@@ -10,4 +10,13 @@ export default [
 			"fsd/typo-in-layer-name": "off",
 		},
 	},
+
+	{
+		// Tell Steiger to treat _app as a sliceless layer by disabling
+		// the segmentless-slices rule exclusively for this directory.
+		files: ["./src/_app/**", "./src/_pages/**"],
+		rules: {
+			"fsd/no-segmentless-slices": "off",
+		},
+	},
 ];
