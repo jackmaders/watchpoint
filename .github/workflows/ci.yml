@@ -1,43 +1,134 @@
-name: CI Pipeline
+name: PR Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - release/**
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - release/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate, Test & Build
+  lint:
+    name: ✨ Check Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: 🛒 Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
+      - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install Dependencies
+      - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate Prisma Client
+      - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
-      - name: Type Check & Code Quality Checks
-        run: bun run validate
+      - name: 🦺 Check Type Safety
+        run: bun run check:types
 
-      - name: Production Build
+      - name: 📐 Check FSD Architecture
+        run: bun run check:architecture
+
+      - name: ✨ Check Linting and Formatting
+        run: bun run check:all
+
+  unit-tests:
+    name: 🧪 Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ⚙️ Generate Prisma Client
+        run: bun run prisma generate
+
+      - name: 🧪 Run Unit Tests with Coverage
+        run: bun run test:coverage
+
+  check-build:
+    name: 🏗️ Build Web App
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - unit-tests
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ⚙️ Generate Prisma Client
+        run: bun run prisma generate
+
+      - name: 💾 Restore Next.js Cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lock', 'src/**/*.js', 'src/**/*.jsx', 'src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: 🏗️ Build Web App
         run: bun run build
 
-      - name: Install Playwright Browsers
+  e2e-tests:
+    name: 🎭 Run E2E Tests
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - unit-tests
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ⚙️ Generate Prisma Client
+        run: bun run prisma generate
+
+      - name: 🏗️ Build Web App
+        run: bun run build
+
+      - name: 🎭 Install Playwright Browsers
         run: bunx playwright install --with-deps chromium firefox
 
-      - name: Run E2E Tests
+      - name: 🧪 Run E2E Tests
         run: bun run test:e2e
 
-      - name: Upload Playwright Report on Failure
+      - name: 📩 Upload Playwright Report on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:

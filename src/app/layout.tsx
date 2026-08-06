@@ -17,7 +17,11 @@ export const metadata: Metadata = {
 	title: "Create Next App",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+	children,
+}: Readonly<{
+	children: React.ReactNode;
+}>) {
 	return (
 		<html
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
