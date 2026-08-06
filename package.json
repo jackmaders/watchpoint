@@ -19,6 +19,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.7",
 		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@playwright/test": "^1.62.1",
 		"@tailwindcss/postcss": "^4",
 		"@testing-library/jest-dom": "^7.0.0",
 		"@testing-library/react": "^16.3.2",
@@ -54,6 +55,7 @@
 		"prisma:validate": "bunx --bun prisma validate",
 		"start": "next start",
 		"test:coverage": "vitest run --coverage",
+		"test:e2e": "playwright test",
 		"test:unit": "vitest run"
 	},
 	"trustedDependencies": [
