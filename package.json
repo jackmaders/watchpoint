@@ -6,10 +6,12 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.7",
+		"@feature-sliced/steiger-plugin": "^0.7.0",
 		"@tailwindcss/postcss": "^4",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"steiger": "^0.6.0",
 		"tailwindcss": "^4",
 		"typescript": "^5"
 	},
@@ -23,6 +25,7 @@
 	"scripts": {
 		"build": "next build",
 		"check:all": "biome check --error-on-warnings .",
+		"check:architecture": "steiger ./src",
 		"check:format": "biome format --error-on-warnings .",
 		"check:lint": "biome lint --error-on-warnings .",
 		"dev": "next dev",
