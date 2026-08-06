@@ -1,16 +1,14 @@
+import type { D1Database } from "@cloudflare/workers-types";
+import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient } from "../generated/prisma/client";
 
-const adapter = {
-	adapterName: "@prisma/adapter-d1" as const,
-	async executeRaw() {
-		return 0;
-	},
-	provider: "sqlite" as const,
-	async queryRaw() {
-		return { rows: [] };
-	},
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClient;
+	DB: D1Database;
 };
-const prisma = new PrismaClient({ adapter: adapter as never });
+
+const adapter = new PrismaD1(globalForPrisma.DB);
+export const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
 
 function getInitialScenarios() {
 	return [

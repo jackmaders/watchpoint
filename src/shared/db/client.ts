@@ -1,29 +1,15 @@
+import type { D1Database } from "@cloudflare/workers-types";
+import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient } from "../../../generated/prisma/client";
 
-export function createMockAdapter() {
-	return {
-		adapterName: "@prisma/adapter-d1" as const,
-		async executeRaw() {
-			return 0;
-		},
-		provider: "sqlite" as const,
-		async queryRaw() {
-			return { rows: [] };
-		},
-	};
-}
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClient;
+	DB: D1Database;
+};
 
-export function createDbClient(d1Instance?: unknown) {
-	const d1 =
-		d1Instance ??
-		(globalThis as unknown as { env?: { DB?: unknown } })?.env?.DB;
+const d1 = globalForPrisma.DB;
 
-	const adapter = createMockAdapter();
-	if (d1) {
-		return new PrismaClient({ adapter: adapter as never });
-	}
+const adapter = new PrismaD1(d1);
+export const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
 
-	return new PrismaClient({ adapter: adapter as never });
-}
-
-export const db = createDbClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
