@@ -8,12 +8,18 @@
 		"@biomejs/biome": "^2.5.7",
 		"@feature-sliced/steiger-plugin": "^0.7.0",
 		"@tailwindcss/postcss": "^4",
+		"@testing-library/jest-dom": "^7.0.0",
+		"@testing-library/react": "^16.3.2",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"@vitest/coverage-v8": "^4.1.10",
+		"happy-dom": "^20.11.1",
 		"steiger": "^0.6.0",
 		"tailwindcss": "^4",
-		"typescript": "^5"
+		"typescript": "^5",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^4.1.10"
 	},
 	"ignoreScripts": [
 		"sharp",
@@ -30,11 +36,14 @@
 		"check:lint": "biome lint --error-on-warnings .",
 		"dev": "next dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
-		"start": "next start"
+		"start": "next start",
+		"test:coverage": "vitest run --coverage",
+		"test:unit": "vitest run"
 	},
 	"trustedDependencies": [
 		"sharp",
 		"unrs-resolver"
 	],
+	"type": "module",
 	"version": "0.1.0"
 }
