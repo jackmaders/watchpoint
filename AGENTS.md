@@ -12,9 +12,11 @@ This repository enforces strict technical, architectural, and quality standards 
 - All manual module mocks MUST utilize adjacent `__mocks__` directories.
 
 ### 2. Feature-Sliced Design (FSD) Extraction Rule (Pages-First)
-- Keep UI components, business logic, and server actions inside the relevant `pages/` slice by default.
+- Keep UI components, business logic, and server actions inside the relevant `_pages/` slice by default.
 - DO NOT extract logic into `features/` or `widgets/` until a second consumer explicitly requires it.
 - Steiger linter (`bun run check:architecture`) enforces slice usage and public API entrypoints (`index.ts`).
+- **Next.js Naming**: FSD `pages` and `app` layers MUST use underscore-prefixed names (`_pages/`, `_app/`) inside `src/` to avoid conflicting with the Next.js App Router `app/` and Pages Router `pages/` directories. See: https://feature-sliced.design/docs/guides/tech/with-nextjs
+- The Next.js routing directory (`src/app/`) is for thin route entry points that re-export from the FSD `_pages/` layer. Route files contain no business logic.
 
 ### 3. Action-First Feature Naming
 - Extracted features in `src/features/` MUST be named using the `{action}-{entity}` (verb-noun) convention (e.g. `create-user`, `submit-feedback`).
@@ -31,3 +33,8 @@ This repository enforces strict technical, architectural, and quality standards 
 - Format commit messages strictly as:
   `<type>(<scope>): <emoji> <description>`
   (e.g., `feat(auth): 🔑 setup Prisma ORM schema and Better Auth authentication`).
+
+### 7. MCP Server Usage
+- When available MCP servers provide relevant functionality (e.g. GitHub, Sentry, Trello), agents MUST use them instead of falling back to CLI tools or manual API calls.
+- Examples: use the `github-mcp-server` for PR operations, issue management, and repository interactions rather than the `gh` CLI; use the `sentry` MCP server for error tracking queries rather than `sentry-cli`.
+
