@@ -1,10 +1,10 @@
 "use client";
 
-import { UserForm } from "@/features/user-form";
+import { UserForm } from "./user-form";
 
 const handleUserFormSubmit = () => {};
 
-export default function Home() {
+export function HomePage() {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24">
 			<h1 className="text-4xl font-bold tracking-tight">

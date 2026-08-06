@@ -43,6 +43,9 @@
 	],
 	"name": "watchpoint",
 	"packageManager": "bun@1.3.13",
+	"prisma": {
+		"seed": "bun prisma/seed.ts"
+	},
 	"private": true,
 	"scripts": {
 		"build": "next build",
@@ -55,6 +58,7 @@
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
 		"prepare": "lefthook install",
 		"prisma": "bunx --bun prisma",
+		"prisma:seed": "bun prisma/seed.ts",
 		"prisma:validate": "bunx --bun prisma validate",
 		"start": "next start",
 		"test:coverage": "vitest run --coverage",

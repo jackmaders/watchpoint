@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String          @unique
+  emailVerified Boolean         @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   sessions      Session[]
   accounts      Account[]
+  attempts      AttemptRecord[]
 
   @@map("user")
 }
@@ -65,3 +66,70 @@ model Verification {
 
   @@map("verification")
 }
+
+model Vod {
+  id              String     @id @default(cuid())
+  title           String
+  youtubeVideoId  String     @map("youtube_video_id")
+  durationSeconds Int        @map("duration_seconds")
+  mapName         String     @map("map_name")
+  rankTier        String     @map("rank_tier")
+  isPublished     Boolean    @default(false) @map("is_published")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  scenarios       Scenario[]
+
+  @@index([isPublished, createdAt(sort: Desc)])
+  @@map("vod")
+}
+
+enum ModuleType {
+  STRATEGY
+  TACTICS
+  ULTIMATE
+  COOLDOWN
+  SPATIAL
+}
+
+enum InputType {
+  MULTIPLE_CHOICE
+  PERCENT_SLIDER
+  TIME_SLIDER
+  MAP_PIN_2D
+}
+
+model Scenario {
+  id               String          @id @default(cuid())
+  vodId            String          @map("vod_id")
+  vod              Vod             @relation(fields: [vodId], references: [id], onDelete: Cascade)
+  timestampSeconds Float           @map("timestamp_seconds")
+  moduleType       ModuleType      @map("module_type")
+  timeLimitSeconds Int?            @map("time_limit_seconds")
+  promptText       String          @map("prompt_text")
+  explanationText  String          @map("explanation_text")
+  imageUrl         String?         @map("image_url")
+  inputType        InputType       @map("input_type")
+  inputConfig      Json            @map("input_config")
+  attempts         AttemptRecord[]
+
+  @@index([vodId, moduleType])
+  @@index([vodId, timestampSeconds(sort: Asc)])
+  @@map("scenario")
+}
+
+model AttemptRecord {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId       String   @map("scenario_id")
+  scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  selectedOptionId String?  @map("selected_option_id")
+  inputValue       Json?    @map("input_value")
+  isCorrect        Boolean  @map("is_correct")
+  responseTimeMs   Int      @map("response_time_ms")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([scenarioId])
+  @@map("attempt_record")
+}
+
