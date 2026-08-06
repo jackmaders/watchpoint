@@ -19,6 +19,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.7",
 		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@opennextjs/cloudflare": "^1.20.2",
 		"@playwright/test": "^1.62.1",
 		"@tailwindcss/postcss": "^4",
 		"@testing-library/jest-dom": "^7.0.0",
@@ -35,7 +36,8 @@
 		"tailwindcss": "^4",
 		"typescript": "^5",
 		"vite-tsconfig-paths": "^6.1.1",
-		"vitest": "^4.1.10"
+		"vitest": "^4.1.10",
+		"wrangler": "^4.119.0"
 	},
 	"ignoreScripts": [
 		"sharp",
@@ -49,14 +51,18 @@
 	"private": true,
 	"scripts": {
 		"build": "next build",
+		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",
 		"check:format": "biome format --error-on-warnings .",
 		"check:lint": "biome lint --error-on-warnings .",
 		"check:types": "tsc --noEmit",
+		"db:seed:local": "bun prisma/seed.ts",
+		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"dev": "next dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
 		"prepare": "lefthook install",
+		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"prisma": "bunx --bun prisma",
 		"prisma:seed": "bun prisma/seed.ts",
 		"prisma:validate": "bunx --bun prisma validate",

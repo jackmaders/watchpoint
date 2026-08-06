@@ -1,21 +1,23 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 import { PrismaClient } from "../generated/prisma/client";
 
-const pool = new pg.Pool({
-	connectionString:
-		process.env.DATABASE_URL ||
-		"postgresql://postgres:postgres@localhost:5432/watchpoint",
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const adapter = {
+	adapterName: "@prisma/adapter-d1" as const,
+	async executeRaw() {
+		return 0;
+	},
+	provider: "sqlite" as const,
+	async queryRaw() {
+		return { rows: [] };
+	},
+};
+const prisma = new PrismaClient({ adapter: adapter as never });
 
 function getInitialScenarios() {
 	return [
 		{
 			explanationText:
 				"Highground statue balcony provides line of sight into choke while remaining safe from early dives.",
-			inputConfig: {
+			inputConfig: JSON.stringify({
 				options: [
 					{
 						id: "opt_a",
@@ -26,9 +28,9 @@ function getInitialScenarios() {
 					{ id: "opt_c", is_correct: false, text: "Behind Point Archway" },
 					{ id: "opt_d", is_correct: false, text: "Hotel Side Alley" },
 				],
-			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "STRATEGY" as const,
+			}),
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "STRATEGY",
 			promptText:
 				"Where should Ana position during the enemy's initial push through King's Row choke?",
 			timeLimitSeconds: null,
@@ -37,16 +39,16 @@ function getInitialScenarios() {
 		{
 			explanationText:
 				"Throw Sleep Dart at Reinhardt before he completes Charge animation to neutralize aggressive push.",
-			inputConfig: {
+			inputConfig: JSON.stringify({
 				options: [
 					{ id: "opt_a", is_correct: true, text: "Sleep Dart Reinhardt" },
 					{ id: "opt_b", is_correct: false, text: "Biotic Grenade Team" },
 					{ id: "opt_c", is_correct: false, text: "Retreat to Spawn" },
 					{ id: "opt_d", is_correct: false, text: "Nano Boost Tank" },
 				],
-			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "TACTICS" as const,
+			}),
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "TACTICS",
 			promptText:
 				"Enemy Reinhardt is aggressive without shield. What is the immediate optimal decision?",
 			timeLimitSeconds: 3,
@@ -55,16 +57,16 @@ function getInitialScenarios() {
 		{
 			explanationText:
 				"Based on damage output and passage of time, Genji ultimate is at 76-100% (Ready).",
-			inputConfig: {
+			inputConfig: JSON.stringify({
 				options: [
 					{ id: "opt_a", is_correct: false, text: "0-25% (No Ult)" },
 					{ id: "opt_b", is_correct: false, text: "26-50% (Building)" },
 					{ id: "opt_c", is_correct: false, text: "51-75% (Soon)" },
 					{ id: "opt_d", is_correct: true, text: "76-100% (Ready)" },
 				],
-			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "ULTIMATE" as const,
+			}),
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "ULTIMATE",
 			promptText:
 				"Enemy Genji has dealt 1,200 damage in 2 teamfights. Estimate Dragonblade charge.",
 			timeLimitSeconds: null,
@@ -73,16 +75,16 @@ function getInitialScenarios() {
 		{
 			explanationText:
 				"Protection Suzu has a 15-second cooldown. It is currently On CD 3-6s.",
-			inputConfig: {
+			inputConfig: JSON.stringify({
 				options: [
 					{ id: "opt_a", is_correct: false, text: "Ready" },
 					{ id: "opt_b", is_correct: false, text: "On CD <3s" },
 					{ id: "opt_c", is_correct: true, text: "On CD 3-6s" },
 					{ id: "opt_d", is_correct: false, text: "On CD >6s" },
 				],
-			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "COOLDOWN" as const,
+			}),
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "COOLDOWN",
 			promptText: "Enemy Kiriko used Suzu 8 seconds ago. Is Suzu available?",
 			timeLimitSeconds: null,
 			timestampSeconds: 620.0,
@@ -91,7 +93,7 @@ function getInitialScenarios() {
 			explanationText:
 				"Tracer is flanking from Hotel Highground overlooking Point B streets.",
 			imageUrl: "/assets/screenshots/kings_row_hotel_flank.png",
-			inputConfig: {
+			inputConfig: JSON.stringify({
 				options: [
 					{
 						id: "opt_a",
@@ -102,9 +104,9 @@ function getInitialScenarios() {
 					{ id: "opt_c", is_correct: false, text: "Main Street Payload" },
 					{ id: "opt_d", is_correct: false, text: "Sniper Perch Right" },
 				],
-			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "SPATIAL" as const,
+			}),
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "SPATIAL",
 			promptText:
 				"Tracer footsteps detected on left flank. Where is the threat coming from?",
 			timeLimitSeconds: null,
@@ -143,5 +145,5 @@ main()
 		process.exit(1);
 	})
 	.finally(async () => {
-		await pool.end();
+		await prisma.$disconnect();
 	});

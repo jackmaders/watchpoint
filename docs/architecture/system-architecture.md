@@ -34,13 +34,13 @@ flowchart TB
         OverlayEngine --> StateMachine
     end
 
-    subgraph Backend ["Watchpoint Backend API"]
+    subgraph Backend ["Cloudflare Workers / Pages API"]
         direction TB
         ManifestService["VOD & Scenario Manifest Service"]
         TelemetryService["Attempt & Telemetry Service"]
     end
 
-    subgraph Database ["PostgreSQL Database"]
+    subgraph Database ["Cloudflare D1 Database (SQLite)"]
         direction TB
         VODTable[("VOD Table")]
         ScenarioTable[("Scenario Table")]

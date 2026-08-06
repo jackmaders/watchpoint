@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model User {
@@ -78,23 +78,8 @@ model Vod {
   createdAt       DateTime   @default(now()) @map("created_at")
   scenarios       Scenario[]
 
-  @@index([isPublished, createdAt(sort: Desc)])
+  @@index([isPublished, createdAt])
   @@map("vod")
-}
-
-enum ModuleType {
-  STRATEGY
-  TACTICS
-  ULTIMATE
-  COOLDOWN
-  SPATIAL
-}
-
-enum InputType {
-  MULTIPLE_CHOICE
-  PERCENT_SLIDER
-  TIME_SLIDER
-  MAP_PIN_2D
 }
 
 model Scenario {
@@ -102,13 +87,13 @@ model Scenario {
   vodId            String          @map("vod_id")
   vod              Vod             @relation(fields: [vodId], references: [id], onDelete: Cascade)
   timestampSeconds Float           @map("timestamp_seconds")
-  moduleType       ModuleType      @map("module_type")
+  moduleType       String          @map("module_type")
   timeLimitSeconds Int?            @map("time_limit_seconds")
   promptText       String          @map("prompt_text")
   explanationText  String          @map("explanation_text")
   imageUrl         String?         @map("image_url")
-  inputType        InputType       @map("input_type")
-  inputConfig      Json            @map("input_config")
+  inputType        String          @map("input_type")
+  inputConfig      String          @map("input_config")
   attempts         AttemptRecord[]
 
   @@index([vodId, moduleType])
@@ -123,7 +108,7 @@ model AttemptRecord {
   scenarioId       String   @map("scenario_id")
   scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
   selectedOptionId String?  @map("selected_option_id")
-  inputValue       Json?    @map("input_value")
+  inputValue       String?  @map("input_value")
   isCorrect        Boolean  @map("is_correct")
   responseTimeMs   Int      @map("response_time_ms")
   createdAt        DateTime @default(now()) @map("created_at")

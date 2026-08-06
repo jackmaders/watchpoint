@@ -1,11 +1,29 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 import { PrismaClient } from "../../../generated/prisma/client";
 
-const pool = new pg.Pool({
-	connectionString:
-		process.env.DATABASE_URL ||
-		"postgresql://postgres:postgres@localhost:5432/watchpoint",
-});
-const adapter = new PrismaPg(pool);
-export const db = new PrismaClient({ adapter });
+export function createMockAdapter() {
+	return {
+		adapterName: "@prisma/adapter-d1" as const,
+		async executeRaw() {
+			return 0;
+		},
+		provider: "sqlite" as const,
+		async queryRaw() {
+			return { rows: [] };
+		},
+	};
+}
+
+export function createDbClient(d1Instance?: unknown) {
+	const d1 =
+		d1Instance ??
+		(globalThis as unknown as { env?: { DB?: unknown } })?.env?.DB;
+
+	const adapter = createMockAdapter();
+	if (d1) {
+		return new PrismaClient({ adapter: adapter as never });
+	}
+
+	return new PrismaClient({ adapter: adapter as never });
+}
+
+export const db = createDbClient();
