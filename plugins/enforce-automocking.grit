@@ -1,0 +1,5 @@
+`vi.mock($path, $factory)` where {
+	not $path <: r".*zustand.*",
+	not $path <: r".*generated/prisma/client.*",
+	register_diagnostic(span=$factory, message="Bypassing automocking via manual factories is disabled. Remove the second argument and utilize an adjacent `__mocks__` directory instead.")
+}
