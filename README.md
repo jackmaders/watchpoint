@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js App Router Production Project Template
 
-## Getting Started
+A production-ready Next.js App Router project template scaffolded using **Bun**, **Feature-Sliced Design (FSD)**, **Biome**, **Steiger**, **Vitest**, **Prisma v7**, **Better Auth**, **Tailwind CSS v4**, **Shadcn UI**, **TanStack React Form**, **Zod**, and **Playwright**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Technical Stack
+
+- **Runtime & Package Manager**: [Bun](https://bun.sh)
+- **Framework**: [Next.js (App Router)](https://nextjs.org) + [React 19](https://react.dev)
+- **Architecture**: [Feature-Sliced Design (FSD v2.1)](https://feature-sliced.design) verified via [Steiger](https://github.com/feature-sliced/steiger)
+- **Linting & Formatting**: [Biome](https://biomejs.dev) with custom GritQL automocking plugin
+- **Database & Auth**: [Prisma v7](https://prisma.io) + `@prisma/adapter-pg` & [Better Auth](https://better-auth.com)
+- **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Shadcn UI](https://ui.shadcn.com)
+- **Form Handling & Validation**: [TanStack React Form](https://tanstack.com/form) & [Zod](https://zod.dev)
+- **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold) & [Playwright](https://playwright.dev) (E2E)
+
+---
+
+## Directory Structure (Feature-Sliced Design)
+
+```text
+src/
+├── app/        → App initialization, global styles, root layout & routes
+├── pages/      → Route-level composition and page-owned logic
+├── widgets/    → Large composite UI blocks reused across pages
+├── features/   → Reusable user interactions (e.g. user-form)
+├── entities/   → Reusable business domain models
+└── shared/     → Infrastructure, UI kit (button), utils, auth, API client
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Available Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+| --- | --- |
+| `bun run dev` | Start Next.js development server |
+| `bun run build` | Build production Next.js bundle |
+| `bun run start` | Start production Next.js server |
+| `bun run check:types` | Run TypeScript type checking (`tsc --noEmit`) |
+| `bun run check:lint` | Run Biome lint checks |
+| `bun run check:format` | Run Biome formatting checks |
+| `bun run check:all` | Run all Biome checks |
+| `bun run check:architecture` | Run Steiger FSD architecture linter |
+| `bun run fix:all` | Auto-fix Biome formatting and lint issues |
+| `bun run test:unit` | Run Vitest unit tests |
+| `bun run test:coverage` | Run Vitest unit tests with 100% coverage check |
+| `bun run test:e2e` | Run Playwright E2E tests |
+| `bun run prisma:validate` | Validate Prisma schema |
+| `bun run validate` | Run complete pipeline (`types`, `all`, `architecture`, `coverage`) |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Setup & Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# 1. Install dependencies
+bun install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 2. Generate Prisma Client
+bun run prisma generate
 
-## Deploy on Vercel
+# 3. Validate complete pipeline
+bun run validate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 4. Start dev server
+bun run dev
+```

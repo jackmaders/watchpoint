@@ -1,9 +1,33 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# AI Agent System Guidance & Architecture Rules
 
-# This is NOT the Next.js you know
+This repository enforces strict technical, architectural, and quality standards for all AI pair-programming and automated code generation tasks.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+---
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+## Core System Rules
 
-<!-- END:nextjs-agent-rules -->
+### 1. Automocking Plugin Protection Lock
+- `plugins/enforce-automocking.grit` MUST NOT be edited, weakened, or extended with additional bypass exceptions/regexes.
+- Inline manual mock factory overrides (`vi.mock("...", () => ...)` are strictly prohibited.
+- All manual module mocks MUST utilize adjacent `__mocks__` directories.
+
+### 2. Feature-Sliced Design (FSD) Extraction Rule (Pages-First)
+- Keep UI components, business logic, and server actions inside the relevant `pages/` slice by default.
+- DO NOT extract logic into `features/` or `widgets/` until a second consumer explicitly requires it.
+- Steiger linter (`bun run check:architecture`) enforces slice usage and public API entrypoints (`index.ts`).
+
+### 3. Action-First Feature Naming
+- Extracted features in `src/features/` MUST be named using the `{action}-{entity}` (verb-noun) convention (e.g. `create-user`, `submit-feedback`).
+
+### 4. Test-Driven Development (TDD) Protocol
+- Always follow the Red -> Green -> Refactor workflow.
+- Write failing unit tests (`*.spec.ts` / `*.spec.tsx`) first before implementing functional code.
+
+### 5. Unit Test Speed & 100% Coverage Enforcement
+- Every test block MUST execute in under 50ms.
+- 100% coverage threshold across statements, branches, functions, and lines is strictly enforced via `bun run test:coverage`.
+
+### 6. Conventional Commit Format
+- Format commit messages strictly as:
+  `<type>(<scope>): <emoji> <description>`
+  (e.g., `feat(auth): 🔑 setup Prisma ORM schema and Better Auth authentication`).
