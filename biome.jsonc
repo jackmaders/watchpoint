@@ -2,7 +2,7 @@
 	"$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
 	"assist": {
 		"actions": {
-			"recommended": true,
+			"preset": "recommended",
 			"source": {
 				"organizeImports": "on",
 				"useSortedAttributes": "on",
@@ -46,7 +46,7 @@
 					}
 				}
 			},
-			"recommended": true,
+			"preset": "recommended",
 			"style": {
 				"useComponentExportOnlyModules": "off",
 				"useFilenamingConvention": {
