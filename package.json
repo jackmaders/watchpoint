@@ -1,6 +1,10 @@
 {
 	"dependencies": {
+		"@prisma/adapter-pg": "^7.9.1",
+		"@prisma/client": "^7.9.1",
+		"better-auth": "^1.6.26",
 		"next": "16.3.0",
+		"pg": "^8.22.0",
 		"react": "19.2.8",
 		"react-dom": "19.2.8"
 	},
@@ -11,10 +15,12 @@
 		"@testing-library/jest-dom": "^7.0.0",
 		"@testing-library/react": "^16.3.2",
 		"@types/node": "^20",
+		"@types/pg": "^8.20.4",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
 		"@vitest/coverage-v8": "^4.1.10",
 		"happy-dom": "^20.11.1",
+		"prisma": "^7.9.1",
 		"steiger": "^0.6.0",
 		"tailwindcss": "^4",
 		"typescript": "^5",
@@ -36,6 +42,8 @@
 		"check:lint": "biome lint --error-on-warnings .",
 		"dev": "next dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
+		"prisma": "bunx --bun prisma",
+		"prisma:validate": "bunx --bun prisma validate",
 		"start": "next start",
 		"test:coverage": "vitest run --coverage",
 		"test:unit": "vitest run"
