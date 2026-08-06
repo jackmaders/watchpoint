@@ -1,5 +1,5 @@
 import type { Prisma } from "../../../generated/prisma/client";
-import { db } from "./client";
+import { prisma } from "./client";
 
 export type PublishedVodItem = Prisma.VodGetPayload<{
 	include: {
@@ -14,7 +14,7 @@ export interface GetVodByIdOptions {
 }
 
 export async function getPublishedVods(): Promise<PublishedVodItem[]> {
-	return db.vod.findMany({
+	return prisma.vod.findMany({
 		include: {
 			_count: {
 				select: { scenarios: true },
@@ -30,7 +30,7 @@ export async function getVodById(
 	options: GetVodByIdOptions = { publishedOnly: true },
 ) {
 	const { publishedOnly = true } = options;
-	return db.vod.findFirst({
+	return prisma.vod.findFirst({
 		include: {
 			scenarios: {
 				orderBy: { timestampSeconds: "asc" },
