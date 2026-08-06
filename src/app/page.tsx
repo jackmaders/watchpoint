@@ -1,3 +1,5 @@
+"use client";
+
 import { UserForm } from "@/features/user-form";
 
 const handleUserFormSubmit = () => {};

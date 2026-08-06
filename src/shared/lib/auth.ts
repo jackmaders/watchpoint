@@ -13,10 +13,14 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 export const auth = betterAuth({
+	baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
 	}),
 	emailAndPassword: {
 		enabled: true,
 	},
+	secret:
+		process.env.BETTER_AUTH_SECRET ||
+		"development-secret-key-at-least-32-chars-long",
 });
