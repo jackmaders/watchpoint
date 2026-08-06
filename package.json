@@ -53,6 +53,7 @@
 		"check:architecture": "steiger ./src",
 		"check:format": "biome format --error-on-warnings .",
 		"check:lint": "biome lint --error-on-warnings .",
+		"check:seed": "bun prisma/seed.ts",
 		"check:types": "tsc --noEmit",
 		"dev": "next dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
