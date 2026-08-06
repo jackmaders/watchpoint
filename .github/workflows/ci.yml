@@ -119,6 +119,9 @@ jobs:
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
+      - name: 🏗️ Build Web App
+        run: bun run build
+
       - name: 🎭 Install Playwright Browsers
         run: bunx playwright install --with-deps chromium firefox
 
