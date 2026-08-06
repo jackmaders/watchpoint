@@ -1,25 +1,19 @@
 import Link from "next/link";
+import type { PublishedVodItem } from "@/shared/db";
 
-export interface VodItem {
-	id: string;
-	title: string;
-	youtubeVideoId: string;
-	durationSeconds: number;
-	mapName: string;
-	rankTier: string;
-	isPublished?: boolean;
-	_count?: {
-		scenarios: number;
-	};
-}
+export type VodItem = PublishedVodItem;
 
 export interface VodsPageProps {
-	vods?: VodItem[];
+	vods?: PublishedVodItem[];
 }
 
 export function formatDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
-	const secs = seconds % 60;
+	const validSeconds = Math.max(
+		0,
+		Math.floor(Number.isFinite(seconds) ? seconds : 0),
+	);
+	const mins = Math.floor(validSeconds / 60);
+	const secs = validSeconds % 60;
 	const paddedSecs = secs < 10 ? `0${secs}` : `${secs}`;
 	return `${mins}m ${paddedSecs}s`;
 }

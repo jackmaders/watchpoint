@@ -78,6 +78,7 @@ model Vod {
   createdAt       DateTime   @default(now()) @map("created_at")
   scenarios       Scenario[]
 
+  @@index([isPublished, createdAt(sort: Desc)])
   @@map("vod")
 }
 
@@ -111,6 +112,7 @@ model Scenario {
   attempts         AttemptRecord[]
 
   @@index([vodId, moduleType])
+  @@index([vodId, timestampSeconds(sort: Asc)])
   @@map("scenario")
 }
 
@@ -126,5 +128,8 @@ model AttemptRecord {
   responseTimeMs   Int      @map("response_time_ms")
   createdAt        DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([scenarioId])
   @@map("attempt_record")
 }
+

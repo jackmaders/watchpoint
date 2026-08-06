@@ -43,7 +43,7 @@ describe("VOD database accessors", () => {
 	});
 
 	describe("getVodById", () => {
-		it("fetches a published VOD by ID with ordered scenarios", async () => {
+		it("fetches a published VOD by ID with ordered scenarios by default", async () => {
 			const mockVod = {
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 1080,
@@ -68,33 +68,61 @@ describe("VOD database accessors", () => {
 				youtubeVideoId: "dQw4w9WgXcQ",
 			};
 
-			vi.mocked(db.vod.findUnique).mockResolvedValueOnce(mockVod as never);
+			vi.mocked(db.vod.findFirst).mockResolvedValueOnce(mockVod as never);
 
 			const result = await getVodById("vod_1");
 
-			expect(db.vod.findUnique).toHaveBeenCalledWith({
+			expect(db.vod.findFirst).toHaveBeenCalledWith({
 				include: {
 					scenarios: {
 						orderBy: { timestampSeconds: "asc" },
 					},
 				},
-				where: { id: "vod_1" },
+				where: { id: "vod_1", isPublished: true },
 			});
 			expect(result).toEqual(mockVod);
 		});
 
-		it("returns null if VOD is not found", async () => {
-			vi.mocked(db.vod.findUnique).mockResolvedValueOnce(null);
+		it("allows fetching unpublished VOD when publishedOnly is false", async () => {
+			const mockDraftVod = {
+				createdAt: new Date("2026-08-06T10:00:00Z"),
+				durationSeconds: 600,
+				id: "draft_vod",
+				isPublished: false,
+				mapName: "Eichenwalde",
+				rankTier: "Master",
+				scenarios: [],
+				title: "Draft VOD",
+				youtubeVideoId: "abc12345",
+			};
 
-			const result = await getVodById("non_existent");
+			vi.mocked(db.vod.findFirst).mockResolvedValueOnce(mockDraftVod as never);
 
-			expect(db.vod.findUnique).toHaveBeenCalledWith({
+			const result = await getVodById("draft_vod", { publishedOnly: false });
+
+			expect(db.vod.findFirst).toHaveBeenCalledWith({
 				include: {
 					scenarios: {
 						orderBy: { timestampSeconds: "asc" },
 					},
 				},
-				where: { id: "non_existent" },
+				where: { id: "draft_vod" },
+			});
+			expect(result).toEqual(mockDraftVod);
+		});
+
+		it("returns null if VOD is not found", async () => {
+			vi.mocked(db.vod.findFirst).mockResolvedValueOnce(null);
+
+			const result = await getVodById("non_existent");
+
+			expect(db.vod.findFirst).toHaveBeenCalledWith({
+				include: {
+					scenarios: {
+						orderBy: { timestampSeconds: "asc" },
+					},
+				},
+				where: { id: "non_existent", isPublished: true },
 			});
 			expect(result).toBeNull();
 		});
