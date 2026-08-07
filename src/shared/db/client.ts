@@ -4,8 +4,6 @@ import { PrismaClient } from "../../../generated/prisma/client";
 
 const { env } = getCloudflareContext();
 
-console.log("env.DB", env.DB);
-
 const adapter = new PrismaD1(env.DB);
 
 export const prisma = globalThis.prisma || new PrismaClient({ adapter });
