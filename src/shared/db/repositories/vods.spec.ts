@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../client/client";
-import { getPublishedVods, getVodById } from "./vods";
+import { getPublishedVods, getVodById, getVodManifest } from "./vods";
 
 vi.mock("../client/client");
 
@@ -108,6 +108,95 @@ describe("VOD database accessors", () => {
 
 			expect(db.query.vods.findFirst).toHaveBeenCalled();
 			expect(result).toBeUndefined();
+		});
+	});
+
+	describe("getVodManifest", () => {
+		it("fetches VOD manifest with all scenarios when no module filter is provided", async () => {
+			const db = await getDb();
+			const mockVod = {
+				createdAt: new Date("2026-08-06T10:00:00Z"),
+				durationSeconds: 1080,
+				id: "vod_1",
+				isPublished: true,
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				scenarios: [
+					{
+						id: "sc_1",
+						moduleType: "STRATEGY",
+						timestampSeconds: 30,
+					},
+					{
+						id: "sc_2",
+						moduleType: "ULTIMATE",
+						timestampSeconds: 90,
+					},
+				],
+				title: "GM Ana VOD",
+				youtubeVideoId: "dQw4w9WgXcQ",
+			};
+
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+			);
+
+			const result = await getVodManifest("vod_1");
+
+			expect(result).toEqual(mockVod);
+		});
+
+		it("filters scenarios by moduleType when modules option is provided", async () => {
+			const db = await getDb();
+			const mockVod = {
+				createdAt: new Date("2026-08-06T10:00:00Z"),
+				durationSeconds: 1080,
+				id: "vod_1",
+				isPublished: true,
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				scenarios: [
+					{
+						id: "sc_1",
+						moduleType: "STRATEGY",
+						timestampSeconds: 30,
+					},
+					{
+						id: "sc_2",
+						moduleType: "ULTIMATE",
+						timestampSeconds: 90,
+					},
+					{
+						id: "sc_3",
+						moduleType: "TACTICS",
+						timestampSeconds: 150,
+					},
+				],
+				title: "GM Ana VOD",
+				youtubeVideoId: "dQw4w9WgXcQ",
+			};
+
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+			);
+
+			const result = await getVodManifest("vod_1", {
+				modules: ["STRATEGY", "TACTICS"],
+			});
+
+			expect(result?.scenarios).toHaveLength(2);
+			expect(result?.scenarios.map((s) => s.id)).toEqual(["sc_1", "sc_3"]);
+		});
+
+		it("returns null if VOD is not found", async () => {
+			const db = await getDb();
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				undefined as unknown as Awaited<ReturnType<typeof getVodById>>,
+			);
+
+			const result = await getVodManifest("non_existent");
+
+			expect(result).toBeNull();
 		});
 	});
 });

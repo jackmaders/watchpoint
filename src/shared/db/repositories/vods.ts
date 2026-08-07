@@ -44,3 +44,34 @@ export async function getVodById(
 		},
 	});
 }
+
+export interface GetVodManifestOptions {
+	modules?: string[];
+	publishedOnly?: boolean;
+}
+
+export async function getVodManifest(
+	id: string,
+	options: GetVodManifestOptions = {},
+) {
+	const { modules, publishedOnly = true } = options;
+	const vod = await getVodById(id, { publishedOnly });
+
+	if (!vod) {
+		return null;
+	}
+
+	if (!modules || modules.length === 0) {
+		return vod;
+	}
+
+	const allowedModulesSet = new Set(modules);
+	const filteredScenarios = vod.scenarios.filter((scenario) =>
+		allowedModulesSet.has(scenario.moduleType),
+	);
+
+	return {
+		...vod,
+		scenarios: filteredScenarios,
+	};
+}
