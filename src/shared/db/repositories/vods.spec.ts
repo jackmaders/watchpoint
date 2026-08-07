@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "./client";
+import { prisma } from "../client/client";
 import { getPublishedVods, getVodById } from "./vods";
 
-vi.mock("./client");
+vi.mock("../client/client");
 
 describe("VOD database accessors", () => {
 	beforeEach(() => {

@@ -1,3 +1,3 @@
-export { prisma } from "./client";
-export type { GetVodByIdOptions, PublishedVodItem } from "./vods";
-export { getPublishedVods, getVodById } from "./vods";
+export { prisma } from "./client/client";
+export type { GetVodByIdOptions, PublishedVodItem } from "./repositories/vods";
+export { getPublishedVods, getVodById } from "./repositories/vods";

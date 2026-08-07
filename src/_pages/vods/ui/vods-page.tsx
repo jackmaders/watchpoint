@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import type { PublishedVodItem } from "@/shared/db";
+import { getPublishedVods, type PublishedVodItem } from "@/shared/db";
 
 export type VodItem = PublishedVodItem;
-
-export interface VodsPageProps {
-	vods?: PublishedVodItem[];
-}
 
 export function formatDuration(seconds: number): string {
 	const validSeconds = Math.max(
@@ -19,8 +15,10 @@ export function formatDuration(seconds: number): string {
 	return `${mins}m ${paddedSecs}s`;
 }
 
-export async function VodsPage({ vods = [] }: VodsPageProps) {
+export async function VodsPage() {
 	await connection();
+
+	const vods = await getPublishedVods();
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">
@@ -70,7 +68,7 @@ export async function VodsPage({ vods = [] }: VodsPageProps) {
 
 									<div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
 										<span>Duration: {formatDuration(vod.durationSeconds)}</span>
-										<span>{vod._count?.scenarios ?? 0} Scenarios</span>
+										<span>{vod._count.scenarios} Scenarios</span>
 									</div>
 								</div>
 

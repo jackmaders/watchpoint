@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../db/client");
+vi.mock("../db/client/client");
 
 import { auth } from "./auth";
 

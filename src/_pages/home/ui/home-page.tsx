@@ -1,12 +1,13 @@
 import Link from "next/link";
-import type { PublishedVodItem } from "@/shared/db";
+import { connection } from "next/server";
+import { getPublishedVods } from "@/shared/db";
 import { UserForm } from "./user-form";
 
-export interface HomePageProps {
-	vods?: PublishedVodItem[];
-}
+export async function HomePage() {
+	connection();
 
-export function HomePage({ vods = [] }: HomePageProps) {
+	const vods = await getPublishedVods();
+
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-8 sm:p-24 bg-slate-950 text-slate-50">
 			<div className="max-w-4xl w-full space-y-12">
@@ -60,7 +61,7 @@ export function HomePage({ vods = [] }: HomePageProps) {
 										</h3>
 									</div>
 									<div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-										<span>{vod._count?.scenarios ?? 0} Scenarios</span>
+										<span>{vod._count.scenarios} Scenarios</span>
 										<Link
 											className="text-indigo-400 hover:underline font-semibold"
 											href={`/vods/${vod.id}`}
