@@ -1,0 +1,45 @@
+name: 🚀 Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: ☁️ Build & Deploy Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ⚙️ Generate Prisma Client
+        run: bun run prisma generate
+
+      - name: 🗄️ Apply Remote D1 Database Migrations
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: echo y | bunx wrangler d1 migrations apply watchpoint-db --remote
+
+      - name: 🏗️ Build OpenNext Cloudflare Worker
+        run: bun run build
+
+      - name: 🚀 Deploy Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -9,7 +9,7 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_id": "local-watchpoint-db",
+			"database_id": "f7d563c1-aa9f-4a83-9efb-3d379b263821",
 			"database_name": "watchpoint-db",
 			"migrations_dir": "prisma/migrations",
 			"migrations_pattern": "prisma/migrations/*/migration.sql"
@@ -22,7 +22,7 @@
 	},
 	"r2_buckets": [
 		{
-			"binding": "MEDIA_BUCKET",
+			"binding": "MEDIA",
 			"bucket_name": "watchpoint-media"
 		}
 	]
