@@ -195,5 +195,15 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lock') }}-
             ${{ runner.os }}-nextjs-
 
-      - name: 🏗️ Build Web App
-        run: bun run build
+      - name: 🏗️ Build OpenNext Cloudflare Worker
+        run: bun run build:worker
+
+      - name: 🛈 Check Cloudflare Worker Bundle Size Limits
+        run: bun run check:bundle-size
+
+      - name: 📏 Report Route & Asset Bundle Sizes
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: ".open-next/server-functions/default/handler.mjs, .next/static/chunks/**/*.js"
+          threshold: "50KB"
