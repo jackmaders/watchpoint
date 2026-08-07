@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import * as github from "@actions/github";
 import { GoogleGenAI } from "@google/genai";
 
@@ -11,49 +12,26 @@ declare global {
 	}
 }
 
-const SPEC_READY_LABEL = "spec-ready";
+export const READY_FOR_SPEC_LABEL = "ready-for-spec";
+export const SPEC_READY_LABEL = "spec-ready";
 
-interface CommentData {
-	body?: string;
-	user?: {
-		type?: string;
-		login?: string;
-	} | null;
-}
+export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
-type OctokitClient = ReturnType<typeof github.getOctokit>;
+export function determineSkillPath(
+	labels: Array<string | { name?: string }>,
+): string {
+	const labelNames = labels.map((l) =>
+		typeof l === "string" ? l : (l.name ?? ""),
+	);
 
-function determineSkillPath(comments: CommentData[]): string {
-	const userComments = comments.filter((c) => c.user?.type !== "Bot");
-	const botComments = comments.filter((c) => c.user?.type === "Bot");
-
-	const lastUserComment =
-		userComments.length > 0 ? userComments[userComments.length - 1] : null;
-	const lastBotComment =
-		botComments.length > 0 ? botComments[botComments.length - 1] : null;
-
-	const hasToSpecTrigger = lastUserComment?.body
-		? /\b\/to-spec\b/i.test(lastUserComment.body)
-		: false;
-
-	const isGrillingComplete = lastBotComment?.body
-		? lastBotComment.body.includes("All requirements clarified!")
-		: false;
-
-	const userRespondedAfterCompletion =
-		isGrillingComplete &&
-		lastUserComment &&
-		lastBotComment &&
-		comments.indexOf(lastUserComment) > comments.indexOf(lastBotComment);
-
-	if (hasToSpecTrigger || userRespondedAfterCompletion) {
+	if (labelNames.includes(READY_FOR_SPEC_LABEL)) {
 		return ".github/skills/to-spec.md";
 	}
 
 	return ".github/skills/grill-me.md";
 }
 
-async function fetchIssueContext(
+export async function fetchIssueContext(
 	octokit: OctokitClient,
 	issueNumber: number,
 	owner: string,
@@ -80,7 +58,7 @@ async function fetchIssueContext(
 	return { comments, conversation, issue };
 }
 
-async function generateAgentResponse(
+export async function generateAgentResponse(
 	ai: GoogleGenAI,
 	systemInstruction: string,
 	conversation: string,
@@ -103,9 +81,36 @@ async function generateAgentResponse(
 	return response.text;
 }
 
-async function executeSpecPublishing(
+export async function removeLabelIfPresent(
+	octokit: OctokitClient,
+	labels: Array<string | { name?: string }>,
+	labelToRemove: string,
+	issueNumber: number,
+	owner: string,
+	repo: string,
+) {
+	const labelNames = labels.map((l) =>
+		typeof l === "string" ? l : (l.name ?? ""),
+	);
+
+	if (labelNames.includes(labelToRemove)) {
+		try {
+			await octokit.rest.issues.removeLabel({
+				issue_number: issueNumber,
+				name: labelToRemove,
+				owner,
+				repo,
+			});
+		} catch {
+			// Ignore 404 if label was not present
+		}
+	}
+}
+
+export async function executeSpecPublishing(
 	octokit: OctokitClient,
 	specText: string,
+	issueLabels: Array<string | { name?: string }>,
 	issueNumber: number,
 	owner: string,
 	repo: string,
@@ -116,6 +121,15 @@ async function executeSpecPublishing(
 		owner,
 		repo,
 	});
+
+	await removeLabelIfPresent(
+		octokit,
+		issueLabels,
+		READY_FOR_SPEC_LABEL,
+		issueNumber,
+		owner,
+		repo,
+	);
 
 	await octokit.rest.issues.addLabels({
 		issue_number: issueNumber,
@@ -132,32 +146,7 @@ async function executeSpecPublishing(
 	});
 }
 
-async function removeSpecReadyLabelIfPresent(
-	octokit: OctokitClient,
-	labels: Array<string | { name?: string }>,
-	issueNumber: number,
-	owner: string,
-	repo: string,
-) {
-	const labelNames = labels.map((l) =>
-		typeof l === "string" ? l : (l.name ?? ""),
-	);
-
-	if (labelNames.includes(SPEC_READY_LABEL)) {
-		try {
-			await octokit.rest.issues.removeLabel({
-				issue_number: issueNumber,
-				name: SPEC_READY_LABEL,
-				owner,
-				repo,
-			});
-		} catch {
-			// Ignore 404 if label was not present
-		}
-	}
-}
-
-async function executeGrilling(
+export async function executeGrilling(
 	octokit: OctokitClient,
 	responseText: string,
 	issueLabels: Array<string | { name?: string }>,
@@ -165,9 +154,10 @@ async function executeGrilling(
 	owner: string,
 	repo: string,
 ) {
-	await removeSpecReadyLabelIfPresent(
+	await removeLabelIfPresent(
 		octokit,
 		issueLabels,
+		SPEC_READY_LABEL,
 		issueNumber,
 		owner,
 		repo,
@@ -179,10 +169,19 @@ async function executeGrilling(
 		owner,
 		repo,
 	});
+
+	if (responseText.includes("All requirements clarified!")) {
+		await octokit.rest.issues.addLabels({
+			issue_number: issueNumber,
+			labels: [READY_FOR_SPEC_LABEL],
+			owner,
+			repo,
+		});
+	}
 }
 
-async function run() {
-	const issueNumber = parseInt(process.env.ISSUE_NUMBER, 10);
+export async function run() {
+	const issueNumber = parseInt(process.env.ISSUE_NUMBER ?? "0", 10);
 	const owner = github.context.repo.owner;
 	const repo = github.context.repo.repo;
 
@@ -190,15 +189,15 @@ async function run() {
 	const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 	try {
-		const { comments, conversation, issue } = await fetchIssueContext(
+		const { conversation, issue } = await fetchIssueContext(
 			octokit,
 			issueNumber,
 			owner,
 			repo,
 		);
 
-		const skillPath = determineSkillPath(comments);
-		const systemInstruction = await Bun.file(skillPath).text();
+		const skillPath = determineSkillPath(issue.labels);
+		const systemInstruction = await readFile(skillPath, "utf-8");
 		const responseText = await generateAgentResponse(
 			ai,
 			systemInstruction,
@@ -210,6 +209,7 @@ async function run() {
 			await executeSpecPublishing(
 				octokit,
 				responseText,
+				issue.labels,
 				issueNumber,
 				owner,
 				repo,
@@ -240,4 +240,6 @@ async function run() {
 	}
 }
 
-run();
+if (!process.env.VITEST) {
+	run();
+}

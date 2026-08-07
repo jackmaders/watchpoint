@@ -38,4 +38,4 @@ Ensure your questions resolve these pillars:
 In subsequent responses:
 - Review user answers. If questions remain unanswered or new trade-offs emerge, ask follow-up questions formatted as above.
 - If all questions are answered and you have a complete technical understanding with no remaining ambiguities, state:
-  "✅ All requirements clarified! Type `/to-spec` or confirm to generate the formal feature specification."
+  "✅ All requirements clarified! Preparing formal feature specification."
