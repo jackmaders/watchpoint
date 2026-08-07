@@ -50,6 +50,7 @@
 		"cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --include-runtime false --env-file .env.example",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",
+		"check:bundle-size": "bunx bundlewatch --config .bundlewatch.config.json",
 		"check:cf-sync": "bun run cf-typegen && git diff --exit-code -- cloudflare-env.d.ts",
 		"check:drizzle-sync": "bun run db:generate && git diff --exit-code -- drizzle",
 		"check:format": "biome format --error-on-warnings .",
