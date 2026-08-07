@@ -5,6 +5,7 @@ import {
 	executeGrilling,
 	executeSpecPublishing,
 	extractOriginalProposal,
+	parseAgentAction,
 	run,
 	SPEC_READY_LABEL,
 } from "./pm-agent";
@@ -48,6 +49,25 @@ describe("pm-agent unit tests", () => {
 		});
 	});
 
+	describe("parseAgentAction helper", () => {
+		it("returns GRILL action for standard text", () => {
+			const action = parseAgentAction("❓ Q1 - What about schema?");
+			expect(action).toEqual({
+				responseText: "❓ Q1 - What about schema?",
+				type: "GRILL",
+			});
+		});
+
+		it("returns PUBLISH_SPEC action when trigger regex matches", () => {
+			const text = '<!-- Trigger: "to-spec" -->\n# [EPIC] Form Spec';
+			const action = parseAgentAction(text);
+			expect(action).toEqual({
+				specText: "# [EPIC] Form Spec",
+				type: "PUBLISH_SPEC",
+			});
+		});
+	});
+
 	describe("extractOriginalProposal helper", () => {
 		it("returns empty string when body is empty", () => {
 			expect(extractOriginalProposal("")).toBe("");
@@ -69,13 +89,16 @@ describe("pm-agent unit tests", () => {
 	describe("executeSpecPublishing", () => {
 		it("updates issue body with spec and collapsible details block, adds spec-ready label, and posts notification comment", async () => {
 			const octokit = github.getOctokit("token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
 
 			await executeSpecPublishing(
-				octokit,
+				ctx,
 				"# [EPIC] Form Spec",
-				42,
-				"jackmaders",
-				"watchpoint",
 				"Original issue proposal content",
 			);
 
@@ -106,15 +129,17 @@ describe("pm-agent unit tests", () => {
 	describe("executeGrilling", () => {
 		it("removes spec-ready label if present and posts grilling comment", async () => {
 			const octokit = github.getOctokit("token");
-
-			await executeGrilling(
+			const ctx = {
+				issueNumber: 42,
 				octokit,
-				"❓ **Q1** - Details?",
-				[SPEC_READY_LABEL, "idea"],
-				42,
-				"jackmaders",
-				"watchpoint",
-			);
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			await executeGrilling(ctx, "❓ **Q1** - Details?", [
+				SPEC_READY_LABEL,
+				"idea",
+			]);
 
 			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
 				issue_number: 42,

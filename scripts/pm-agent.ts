@@ -8,6 +8,7 @@ declare global {
 			GITHUB_TOKEN: string;
 			GEMINI_API_KEY: string;
 			ISSUE_NUMBER: string;
+			GEMINI_MODEL?: string;
 		}
 	}
 }
@@ -16,6 +17,17 @@ export const SPEC_READY_LABEL = "spec-ready";
 export const TO_SPEC_TRIGGER_REGEX = /<!--\s*Trigger:\s*["']to-spec["']\s*-->/i;
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
+
+export interface IssueContext {
+	octokit: OctokitClient;
+	issueNumber: number;
+	owner: string;
+	repo: string;
+}
+
+export type AgentAction =
+	| { type: "GRILL"; responseText: string }
+	| { type: "PUBLISH_SPEC"; specText: string };
 
 export function extractLabelNames(
 	labels: Array<string | { name?: string }>,
@@ -56,12 +68,16 @@ export function extractOriginalProposal(body?: string | null): string {
 	return body.trim();
 }
 
-export async function fetchIssueContext(
-	octokit: OctokitClient,
-	issueNumber: number,
-	owner: string,
-	repo: string,
-) {
+export function parseAgentAction(responseText: string): AgentAction {
+	if (TO_SPEC_TRIGGER_REGEX.test(responseText)) {
+		const specText = responseText.replace(TO_SPEC_TRIGGER_REGEX, "").trim();
+		return { specText, type: "PUBLISH_SPEC" };
+	}
+	return { responseText, type: "GRILL" };
+}
+
+export async function fetchIssueContext(ctx: IssueContext) {
+	const { octokit, issueNumber, owner, repo } = ctx;
 	const { data: issue } = await octokit.rest.issues.get({
 		issue_number: issueNumber,
 		owner,
@@ -124,22 +140,19 @@ export async function generateAgentResponse(
 }
 
 export async function removeLabelIfPresent(
-	octokit: OctokitClient,
+	ctx: IssueContext,
 	labels: Array<string | { name?: string }>,
 	labelToRemove: string,
-	issueNumber: number,
-	owner: string,
-	repo: string,
 ) {
 	const labelNames = extractLabelNames(labels);
 
 	if (labelNames.includes(labelToRemove)) {
 		try {
-			await octokit.rest.issues.removeLabel({
-				issue_number: issueNumber,
+			await ctx.octokit.rest.issues.removeLabel({
+				issue_number: ctx.issueNumber,
 				name: labelToRemove,
-				owner,
-				repo,
+				owner: ctx.owner,
+				repo: ctx.repo,
 			});
 		} catch (error: unknown) {
 			if (
@@ -157,13 +170,11 @@ export async function removeLabelIfPresent(
 }
 
 export async function executeSpecPublishing(
-	octokit: OctokitClient,
+	ctx: IssueContext,
 	specText: string,
-	issueNumber: number,
-	owner: string,
-	repo: string,
 	originalBody?: string | null,
 ) {
+	const { octokit, issueNumber, owner, repo } = ctx;
 	const cleanProposal = extractOriginalProposal(originalBody);
 	let bodyToPublish = specText;
 	if (cleanProposal.length > 0) {
@@ -193,73 +204,49 @@ export async function executeSpecPublishing(
 }
 
 export async function executeGrilling(
-	octokit: OctokitClient,
+	ctx: IssueContext,
 	responseText: string,
 	issueLabels: Array<string | { name?: string }>,
-	issueNumber: number,
-	owner: string,
-	repo: string,
 ) {
-	await removeLabelIfPresent(
-		octokit,
-		issueLabels,
-		SPEC_READY_LABEL,
-		issueNumber,
-		owner,
-		repo,
-	);
+	await removeLabelIfPresent(ctx, issueLabels, SPEC_READY_LABEL);
 
-	await octokit.rest.issues.createComment({
+	await ctx.octokit.rest.issues.createComment({
 		body: responseText,
-		issue_number: issueNumber,
-		owner,
-		repo,
+		issue_number: ctx.issueNumber,
+		owner: ctx.owner,
+		repo: ctx.repo,
 	});
 }
 
-export async function handleGrillingFlow(
-	octokit: OctokitClient,
+export async function executeAction(
+	ctx: IssueContext,
 	ai: GoogleGenAI,
-	responseText: string,
+	action: AgentAction,
 	issue: { body?: string | null; labels: Array<string | { name?: string }> },
 	conversation: string,
-	issueNumber: number,
-	owner: string,
-	repo: string,
 ) {
-	await executeGrilling(
-		octokit,
-		responseText,
-		issue.labels,
-		issueNumber,
-		owner,
-		repo,
-	);
+	if (action.type === "PUBLISH_SPEC") {
+		await executeSpecPublishing(ctx, action.specText, issue.body);
+		return;
+	}
 
-	const isCompleted =
-		TO_SPEC_TRIGGER_REGEX.test(responseText) ||
-		responseText.includes("All requirements clarified");
+	await executeGrilling(ctx, action.responseText, issue.labels);
+
+	const isCompleted = TO_SPEC_TRIGGER_REGEX.test(action.responseText);
 
 	if (isCompleted) {
 		const toSpecInstruction = await readFile(
 			".github/skills/to-spec.md",
 			"utf-8",
 		);
-		const updatedConversation = `${conversation}\nAgent: ${responseText}\n\n`;
+		const updatedConversation = `${conversation}\nAgent: ${action.responseText}\n\n`;
 		const specText = await generateAgentResponse(
 			ai,
 			toSpecInstruction,
 			updatedConversation,
 		);
 
-		await executeSpecPublishing(
-			octokit,
-			specText,
-			issueNumber,
-			owner,
-			repo,
-			issue.body,
-		);
+		await executeSpecPublishing(ctx, specText, issue.body);
 	}
 }
 
@@ -270,14 +257,11 @@ export async function run() {
 
 	const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 	const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+	const ctx: IssueContext = { issueNumber, octokit, owner, repo };
 
 	try {
-		const { conversation, issue, latestUserComment } = await fetchIssueContext(
-			octokit,
-			issueNumber,
-			owner,
-			repo,
-		);
+		const { conversation, issue, latestUserComment } =
+			await fetchIssueContext(ctx);
 
 		const skillPath = determineSkillPath(issue.labels, latestUserComment);
 		if (!skillPath) {
@@ -295,25 +279,10 @@ export async function run() {
 		);
 
 		if (skillPath.endsWith("to-spec.md")) {
-			await executeSpecPublishing(
-				octokit,
-				responseText,
-				issueNumber,
-				owner,
-				repo,
-				issue.body,
-			);
+			await executeSpecPublishing(ctx, responseText, issue.body);
 		} else {
-			await handleGrillingFlow(
-				octokit,
-				ai,
-				responseText,
-				issue,
-				conversation,
-				issueNumber,
-				owner,
-				repo,
-			);
+			const action = parseAgentAction(responseText);
+			await executeAction(ctx, ai, action, issue, conversation);
 		}
 	} catch (error) {
 		console.error("PM Agent execution error:", error);
@@ -331,6 +300,6 @@ export async function run() {
 	}
 }
 
-if (!process.env.VITEST) {
+if (process.env.NODE_ENV !== "test") {
 	run();
 }
