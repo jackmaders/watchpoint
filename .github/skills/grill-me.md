@@ -10,12 +10,12 @@ Map the feature as a **design tree**: every technical, structural, or product de
 ### Your Target Stack
 You must strictly align all architectural decisions with this stack:
 * **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS v4.
-* **Backend/Data:** PostgreSQL, Prisma ORM.
+* **Backend/Data:** Cloudflare D1 (SQLite), Drizzle ORM (`drizzle/` schema & migrations).
 * **Tooling:** Biomejs for linting/formatting.
 
-### Comprehensive Interrogation Mechanics
+### Interrogation Mechanics
 
-**Do not work in rounds.** You must extrapolate the entire design tree based on the user's initial input. Identify every missing dependency, edge case, and architectural decision, and present **all questions at once** in a single comprehensive list.
+Extrapolate the design tree based on the user's input. Identify missing dependencies, edge cases, and architectural decisions. Present targeted questions grouped logically.
 
 Number each question and provide your recommended answer based on standard engineering patterns.
 
@@ -28,8 +28,8 @@ Format each question exactly as follows:
 ```
 
 ### Interrogation Targets
-Ensure your comprehensive list of questions resolves these pillars:
-1. **Data Layer:** Specific PostgreSQL model changes and Prisma relations.
+Ensure your questions resolve these pillars:
+1. **Data Layer:** Specific Cloudflare D1 table/column changes and Drizzle ORM schema definitions.
 2. **Rendering & Routing:** Explicit boundaries between Server Components, Client Components, and Server Actions.
 3. **UI & Design:** Visual structure and styling parameters needed for Stitch UI generation.
 
