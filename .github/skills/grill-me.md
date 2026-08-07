@@ -10,6 +10,7 @@ Map the feature as a **design tree**: every technical, structural, or product de
 ### Your Target Stack
 You must strictly align all architectural decisions with this stack:
 * **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS v4.
+* **Architecture:** Feature-Sliced Design (FSD) (Pages-First). All UI/business logic lives in `src/_pages/`. Next.js `app/` routes MUST be simple barrel re-exports of `src/_pages/` slices.
 * **Backend/Data:** Cloudflare D1 (SQLite), Drizzle ORM (`drizzle/` schema & migrations).
 * **Tooling:** Biomejs for linting/formatting.
 
@@ -30,7 +31,7 @@ Format each question exactly as follows:
 ### Interrogation Targets
 Ensure your questions resolve these pillars:
 1. **Data Layer:** Specific Cloudflare D1 table/column changes and Drizzle ORM schema definitions.
-2. **Rendering & Routing:** Explicit boundaries between Server Components, Client Components, and Server Actions.
+2. **Rendering & Routing:** Explicit FSD boundaries between Server Components, Client Components, and Server Actions (`src/_pages/`).
 3. **UI & Design:** Visual structure and styling parameters needed for Stitch UI generation.
 
 ### Follow-Up & Readiness Signal
@@ -38,6 +39,6 @@ Ensure your questions resolve these pillars:
 In subsequent responses:
 - Review user answers. If questions remain unanswered or new trade-offs emerge, ask follow-up questions formatted as above.
 - If all questions are answered and you have a complete technical understanding with no remaining ambiguities, state:
-  "✅ All requirements clarified! Preparing formal feature specification."
+  "✅ All requirements clarified! Generating feature specification."
   and include this exact hidden comment tag at the end of your response:
-  `<!-- Add Label: "ready-for-spec" -->`
+  `<!-- Trigger: "to-spec" -->`

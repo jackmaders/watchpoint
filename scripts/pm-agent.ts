@@ -12,10 +12,8 @@ declare global {
 	}
 }
 
-export const READY_FOR_SPEC_LABEL = "ready-for-spec";
 export const SPEC_READY_LABEL = "spec-ready";
-export const READY_FOR_SPEC_TAG_REGEX =
-	/<!--\s*Add Label:\s*["']ready[- ]for[- ]spec["']\s*-->/i;
+export const TO_SPEC_TRIGGER_REGEX = /<!--\s*Trigger:\s*["']to-spec["']\s*-->/i;
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -27,14 +25,35 @@ export function extractLabelNames(
 
 export function determineSkillPath(
 	labels: Array<string | { name?: string }>,
-): string {
+	latestUserComment?: string,
+): string | null {
 	const labelNames = extractLabelNames(labels);
+	const commentText = latestUserComment ?? "";
 
-	if (labelNames.includes(READY_FOR_SPEC_LABEL)) {
+	if (commentText.includes("/to-spec")) {
 		return ".github/skills/to-spec.md";
 	}
 
+	if (commentText.includes("/grill")) {
+		return ".github/skills/grill-me.md";
+	}
+
+	if (labelNames.includes(SPEC_READY_LABEL)) {
+		return null;
+	}
+
 	return ".github/skills/grill-me.md";
+}
+
+export function extractOriginalProposal(body?: string | null): string {
+	if (!body) return "";
+	const detailsMatch = body.match(
+		/<details>\s*<summary>📜 Original Issue Proposal<\/summary>\s*([\s\S]*?)\s*<\/details>/i,
+	);
+	if (detailsMatch?.[1]) {
+		return detailsMatch[1].trim();
+	}
+	return body.trim();
 }
 
 export async function fetchIssueContext(
@@ -57,16 +76,27 @@ export async function fetchIssueContext(
 
 	const issueBodyText = issue.body ?? "";
 	let conversation = `User Context (Issue Body): \n${issueBodyText}\n\n`;
+	let latestUserComment = "";
+
 	for (const comment of comments) {
 		const commentBody = comment.body ?? "";
-		if (commentBody.includes("PM Agent Error")) {
+		if (
+			commentBody.includes("PM Agent Error") ||
+			commentBody.includes("Feature Specification Published!") ||
+			commentBody.includes("synthesized our discussion")
+		) {
 			continue;
 		}
-		const role = comment.user?.type === "Bot" ? "Agent" : "User";
+
+		const isBot = comment.user?.type === "Bot";
+		const role = isBot ? "Agent" : "User";
+		if (!isBot) {
+			latestUserComment = commentBody;
+		}
 		conversation += `${role}: ${commentBody}\n\n`;
 	}
 
-	return { comments, conversation, issue };
+	return { comments, conversation, issue, latestUserComment };
 }
 
 export async function generateAgentResponse(
@@ -74,6 +104,7 @@ export async function generateAgentResponse(
 	systemInstruction: string,
 	conversation: string,
 ): Promise<string> {
+	const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 	const response = await ai.models.generateContent({
 		config: {
 			systemInstruction,
@@ -82,7 +113,7 @@ export async function generateAgentResponse(
 			},
 		},
 		contents: conversation,
-		model: "gemini-3.6-flash",
+		model,
 	});
 
 	if (!response.text) {
@@ -110,8 +141,17 @@ export async function removeLabelIfPresent(
 				owner,
 				repo,
 			});
-		} catch {
-			// Ignore 404 if label was not present
+		} catch (error: unknown) {
+			if (
+				typeof error === "object" &&
+				error !== null &&
+				"status" in error &&
+				(error as { status?: number }).status === 404
+			) {
+				return;
+			}
+			// Rethrow error if not 404
+			throw error;
 		}
 	}
 }
@@ -119,15 +159,15 @@ export async function removeLabelIfPresent(
 export async function executeSpecPublishing(
 	octokit: OctokitClient,
 	specText: string,
-	issueLabels: Array<string | { name?: string }>,
 	issueNumber: number,
 	owner: string,
 	repo: string,
 	originalBody?: string | null,
 ) {
+	const cleanProposal = extractOriginalProposal(originalBody);
 	let bodyToPublish = specText;
-	if (originalBody && originalBody.trim().length > 0) {
-		bodyToPublish = `${specText}\n\n<!-- Original Issue Body:\n${originalBody}\n-->`;
+	if (cleanProposal.length > 0) {
+		bodyToPublish = `${specText}\n\n<details>\n<summary>📜 Original Issue Proposal</summary>\n\n${cleanProposal}\n</details>`;
 	}
 
 	await octokit.rest.issues.update({
@@ -136,15 +176,6 @@ export async function executeSpecPublishing(
 		owner,
 		repo,
 	});
-
-	await removeLabelIfPresent(
-		octokit,
-		issueLabels,
-		READY_FOR_SPEC_LABEL,
-		issueNumber,
-		owner,
-		repo,
-	);
 
 	await octokit.rest.issues.addLabels({
 		issue_number: issueNumber,
@@ -184,17 +215,51 @@ export async function executeGrilling(
 		owner,
 		repo,
 	});
+}
 
-	if (
-		READY_FOR_SPEC_TAG_REGEX.test(responseText) ||
-		responseText.includes("ready-for-spec")
-	) {
-		await octokit.rest.issues.addLabels({
-			issue_number: issueNumber,
-			labels: [READY_FOR_SPEC_LABEL],
+export async function handleGrillingFlow(
+	octokit: OctokitClient,
+	ai: GoogleGenAI,
+	responseText: string,
+	issue: { body?: string | null; labels: Array<string | { name?: string }> },
+	conversation: string,
+	issueNumber: number,
+	owner: string,
+	repo: string,
+) {
+	await executeGrilling(
+		octokit,
+		responseText,
+		issue.labels,
+		issueNumber,
+		owner,
+		repo,
+	);
+
+	const isCompleted =
+		TO_SPEC_TRIGGER_REGEX.test(responseText) ||
+		responseText.includes("All requirements clarified");
+
+	if (isCompleted) {
+		const toSpecInstruction = await readFile(
+			".github/skills/to-spec.md",
+			"utf-8",
+		);
+		const updatedConversation = `${conversation}\nAgent: ${responseText}\n\n`;
+		const specText = await generateAgentResponse(
+			ai,
+			toSpecInstruction,
+			updatedConversation,
+		);
+
+		await executeSpecPublishing(
+			octokit,
+			specText,
+			issueNumber,
 			owner,
 			repo,
-		});
+			issue.body,
+		);
 	}
 }
 
@@ -207,14 +272,21 @@ export async function run() {
 	const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 	try {
-		const { conversation, issue } = await fetchIssueContext(
+		const { conversation, issue, latestUserComment } = await fetchIssueContext(
 			octokit,
 			issueNumber,
 			owner,
 			repo,
 		);
 
-		const skillPath = determineSkillPath(issue.labels);
+		const skillPath = determineSkillPath(issue.labels, latestUserComment);
+		if (!skillPath) {
+			console.log(
+				"Issue has spec-ready label and no override command. Skipping PM agent grilling.",
+			);
+			return;
+		}
+
 		const systemInstruction = await readFile(skillPath, "utf-8");
 		const responseText = await generateAgentResponse(
 			ai,
@@ -222,22 +294,22 @@ export async function run() {
 			conversation,
 		);
 
-		const isSpecPath = skillPath.endsWith("to-spec.md");
-		if (isSpecPath) {
+		if (skillPath.endsWith("to-spec.md")) {
 			await executeSpecPublishing(
 				octokit,
 				responseText,
-				issue.labels,
 				issueNumber,
 				owner,
 				repo,
 				issue.body,
 			);
 		} else {
-			await executeGrilling(
+			await handleGrillingFlow(
 				octokit,
+				ai,
 				responseText,
-				issue.labels,
+				issue,
+				conversation,
 				issueNumber,
 				owner,
 				repo,

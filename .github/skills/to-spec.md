@@ -8,6 +8,7 @@ This skill takes the current conversation context and codebase understanding and
 ### Your Target Stack
 Align all technical specification details with this target stack:
 * **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS v4.
+* **Architecture:** Feature-Sliced Design (FSD) (Pages-First). All UI/business logic lives in `src/_pages/`. Next.js `app/` routes MUST be simple barrel re-exports of `src/_pages/` slices.
 * **Backend/Data:** Cloudflare D1 (SQLite), Drizzle ORM (`drizzle/` schema & migrations).
 * **Tooling:** Biomejs for linting/formatting.
 
@@ -35,7 +36,7 @@ Cover all key aspects of the feature.
 ## Implementation Decisions
 A detailed breakdown of implementation decisions:
 - **Data Model:** Cloudflare D1 schema & Drizzle ORM relation updates (`drizzle/`).
-- **Routing & Server Boundaries:** App Router endpoints, Server Actions, Client vs. Server Component boundaries.
+- **Routing & FSD Boundaries:** `src/_pages/<slice>` implementations and `app/` route barrel re-exports, Server Actions, Client vs. Server Component boundaries.
 - **Modules & Interfaces:** Modules to build/modify and interface definitions.
 - **Architectural & API Contracts:** API request/response shapes and state interactions.
 

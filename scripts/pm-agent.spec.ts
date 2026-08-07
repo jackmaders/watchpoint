@@ -4,7 +4,7 @@ import {
 	determineSkillPath,
 	executeGrilling,
 	executeSpecPublishing,
-	READY_FOR_SPEC_LABEL,
+	extractOriginalProposal,
 	run,
 	SPEC_READY_LABEL,
 } from "./pm-agent";
@@ -20,31 +20,59 @@ describe("pm-agent unit tests", () => {
 		process.env.ISSUE_NUMBER = "42";
 	});
 
-	describe("determineSkillPath label-driven state machine", () => {
-		it("defaults to grill-me skill when ready-for-spec label is absent", () => {
+	describe("determineSkillPath state machine & command handling", () => {
+		it("defaults to grill-me skill when spec-ready is absent", () => {
 			const skillPath = determineSkillPath(["idea"]);
 			expect(skillPath).toBe(".github/skills/grill-me.md");
 		});
 
-		it("defaults to grill-me skill when issue has spec-ready label and user comments", () => {
+		it("returns null when issue has spec-ready label and no override command", () => {
 			const skillPath = determineSkillPath(["idea", SPEC_READY_LABEL]);
-			expect(skillPath).toBe(".github/skills/grill-me.md");
+			expect(skillPath).toBeNull();
 		});
 
-		it("switches to to-spec skill when ready-for-spec label is present on issue", () => {
-			const skillPath = determineSkillPath(["idea", READY_FOR_SPEC_LABEL]);
+		it("switches to to-spec skill when /to-spec command is present in comment", () => {
+			const skillPath = determineSkillPath(
+				["idea", SPEC_READY_LABEL],
+				"Please generate /to-spec now",
+			);
 			expect(skillPath).toBe(".github/skills/to-spec.md");
+		});
+
+		it("switches to grill-me skill when /grill command is present in comment on spec-ready issue", () => {
+			const skillPath = determineSkillPath(
+				["idea", SPEC_READY_LABEL],
+				"I want to /grill more details",
+			);
+			expect(skillPath).toBe(".github/skills/grill-me.md");
+		});
+	});
+
+	describe("extractOriginalProposal helper", () => {
+		it("returns empty string when body is empty", () => {
+			expect(extractOriginalProposal("")).toBe("");
+		});
+
+		it("extracts original proposal from existing details collapsible block", () => {
+			const text =
+				"# [EPIC] Title\n\n<details>\n<summary>📜 Original Issue Proposal</summary>\nMy original idea\n</details>";
+			expect(extractOriginalProposal(text)).toBe("My original idea");
+		});
+
+		it("returns full body trimmed when no details tag exists", () => {
+			expect(extractOriginalProposal("My original proposal")).toBe(
+				"My original proposal",
+			);
 		});
 	});
 
 	describe("executeSpecPublishing", () => {
-		it("updates issue body with spec and hidden original body, removes ready-for-spec label, adds spec-ready label, and posts notification comment", async () => {
+		it("updates issue body with spec and collapsible details block, adds spec-ready label, and posts notification comment", async () => {
 			const octokit = github.getOctokit("token");
 
 			await executeSpecPublishing(
 				octokit,
 				"# [EPIC] Form Spec",
-				["idea", READY_FOR_SPEC_LABEL],
 				42,
 				"jackmaders",
 				"watchpoint",
@@ -52,15 +80,8 @@ describe("pm-agent unit tests", () => {
 			);
 
 			expect(octokit.rest.issues.update).toHaveBeenCalledWith({
-				body: "# [EPIC] Form Spec\n\n<!-- Original Issue Body:\nOriginal issue proposal content\n-->",
+				body: "# [EPIC] Form Spec\n\n<details>\n<summary>📜 Original Issue Proposal</summary>\n\nOriginal issue proposal content\n</details>",
 				issue_number: 42,
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
-
-			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
-				issue_number: 42,
-				name: READY_FOR_SPEC_LABEL,
 				owner: "jackmaders",
 				repo: "watchpoint",
 			});
@@ -108,28 +129,6 @@ describe("pm-agent unit tests", () => {
 				owner: "jackmaders",
 				repo: "watchpoint",
 			});
-
-			expect(octokit.rest.issues.addLabels).not.toHaveBeenCalled();
-		});
-
-		it("adds ready-for-spec label when response contains hidden completion tag", async () => {
-			const octokit = github.getOctokit("token");
-
-			await executeGrilling(
-				octokit,
-				'✅ All requirements clarified!\n<!-- Add Label: "ready-for-spec" -->',
-				["idea"],
-				42,
-				"jackmaders",
-				"watchpoint",
-			);
-
-			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith({
-				issue_number: 42,
-				labels: [READY_FOR_SPEC_LABEL],
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
 		});
 	});
 
@@ -149,6 +148,18 @@ describe("pm-agent unit tests", () => {
 				repo: "watchpoint",
 			});
 			expect(octokit.rest.issues.createComment).toHaveBeenCalled();
+		});
+
+		it("skips execution smoothly when issue has spec-ready label and no override command", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
+				data: { body: "My feature idea", labels: [{ name: SPEC_READY_LABEL }] },
+			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+			vi.mocked(octokit.paginate).mockResolvedValue([]);
+
+			await run();
+
+			expect(octokit.rest.issues.createComment).not.toHaveBeenCalled();
 		});
 	});
 });
