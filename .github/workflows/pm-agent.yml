@@ -10,6 +10,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: pm-agent-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   run-pm-agent:
     name: 🤖 Run Product Manager AI Agent
