@@ -1,29 +1,24 @@
-import type { Prisma } from "../../../../generated/prisma/client";
-import { getPrismaClient } from "../client/client";
-
-export type PublishedVodItem = Prisma.VodGetPayload<{
-	include: {
-		_count: {
-			select: { scenarios: true };
-		};
-	};
-}>;
+import { desc } from "drizzle-orm";
+import { getDb } from "../client/client";
+import { vods } from "../schema";
 
 export interface GetVodByIdOptions {
 	publishedOnly?: boolean;
 }
 
-export async function getPublishedVods(): Promise<PublishedVodItem[]> {
-	const prisma = await getPrismaClient();
+export async function getPublishedVods() {
+	const db = await getDb();
 
-	return prisma.vod.findMany({
-		include: {
-			_count: {
-				select: { scenarios: true },
+	return db.query.vods.findMany({
+		orderBy: [desc(vods.createdAt)],
+		where: (vods, { eq }) => eq(vods.isPublished, true),
+		with: {
+			scenarios: {
+				columns: {
+					id: true,
+				},
 			},
 		},
-		orderBy: { createdAt: "desc" },
-		where: { isPublished: true },
 	});
 }
 
@@ -31,17 +26,17 @@ export async function getVodById(
 	id: string,
 	options: GetVodByIdOptions = { publishedOnly: true },
 ) {
-	const prisma = await getPrismaClient();
+	const db = await getDb();
 	const { publishedOnly = true } = options;
-	return prisma.vod.findFirst({
-		include: {
+
+	return db.query.vods.findFirst({
+		where: publishedOnly
+			? (vods, { and, eq }) => and(eq(vods.id, id), eq(vods.isPublished, true))
+			: (vods, { eq }) => eq(vods.id, id),
+		with: {
 			scenarios: {
-				orderBy: { timestampSeconds: "asc" },
+				orderBy: (scenarios, { asc }) => [asc(scenarios.timestampSeconds)],
 			},
-		},
-		where: {
-			id,
-			...(publishedOnly ? { isPublished: true } : {}),
 		},
 	});
 }
