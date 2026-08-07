@@ -24,7 +24,7 @@ export async function HomePage() {
 				<section className="space-y-6 border border-slate-800 rounded-xl bg-slate-900/60 p-6 shadow-xl">
 					<div className="flex items-center justify-between border-b border-slate-800 pb-4">
 						<h2 className="text-xl font-bold text-white">
-							Prisma Database Catalog ({vods.length})
+							Training VOD Catalog ({vods.length})
 						</h2>
 						<Link
 							className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -61,7 +61,7 @@ export async function HomePage() {
 										</h3>
 									</div>
 									<div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-										<span>{vod._count.scenarios} Scenarios</span>
+										<span>{vod.scenarios.length} Scenarios</span>
 										<Link
 											className="text-indigo-400 hover:underline font-semibold"
 											href={`/vods/${vod.id}`}

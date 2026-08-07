@@ -68,7 +68,7 @@ export async function VodsPage() {
 
 									<div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
 										<span>Duration: {formatDuration(vod.durationSeconds)}</span>
-										<span>{vod._count.scenarios} Scenarios</span>
+										<span>{vod.scenarios.length} Scenarios</span>
 									</div>
 								</div>
 

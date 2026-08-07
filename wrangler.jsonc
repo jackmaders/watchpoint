@@ -11,8 +11,8 @@
 			"binding": "DB",
 			"database_id": "f7d563c1-aa9f-4a83-9efb-3d379b263821",
 			"database_name": "watchpoint-db",
-			"migrations_dir": "prisma/migrations",
-			"migrations_pattern": "prisma/migrations/*/migration.sql"
+			"migrations_dir": "drizzle",
+			"migrations_pattern": "drizzle/*.sql"
 		}
 	],
 	"main": ".open-next/worker.js",

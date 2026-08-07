@@ -32,13 +32,19 @@ describe("HomePage component", () => {
 	it("renders VOD items fetched from database", async () => {
 		vi.mocked(getPublishedVods).mockResolvedValueOnce([
 			{
-				_count: { scenarios: 5 },
 				createdAt: new Date(),
 				durationSeconds: 100,
 				id: "1",
 				isPublished: true,
 				mapName: "King's Row",
 				rankTier: "Grandmaster",
+				scenarios: [
+					{ id: "1" },
+					{ id: "2" },
+					{ id: "3" },
+					{ id: "4" },
+					{ id: "5" },
+				],
 				title: "Grandmaster Ana VOD",
 				youtubeVideoId: "abcde",
 			},

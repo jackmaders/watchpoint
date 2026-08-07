@@ -34,14 +34,10 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
       - name: 🏗️ Build OpenNext Cloudflare Worker
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-          DATABASE_URL: "file:./dev.db"
         run: bun run build:worker
 
       - name: 🗄️ Apply Remote D1 Database Migrations

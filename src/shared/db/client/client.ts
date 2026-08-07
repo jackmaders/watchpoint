@@ -1,15 +1,20 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { PrismaD1 } from "@prisma/adapter-d1";
+import { drizzle } from "drizzle-orm/d1";
 import { cache } from "react";
-import { PrismaClient } from "../../../../generated/prisma/client";
+import * as schema from "../schema";
 
-export const getPrismaClient = cache(async () => {
-	if (globalThis.prisma) return globalThis.prisma;
+export type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
+
+declare global {
+	var db: DrizzleDb | undefined;
+}
+
+export const getDb = cache(async (): Promise<DrizzleDb> => {
+	if (globalThis.db) return globalThis.db;
 	const { env } = await getCloudflareContext({ async: true });
-	const adapter = new PrismaD1(env.DB);
-	const prisma = new PrismaClient({ adapter });
+	const db = drizzle(env.DB, { schema });
 
-	if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+	if (process.env.NODE_ENV !== "production") globalThis.db = db;
 
-	return prisma;
+	return db;
 });
