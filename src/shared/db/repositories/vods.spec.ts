@@ -34,6 +34,11 @@ describe("VOD database accessors", () => {
 
 			expect(db.query.vods.findMany).toHaveBeenCalled();
 			expect(result).toEqual(mockVods);
+
+			const options = vi.mocked(db.query.vods.findMany).mock.calls[0][0] as {
+				where?: (vods: unknown, ops: { eq: ReturnType<typeof vi.fn> }) => void;
+			};
+			options?.where?.({}, { eq: vi.fn() });
 		});
 	});
 
@@ -72,6 +77,23 @@ describe("VOD database accessors", () => {
 
 			expect(db.query.vods.findFirst).toHaveBeenCalled();
 			expect(result).toEqual(mockVod);
+
+			const options = vi.mocked(db.query.vods.findFirst).mock.calls[0][0] as {
+				where?: (
+					vods: unknown,
+					ops: { and: ReturnType<typeof vi.fn>; eq: ReturnType<typeof vi.fn> },
+				) => void;
+				with?: {
+					scenarios?: {
+						orderBy?: (
+							scenarios: unknown,
+							ops: { asc: ReturnType<typeof vi.fn> },
+						) => void;
+					};
+				};
+			};
+			options?.where?.({}, { and: vi.fn(), eq: vi.fn() });
+			options?.with?.scenarios?.orderBy?.({}, { asc: vi.fn() });
 		});
 
 		it("allows fetching unpublished VOD when publishedOnly is false", async () => {
@@ -96,6 +118,11 @@ describe("VOD database accessors", () => {
 
 			expect(db.query.vods.findFirst).toHaveBeenCalled();
 			expect(result).toEqual(mockDraftVod);
+
+			const options = vi.mocked(db.query.vods.findFirst).mock.calls[0][0] as {
+				where?: (vods: unknown, ops: { eq: ReturnType<typeof vi.fn> }) => void;
+			};
+			options?.where?.({}, { eq: vi.fn() });
 		});
 
 		it("returns undefined if VOD is not found", async () => {
