@@ -162,11 +162,6 @@ describe("VOD database accessors", () => {
 						timestampSeconds: 30,
 					},
 					{
-						id: "sc_2",
-						moduleType: "ULTIMATE",
-						timestampSeconds: 90,
-					},
-					{
 						id: "sc_3",
 						moduleType: "TACTICS",
 						timestampSeconds: 150,
@@ -197,6 +192,69 @@ describe("VOD database accessors", () => {
 			const result = await getVodManifest("non_existent");
 
 			expect(result).toBeNull();
+		});
+
+		it("queries unpublished VODs when publishedOnly is set to false", async () => {
+			const db = await getDb();
+			const mockVod = {
+				createdAt: new Date("2026-08-06T10:00:00Z"),
+				durationSeconds: 1080,
+				id: "unpub_vod",
+				isPublished: false,
+				mapName: "Eichenwalde",
+				rankTier: "Diamond",
+				scenarios: [],
+				title: "Unpublished VOD",
+				youtubeVideoId: "abc123xyz",
+			};
+
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+			);
+
+			const result = await getVodManifest("unpub_vod", {
+				publishedOnly: false,
+			});
+
+			expect(result).toEqual(mockVod);
+		});
+
+		it("executes scenario module filtering callback", async () => {
+			const db = await getDb();
+
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce({
+				id: "vod_1",
+				scenarios: [],
+			} as unknown as Awaited<ReturnType<typeof getVodById>>);
+
+			await getVodManifest("vod_1", { modules: ["STRATEGY"] });
+
+			const callArgs = vi
+				.mocked(db.query.vods.findFirst)
+				.mock.calls.at(-1)?.[0];
+			const capturedWhereFn =
+				callArgs &&
+				"with" in callArgs &&
+				callArgs.with &&
+				"scenarios" in callArgs.with &&
+				typeof callArgs.with.scenarios === "object" &&
+				callArgs.with.scenarios &&
+				"where" in callArgs.with.scenarios
+					? callArgs.with.scenarios.where
+					: undefined;
+
+			const mockInArray = vi.fn();
+			const mockScenarios = { moduleType: "STRATEGY" };
+			if (typeof capturedWhereFn === "function") {
+				capturedWhereFn(
+					mockScenarios as unknown as Parameters<typeof capturedWhereFn>[0],
+					{ inArray: mockInArray } as unknown as Parameters<
+						typeof capturedWhereFn
+					>[1],
+				);
+			}
+
+			expect(mockInArray).toHaveBeenCalledWith("STRATEGY", ["STRATEGY"]);
 		});
 	});
 });

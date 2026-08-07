@@ -2,7 +2,7 @@
 
 **Project**: Watchpoint — Interactive Overwatch 2 Game Sense Learning Platform  
 **Status**: Living Specification  
-**Last Updated**: 2026-08-06  
+**Last Updated**: 2026-08-07  
 
 This document defines the core domain terminology used across product discussions, system documentation, database schemas, and codebase entities.
 
@@ -62,6 +62,12 @@ This document defines the core domain terminology used across product discussion
 
 * **Module Filter**  
   User-configured pre-session settings that filter which scenario module types are active during a VOD playthrough (e.g., allowing a user to isolate and practice only Ultimate Tracking).
+
+* **Pre-Session Module Filter UI**  
+  Interactive pill toggle interface on the VOD detail landing view (`/vods/[id]`) allowing users to customize active scenario modules before initiating a session.
+
+* **Timeline Manifest API Endpoint (`GET /api/vods/[id]/manifest`)**  
+  REST endpoint serving the ordered session manifest JSON payload filtered dynamically via query parameter module selection (`?modules=STRATEGY,TACTICS`).
 
 * **Tab Visibility Sync**  
   An automated event listener using the browser Page Visibility API (`document.hidden`) to pause video playback whenever the user switches browser tabs, preventing missed scenario triggers.
