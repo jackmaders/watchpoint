@@ -4,7 +4,7 @@ import { getPublishedVods } from "@/shared/db";
 import { UserForm } from "./user-form";
 
 export async function HomePage() {
-	connection();
+	await connection();
 
 	const vods = await getPublishedVods();
 
