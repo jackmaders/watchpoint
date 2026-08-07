@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import type { PublishedVodItem } from "@/shared/db";
 
 export type VodItem = PublishedVodItem;
@@ -18,7 +19,9 @@ export function formatDuration(seconds: number): string {
 	return `${mins}m ${paddedSecs}s`;
 }
 
-export function VodsPage({ vods = [] }: VodsPageProps) {
+export async function VodsPage({ vods = [] }: VodsPageProps) {
+	await connection();
+
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">
 			<div className="max-w-6xl mx-auto space-y-8">
