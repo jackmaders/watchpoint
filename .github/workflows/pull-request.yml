@@ -110,9 +110,10 @@ jobs:
 
       - name: 🚨 Verify Cloudflare Types
         run: |
+          cp -n .env.example .env || true
           bun run cf-typegen
           if [[ -n $(git status --porcelain cloudflare-env.d.ts) ]]; then
-            echo "❌ Cloudflare types are out of sync! You have changes in wrangler.jsonc that are not reflected in cloudflare-env.d.ts."
+            echo "❌ Cloudflare types are out of sync! You have changes in wrangler.jsonc or .env.example that are not reflected in cloudflare-env.d.ts."
             echo "Please run 'bun run cf-typegen' locally and commit the updated cloudflare-env.d.ts file."
             git status cloudflare-env.d.ts
             exit 1
@@ -159,7 +160,7 @@ jobs:
         run: bun run test:coverage
 
   database:
-    name: 🛢 Check Database Schema & Migrations
+    name: 🛢 Check Database Schema
     runs-on: ubuntu-latest
     needs:
       - lint
