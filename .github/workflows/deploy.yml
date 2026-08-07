@@ -45,10 +45,11 @@ jobs:
         run: bun run build:worker
 
       - name: 🗄️ Apply Remote D1 Database Migrations
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: bun run db:migrate:prod
+        uses: cloudflare/wrangler-action@v3
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: d1 migrations apply DB --remote
 
       - name: 🚀 Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
