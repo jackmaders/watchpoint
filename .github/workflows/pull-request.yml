@@ -110,7 +110,7 @@ jobs:
 
       - name: 🚨 Verify Cloudflare Types
         run: |
-          cp -n .env.example .env || true
+          test -f .env || cp .env.example .env
           bun run cf-typegen
           if [[ -n $(git status --porcelain cloudflare-env.d.ts) ]]; then
             echo "❌ Cloudflare types are out of sync! You have changes in wrangler.jsonc or .env.example that are not reflected in cloudflare-env.d.ts."
