@@ -19,17 +19,10 @@ jobs:
   e2e-tests:
     name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.62.1-noble
 
     steps:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
-
-      - name: 📦 Install System Dependencies & Config
-        run: |
-          apt-get update && apt-get install -y unzip git
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -41,6 +34,18 @@ jobs:
 
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
+
+      - name: 💾 Restore Playwright Browsers Cache
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: 🎭 Install Playwright Browsers
+        run: bunx playwright install --with-deps chromium firefox
 
       - name: 🏗️ Build Web App
         run: bun run build
