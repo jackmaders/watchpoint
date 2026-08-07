@@ -132,7 +132,7 @@ jobs:
         run: bun run prisma generate
 
       - name: 🗄️ Push DB Schema
-        run: bunx --bun prisma db push --url="postgresql://postgres:postgres@localhost:5432/watchpoint" --accept-data-loss
+        run: bunx --bun prisma db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/watchpoint
 
