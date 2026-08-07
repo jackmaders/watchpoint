@@ -6,6 +6,10 @@ export interface GetVodByIdOptions {
 	publishedOnly?: boolean;
 }
 
+export type PublishedVodItem = Awaited<
+	ReturnType<typeof getPublishedVods>
+>[number];
+
 export async function getPublishedVods() {
 	const db = await getDb();
 

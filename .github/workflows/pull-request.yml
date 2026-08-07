@@ -88,11 +88,8 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
-      - name: 🚨 Verify Prisma Client Artifacts
-        run: bun run check:prisma-sync
+      - name: 🚨 Verify Drizzle Migrations Sync
+        run: bun run check:drizzle-sync
 
       - name: 🚨 Verify Cloudflare Types
         run: bun run check:cf-sync
@@ -129,9 +126,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
       - name: 🧪 Run Unit Tests with Coverage
         run: bun run test:coverage
 
@@ -158,15 +152,6 @@ jobs:
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
-
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
-      - name: 🔍 Validate Prisma Schema
-        run: bun run prisma:validate
-
-      - name: 🚨 Verify No Database Schema Drift
-        run: bun run check:db-drift
 
       - name: 🗄️ Verify Cloudflare D1 Migrations
         run: bun run db:migrate:local

@@ -1,17 +1,17 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { PrismaD1 } from "@prisma/adapter-d1";
+import { drizzle } from "drizzle-orm/d1";
 import { getPlatformProxy } from "wrangler";
-import { PrismaClient } from "../generated/prisma/client";
+import * as schema from "../src/shared/db/schema";
 
-async function getPrismaClient() {
+async function getDbClient() {
 	if (process.env.DB) {
-		const adapter = new PrismaD1(process.env.DB as unknown as D1Database);
-		return { prisma: new PrismaClient({ adapter }), proxy: null };
+		const db = drizzle(process.env.DB as unknown as D1Database, { schema });
+		return { db, proxy: null };
 	}
 
 	const proxy = await getPlatformProxy<{ DB: D1Database }>();
-	const adapter = new PrismaD1(proxy.env.DB);
-	return { prisma: new PrismaClient({ adapter }), proxy };
+	const db = drizzle(proxy.env.DB, { schema });
+	return { db, proxy };
 }
 
 function getInitialScenarios() {
@@ -120,32 +120,36 @@ function getInitialScenarios() {
 async function main() {
 	console.log("Seeding database...");
 
-	const { prisma, proxy } = await getPrismaClient();
+	const { db, proxy } = await getDbClient();
 
 	try {
-		await prisma.attemptRecord.deleteMany();
-		await prisma.scenario.deleteMany();
-		await prisma.vod.deleteMany();
+		await db.delete(schema.attemptRecords);
+		await db.delete(schema.scenarios);
+		await db.delete(schema.vods);
 
-		const vod = await prisma.vod.create({
-			data: {
+		const [vod] = await db
+			.insert(schema.vods)
+			.values({
 				durationSeconds: 1080,
 				isPublished: true,
 				mapName: "King's Row",
 				rankTier: "Grandmaster",
-				scenarios: {
-					create: getInitialScenarios(),
-				},
 				title: "Grandmaster Ana VOD — King's Row Defense & Attack",
 				youtubeVideoId: "dQw4w9WgXcQ",
-			},
-		});
+			})
+			.returning();
+
+		const scenarioValues = getInitialScenarios().map((scenario) => ({
+			...scenario,
+			vodId: vod.id,
+		}));
+
+		await db.insert(schema.scenarios).values(scenarioValues);
 
 		console.log(
 			`Seeded VOD: ${vod.title} (${vod.id}) with 5 curated scenarios.`,
 		);
 	} finally {
-		await prisma.$disconnect();
 		if (proxy) {
 			await proxy.dispose();
 		}

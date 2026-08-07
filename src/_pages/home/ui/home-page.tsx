@@ -61,7 +61,7 @@ export async function HomePage() {
 										</h3>
 									</div>
 									<div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-										<span>{vod._count.scenarios} Scenarios</span>
+										<span>{vod.scenarios.length} Scenarios</span>
 										<Link
 											className="text-indigo-400 hover:underline font-semibold"
 											href={`/vods/${vod.id}`}

@@ -34,9 +34,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
       - name: 🏗️ Build OpenNext Cloudflare Worker
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
