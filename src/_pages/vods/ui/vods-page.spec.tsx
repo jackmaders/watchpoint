@@ -1,17 +1,23 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { PublishedVodItem } from "@/shared/db";
 import { formatDuration, VodsPage } from "./vods-page";
 
+vi.mock("next/server");
+
 describe("VodsPage catalog component", () => {
-	it("renders empty state message when no VODs are provided", () => {
-		render(<VodsPage vods={[]} />);
+	it("renders empty state message when no VODs are provided", async () => {
+		// 1. Await the server component function call
+		const ui = await VodsPage({ vods: [] });
+		// 2. Render the resolved JSX
+		render(ui);
+
 		expect(
 			screen.getByText(/no training vods currently available/i),
 		).toBeDefined();
 	});
 
-	it("renders VOD cards with map name, rank tier, duration, and Start Training action", () => {
+	it("renders VOD cards with map name, rank tier, duration, and Start Training action", async () => {
 		const mockVods: PublishedVodItem[] = [
 			{
 				_count: { scenarios: 5 },
@@ -26,7 +32,8 @@ describe("VodsPage catalog component", () => {
 			},
 		];
 
-		render(<VodsPage vods={mockVods} />);
+		const ui = await VodsPage({ vods: mockVods });
+		render(ui);
 
 		expect(
 			screen.getByText("GM Ana VOD — King's Row Defense & Attack"),
@@ -41,7 +48,7 @@ describe("VodsPage catalog component", () => {
 		expect(startButton.getAttribute("href")).toBe("/vods/vod_1");
 	});
 
-	it("formats duration correctly when under 1 minute or with remaining seconds", () => {
+	it("formats duration correctly when under 1 minute or with remaining seconds", async () => {
 		const mockVods: PublishedVodItem[] = [
 			{
 				_count: { scenarios: 2 },
@@ -56,12 +63,13 @@ describe("VodsPage catalog component", () => {
 			},
 		];
 
-		render(<VodsPage vods={mockVods} />);
+		const ui = await VodsPage({ vods: mockVods });
+		render(ui);
 
 		expect(screen.getByText(/0m 45s/)).toBeDefined();
 	});
 
-	it("renders fallback scenario count 0 when _count is undefined", () => {
+	it("renders fallback scenario count 0 when _count is undefined", async () => {
 		const mockVods = [
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
@@ -75,7 +83,8 @@ describe("VodsPage catalog component", () => {
 			},
 		] as unknown as PublishedVodItem[];
 
-		render(<VodsPage vods={mockVods} />);
+		const ui = await VodsPage({ vods: mockVods });
+		render(ui);
 
 		expect(screen.getByText(/0 Scenarios/)).toBeDefined();
 	});
