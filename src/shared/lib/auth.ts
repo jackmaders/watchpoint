@@ -19,13 +19,15 @@ export function getAuthConfig(
 	};
 }
 
-const db = await getDb();
-const config = getAuthConfig();
+export async function getAuth() {
+	const db = await getDb();
+	const config = getAuthConfig();
 
-export const auth = betterAuth({
-	...config,
-	database: drizzleAdapter(db, {
-		provider: "sqlite",
-		schema,
-	}),
-});
+	return betterAuth({
+		...config,
+		database: drizzleAdapter(db, {
+			provider: "sqlite",
+			schema,
+		}),
+	});
+}

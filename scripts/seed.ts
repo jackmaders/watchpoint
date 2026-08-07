@@ -5,7 +5,7 @@ import * as schema from "../src/shared/db/schema";
 
 async function getDbClient() {
 	if (process.env.DB) {
-		const db = drizzle(process.env.DB as unknown as D1Database, { schema });
+		const db = drizzle(process.env.DB as never as D1Database, { schema });
 		return { db, proxy: null };
 	}
 

@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../db/client/client");
 
-import { auth, getAuthConfig } from "./auth";
+import { getAuth, getAuthConfig } from "./auth";
 
 describe("auth", () => {
-	it("initializes better-auth instance correctly", () => {
+	it("initializes better-auth instance correctly", async () => {
+		const auth = await getAuth();
 		expect(auth).toBeDefined();
 		expect(auth.handler).toBeInstanceOf(Function);
 	});

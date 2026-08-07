@@ -18,5 +18,3 @@ export const getDb = cache(async (): Promise<DrizzleDb> => {
 
 	return db;
 });
-
-export const getPrismaClient = getDb;
