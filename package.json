@@ -50,6 +50,7 @@
 	"private": true,
 	"scripts": {
 		"build": "next build",
+		"build:worker": "opennextjs-cloudflare build",
 		"cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --include-runtime false --env-file .env.example",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",
