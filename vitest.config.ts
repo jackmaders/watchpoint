@@ -13,6 +13,7 @@ export default defineConfig({
 				"src/**/index.ts",
 				"src/**/index.client.ts",
 				"src/**/index.server.ts",
+				"src/shared/db/client.ts",
 				"src/app/**",
 			],
 			include: ["src/**/*.{ts,tsx}"],
