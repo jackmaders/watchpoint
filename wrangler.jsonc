@@ -25,5 +25,6 @@
 			"binding": "MEDIA",
 			"bucket_name": "watchpoint-media"
 		}
-	]
+	],
+	"workers_dev": true
 }
