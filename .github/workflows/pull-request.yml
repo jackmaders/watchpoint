@@ -194,7 +194,7 @@ jobs:
 
       - name: 🚨 Verify No Database Schema Drift
         run: |
-          if ! bunx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-migrations prisma/migrations --exit-code; then
+          if ! bunx prisma migrate diff --from-schema prisma/schema.prisma --to-migrations prisma/migrations --exit-code; then
             echo "❌ Schema drift detected! You have changes in prisma/schema.prisma that are not reflected in a migration script."
             echo "Please run 'bun run db:migrate:new' locally and commit the generated migration files."
             exit 1
