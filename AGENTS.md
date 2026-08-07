@@ -43,6 +43,3 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 9. Skip Local Testing During Code Reviews
 - When performing a code review, always skip local test execution and validation.
 - Trust that the PR's CI/CD automated checks are valid; if the checks on the PR pass, do not re-run tests locally.
-
-
-

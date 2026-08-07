@@ -44,11 +44,12 @@ jobs:
         run: bun run db:migrate:prod
 
       - name: 🏗️ Build OpenNext Cloudflare Worker
-        run: bunx opennextjs-cloudflare build
+        run: bun exec opennextjs-cloudflare build
 
       - name: 🚀 Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: opennextjs-cloudflare deploy
 
