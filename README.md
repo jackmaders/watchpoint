@@ -7,10 +7,10 @@ A production-ready Next.js App Router project template scaffolded using **Bun**,
 ## Technical Stack
 
 - **Runtime & Package Manager**: [Bun](https://bun.sh)
-- **Framework**: [Next.js (App Router)](https://nextjs.org) + [React 19](https://react.dev)
+- **Framework & Edge Deployment**: [Next.js (App Router)](https://nextjs.org) + [React 19](https://react.dev) deployed to [Cloudflare Workers](https://workers.cloudflare.com) via [@opennextjs/cloudflare](https://opennext.js.org/cloudflare)
 - **Architecture**: [Feature-Sliced Design (FSD v2.1)](https://feature-sliced.design) verified via [Steiger](https://github.com/feature-sliced/steiger)
 - **Linting & Formatting**: [Biome](https://biomejs.dev) with custom GritQL automocking plugin
-- **Database & Auth**: [Prisma v7](https://prisma.io) + `@prisma/adapter-pg` & [Better Auth](https://better-auth.com)
+- **Database, Storage & Auth**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) + [Prisma v7](https://prisma.io) (`@prisma/adapter-d1`), [Cloudflare R2](https://developers.cloudflare.com/r2/) & [Better Auth](https://better-auth.com)
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Shadcn UI](https://ui.shadcn.com)
 - **Form Handling & Validation**: [TanStack React Form](https://tanstack.com/form) & [Zod](https://zod.dev)
 - **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold) & [Playwright](https://playwright.dev) (E2E)
@@ -36,8 +36,10 @@ src/
 | Command | Description |
 | --- | --- |
 | `bun run dev` | Start Next.js development server |
-| `bun run build` | Build production Next.js bundle |
-| `bun run start` | Start production Next.js server |
+| `bun run preview` | Build and preview application locally in Cloudflare `workerd` runtime |
+| `bun run deploy` | Build and deploy application to Cloudflare Workers |
+| `bun run cf-typegen` | Generate TypeScript types for Cloudflare bindings (`CloudflareEnv`) |
+| `bun run build` | Build Next.js application |
 | `bun run check:types` | Run TypeScript type checking (`tsc --noEmit`) |
 | `bun run check:lint` | Run Biome lint checks |
 | `bun run check:format` | Run Biome formatting checks |

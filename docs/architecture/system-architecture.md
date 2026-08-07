@@ -40,11 +40,15 @@ flowchart TB
         TelemetryService["Attempt & Telemetry Service"]
     end
 
-    subgraph Database ["PostgreSQL Database"]
+    subgraph Storage ["Cloudflare Edge Infrastructure"]
         direction TB
-        VODTable[("VOD Table")]
-        ScenarioTable[("Scenario Table")]
-        AttemptTable[("AttemptRecord Table")]
+        subgraph Database ["Cloudflare D1 Database (SQLite at Edge)"]
+            direction TB
+            VODTable[("VOD Table")]
+            ScenarioTable[("Scenario Table")]
+            AttemptTable[("AttemptRecord Table")]
+        end
+        R2Bucket[("Cloudflare R2 Object Storage")]
     end
 
     Client -- REST / GraphQL Queries --> Backend

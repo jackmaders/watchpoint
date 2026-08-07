@@ -1,8 +1,7 @@
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient } from "../generated/prisma/client";
 
-const url = process.env.DATABASE_URL || "file:./dev.db";
-const adapter = new PrismaLibSql({ url });
+const adapter = new PrismaD1(process.env.DB);
 const prisma = new PrismaClient({ adapter });
 
 function getInitialScenarios() {
