@@ -1,0 +1,29 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".open-next/assets"
+	},
+	"compatibility_date": "2026-08-07",
+	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "local-watchpoint-db",
+			"database_name": "watchpoint-db",
+			"migrations_dir": "prisma/migrations",
+			"migrations_pattern": "prisma/migrations/*/migration.sql"
+		}
+	],
+	"main": ".open-next/worker.js",
+	"name": "watchpoint",
+	"observability": {
+		"enabled": true
+	},
+	"r2_buckets": [
+		{
+			"binding": "MEDIA_BUCKET",
+			"bucket_name": "watchpoint-media"
+		}
+	]
+}

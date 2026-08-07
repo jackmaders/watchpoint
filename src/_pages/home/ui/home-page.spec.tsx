@@ -1,24 +1,59 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { getPublishedVods } from "@/shared/db";
 import { HomePage } from "./home-page";
 
+vi.mock("next/server");
+vi.mock("@/shared/db");
+
 describe("HomePage component", () => {
-	it("renders heading, description, and user form", () => {
-		render(<HomePage />);
+	it("renders heading, description, and user form", async () => {
+		render(await HomePage());
 
 		expect(
-			screen.getByRole("heading", { name: "Next.js Project Template" }),
+			screen.getByRole("heading", { name: "Watchpoint Interactive Engine" }),
 		).toBeDefined();
 		expect(
-			screen.getByText("Scaffolded with Bun, FSD, Biome, and Vitest"),
+			screen.getByText(/overwatch 2 interactive vod decision training/i),
 		).toBeDefined();
 		expect(screen.getByPlaceholderText("Name")).toBeDefined();
 		expect(screen.getByPlaceholderText("Email")).toBeDefined();
 		expect(screen.getByRole("button", { name: "Submit" })).toBeDefined();
 	});
 
+	it("renders empty database state when no VODs are passed", async () => {
+		render(await HomePage());
+
+		expect(
+			screen.getByText(/no published training vods in database/i),
+		).toBeDefined();
+	});
+
+	it("renders VOD items fetched from database", async () => {
+		vi.mocked(getPublishedVods).mockResolvedValueOnce([
+			{
+				_count: { scenarios: 5 },
+				createdAt: new Date(),
+				durationSeconds: 100,
+				id: "1",
+				isPublished: true,
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				title: "Grandmaster Ana VOD",
+				youtubeVideoId: "abcde",
+			},
+		]);
+
+		render(await HomePage());
+
+		expect(screen.getByText("Grandmaster Ana VOD")).toBeDefined();
+		expect(screen.getByText("King's Row")).toBeDefined();
+		expect(screen.getByText("Grandmaster")).toBeDefined();
+		expect(screen.getByText(/5 scenarios/i)).toBeDefined();
+	});
+
 	it("handles form submission cleanly", async () => {
-		render(<HomePage />);
+		render(await HomePage());
 
 		const nameInput = screen.getByPlaceholderText("Name");
 		const emailInput = screen.getByPlaceholderText("Email");

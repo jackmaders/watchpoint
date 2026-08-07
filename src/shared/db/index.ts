@@ -1,3 +1,3 @@
-export { db } from "./client";
-export type { GetVodByIdOptions, PublishedVodItem } from "./vods";
-export { getPublishedVods, getVodById } from "./vods";
+export { getPrismaClient } from "./client/client";
+export type { GetVodByIdOptions, PublishedVodItem } from "./repositories/vods";
+export { getPublishedVods, getVodById } from "./repositories/vods";

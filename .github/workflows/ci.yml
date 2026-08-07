@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   e2e-tests:
     name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
@@ -27,7 +26,15 @@ jobs:
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
@@ -47,8 +54,11 @@ jobs:
       - name: 🎭 Install Playwright Browsers
         run: bunx playwright install --with-deps chromium firefox
 
-      - name: 🏗️ Build Web App
-        run: bun run build
+      - name: 🗄️ Run D1 Local Migrations
+        run: bun run db:migrate:local
+
+      - name: 🌱 Seed D1 Local Database
+        run: bun run check:seed
 
       - name: 🧪 Run E2E Tests
         run: bun run test:e2e
@@ -71,7 +81,15 @@ jobs:
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
@@ -98,7 +116,15 @@ jobs:
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
@@ -110,25 +136,11 @@ jobs:
         run: bun run test:coverage
 
   database:
-    name: 🛢 Check Database Schema
+    name: 🛢 Check Database Schema & Migrations
     runs-on: ubuntu-latest
     needs:
       - lint
       - unit-tests
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: watchpoint
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: 🛒 Checkout
@@ -137,7 +149,15 @@ jobs:
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
@@ -145,16 +165,14 @@ jobs:
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
-      - name: 🗄️ Push DB Schema
-        run: bunx --bun prisma db push --accept-data-loss
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/watchpoint
+      - name: 🔍 Validate Prisma Schema
+        run: bun run prisma:validate
+
+      - name: 🗄️ Verify Cloudflare D1 Migrations
+        run: bun run db:migrate:local
 
       - name: 🌱 Run Seed Script Check
         run: bun run check:seed
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/watchpoint
-
 
   build:
     name: 🏗️ Build Web App
@@ -170,13 +188,27 @@ jobs:
       - name: ⚡ Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
+
+      - name: 🗄️ Run D1 Local Migrations
+        run: bun run db:migrate:local
+
+      - name: 🌱 Seed D1 Local Database
+        run: bun run check:seed
 
       - name: 💾 Restore Next.js Cache
         uses: actions/cache@v5

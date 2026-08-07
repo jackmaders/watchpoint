@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-export const db = {
+const prisma = {
 	attemptRecord: {
 		create: vi.fn(),
 		findFirst: vi.fn(),
@@ -18,3 +18,5 @@ export const db = {
 		findUnique: vi.fn(),
 	},
 };
+
+export const getPrismaClient = vi.fn(() => prisma);

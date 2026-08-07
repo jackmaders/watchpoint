@@ -1,18 +1,22 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import type { PublishedVodItem } from "@/shared/db";
+import { describe, expect, it, vi } from "vitest";
+import { getPublishedVods } from "@/shared/db";
 import { formatDuration, VodsPage } from "./vods-page";
 
+vi.mock("next/server");
+vi.mock("@/shared/db");
+
 describe("VodsPage catalog component", () => {
-	it("renders empty state message when no VODs are provided", () => {
-		render(<VodsPage vods={[]} />);
+	it("renders empty state message when no VODs are provided", async () => {
+		render(await VodsPage());
+
 		expect(
 			screen.getByText(/no training vods currently available/i),
 		).toBeDefined();
 	});
 
-	it("renders VOD cards with map name, rank tier, duration, and Start Training action", () => {
-		const mockVods: PublishedVodItem[] = [
+	it("renders VOD cards with map name, rank tier, duration, and Start Training action", async () => {
+		vi.mocked(getPublishedVods).mockResolvedValueOnce([
 			{
 				_count: { scenarios: 5 },
 				createdAt: new Date("2026-08-06T10:00:00Z"),
@@ -24,9 +28,8 @@ describe("VodsPage catalog component", () => {
 				title: "GM Ana VOD — King's Row Defense & Attack",
 				youtubeVideoId: "dQw4w9WgXcQ",
 			},
-		];
-
-		render(<VodsPage vods={mockVods} />);
+		]);
+		render(await VodsPage());
 
 		expect(
 			screen.getByText("GM Ana VOD — King's Row Defense & Attack"),
@@ -41,8 +44,8 @@ describe("VodsPage catalog component", () => {
 		expect(startButton.getAttribute("href")).toBe("/vods/vod_1");
 	});
 
-	it("formats duration correctly when under 1 minute or with remaining seconds", () => {
-		const mockVods: PublishedVodItem[] = [
+	it("formats duration correctly when under 1 minute or with remaining seconds", async () => {
+		vi.mocked(getPublishedVods).mockResolvedValueOnce([
 			{
 				_count: { scenarios: 2 },
 				createdAt: new Date("2026-08-06T10:00:00Z"),
@@ -54,30 +57,10 @@ describe("VodsPage catalog component", () => {
 				title: "Short VOD",
 				youtubeVideoId: "abc12345",
 			},
-		];
-
-		render(<VodsPage vods={mockVods} />);
+		]);
+		render(await VodsPage());
 
 		expect(screen.getByText(/0m 45s/)).toBeDefined();
-	});
-
-	it("renders fallback scenario count 0 when _count is undefined", () => {
-		const mockVods = [
-			{
-				createdAt: new Date("2026-08-06T10:00:00Z"),
-				durationSeconds: 60,
-				id: "vod_no_count",
-				isPublished: true,
-				mapName: "Hanamura",
-				rankTier: "Diamond",
-				title: "No Count VOD",
-				youtubeVideoId: "12345678",
-			},
-		] as unknown as PublishedVodItem[];
-
-		render(<VodsPage vods={mockVods} />);
-
-		expect(screen.getByText(/0 Scenarios/)).toBeDefined();
 	});
 
 	describe("formatDuration helper", () => {

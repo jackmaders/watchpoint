@@ -44,8 +44,9 @@ Watchpoint is a browser-based interactive learning platform that transforms pass
 
 ### Core Architecture & ADR Compliance
 * **Media Delivery ([ADR-001](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0001-youtube-media-player.md))**: Implemented via the YouTube IFrame API wrapped in a custom minimalist control interface (`Play`, `Pause`, `Replay Scenario`). Native controls are disabled (`controls=0`).
-* **Database Schema ([ADR-002](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a PostgreSQL database managed via Prisma ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
+* **Database Schema ([ADR-002](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a Cloudflare D1 (SQLite) database managed via Prisma ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
 * **Input Engine ([ADR-003](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0003-uniform-multiple-choice-v1-input-engine.md))**: Standardizes V1 interactive modules on uniform multiple-choice UI components while maintaining polymorphic `input_type` metadata to allow future continuous sliders and 2D map pin drops.
+* **Edge Deployment ([ADR-004](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0004-cloudflare-native-deployment.md))**: Deployed natively to Cloudflare Workers using `@opennextjs/cloudflare`, Cloudflare D1, and Cloudflare R2 object storage.
 
 ### Database Schema (Prisma)
 Derived from architectural decision records:

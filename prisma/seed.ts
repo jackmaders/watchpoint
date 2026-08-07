@@ -1,14 +1,18 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import type { D1Database } from "@cloudflare/workers-types";
+import { PrismaD1 } from "@prisma/adapter-d1";
+import { getPlatformProxy } from "wrangler";
 import { PrismaClient } from "../generated/prisma/client";
 
-const pool = new pg.Pool({
-	connectionString:
-		process.env.DATABASE_URL ||
-		"postgresql://postgres:postgres@localhost:5432/watchpoint",
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+async function getPrismaClient() {
+	if (process.env.DB) {
+		const adapter = new PrismaD1(process.env.DB as unknown as D1Database);
+		return { prisma: new PrismaClient({ adapter }), proxy: null };
+	}
+
+	const proxy = await getPlatformProxy<{ DB: D1Database }>();
+	const adapter = new PrismaD1(proxy.env.DB);
+	return { prisma: new PrismaClient({ adapter }), proxy };
+}
 
 function getInitialScenarios() {
 	return [
@@ -116,32 +120,39 @@ function getInitialScenarios() {
 async function main() {
 	console.log("Seeding database...");
 
-	await prisma.attemptRecord.deleteMany();
-	await prisma.scenario.deleteMany();
-	await prisma.vod.deleteMany();
+	const { prisma, proxy } = await getPrismaClient();
 
-	const vod = await prisma.vod.create({
-		data: {
-			durationSeconds: 1080,
-			isPublished: true,
-			mapName: "King's Row",
-			rankTier: "Grandmaster",
-			scenarios: {
-				create: getInitialScenarios(),
+	try {
+		await prisma.attemptRecord.deleteMany();
+		await prisma.scenario.deleteMany();
+		await prisma.vod.deleteMany();
+
+		const vod = await prisma.vod.create({
+			data: {
+				durationSeconds: 1080,
+				isPublished: true,
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				scenarios: {
+					create: getInitialScenarios(),
+				},
+				title: "Grandmaster Ana VOD — King's Row Defense & Attack",
+				youtubeVideoId: "dQw4w9WgXcQ",
 			},
-			title: "Grandmaster Ana VOD — King's Row Defense & Attack",
-			youtubeVideoId: "dQw4w9WgXcQ",
-		},
-	});
+		});
 
-	console.log(`Seeded VOD: ${vod.title} (${vod.id}) with 5 curated scenarios.`);
+		console.log(
+			`Seeded VOD: ${vod.title} (${vod.id}) with 5 curated scenarios.`,
+		);
+	} finally {
+		await prisma.$disconnect();
+		if (proxy) {
+			await proxy.dispose();
+		}
+	}
 }
 
-main()
-	.catch((e) => {
-		console.error(e);
-		process.exit(1);
-	})
-	.finally(async () => {
-		await pool.end();
-	});
+main().catch((e) => {
+	console.error(e);
+	process.exit(1);
+});

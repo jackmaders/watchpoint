@@ -96,12 +96,12 @@ function EmailInput({
 export function UserForm({
 	onSubmit,
 }: {
-	onSubmit: (data: UserFormData) => void;
+	onSubmit?: (data: UserFormData) => void;
 }) {
 	const form = useForm({
 		defaultValues: initialValues,
 		onSubmit: async ({ value }) => {
-			onSubmit(value);
+			onSubmit?.(value);
 		},
 		validators: {
 			onChange: userSchema,
