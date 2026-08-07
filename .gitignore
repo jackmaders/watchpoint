@@ -36,10 +36,12 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
-.vercel
+# cloudflare
+.wrangler
+.open-next
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
 
