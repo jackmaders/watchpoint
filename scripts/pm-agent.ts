@@ -14,15 +14,21 @@ declare global {
 
 export const READY_FOR_SPEC_LABEL = "ready-for-spec";
 export const SPEC_READY_LABEL = "spec-ready";
+export const READY_FOR_SPEC_TAG_REGEX =
+	/<!--\s*Add Label:\s*["']ready[- ]for[- ]spec["']\s*-->/i;
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
+
+export function extractLabelNames(
+	labels: Array<string | { name?: string }>,
+): string[] {
+	return labels.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
+}
 
 export function determineSkillPath(
 	labels: Array<string | { name?: string }>,
 ): string {
-	const labelNames = labels.map((l) =>
-		typeof l === "string" ? l : (l.name ?? ""),
-	);
+	const labelNames = extractLabelNames(labels);
 
 	if (labelNames.includes(READY_FOR_SPEC_LABEL)) {
 		return ".github/skills/to-spec.md";
@@ -49,10 +55,15 @@ export async function fetchIssueContext(
 		repo,
 	});
 
-	let conversation = `User Context (Issue Body): \n${issue.body}\n\n`;
+	const issueBodyText = issue.body ?? "";
+	let conversation = `User Context (Issue Body): \n${issueBodyText}\n\n`;
 	for (const comment of comments) {
+		const commentBody = comment.body ?? "";
+		if (commentBody.includes("PM Agent Error")) {
+			continue;
+		}
 		const role = comment.user?.type === "Bot" ? "Agent" : "User";
-		conversation += `${role}: ${comment.body}\n\n`;
+		conversation += `${role}: ${commentBody}\n\n`;
 	}
 
 	return { comments, conversation, issue };
@@ -89,9 +100,7 @@ export async function removeLabelIfPresent(
 	owner: string,
 	repo: string,
 ) {
-	const labelNames = labels.map((l) =>
-		typeof l === "string" ? l : (l.name ?? ""),
-	);
+	const labelNames = extractLabelNames(labels);
 
 	if (labelNames.includes(labelToRemove)) {
 		try {
@@ -114,9 +123,15 @@ export async function executeSpecPublishing(
 	issueNumber: number,
 	owner: string,
 	repo: string,
+	originalBody?: string | null,
 ) {
+	let bodyToPublish = specText;
+	if (originalBody && originalBody.trim().length > 0) {
+		bodyToPublish = `${specText}\n\n<!-- Original Issue Body:\n${originalBody}\n-->`;
+	}
+
 	await octokit.rest.issues.update({
-		body: specText,
+		body: bodyToPublish,
 		issue_number: issueNumber,
 		owner,
 		repo,
@@ -170,7 +185,10 @@ export async function executeGrilling(
 		repo,
 	});
 
-	if (responseText.includes("All requirements clarified!")) {
+	if (
+		READY_FOR_SPEC_TAG_REGEX.test(responseText) ||
+		responseText.includes("ready-for-spec")
+	) {
 		await octokit.rest.issues.addLabels({
 			issue_number: issueNumber,
 			labels: [READY_FOR_SPEC_LABEL],
@@ -213,6 +231,7 @@ export async function run() {
 				issueNumber,
 				owner,
 				repo,
+				issue.body,
 			);
 		} else {
 			await executeGrilling(

@@ -39,3 +39,5 @@ In subsequent responses:
 - Review user answers. If questions remain unanswered or new trade-offs emerge, ask follow-up questions formatted as above.
 - If all questions are answered and you have a complete technical understanding with no remaining ambiguities, state:
   "✅ All requirements clarified! Preparing formal feature specification."
+  and include this exact hidden comment tag at the end of your response:
+  `<!-- Add Label: "ready-for-spec" -->`

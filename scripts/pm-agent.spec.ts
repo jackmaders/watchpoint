@@ -38,7 +38,7 @@ describe("pm-agent unit tests", () => {
 	});
 
 	describe("executeSpecPublishing", () => {
-		it("updates issue body with spec, removes ready-for-spec label, adds spec-ready label, and posts notification comment", async () => {
+		it("updates issue body with spec and hidden original body, removes ready-for-spec label, adds spec-ready label, and posts notification comment", async () => {
 			const octokit = github.getOctokit("token");
 
 			await executeSpecPublishing(
@@ -48,10 +48,11 @@ describe("pm-agent unit tests", () => {
 				42,
 				"jackmaders",
 				"watchpoint",
+				"Original issue proposal content",
 			);
 
 			expect(octokit.rest.issues.update).toHaveBeenCalledWith({
-				body: "# [EPIC] Form Spec",
+				body: "# [EPIC] Form Spec\n\n<!-- Original Issue Body:\nOriginal issue proposal content\n-->",
 				issue_number: 42,
 				owner: "jackmaders",
 				repo: "watchpoint",
@@ -111,12 +112,12 @@ describe("pm-agent unit tests", () => {
 			expect(octokit.rest.issues.addLabels).not.toHaveBeenCalled();
 		});
 
-		it("adds ready-for-spec label when response contains completion signal", async () => {
+		it("adds ready-for-spec label when response contains hidden completion tag", async () => {
 			const octokit = github.getOctokit("token");
 
 			await executeGrilling(
 				octokit,
-				"✅ All requirements clarified!",
+				'✅ All requirements clarified!\n<!-- Add Label: "ready-for-spec" -->',
 				["idea"],
 				42,
 				"jackmaders",
