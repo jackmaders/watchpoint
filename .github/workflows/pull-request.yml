@@ -33,9 +33,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
-
       - name: 💾 Restore Playwright Browsers Cache
         uses: actions/cache@v5
         id: playwright-cache
@@ -182,9 +179,6 @@ jobs:
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
-
-      - name: ⚙️ Generate Prisma Client
-        run: bun run prisma generate
 
       - name: 🗄️ Run D1 Local Migrations
         run: bun run db:migrate:local
