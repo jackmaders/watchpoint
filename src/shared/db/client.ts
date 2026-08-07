@@ -1,8 +1,12 @@
-import type { D1Database } from "@cloudflare/workers-types";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient } from "../../../generated/prisma/client";
 
-const adapter = new PrismaD1(process.env.DB as unknown as D1Database);
+const { env } = getCloudflareContext();
+
+console.log("env.DB", env.DB);
+
+const adapter = new PrismaD1(env.DB);
 
 export const prisma = globalThis.prisma || new PrismaClient({ adapter });
 

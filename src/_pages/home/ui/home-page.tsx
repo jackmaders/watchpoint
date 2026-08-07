@@ -2,8 +2,6 @@ import Link from "next/link";
 import type { PublishedVodItem } from "@/shared/db";
 import { UserForm } from "./user-form";
 
-const handleUserFormSubmit = () => {};
-
 export interface HomePageProps {
 	vods?: PublishedVodItem[];
 }
@@ -77,7 +75,7 @@ export function HomePage({ vods = [] }: HomePageProps) {
 				</section>
 
 				<div className="w-full max-w-md mx-auto pt-6 border-t border-slate-800">
-					<UserForm onSubmit={handleUserFormSubmit} />
+					<UserForm />
 				</div>
 			</div>
 		</main>
