@@ -1,11 +1,17 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { PrismaD1 } from "@prisma/adapter-d1";
+import { cache } from "react";
 import { PrismaClient } from "../../../generated/prisma/client";
 
-const { env } = await getCloudflareContext({ async: true });
+const getPrismaClient = cache((): PrismaClient => {
+	if (globalThis.prisma) return globalThis.prisma;
+	const { env } = getCloudflareContext();
+	const adapter = new PrismaD1(env.DB);
+	const prisma = new PrismaClient({ adapter });
 
-const adapter = new PrismaD1(env.DB);
+	if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
-export const prisma = globalThis.prisma || new PrismaClient({ adapter });
+	return prisma;
+});
 
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+export const prisma = getPrismaClient();
