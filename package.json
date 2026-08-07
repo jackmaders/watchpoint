@@ -50,7 +50,7 @@
 	"private": true,
 	"scripts": {
 		"build": "next build",
-		"cf-typegen": "wrangler types --env-interface CloudflareEnv --include-runtime false cloudflare-env.d.ts && bun scripts/patch-cf-types.ts && biome format --write cloudflare-env.d.ts",
+		"cf-typegen": "wrangler types --env-interface CloudflareEnv --include-runtime false cloudflare-env.d.ts && bun scripts/patch-cf-types.ts",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",
 		"check:cf-sync": "bun scripts/check-cf-sync.ts",
