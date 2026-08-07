@@ -15,8 +15,7 @@ This repository enforces strict technical, architectural, and quality standards 
 - Keep UI components, business logic, and server actions inside the relevant `_pages/` slice by default.
 - DO NOT extract logic into `features/` or `widgets/` until a second consumer explicitly requires it.
 - Steiger linter (`bun run check:architecture`) enforces slice usage and public API entrypoints (`index.ts`).
-- **Next.js Naming**: FSD `pages` and `app` layers MUST use underscore-prefixed names (`_pages/`, `_app/`) inside `src/` to avoid conflicting with the Next.js App Router `app/` and Pages Router `pages/` directories. See: https://feature-sliced.design/docs/guides/tech/with-nextjs
-- The Next.js routing directory (`src/app/`) is for thin route entry points that re-export from the FSD `_pages/` layer. Route files contain no business logic.
+- **Next.js Routing Directory (`app/`)**: All files in the Next.js routing directory (`app/`) MUST be simple barrel re-exports (e.g. `export { HomePage as default } from "@/_pages/home"`). Route files MUST NOT contain any inline business logic, data fetching, or UI rendering—all page logic and data fetching MUST reside inside the FSD `src/_pages/` layer.
 
 ### 3. Action-First Feature Naming
 - Extracted features in `src/features/` MUST be named using the `{action}-{entity}` (verb-noun) convention (e.g. `create-user`, `submit-feedback`).
