@@ -37,14 +37,18 @@ jobs:
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
+      - name: 🏗️ Build OpenNext Cloudflare Worker
+        env:
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'build-secret-key-at-least-32-chars-long' }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL || 'http://localhost:3000' }}
+          DATABASE_URL: "file:./dev.db"
+        run: bun exec opennextjs-cloudflare build
+
       - name: 🗄️ Apply Remote D1 Database Migrations
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: bun run db:migrate:prod
-
-      - name: 🏗️ Build OpenNext Cloudflare Worker
-        run: bun exec opennextjs-cloudflare build
 
       - name: 🚀 Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
