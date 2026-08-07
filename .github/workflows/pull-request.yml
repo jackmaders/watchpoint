@@ -1,14 +1,8 @@
 name: PR Quality Checks
 
 on:
-  push:
-    branches:
-      - main
-      - release/**
   pull_request:
-    branches:
-      - main
-      - release/**
+    branches: ["main"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
