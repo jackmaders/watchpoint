@@ -1,15 +1,15 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getPrismaClient } from "./client";
 
 vi.mock("@opennextjs/cloudflare");
+vi.mock("react");
 
 describe("db client", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.unstubAllEnvs();
 		delete globalThis.prisma;
-
-		vi.resetModules();
 	});
 
 	afterEach(() => {
@@ -21,8 +21,7 @@ describe("db client", () => {
 		const existingClient = { vod: {} } as never;
 		globalThis.prisma = existingClient;
 
-		// Dynamically import inside the test block
-		const { prisma } = await import("./client");
+		const prisma = await getPrismaClient();
 
 		expect(prisma).toBe(existingClient);
 	});
@@ -36,7 +35,7 @@ describe("db client", () => {
 			env: { DB: mockDb },
 		} as never);
 
-		const { prisma } = await import("./client");
+		const prisma = await getPrismaClient();
 
 		expect(prisma).toBeDefined();
 		expect(globalThis.prisma).toBe(prisma);
@@ -51,7 +50,7 @@ describe("db client", () => {
 			env: { DB: mockDb },
 		} as never);
 
-		const { prisma } = await import("./client");
+		const prisma = await getPrismaClient();
 
 		expect(prisma).toBeDefined();
 		expect(globalThis.prisma).toBeUndefined();

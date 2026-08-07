@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "../db";
+import { getPrismaClient } from "../db";
+
+const prisma = await getPrismaClient();
 
 export const auth = betterAuth({
 	baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",

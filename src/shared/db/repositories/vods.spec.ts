@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "../client/client";
+import { getPrismaClient } from "../client/client";
 import { getPublishedVods, getVodById } from "./vods";
 
 vi.mock("../client/client");
@@ -11,6 +11,7 @@ describe("VOD database accessors", () => {
 
 	describe("getPublishedVods", () => {
 		it("fetches all published VODs ordered by creation date descending", async () => {
+			const prisma = await getPrismaClient();
 			const mockVods = [
 				{
 					_count: { scenarios: 5 },
@@ -44,6 +45,7 @@ describe("VOD database accessors", () => {
 
 	describe("getVodById", () => {
 		it("fetches a published VOD by ID with ordered scenarios by default", async () => {
+			const prisma = await getPrismaClient();
 			const mockVod = {
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 1080,
@@ -84,6 +86,7 @@ describe("VOD database accessors", () => {
 		});
 
 		it("allows fetching unpublished VOD when publishedOnly is false", async () => {
+			const prisma = await getPrismaClient();
 			const mockDraftVod = {
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 600,
@@ -114,6 +117,7 @@ describe("VOD database accessors", () => {
 		});
 
 		it("returns null if VOD is not found", async () => {
+			const prisma = await getPrismaClient();
 			vi.mocked(prisma.vod.findFirst).mockResolvedValueOnce(null);
 
 			const result = await getVodById("non_existent");
