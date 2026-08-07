@@ -10,7 +10,9 @@
 		{
 			"binding": "DB",
 			"database_id": "local-watchpoint-db",
-			"database_name": "watchpoint-db"
+			"database_name": "watchpoint-db",
+			"migrations_dir": "prisma/migrations",
+			"migrations_pattern": "prisma/migrations/*/migration.sql"
 		}
 	],
 	"main": ".open-next/worker.js",
