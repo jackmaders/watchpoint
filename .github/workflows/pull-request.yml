@@ -202,7 +202,7 @@ jobs:
         run: bun run check:bundle-size
 
       - name: 📏 Report Route & Asset Bundle Sizes
-        uses: lukeed/compressed-size-action@v2
+        uses: preactjs/compressed-size-action@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           pattern: ".open-next/server-functions/default/handler.mjs, .next/static/chunks/**/*.js"
