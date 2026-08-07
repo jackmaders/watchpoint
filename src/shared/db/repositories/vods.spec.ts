@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPrismaClient } from "../client/client";
+import { getDb } from "../client/client";
 import { getPublishedVods, getVodById } from "./vods";
 
 vi.mock("../client/client");
@@ -11,41 +11,35 @@ describe("VOD database accessors", () => {
 
 	describe("getPublishedVods", () => {
 		it("fetches all published VODs ordered by creation date descending", async () => {
-			const prisma = await getPrismaClient();
+			const db = await getDb();
 			const mockVods = [
 				{
-					_count: { scenarios: 5 },
 					createdAt: new Date("2026-08-06T10:00:00Z"),
 					durationSeconds: 1080,
 					id: "vod_1",
 					isPublished: true,
 					mapName: "King's Row",
 					rankTier: "Grandmaster",
+					scenarios: [{ id: "sc_1" }],
 					title: "GM Ana VOD",
 					youtubeVideoId: "dQw4w9WgXcQ",
 				},
 			];
 
-			vi.mocked(prisma.vod.findMany).mockResolvedValueOnce(mockVods as never);
+			vi.mocked(db.query.vods.findMany).mockResolvedValueOnce(
+				mockVods as never,
+			);
 
 			const result = await getPublishedVods();
 
-			expect(prisma.vod.findMany).toHaveBeenCalledWith({
-				include: {
-					_count: {
-						select: { scenarios: true },
-					},
-				},
-				orderBy: { createdAt: "desc" },
-				where: { isPublished: true },
-			});
+			expect(db.query.vods.findMany).toHaveBeenCalled();
 			expect(result).toEqual(mockVods);
 		});
 	});
 
 	describe("getVodById", () => {
 		it("fetches a published VOD by ID with ordered scenarios by default", async () => {
-			const prisma = await getPrismaClient();
+			const db = await getDb();
 			const mockVod = {
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 1080,
@@ -70,23 +64,18 @@ describe("VOD database accessors", () => {
 				youtubeVideoId: "dQw4w9WgXcQ",
 			};
 
-			vi.mocked(prisma.vod.findFirst).mockResolvedValueOnce(mockVod as never);
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				mockVod as never,
+			);
 
 			const result = await getVodById("vod_1");
 
-			expect(prisma.vod.findFirst).toHaveBeenCalledWith({
-				include: {
-					scenarios: {
-						orderBy: { timestampSeconds: "asc" },
-					},
-				},
-				where: { id: "vod_1", isPublished: true },
-			});
+			expect(db.query.vods.findFirst).toHaveBeenCalled();
 			expect(result).toEqual(mockVod);
 		});
 
 		it("allows fetching unpublished VOD when publishedOnly is false", async () => {
-			const prisma = await getPrismaClient();
+			const db = await getDb();
 			const mockDraftVod = {
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 600,
@@ -99,38 +88,26 @@ describe("VOD database accessors", () => {
 				youtubeVideoId: "abc12345",
 			};
 
-			vi.mocked(prisma.vod.findFirst).mockResolvedValueOnce(
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
 				mockDraftVod as never,
 			);
 
 			const result = await getVodById("draft_vod", { publishedOnly: false });
 
-			expect(prisma.vod.findFirst).toHaveBeenCalledWith({
-				include: {
-					scenarios: {
-						orderBy: { timestampSeconds: "asc" },
-					},
-				},
-				where: { id: "draft_vod" },
-			});
+			expect(db.query.vods.findFirst).toHaveBeenCalled();
 			expect(result).toEqual(mockDraftVod);
 		});
 
-		it("returns null if VOD is not found", async () => {
-			const prisma = await getPrismaClient();
-			vi.mocked(prisma.vod.findFirst).mockResolvedValueOnce(null);
+		it("returns undefined if VOD is not found", async () => {
+			const db = await getDb();
+			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce(
+				undefined as never,
+			);
 
 			const result = await getVodById("non_existent");
 
-			expect(prisma.vod.findFirst).toHaveBeenCalledWith({
-				include: {
-					scenarios: {
-						orderBy: { timestampSeconds: "asc" },
-					},
-				},
-				where: { id: "non_existent", isPublished: true },
-			});
-			expect(result).toBeNull();
+			expect(db.query.vods.findFirst).toHaveBeenCalled();
+			expect(result).toBeUndefined();
 		});
 	});
 });

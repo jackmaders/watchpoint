@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getPrismaClient } from "./client";
+import { getDb } from "./client";
 
 vi.mock("@opennextjs/cloudflare");
 vi.mock("react");
@@ -9,21 +9,21 @@ describe("db client", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.unstubAllEnvs();
-		delete globalThis.prisma;
+		delete globalThis.db;
 	});
 
 	afterEach(() => {
 		vi.unstubAllEnvs();
-		delete globalThis.prisma;
+		delete globalThis.db;
 	});
 
-	it("returns globalThis.prisma if already initialized", async () => {
-		const existingClient = { vod: {} } as never;
-		globalThis.prisma = existingClient;
+	it("returns globalThis.db if already initialized", async () => {
+		const existingClient = { query: {} } as never;
+		globalThis.db = existingClient;
 
-		const prisma = await getPrismaClient();
+		const db = await getDb();
 
-		expect(prisma).toBe(existingClient);
+		expect(db).toBe(existingClient);
 	});
 
 	it("resolves D1 database adapter when Cloudflare context is available in development", async () => {
@@ -35,13 +35,13 @@ describe("db client", () => {
 			env: { DB: mockDb },
 		} as never);
 
-		const prisma = await getPrismaClient();
+		const db = await getDb();
 
-		expect(prisma).toBeDefined();
-		expect(globalThis.prisma).toBe(prisma);
+		expect(db).toBeDefined();
+		expect(globalThis.db).toBe(db);
 	});
 
-	it("resolves D1 database adapter in production without setting globalThis.prisma", async () => {
+	it("resolves D1 database adapter in production without setting globalThis.db", async () => {
 		vi.stubEnv("NODE_ENV", "production");
 		const mockDb = {
 			prepare: vi.fn(),
@@ -50,9 +50,9 @@ describe("db client", () => {
 			env: { DB: mockDb },
 		} as never);
 
-		const prisma = await getPrismaClient();
+		const db = await getDb();
 
-		expect(prisma).toBeDefined();
-		expect(globalThis.prisma).toBeUndefined();
+		expect(db).toBeDefined();
+		expect(globalThis.db).toBeUndefined();
 	});
 });
