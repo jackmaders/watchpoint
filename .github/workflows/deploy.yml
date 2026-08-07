@@ -39,8 +39,8 @@ jobs:
 
       - name: 🏗️ Build OpenNext Cloudflare Worker
         env:
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'build-secret-key-at-least-32-chars-long' }}
-          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL || 'http://localhost:3000' }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
           DATABASE_URL: "file:./dev.db"
         run: bun exec opennextjs-cloudflare build
 
