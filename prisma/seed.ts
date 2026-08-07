@@ -1,13 +1,8 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { PrismaClient } from "../generated/prisma/client";
 
-const pool = new pg.Pool({
-	connectionString:
-		process.env.DATABASE_URL ||
-		"postgresql://postgres:postgres@localhost:5432/watchpoint",
-});
-const adapter = new PrismaPg(pool);
+const url = process.env.DATABASE_URL || "file:./dev.db";
+const adapter = new PrismaLibSql({ url });
 const prisma = new PrismaClient({ adapter });
 
 function getInitialScenarios() {
@@ -143,5 +138,5 @@ main()
 		process.exit(1);
 	})
 	.finally(async () => {
-		await pool.end();
+		await prisma.$disconnect();
 	});

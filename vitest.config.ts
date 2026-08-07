@@ -29,6 +29,8 @@ export default defineConfig({
 			"e2e/**",
 			"node_modules/**",
 			".next/**",
+			".wrangler/**",
+			".open-next/**",
 			"dist/**",
 			"generated/**",
 		],

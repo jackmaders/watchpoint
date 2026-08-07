@@ -115,20 +115,6 @@ jobs:
     needs:
       - lint
       - unit-tests
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: watchpoint
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: 🛒 Checkout
@@ -148,12 +134,13 @@ jobs:
       - name: 🗄️ Push DB Schema
         run: bunx --bun prisma db push --accept-data-loss
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/watchpoint
+          DATABASE_URL: file:./dev.db
 
       - name: 🌱 Run Seed Script Check
         run: bun run check:seed
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/watchpoint
+          DATABASE_URL: file:./dev.db
+
 
 
   build:
