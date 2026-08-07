@@ -100,13 +100,9 @@ function ModuleFilterCard({
 }
 
 export function VodDetailClient({ vod }: VodDetailClientProps) {
-	const [activeModules, setActiveModules] = useState<ModuleType[]>([
-		"STRATEGY",
-		"TACTICS",
-		"ULTIMATE",
-		"COOLDOWN",
-		"SPATIAL",
-	]);
+	const [activeModules, setActiveModules] = useState<ModuleType[]>(() =>
+		MODULE_DEFINITIONS.map((def) => def.key),
+	);
 
 	const toggleModule = useCallback((moduleKey: ModuleType) => {
 		setActiveModules((prev) =>
