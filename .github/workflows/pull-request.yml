@@ -97,6 +97,12 @@ jobs:
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
+      - name: 🚨 Verify Prisma Client Artifacts
+        run: bun run check:prisma-sync
+
+      - name: 🚨 Verify Cloudflare Types
+        run: bun run check:cf-sync
+
       - name: 🦺 Check Type Safety
         run: bun run check:types
 
@@ -136,11 +142,8 @@ jobs:
         run: bun run test:coverage
 
   database:
-    name: 🛢 Check Database Schema & Migrations
+    name: 🛢 Check Database Schema
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - unit-tests
 
     steps:
       - name: 🛒 Checkout
@@ -168,6 +171,9 @@ jobs:
       - name: 🔍 Validate Prisma Schema
         run: bun run prisma:validate
 
+      - name: 🚨 Verify No Database Schema Drift
+        run: bun run check:db-drift
+
       - name: 🗄️ Verify Cloudflare D1 Migrations
         run: bun run db:migrate:local
 
@@ -177,9 +183,6 @@ jobs:
   build:
     name: 🏗️ Build Web App
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - unit-tests
 
     steps:
       - name: 🛒 Checkout
