@@ -69,7 +69,6 @@
 		"prisma": "bunx --bun prisma",
 		"prisma:seed": "bun prisma/seed.ts",
 		"prisma:validate": "bunx --bun prisma validate",
-		"start": "next start",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:unit": "vitest run",
