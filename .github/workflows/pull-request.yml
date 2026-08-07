@@ -97,6 +97,29 @@ jobs:
       - name: ⚙️ Generate Prisma Client
         run: bun run prisma generate
 
+      - name: 🚨 Verify Prisma Client Artifacts
+        run: |
+          if [[ -n $(git status --porcelain generated/prisma) ]]; then
+            echo "❌ Prisma generated client is out of sync! You have changes in prisma/schema.prisma that are not reflected in generated/prisma."
+            echo "Please run 'bun run prisma generate' locally and commit the updated generated/prisma files."
+            git status generated/prisma
+            exit 1
+          else
+            echo "✅ Prisma generated client is in sync with schema."
+          fi
+
+      - name: 🚨 Verify Cloudflare Types
+        run: |
+          bun run cf-typegen
+          if [[ -n $(git status --porcelain cloudflare-env.d.ts) ]]; then
+            echo "❌ Cloudflare types are out of sync! You have changes in wrangler.jsonc that are not reflected in cloudflare-env.d.ts."
+            echo "Please run 'bun run cf-typegen' locally and commit the updated cloudflare-env.d.ts file."
+            git status cloudflare-env.d.ts
+            exit 1
+          else
+            echo "✅ Cloudflare types are in sync with wrangler.jsonc."
+          fi
+
       - name: 🦺 Check Type Safety
         run: bun run check:types
 
@@ -167,6 +190,16 @@ jobs:
 
       - name: 🔍 Validate Prisma Schema
         run: bun run prisma:validate
+
+      - name: 🚨 Verify No Database Schema Drift
+        run: |
+          if ! bunx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-migrations prisma/migrations --exit-code; then
+            echo "❌ Schema drift detected! You have changes in prisma/schema.prisma that are not reflected in a migration script."
+            echo "Please run 'bun run db:migrate:new' locally and commit the generated migration files."
+            exit 1
+          else
+            echo "✅ Database schema is in sync with migration history."
+          fi
 
       - name: 🗄️ Verify Cloudflare D1 Migrations
         run: bun run db:migrate:local
