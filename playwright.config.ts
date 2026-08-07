@@ -19,7 +19,7 @@ export default defineConfig({
 		trace: "on-first-retry",
 	},
 	webServer: {
-		command: process.env.CI ? "bun run start" : "bun run dev",
+		command: process.env.CI ? "bun run preview" : "bun run dev",
 		reuseExistingServer: !process.env.CI,
 		timeout: 360_000,
 		url: "http://localhost:3000",

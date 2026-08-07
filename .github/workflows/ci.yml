@@ -60,9 +60,6 @@ jobs:
       - name: 🌱 Seed D1 Local Database
         run: bun run check:seed
 
-      - name: 🏗️ Build Web App
-        run: bun run build
-
       - name: 🧪 Run E2E Tests
         run: bun run test:e2e
 
