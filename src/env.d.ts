@@ -1,4 +1,3 @@
-import type { D1Database } from "@cloudflare/workers-types";
 import type { PrismaClient } from "../generated/prisma/client";
 
 declare global {
@@ -10,7 +9,6 @@ declare global {
 			BETTER_AUTH_SECRET: string;
 			BETTER_AUTH_URL: string;
 			NODE_ENV: "development" | "production" | "test";
-			DB: D1Database;
 		}
 	}
 }
