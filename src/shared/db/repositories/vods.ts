@@ -1,6 +1,6 @@
 import { desc } from "drizzle-orm";
 import { getDb } from "../client/client";
-import { vods } from "../schema";
+import { type ModuleType, vods } from "../schema";
 
 export interface GetVodByIdOptions {
 	publishedOnly?: boolean;
@@ -54,24 +54,28 @@ export async function getVodManifest(
 	id: string,
 	options: GetVodManifestOptions = {},
 ) {
+	const db = await getDb();
 	const { modules, publishedOnly = true } = options;
-	const vod = await getVodById(id, { publishedOnly });
+
+	const vod = await db.query.vods.findFirst({
+		where: publishedOnly
+			? (vods, { and, eq }) => and(eq(vods.id, id), eq(vods.isPublished, true))
+			: (vods, { eq }) => eq(vods.id, id),
+		with: {
+			scenarios: {
+				orderBy: (scenarios, { asc }) => [asc(scenarios.timestampSeconds)],
+				where:
+					modules && modules.length > 0
+						? (scenarios, { inArray }) =>
+								inArray(scenarios.moduleType, modules as ModuleType[])
+						: undefined,
+			},
+		},
+	});
 
 	if (!vod) {
 		return null;
 	}
 
-	if (!modules || modules.length === 0) {
-		return vod;
-	}
-
-	const allowedModulesSet = new Set(modules);
-	const filteredScenarios = vod.scenarios.filter((scenario) =>
-		allowedModulesSet.has(scenario.moduleType),
-	);
-
-	return {
-		...vod,
-		scenarios: filteredScenarios,
-	};
+	return vod;
 }

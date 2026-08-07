@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getVodManifest } from "@/shared/db";
-import { handleGetVodManifest } from "./manifest";
+import { handleGetVodManifest, parseModulesParam } from "./manifest";
 
 vi.mock("@/shared/db");
 
@@ -88,5 +88,21 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		expect(res.status).toBe(404);
 		const body = await res.json();
 		expect(body).toEqual({ error: "VOD not found" });
+	});
+});
+
+describe("parseModulesParam helper", () => {
+	it("parses comma-separated and multiple query params into uppercase array", () => {
+		const searchParams = new URLSearchParams(
+			"modules=strategy,tactics&modules=ultimate",
+		);
+		const result = parseModulesParam(searchParams);
+		expect(result).toEqual(["STRATEGY", "TACTICS", "ULTIMATE"]);
+	});
+
+	it("returns empty array when no modules param is present", () => {
+		const searchParams = new URLSearchParams("");
+		const result = parseModulesParam(searchParams);
+		expect(result).toEqual([]);
 	});
 });
