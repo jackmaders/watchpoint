@@ -20,7 +20,7 @@ jobs:
     name: 💻 Run Developer AI Agent
     if: >
       (github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'ready-for-dev') || github.event.action == 'assigned')) ||
-      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'ready-for-dev') && github.event.comment.user.type != 'Bot')
+      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'ready-for-dev') || contains(github.event.comment.body, '/dev') || contains(github.event.comment.body, '/implement')) && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
 
     steps:
@@ -42,11 +42,6 @@ jobs:
 
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
-
-      - name: 🚀 Install Antigravity CLI
-        run: |
-          curl -fsSL https://antigravity.google/cli/install.sh | bash
-          echo "$HOME/.antigravity/bin" >> $GITHUB_PATH
 
       - name: 💻 Execute Developer Agent
         env:

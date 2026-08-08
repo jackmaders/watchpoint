@@ -5,6 +5,8 @@ import {
 	findMatchingChildIssue,
 	formatChildIssueBody,
 	getOrCreateMilestone,
+	linkSingleBlocker,
+	linkSubIssue,
 	parseTicketsFromAI,
 	postBreakdownSummaryComment,
 	reviewAndUpdateChildIssues,
@@ -326,6 +328,44 @@ describe("pm-to-tickets unit tests", () => {
 			await expect(
 				parseTicketsFromAI(mockAi, "System Instruction", "Spec Content"),
 			).rejects.toThrow("Gemini returned an empty or invalid response.");
+		});
+	});
+
+	describe("linkSubIssue & linkSingleBlocker helpers", () => {
+		it("calls GraphQL addSubIssue and handles errors gracefully", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.graphql).mockRejectedValueOnce(
+				new Error("GraphQL Error"),
+			);
+
+			await expect(
+				linkSubIssue(octokit, "I_kw_parent", "I_kw_child"),
+			).resolves.not.toThrow();
+			expect(octokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addSubIssue"),
+				expect.objectContaining({
+					issueId: "I_kw_parent",
+					subIssueId: "I_kw_child",
+				}),
+			);
+		});
+
+		it("calls GraphQL addBlockedBy and handles errors gracefully", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.graphql).mockRejectedValueOnce(
+				new Error("GraphQL Error"),
+			);
+
+			await expect(
+				linkSingleBlocker(octokit, "I_kw_target", "I_kw_blocker"),
+			).resolves.not.toThrow();
+			expect(octokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addBlockedBy"),
+				expect.objectContaining({
+					blockedByIssueId: "I_kw_blocker",
+					issueId: "I_kw_target",
+				}),
+			);
 		});
 	});
 
