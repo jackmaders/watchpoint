@@ -98,7 +98,19 @@ describe("developer-agent unit tests", () => {
 	});
 
 	describe("sanitizeBranchName helper", () => {
-		it("formats clean Git branch name from issue title and number", () => {
+		it("formats clean Git branch name with slice name from body", () => {
+			// Arrange
+			const title = "Setup Prisma ORM & Auth System!";
+			const body = "Target: `src/_pages/auth/ui/Form.tsx`";
+
+			// Act
+			const branch = sanitizeBranchName(title, 42, body);
+
+			// Assert
+			expect(branch).toBe("dev/issue-42-auth-setup-prisma-orm-auth-system");
+		});
+
+		it("uses fallback slice name feature when no body is provided", () => {
 			// Arrange
 			const title = "Setup Prisma ORM & Auth System!";
 
@@ -106,7 +118,7 @@ describe("developer-agent unit tests", () => {
 			const branch = sanitizeBranchName(title, 42);
 
 			// Assert
-			expect(branch).toBe("dev/issue-42-setup-prisma-orm-auth-system");
+			expect(branch).toBe("dev/issue-42-feature-setup-prisma-orm-auth-system");
 		});
 	});
 

@@ -48,13 +48,18 @@ export function extractTargetSliceName(body?: string | null): string {
 	return match?.[1] ?? "feature";
 }
 
-export function sanitizeBranchName(title: string, issueNumber: number): string {
+export function sanitizeBranchName(
+	title: string,
+	issueNumber: number,
+	body?: string | null,
+): string {
+	const slice = extractTargetSliceName(body);
 	const cleanTitle = title
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/^-+|-+$/g, "")
 		.slice(0, 30);
-	return `dev/issue-${issueNumber}-${cleanTitle}`;
+	return `dev/issue-${issueNumber}-${slice}-${cleanTitle}`;
 }
 
 export async function generateDeveloperImplementation(
@@ -92,11 +97,11 @@ export async function postDeveloperStartedComment(
 	const body = `${BOT_COMMENT_MARKER}
 🚀 **Developer AI Agent Starting Work!**
 
-* **Branch:** \`${branchName}\`
+* **Target Branch:** \`${branchName}\`
 * **Workflow:** Following \`implement\` & \`tdd\` skills with AAA testing pattern.
 * **Architecture:** Feature-Sliced Design (\`src/_pages/\`).
 
-Executing TDD cycle and running project validation checks...`;
+Executing implementation plan and project validation checks (\`bun run validate\`)...`;
 
 	await octokit.rest.issues.createComment({
 		body,
@@ -119,12 +124,10 @@ export async function postDeveloperCompletedComment(
 ### Implementation Summary
 ${implementationSummary}
 
-* **Branch Created:** \`${branchName}\`
-* **Architecture Check (\`check:architecture\`):** Passed
-* **Unit Test Coverage (\`test:coverage\`):** 100% threshold met with AAA pattern
-* **Type Safety (\`check:types\`):** Passed
-
-Creating Pull Request linked to Issue #${issueNumber}...`;
+* **Target Branch:** \`${branchName}\`
+* **Architecture:** Feature-Sliced Design (\`src/_pages/\`)
+* **Verification Command:** \`bun run validate\`
+`;
 
 	await octokit.rest.issues.createComment({
 		body,
@@ -155,7 +158,7 @@ export async function run() {
 			return;
 		}
 
-		const branchName = sanitizeBranchName(issue.title, issueNumber);
+		const branchName = sanitizeBranchName(issue.title, issueNumber, issue.body);
 		await postDeveloperStartedComment(ctx, branchName);
 
 		const skillInstruction = await readFile(

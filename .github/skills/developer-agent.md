@@ -36,8 +36,16 @@ Implement the work described in the developer ticket slice end-to-end.
 * **Act:** Execute the public interface or function under test.
 * **Assert:** Verify the outcome against independent, known-good expected values.
 
+---
+
+## 3. Good and Bad Tests & Red Flags
+
+### Good Tests
+
+**Integration-style**: Test through real interfaces, not mocks of internal parts.
+
 ```typescript
-// GOOD: Organized into Arrange, Act, Assert
+// GOOD: Tests observable behavior through public interface with AAA
 test("user can checkout with valid cart", async () => {
   // Arrange
   const cart = createCart();
@@ -50,7 +58,7 @@ test("user can checkout with valid cart", async () => {
   expect(result.status).toBe("confirmed");
 });
 
-// GOOD: Verifies through public interface with AAA
+// GOOD: Verifies through public interface
 test("createUser makes user retrievable", async () => {
   // Arrange
   const userData = { name: "Alice" };
@@ -63,7 +71,7 @@ test("createUser makes user retrievable", async () => {
   expect(retrieved.name).toBe("Alice");
 });
 
-// GOOD: Independent expected value (not recomputed tautologically)
+// GOOD: Independent expected literal value (not recomputed tautologically)
 test("calculateTotal sums line items", () => {
   // Arrange
   const items = [{ price: 10 }, { price: 5 }];
@@ -76,9 +84,81 @@ test("calculateTotal sums line items", () => {
 });
 ```
 
+**Characteristics of Good Tests:**
+* Tests behavior users/callers care about
+* Uses public API only
+* Survives internal refactors
+* Describes WHAT, not HOW
+* One logical assertion per test
+
+### Bad Tests & Red Flags
+
+**Implementation-detail tests**: Coupled to internal structure.
+
+```typescript
+// BAD: Tests implementation details and mocks internal collaborators
+test("checkout calls paymentService.process", async () => {
+  const mockPayment = jest.mock(paymentService);
+  await checkout(cart, payment);
+  expect(mockPayment.process).toHaveBeenCalledWith(cart.total);
+});
+
+// BAD: Bypasses public interface to verify internal DB details directly
+test("createUser saves to database", async () => {
+  await createUser({ name: "Alice" });
+  const row = await db.query("SELECT * FROM users WHERE name = ?", ["Alice"]);
+  expect(row).toBeDefined();
+});
+```
+
+**Tautological tests**: Expected value restates the implementation, so the test passes by construction.
+
+```typescript
+// BAD: Expected value is recomputed the way the code computes it
+test("calculateTotal sums line items", () => {
+  const items = [{ price: 10 }, { price: 5 }];
+  const expected = items.reduce((sum, i) => sum + i.price, 0);
+  expect(calculateTotal(items)).toBe(expected);
+});
+```
+
+**Red Flags to Avoid:**
+* 🚩 Mocking internal collaborators instead of testing through public seams
+* 🚩 Testing private methods or internal state variables
+* 🚩 Asserting on exact internal function call counts or call order
+* 🚩 Test breaks during refactoring when observable behavior has not changed
+* 🚩 Test name describes HOW it works instead of WHAT it accomplishes
+* 🚩 Verifying outcomes through raw DB queries or private internals instead of the public interface
+* 🚩 Recomputing expected test values using the same formula/logic as the implementation
+
 ---
 
-## 3. Architecture & System Rules
+## 4. Mandatory Git Workflow & Version Control Rules
+
+EVERY AI agent developer iteration MUST strictly follow this 3-step Git workflow:
+
+1. **Branch Creation at Start:**
+   - Before editing any codebase files, create and checkout a clean git branch:
+     ```bash
+     git checkout -b dev/issue-<number>-<slice>-<clean-title>
+     ```
+2. **Commit & Push After Every Green Phase in TDD:**
+   - As soon as a unit test turns **Green** (passing) and validation passes, immediately stage, commit, and push the progress to remote:
+     ```bash
+     git add -A
+     git commit -m "feat(<scope>): 🔑 <description>"
+     git push origin dev/issue-<number>-<slice>-<clean-title>
+     ```
+   - **Never hoard uncommitted changes across multiple TDD cycles.** Commit and push every passing test phase.
+3. **Pull Request Creation Upon Completion:**
+   - Once all ticket acceptance criteria are satisfied and `bun run validate` passes clean, open a Pull Request linking to the originating issue:
+     ```bash
+     gh pr create --title "feat(<scope>): 🔑 <title>" --body "Closes #<issue-number>\n\n..."
+     ```
+
+---
+
+## 5. Architecture & System Rules
 
 ### Feature-Sliced Design (Pages-First)
 * Keep UI components, business logic, and server actions inside the relevant `src/_pages/<slice-name>/` directory by default.
@@ -92,13 +172,12 @@ test("calculateTotal sums line items", () => {
 
 ---
 
-## 4. Verification Commands
+## 6. Verification Commands
 
-Before completing work and submitting a PR, run and verify:
+Before completing work and submitting PRs, run and verify project correctness:
 
 ```bash
-bun run check:architecture
-bun run check:types
-bun run check:all
-bun run test:coverage
+bun run validate
 ```
+
+

@@ -365,6 +365,8 @@ export async function linkNativeIssueBlockers(
 	sortedTickets: Ticket[],
 	idToNodeIdMap: Map<string, string>,
 ) {
+	const tasks: Promise<void>[] = [];
+
 	for (const ticket of sortedTickets) {
 		const targetNodeId = idToNodeIdMap.get(ticket.id);
 		if (!targetNodeId || !ticket.blockers?.length) continue;
@@ -372,10 +374,12 @@ export async function linkNativeIssueBlockers(
 		for (const blockerId of ticket.blockers) {
 			const blockerNodeId = idToNodeIdMap.get(blockerId);
 			if (blockerNodeId) {
-				await linkSingleBlocker(octokit, targetNodeId, blockerNodeId);
+				tasks.push(linkSingleBlocker(octokit, targetNodeId, blockerNodeId));
 			}
 		}
 	}
+
+	await Promise.all(tasks);
 }
 
 export async function reviewAndUpdateChildIssues(params: {
