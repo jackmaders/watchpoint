@@ -10,6 +10,7 @@ import {
 	reviewAndUpdateChildIssues,
 	run,
 	TicketBreakdownSchema,
+	topologicalSortTickets,
 } from "./pm-to-tickets";
 
 vi.mock("@actions/github");
@@ -21,6 +22,7 @@ describe("pm-to-tickets unit tests", () => {
 		process.env.GITHUB_TOKEN = "fake-token";
 		process.env.GEMINI_API_KEY = "fake-api-key";
 		process.env.ISSUE_NUMBER = "42";
+		delete (github.context as { payload?: unknown }).payload;
 	});
 
 	describe("Zod TicketBreakdownSchema validation", () => {
@@ -30,6 +32,7 @@ describe("pm-to-tickets unit tests", () => {
 					{
 						acceptanceCriteria: ["Criteria 1", "Criteria 2"],
 						blockers: [],
+						existingNumber: 101,
 						id: "TICKET-1",
 						title: "Setup Schema",
 						whatToBuild: "Build Drizzle schema for user table",
@@ -47,6 +50,7 @@ describe("pm-to-tickets unit tests", () => {
 			const parsed = TicketBreakdownSchema.parse(validData);
 			expect(parsed.tickets).toHaveLength(2);
 			expect(parsed.tickets[0].id).toBe("TICKET-1");
+			expect(parsed.tickets[0].existingNumber).toBe(101);
 		});
 
 		it("throws validation error for invalid ticket data", () => {
@@ -60,6 +64,63 @@ describe("pm-to-tickets unit tests", () => {
 			};
 
 			expect(() => TicketBreakdownSchema.parse(invalidData)).toThrow();
+		});
+	});
+
+	describe("topologicalSortTickets helper", () => {
+		it("sorts tickets in dependency order", () => {
+			const tickets = [
+				{
+					acceptanceCriteria: ["AC3"],
+					blockers: ["TICKET-2"],
+					id: "TICKET-3",
+					title: "Ticket 3",
+					whatToBuild: "Build 3",
+				},
+				{
+					acceptanceCriteria: ["AC1"],
+					blockers: [],
+					id: "TICKET-1",
+					title: "Ticket 1",
+					whatToBuild: "Build 1",
+				},
+				{
+					acceptanceCriteria: ["AC2"],
+					blockers: ["TICKET-1"],
+					id: "TICKET-2",
+					title: "Ticket 2",
+					whatToBuild: "Build 2",
+				},
+			];
+
+			const sorted = topologicalSortTickets(tickets);
+			expect(sorted.map((t) => t.id)).toEqual([
+				"TICKET-1",
+				"TICKET-2",
+				"TICKET-3",
+			]);
+		});
+
+		it("handles cycle gracefully without infinite loop", () => {
+			const tickets = [
+				{
+					acceptanceCriteria: ["AC1"],
+					blockers: ["TICKET-2"],
+					id: "TICKET-1",
+					title: "Ticket 1",
+					whatToBuild: "Build 1",
+				},
+				{
+					acceptanceCriteria: ["AC2"],
+					blockers: ["TICKET-1"],
+					id: "TICKET-2",
+					title: "Ticket 2",
+					whatToBuild: "Build 2",
+				},
+			];
+
+			const sorted = topologicalSortTickets(tickets);
+			expect(sorted).toHaveLength(2);
 		});
 	});
 
@@ -191,7 +252,7 @@ describe("pm-to-tickets unit tests", () => {
 	});
 
 	describe("createChildIssues helper", () => {
-		it("creates issues, sets native GraphQL sub-issue links, and updates blocking references", async () => {
+		it("creates issues topologically in 1-pass and sets sub-issue links", async () => {
 			const octokit = github.getOctokit("token");
 			let callCount = 100;
 			vi.mocked(octokit.rest.issues.create).mockImplementation(
@@ -229,39 +290,34 @@ describe("pm-to-tickets unit tests", () => {
 				parentNodeId: "I_kw_parent42",
 				tickets: [
 					{
-						acceptanceCriteria: ["AC1"],
-						blockers: [],
-						id: "TICKET-1",
-						title: "Ticket 1",
-						whatToBuild: "Build 1",
-					},
-					{
 						acceptanceCriteria: ["AC2"],
 						blockers: ["TICKET-1"],
 						id: "TICKET-2",
 						title: "Ticket 2",
 						whatToBuild: "Build 2",
 					},
+					{
+						acceptanceCriteria: ["AC1"],
+						blockers: [],
+						id: "TICKET-1",
+						title: "Ticket 1",
+						whatToBuild: "Build 1",
+					},
 				],
 			});
 
 			expect(created).toHaveLength(2);
 			expect(octokit.rest.issues.create).toHaveBeenCalledTimes(2);
-			expect(octokit.graphql).toHaveBeenCalledTimes(2);
-			expect(octokit.graphql).toHaveBeenCalledWith(
-				expect.stringContaining("addSubIssue"),
-				expect.objectContaining({
-					headers: { "GraphQL-Features": "sub_issues" },
-					issueId: "I_kw_parent42",
-				}),
-			);
-			// Check updated body contains resolved issue number reference (#101)
-			expect(octokit.rest.issues.update).toHaveBeenCalledWith(
+			// Verify TICKET-2 was created with resolved #101 reference directly on creation
+			expect(octokit.rest.issues.create).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					body: expect.stringContaining("#101"),
-					issue_number: 102,
+					title: "Ticket 2",
 				}),
 			);
+			expect(octokit.graphql).toHaveBeenCalledTimes(2);
+			// Verify octokit.rest.issues.update was NOT called (1-pass creation!)
+			expect(octokit.rest.issues.update).not.toHaveBeenCalled();
 		});
 	});
 
@@ -402,6 +458,10 @@ describe("pm-to-tickets unit tests", () => {
 				},
 			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
 
+			vi.mocked(octokit.paginate).mockResolvedValue([
+				{ body: "User comment context", user: { type: "User" } },
+			]);
+
 			vi.mocked(octokit.rest.issues.listMilestones).mockResolvedValue({
 				data: [],
 			} as unknown as Awaited<
@@ -444,6 +504,42 @@ describe("pm-to-tickets unit tests", () => {
 			);
 		});
 
+		it("strips spec-ready label and exits without auto-close on issue reopened event", async () => {
+			(github.context as { payload: unknown }).payload = {
+				action: "reopened",
+			};
+
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
+				data: {
+					body: "Spec body",
+					labels: [{ name: "spec-ready" }],
+					node_id: "I_kw_parent42",
+					number: 42,
+					title: "Feature Spec",
+				},
+			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+
+			await run();
+
+			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+				issue_number: 42,
+				name: "spec-ready",
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("Removed `spec-ready` label"),
+					issue_number: 42,
+				}),
+			);
+
+			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
+			expect(octokit.rest.issues.create).not.toHaveBeenCalled();
+		});
+
 		it("skips execution if spec-ready label is missing", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
@@ -460,6 +556,28 @@ describe("pm-to-tickets unit tests", () => {
 
 			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
 			expect(octokit.rest.issues.create).not.toHaveBeenCalled();
+		});
+
+		it("posts formatted error comment on execution failure", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.rest.issues.get).mockRejectedValueOnce(
+				new Error("GitHub API rate limit exceeded"),
+			);
+
+			await expect(run()).rejects.toThrow();
+
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
+				body: expect.stringContaining("⚠️ **Spec-to-Tickets Agent Error:**"),
+				issue_number: 42,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
+				body: expect.stringContaining("GitHub API rate limit exceeded"),
+				issue_number: 42,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
 		});
 	});
 });

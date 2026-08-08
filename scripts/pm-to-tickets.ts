@@ -2,6 +2,15 @@ import { readFile } from "node:fs/promises";
 import * as github from "@actions/github";
 import { GoogleGenAI, Type } from "@google/genai";
 import { z } from "zod";
+import {
+	extractLabelNames,
+	fetchIssueContext,
+	type IssueContext,
+	postIssueErrorComment,
+	READY_FOR_DEV_LABEL,
+	removeLabelIfPresent,
+	SPEC_READY_LABEL,
+} from "./pm-shared";
 
 declare global {
 	namespace NodeJS {
@@ -12,18 +21,6 @@ declare global {
 			GEMINI_MODEL?: string;
 		}
 	}
-}
-
-export const SPEC_READY_LABEL = "spec-ready";
-export const READY_FOR_DEV_LABEL = "ready-for-dev";
-
-export type OctokitClient = ReturnType<typeof github.getOctokit>;
-
-export interface IssueContext {
-	octokit: OctokitClient;
-	issueNumber: number;
-	owner: string;
-	repo: string;
 }
 
 export const TicketSchema = z.object({
@@ -41,12 +38,6 @@ export const TicketBreakdownSchema = z.object({
 
 export type Ticket = z.infer<typeof TicketSchema>;
 export type TicketBreakdown = z.infer<typeof TicketBreakdownSchema>;
-
-export function extractLabelNames(
-	labels: Array<string | { name?: string }>,
-): string[] {
-	return labels.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
-}
 
 export function formatChildIssueBody(params: {
 	parentNumber: number;
@@ -76,6 +67,40 @@ ${criteriaList || "- [ ] Complete implementation as specified"}
 
 ${blockersList}
 `;
+}
+
+export function topologicalSortTickets(tickets: Ticket[]): Ticket[] {
+	const result: Ticket[] = [];
+	const visited = new Set<string>();
+	const ticketMap = new Map<string, Ticket>(tickets.map((t) => [t.id, t]));
+
+	function visit(ticket: Ticket, ancestors = new Set<string>()) {
+		if (visited.has(ticket.id)) return;
+		if (ancestors.has(ticket.id)) {
+			return;
+		}
+
+		ancestors.add(ticket.id);
+
+		for (const blockerId of ticket.blockers) {
+			const blockerTicket = ticketMap.get(blockerId);
+			if (blockerTicket && !visited.has(blockerTicket.id)) {
+				visit(blockerTicket, new Set(ancestors));
+			}
+		}
+
+		ancestors.delete(ticket.id);
+		visited.add(ticket.id);
+		result.push(ticket);
+	}
+
+	for (const ticket of tickets) {
+		if (!visited.has(ticket.id)) {
+			visit(ticket);
+		}
+	}
+
+	return result;
 }
 
 export async function getOrCreateMilestone(
@@ -182,22 +207,23 @@ export async function createChildIssues(params: {
 		title: string;
 	}> = [];
 	const idToNumberMap = new Map<string, number>();
+	const sortedTickets = topologicalSortTickets(tickets);
 
-	for (const ticket of tickets) {
-		const initialBlockers = ticket.blockers.map((b) => {
+	for (const ticket of sortedTickets) {
+		const mappedBlockers = ticket.blockers.map((b) => {
 			const num = idToNumberMap.get(b);
 			return num ? `#${num}` : b;
 		});
 
-		const initialBody = formatChildIssueBody({
+		const issueBody = formatChildIssueBody({
 			acceptanceCriteria: ticket.acceptanceCriteria,
-			blockers: initialBlockers,
+			blockers: mappedBlockers,
 			parentNumber: issueNumber,
 			whatToBuild: ticket.whatToBuild,
 		});
 
 		const { data: createdIssue } = await octokit.rest.issues.create({
-			body: initialBody,
+			body: issueBody,
 			labels: [READY_FOR_DEV_LABEL],
 			milestone: milestoneNumber,
 			owner,
@@ -213,7 +239,6 @@ export async function createChildIssues(params: {
 			title: createdIssue.title,
 		});
 
-		// Native GraphQL sub-issue relationship mutation
 		try {
 			await octokit.graphql(
 				`mutation($issueId: ID!, $subIssueId: ID!) {
@@ -236,31 +261,6 @@ export async function createChildIssues(params: {
 				graphqlErr,
 			);
 		}
-	}
-
-	// Update ticket descriptions with finalized blocking issue numbers
-	for (const created of createdList) {
-		const originalTicket = tickets.find((t) => t.id === created.id);
-		if (!originalTicket) continue;
-
-		const mappedBlockers = originalTicket.blockers.map((b) => {
-			const num = idToNumberMap.get(b);
-			return num ? `#${num}` : b;
-		});
-
-		const finalBody = formatChildIssueBody({
-			acceptanceCriteria: originalTicket.acceptanceCriteria,
-			blockers: mappedBlockers,
-			parentNumber: issueNumber,
-			whatToBuild: originalTicket.whatToBuild,
-		});
-
-		await octokit.rest.issues.update({
-			body: finalBody,
-			issue_number: created.number,
-			owner,
-			repo,
-		});
 	}
 
 	return createdList;
@@ -344,8 +344,9 @@ export async function reviewAndUpdateChildIssues(params: {
 		title: string;
 	}> = [];
 	const idToNumberMap = new Map<string, number>();
+	const sortedTickets = topologicalSortTickets(newTickets);
 
-	for (const ticket of newTickets) {
+	for (const ticket of sortedTickets) {
 		const match = findMatchingChildIssue(
 			existingChildIssues,
 			matchedNumbers,
@@ -474,13 +475,24 @@ export async function run() {
 	const ctx: IssueContext = { issueNumber, octokit, owner, repo };
 
 	try {
-		const { data: issue } = await octokit.rest.issues.get({
-			issue_number: issueNumber,
-			owner,
-			repo,
-		});
+		const { conversation, issue } = await fetchIssueContext(ctx);
 
 		const labels = extractLabelNames(issue.labels);
+
+		// Handle issue reopening: strip spec-ready label to prevent auto-close loop
+		if (github.context.payload?.action === "reopened") {
+			if (labels.includes(SPEC_READY_LABEL)) {
+				await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
+				await octokit.rest.issues.createComment({
+					body: "ℹ️ **Issue Reopened:** Removed `spec-ready` label so the specification can be edited and refined. Re-apply `spec-ready` when ready to generate updated child tickets.",
+					issue_number: issueNumber,
+					owner,
+					repo,
+				});
+			}
+			return;
+		}
+
 		if (!labels.includes(SPEC_READY_LABEL)) {
 			console.log(
 				"Issue does not have spec-ready label. Skipping to-tickets workflow.",
@@ -491,19 +503,7 @@ export async function run() {
 		const milestoneTitle = `[Spec] ${issue.title}`;
 		const milestoneNumber = await getOrCreateMilestone(ctx, milestoneTitle);
 
-		const skillInstruction = await readFile(
-			".github/skills/to-tickets.md",
-			"utf-8",
-		);
-		const promptText = `Specification Document (Issue #${issue.number} - ${issue.title}):\n\n${issue.body ?? ""}`;
-
-		const breakdown = await parseTicketsFromAI(
-			ai,
-			skillInstruction,
-			promptText,
-		);
-
-		// Check for existing child issues under milestone or parent ref
+		// Check for existing child issues prior to AI generation
 		const { data: existingIssues } = await octokit.rest.issues.listForRepo({
 			milestone: `${milestoneNumber}`,
 			owner,
@@ -515,6 +515,23 @@ export async function run() {
 			(i) =>
 				i.number !== issueNumber &&
 				(i.body ?? "").includes(`Parent: #${issueNumber}`),
+		);
+
+		let existingContext = "";
+		if (existingChildIssues.length > 0) {
+			existingContext = `\nExisting Child Issues currently linked to this spec:\n${existingChildIssues.map((i) => `- Issue #${i.number}: "${i.title}"`).join("\n")}\nIf a ticket corresponds to an existing child issue, specify its issue number as existingNumber integer.\n`;
+		}
+
+		const skillInstruction = await readFile(
+			".github/skills/to-tickets.md",
+			"utf-8",
+		);
+		const promptText = `Specification Document & Conversation (Issue #${issue.number} - ${issue.title}):\n\n${conversation}${existingContext}`;
+
+		const breakdown = await parseTicketsFromAI(
+			ai,
+			skillInstruction,
+			promptText,
 		);
 
 		let resultChildIssues: Array<{ number: number; title: string }>;
@@ -544,16 +561,7 @@ export async function run() {
 		});
 	} catch (error) {
 		console.error("to-tickets agent execution error:", error);
-		try {
-			await octokit.rest.issues.createComment({
-				body: "⚠️ **To-Tickets Agent Error:** An error occurred while generating child tickets. Please try again.",
-				issue_number: issueNumber,
-				owner,
-				repo,
-			});
-		} catch (commentError) {
-			console.error("Failed to post error comment:", commentError);
-		}
+		await postIssueErrorComment(ctx, "Spec-to-Tickets Agent", error);
 		process.exit(1);
 	}
 }
