@@ -9,7 +9,7 @@ import {
 	NEEDS_HUMAN_REVIEW_LABEL,
 	postIssueErrorComment,
 	transitionState,
-} from "./pm-shared";
+} from "./agent-shared";
 
 export type ReviewDecision = "APPROVE" | "REQUEST_CHANGES" | "ESCALATE";
 
@@ -328,7 +328,7 @@ export async function run() {
 		);
 
 		const skillInstruction = await readFile(
-			".github/skills/reviewer-agent.md",
+			".github/skills/agent-reviewer.md",
 			"utf-8",
 		);
 

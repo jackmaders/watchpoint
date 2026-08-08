@@ -13,7 +13,7 @@ import {
 	SPEC_NEEDED_LABEL,
 	SPEC_READY_LABEL,
 	transitionState,
-} from "./pm-shared";
+} from "./agent-shared";
 
 vi.mock("@actions/github");
 
