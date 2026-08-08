@@ -2,15 +2,16 @@ import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
 import {
-	closeParentIssueIfSafe,
 	createChildIssues,
 	formatChildIssueBody,
 	getOrCreateMilestone,
 	parseTicketsFromAI,
+	postBreakdownSummaryComment,
 	reviewAndUpdateChildIssues,
 	run,
 	TicketBreakdownSchema,
 	topologicalSortTickets,
+	zodToGeminiSchema,
 } from "./pm-to-tickets";
 
 vi.mock("@actions/github");
@@ -23,6 +24,17 @@ describe("pm-to-tickets unit tests", () => {
 		process.env.GEMINI_API_KEY = "fake-api-key";
 		process.env.ISSUE_NUMBER = "42";
 		delete (github.context as { payload?: unknown }).payload;
+	});
+
+	describe("zodToGeminiSchema helper", () => {
+		it("converts TicketBreakdownSchema to Gemini JSON schema tree", () => {
+			const schemaTree = zodToGeminiSchema(TicketBreakdownSchema) as {
+				type: string;
+				properties: { tickets: { type: string } };
+			};
+			expect(schemaTree.type).toBe("OBJECT");
+			expect(schemaTree.properties.tickets.type).toBe("ARRAY");
+		});
 	});
 
 	describe("Zod TicketBreakdownSchema validation", () => {
@@ -134,11 +146,11 @@ describe("pm-to-tickets unit tests", () => {
 			});
 
 			expect(body).toContain("Parent: #42");
-			expect(body).toContain("## What to build");
+			expect(body).toContain('## 1. Goal & Context ("What to Build")');
 			expect(body).toContain("Build the auth form UI component");
 			expect(body).toContain("- [ ] Criteria 1");
 			expect(body).toContain("- [ ] Criteria 2");
-			expect(body).toContain("## Blocked by");
+			expect(body).toContain("## 6. Blocked By");
 			expect(body).toContain("- [ ] #101");
 		});
 
@@ -408,7 +420,7 @@ describe("pm-to-tickets unit tests", () => {
 		});
 	});
 
-	describe("closeParentIssueIfSafe helper", () => {
+	describe("postBreakdownSummaryComment helper", () => {
 		it("posts summary comment on parent issue without closing it", async () => {
 			const octokit = github.getOctokit("token");
 			const ctx = {
@@ -418,7 +430,7 @@ describe("pm-to-tickets unit tests", () => {
 				repo: "watchpoint",
 			};
 
-			await closeParentIssueIfSafe({
+			await postBreakdownSummaryComment({
 				childIssues: [
 					{ number: 101, title: "Ticket 1" },
 					{ number: 102, title: "Ticket 2" },
@@ -488,14 +500,18 @@ describe("pm-to-tickets unit tests", () => {
 				owner: "jackmaders",
 				repo: "watchpoint",
 			});
-			expect(octokit.rest.issues.createMilestone).toHaveBeenCalled();
-			expect(octokit.rest.issues.create).toHaveBeenCalled();
-			expect(octokit.rest.issues.update).not.toHaveBeenCalledWith(
-				expect.objectContaining({
-					issue_number: 42,
-					state: "closed",
-				}),
-			);
+			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+				issue_number: 42,
+				name: "spec-ready",
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+				issue_number: 42,
+				labels: ["refined"],
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
 		});
 
 		it("strips spec-ready label and exits without auto-close on issue reopened event", async () => {

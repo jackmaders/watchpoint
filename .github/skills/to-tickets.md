@@ -36,6 +36,9 @@ Output the tickets strictly adhering to the JSON schema with:
 - `id`: Temporary identifier (e.g. `TICKET-1`, `TICKET-2`)
 - `title`: Short descriptive ticket title
 - `whatToBuild`: End-to-end behavior from user perspective
+- `targetFiles`: Array of specific file paths to create/modify (e.g. `["src/_pages/auth/ui/LoginForm.tsx"]`)
+- `technicalConstraints`: Array of technical constraints, interfaces, or invariants for this slice
+- `implementationSteps`: Sequential list of step-by-step TDD implementation instructions
 - `acceptanceCriteria`: List of acceptance criteria strings
 - `blockers`: Array of temporary ticket IDs that block this ticket (e.g. `["TICKET-1"]`)
 

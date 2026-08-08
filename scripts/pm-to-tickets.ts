@@ -3,11 +3,13 @@ import * as github from "@actions/github";
 import { GoogleGenAI, Type } from "@google/genai";
 import { z } from "zod";
 import {
+	BOT_COMMENT_MARKER,
 	extractLabelNames,
 	fetchIssueContext,
 	type IssueContext,
 	postIssueErrorComment,
 	READY_FOR_DEV_LABEL,
+	REFINED_LABEL,
 	removeLabelIfPresent,
 	SPEC_READY_LABEL,
 } from "./pm-shared";
@@ -28,6 +30,9 @@ export const TicketSchema = z.object({
 	blockers: z.array(z.string()),
 	existingNumber: z.number().nullable().optional(),
 	id: z.string(),
+	implementationSteps: z.array(z.string()).optional(),
+	targetFiles: z.array(z.string()).optional(),
+	technicalConstraints: z.array(z.string()).optional(),
 	title: z.string(),
 	whatToBuild: z.string(),
 });
@@ -39,13 +44,102 @@ export const TicketBreakdownSchema = z.object({
 export type Ticket = z.infer<typeof TicketSchema>;
 export type TicketBreakdown = z.infer<typeof TicketBreakdownSchema>;
 
+function unwrapZodType(val: z.ZodTypeAny): {
+	unwrapped: z.ZodTypeAny;
+	isOptional: boolean;
+} {
+	let unwrapped = val;
+	let isOptional = false;
+
+	if (unwrapped instanceof z.ZodDefault) {
+		unwrapped = (unwrapped as unknown as { _def: { innerType: z.ZodTypeAny } })
+			._def.innerType;
+	}
+	if (
+		unwrapped instanceof z.ZodOptional ||
+		unwrapped instanceof z.ZodNullable
+	) {
+		isOptional = true;
+		unwrapped = (unwrapped as unknown as { _def: { innerType: z.ZodTypeAny } })
+			._def.innerType;
+	}
+
+	return { isOptional, unwrapped };
+}
+
+function getObjectGeminiProperties(shape: Record<string, z.ZodTypeAny>) {
+	const properties: Record<string, unknown> = {};
+	const required: string[] = [];
+
+	for (const [key, value] of Object.entries(shape)) {
+		const { unwrapped, isOptional } = unwrapZodType(value);
+		properties[key] = zodToGeminiSchema(unwrapped);
+		if (!isOptional) {
+			required.push(key);
+		}
+	}
+
+	return { properties, required };
+}
+
+export function zodToGeminiSchema(schema: z.ZodTypeAny): unknown {
+	if (schema instanceof z.ZodObject) {
+		const { properties, required } = getObjectGeminiProperties(schema.shape);
+		return {
+			properties,
+			type: Type.OBJECT,
+			...(required.length > 0 ? { required } : {}),
+		};
+	}
+
+	if (schema instanceof z.ZodArray) {
+		const element = (schema as unknown as { element: z.ZodTypeAny }).element;
+		return {
+			items: zodToGeminiSchema(element),
+			type: Type.ARRAY,
+		};
+	}
+
+	if (schema instanceof z.ZodString) return { type: Type.STRING };
+	if (schema instanceof z.ZodNumber) return { type: Type.INTEGER };
+	if (schema instanceof z.ZodBoolean) return { type: Type.BOOLEAN };
+
+	return { type: Type.STRING };
+}
+
 export function formatChildIssueBody(params: {
 	parentNumber: number;
 	whatToBuild: string;
+	targetFiles?: string[];
+	technicalConstraints?: string[];
+	implementationSteps?: string[];
 	acceptanceCriteria: string[];
 	blockers: string[];
 }): string {
-	const { parentNumber, whatToBuild, acceptanceCriteria, blockers } = params;
+	const {
+		parentNumber,
+		whatToBuild,
+		targetFiles = [],
+		technicalConstraints = [],
+		implementationSteps = [],
+		acceptanceCriteria,
+		blockers,
+	} = params;
+
+	const targetFilesList =
+		targetFiles.length > 0
+			? targetFiles.map((f) => `* ${f}`).join("\n")
+			: "* `src/_pages/` implementation files and corresponding tests";
+
+	const constraintsList =
+		technicalConstraints.length > 0
+			? technicalConstraints.map((c) => `* ${c}`).join("\n")
+			: "* Follow Red -> Green -> Refactor TDD workflow\n* No inline business logic or UI rendering in `app/` routes";
+
+	const stepsList =
+		implementationSteps.length > 0
+			? implementationSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")
+			: "1. **Red (Test First):** Write failing test for slice functionality.\n2. **Implementation:** Implement schema, logic, and UI.\n3. **Green & Refactor:** Verify tests pass and clean up code.";
 
 	const criteriaList = acceptanceCriteria.map((c) => `- [ ] ${c}`).join("\n");
 	const blockersList =
@@ -55,21 +149,33 @@ export function formatChildIssueBody(params: {
 
 	return `Parent: #${parentNumber}
 
-## What to build
+## 1. Goal & Context ("What to Build")
 
 ${whatToBuild}
 
-## Acceptance criteria
+## 2. Target File Scope & FSD Architecture
+
+${targetFilesList}
+
+## 3. Technical Constraints & Contracts
+
+${constraintsList}
+
+## 4. Step-by-Step Implementation Guide
+
+${stepsList}
+
+## 5. Acceptance Criteria & Definition of Done
 
 ${criteriaList || "- [ ] Complete implementation as specified"}
 - [ ] FSD architecture check passes (\`bun run check:architecture\`)
 - [ ] 100% test coverage threshold met (\`bun run test:coverage\`)
 
-## Blocked by
+## 6. Blocked By
 
 ${blockersList}
 
-## Verification Commands
+## 7. Verification Commands
 \`\`\`bash
 bun run check:architecture
 bun run test:coverage
@@ -146,39 +252,10 @@ export async function parseTicketsFromAI(
 	const response = await ai.models.generateContent({
 		config: {
 			responseMimeType: "application/json",
-			responseSchema: {
-				properties: {
-					tickets: {
-						items: {
-							properties: {
-								acceptanceCriteria: {
-									items: { type: Type.STRING },
-									type: Type.ARRAY,
-								},
-								blockers: {
-									items: { type: Type.STRING },
-									type: Type.ARRAY,
-								},
-								existingNumber: { type: Type.INTEGER },
-								id: { type: Type.STRING },
-								title: { type: Type.STRING },
-								whatToBuild: { type: Type.STRING },
-							},
-							required: [
-								"id",
-								"title",
-								"whatToBuild",
-								"acceptanceCriteria",
-								"blockers",
-							],
-							type: Type.OBJECT,
-						},
-						type: Type.ARRAY,
-					},
-				},
-				required: ["tickets"],
-				type: Type.OBJECT,
-			},
+			responseSchema: zodToGeminiSchema(TicketBreakdownSchema) as Record<
+				string,
+				unknown
+			>,
 			systemInstruction,
 			thinkingConfig: {
 				thinkingBudget: 2048,
@@ -292,7 +369,10 @@ export async function reviewAndUpdateChildIssues(params: {
 		const bodyContent = formatChildIssueBody({
 			acceptanceCriteria: ticket.acceptanceCriteria,
 			blockers: mappedBlockers,
+			implementationSteps: ticket.implementationSteps,
 			parentNumber: issueNumber,
+			targetFiles: ticket.targetFiles,
+			technicalConstraints: ticket.technicalConstraints,
 			whatToBuild: ticket.whatToBuild,
 		});
 
@@ -376,7 +456,7 @@ export async function createChildIssues(params: {
 	});
 }
 
-export async function closeParentIssueIfSafe(params: {
+export async function postBreakdownSummaryComment(params: {
 	ctx: IssueContext;
 	parentIssueNumber: number;
 	childIssues: Array<{ number: number; title: string }>;
@@ -389,7 +469,7 @@ export async function closeParentIssueIfSafe(params: {
 		.map((c) => `- #${c.number} (${c.title})`)
 		.join("\n");
 
-	const commentBody = `🎯 **Specification Breakdown Complete!**
+	const commentBody = `${BOT_COMMENT_MARKER}\n🎯 **Specification Breakdown Complete!**
 
 All ${childIssues.length} child issues created/updated and linked under milestone **${milestoneTitle}**:
 
@@ -422,7 +502,7 @@ export async function run() {
 			if (labels.includes(SPEC_READY_LABEL)) {
 				await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
 				await octokit.rest.issues.createComment({
-					body: "ℹ️ **Issue Reopened:** Removed `spec-ready` label so the specification can be edited and refined. Re-apply `spec-ready` when ready to generate updated child tickets.",
+					body: `${BOT_COMMENT_MARKER}\nℹ️ **Issue Reopened:** Removed \`spec-ready\` label so the specification can be edited and refined. Re-apply \`spec-ready\` when ready to generate updated child tickets.`,
 					issue_number: issueNumber,
 					owner,
 					repo,
@@ -480,11 +560,20 @@ export async function run() {
 			parentNodeId: issue.node_id,
 		});
 
-		await closeParentIssueIfSafe({
+		await postBreakdownSummaryComment({
 			childIssues: resultChildIssues,
 			ctx,
 			milestoneTitle,
 			parentIssueNumber: issueNumber,
+		});
+
+		// Transition labels: remove spec-ready and add refined
+		await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
+		await octokit.rest.issues.addLabels({
+			issue_number: issueNumber,
+			labels: [REFINED_LABEL],
+			owner,
+			repo,
 		});
 	} catch (error) {
 		console.error("to-tickets agent execution error:", error);

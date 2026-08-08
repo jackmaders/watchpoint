@@ -6,6 +6,7 @@ import {
 	formatGeminiError,
 	postIssueErrorComment,
 	READY_FOR_DEV_LABEL,
+	REFINED_LABEL,
 	removeLabelIfPresent,
 	SPEC_READY_LABEL,
 } from "./pm-shared";
@@ -21,6 +22,7 @@ describe("pm-shared unit tests", () => {
 		it("defines correct label constants", () => {
 			expect(SPEC_READY_LABEL).toBe("spec-ready");
 			expect(READY_FOR_DEV_LABEL).toBe("ready-for-dev");
+			expect(REFINED_LABEL).toBe("refined");
 		});
 	});
 

@@ -2,6 +2,8 @@ import type * as github from "@actions/github";
 
 export const SPEC_READY_LABEL = "spec-ready";
 export const READY_FOR_DEV_LABEL = "ready-for-dev";
+export const REFINED_LABEL = "refined";
+export const BOT_COMMENT_MARKER = "<!-- bot-comment -->";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -72,21 +74,15 @@ export async function fetchIssueContext(ctx: IssueContext) {
 
 	for (const comment of comments) {
 		const commentBody = comment.body ?? "";
-		if (
-			commentBody.includes("PM Agent Error") ||
-			commentBody.includes("To-Tickets Agent Error") ||
-			commentBody.includes("Feature Specification Published!") ||
-			commentBody.includes("synthesized our discussion")
-		) {
+		const isBot =
+			comment.user?.type === "Bot" || commentBody.includes(BOT_COMMENT_MARKER);
+
+		if (isBot) {
 			continue;
 		}
 
-		const isBot = comment.user?.type === "Bot";
-		const role = isBot ? "Agent" : "User";
-		if (!isBot) {
-			latestUserComment = commentBody;
-		}
-		conversation += `${role}: ${commentBody}\n\n`;
+		latestUserComment = commentBody;
+		conversation += `User: ${commentBody}\n\n`;
 	}
 
 	return { comments, conversation, issue, latestUserComment };
@@ -112,7 +108,7 @@ export async function postIssueErrorComment(
 	error: unknown,
 ) {
 	const formattedDetails = formatGeminiError(error);
-	const commentBody = `⚠️ **${agentName} Error:** An error occurred while executing this workflow step.\n\n**Details:**\n\`\`\`\n${formattedDetails}\n\`\`\``;
+	const commentBody = `${BOT_COMMENT_MARKER}\n⚠️ **${agentName} Error:** An error occurred while executing this workflow step.\n\n**Details:**\n\`\`\`\n${formattedDetails}\n\`\`\``;
 
 	try {
 		await ctx.octokit.rest.issues.createComment({
