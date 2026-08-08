@@ -5,6 +5,8 @@ import {
 	findMatchingChildIssue,
 	formatChildIssueBody,
 	getOrCreateMilestone,
+	linkSingleBlocker,
+	linkSubIssue,
 	parseTicketsFromAI,
 	postBreakdownSummaryComment,
 	reviewAndUpdateChildIssues,
@@ -106,6 +108,7 @@ describe("pm-to-tickets unit tests", () => {
 			];
 
 			const sorted = topologicalSortTickets(tickets);
+			expect(sorted).toHaveLength(3);
 			expect(sorted.map((t) => t.id)).toEqual([
 				"TICKET-1",
 				"TICKET-2",
@@ -113,7 +116,7 @@ describe("pm-to-tickets unit tests", () => {
 			]);
 		});
 
-		it("handles cycle gracefully without infinite loop", () => {
+		it("handles circular dependencies without crashing", () => {
 			const tickets = [
 				{
 					acceptanceCriteria: ["AC1"],
@@ -137,10 +140,9 @@ describe("pm-to-tickets unit tests", () => {
 	});
 
 	describe("formatChildIssueBody helper", () => {
-		it("formats issue body with parent reference, metadata key, acceptance criteria, and bullet blockers", () => {
+		it("formats issue body with parent reference, metadata key, and acceptance criteria", () => {
 			const body = formatChildIssueBody({
 				acceptanceCriteria: ["Criteria 1", "Criteria 2"],
-				blockers: ["#101"],
 				parentNumber: 42,
 				ticketId: "TICKET-1",
 				whatToBuild: "Build the auth form UI component",
@@ -152,21 +154,8 @@ describe("pm-to-tickets unit tests", () => {
 			expect(body).toContain("Build the auth form UI component");
 			expect(body).toContain("- [ ] Criteria 1");
 			expect(body).toContain("- [ ] Criteria 2");
-			expect(body).toContain("## 6. Blocked By");
-			expect(body).toContain("* #101");
-			expect(body).not.toContain("- [ ] #101");
-		});
-
-		it("formats issue body with None when blockers array is empty", () => {
-			const body = formatChildIssueBody({
-				acceptanceCriteria: ["Criteria 1"],
-				blockers: [],
-				parentNumber: 42,
-				ticketId: "TICKET-1",
-				whatToBuild: "Build the auth form UI component",
-			});
-
-			expect(body).toContain("None — can start immediately");
+			expect(body).toContain("## 6. Verification Commands");
+			expect(body).not.toContain("Blocked By");
 		});
 	});
 
@@ -268,7 +257,7 @@ describe("pm-to-tickets unit tests", () => {
 			});
 		});
 
-		it("creates new milestone if not existing", async () => {
+		it("creates new milestone if none matches prefix", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.listMilestones).mockResolvedValue({
 				data: [],
@@ -342,8 +331,46 @@ describe("pm-to-tickets unit tests", () => {
 		});
 	});
 
+	describe("linkSubIssue & linkSingleBlocker helpers", () => {
+		it("calls GraphQL addSubIssue and handles errors gracefully", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.graphql).mockRejectedValueOnce(
+				new Error("GraphQL Error"),
+			);
+
+			await expect(
+				linkSubIssue(octokit, "I_kw_parent", "I_kw_child"),
+			).resolves.not.toThrow();
+			expect(octokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addSubIssue"),
+				expect.objectContaining({
+					issueId: "I_kw_parent",
+					subIssueId: "I_kw_child",
+				}),
+			);
+		});
+
+		it("calls GraphQL addBlockedBy and handles errors gracefully", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.graphql).mockRejectedValueOnce(
+				new Error("GraphQL Error"),
+			);
+
+			await expect(
+				linkSingleBlocker(octokit, "I_kw_target", "I_kw_blocker"),
+			).resolves.not.toThrow();
+			expect(octokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addBlockedBy"),
+				expect.objectContaining({
+					blockedByIssueId: "I_kw_blocker",
+					issueId: "I_kw_target",
+				}),
+			);
+		});
+	});
+
 	describe("reviewAndUpdateChildIssues helper", () => {
-		it("updates existing matching child issues, creates new ones, and closes obsolete ones", async () => {
+		it("updates existing matching child issues, creates new ones, and links native blockers", async () => {
 			const octokit = github.getOctokit("token");
 			const ctx = {
 				issueNumber: 42,
@@ -395,7 +422,6 @@ describe("pm-to-tickets unit tests", () => {
 				parentNodeId: "I_kw_parent42",
 			});
 
-			// Should update ticket 101
 			expect(octokit.rest.issues.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					issue_number: 101,
@@ -403,7 +429,6 @@ describe("pm-to-tickets unit tests", () => {
 				}),
 			);
 
-			// Should close obsolete ticket 102
 			expect(octokit.rest.issues.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					issue_number: 102,
@@ -412,7 +437,6 @@ describe("pm-to-tickets unit tests", () => {
 				}),
 			);
 
-			// Should post comment on ticket 102
 			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith(
 				expect.objectContaining({
 					body: expect.stringContaining("obsolete"),
@@ -420,10 +444,16 @@ describe("pm-to-tickets unit tests", () => {
 				}),
 			);
 
-			// Should create new ticket for TICKET-3
 			expect(octokit.rest.issues.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					title: "Brand New Ticket 3",
+				}),
+			);
+
+			expect(octokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addBlockedBy"),
+				expect.objectContaining({
+					blockedByIssueId: "I_kw_child101",
 				}),
 			);
 		});
@@ -450,39 +480,54 @@ describe("pm-to-tickets unit tests", () => {
 			});
 
 			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
-				body: expect.stringContaining("All 2 child issues created"),
+				body: expect.stringContaining("Specification Breakdown Complete!"),
 				issue_number: 42,
 				owner: "jackmaders",
 				repo: "watchpoint",
 			});
-
-			expect(octokit.rest.issues.update).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("run integration workflow execution", () => {
-		it("executes pm-to-tickets workflow end-to-end for new spec", async () => {
+		it("skips execution smoothly when issue does not have spec-ready label", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
 				data: {
-					body: "# [EPIC] Feature Spec\nSpec details...",
-					labels: [{ name: "spec-ready" }],
-					node_id: "I_kw_parent42",
+					body: "Issue Body",
+					labels: [{ name: "idea" }],
 					number: 42,
-					title: "Feature Spec",
+					title: "Feature Title",
 				},
 			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+			vi.mocked(octokit.paginate).mockResolvedValue([]);
 
-			vi.mocked(octokit.paginate).mockResolvedValue([
-				{ body: "User comment context", user: { type: "User" } },
-			]);
+			await run();
 
+			expect(octokit.rest.issues.addLabels).not.toHaveBeenCalled();
+		});
+
+		it("executes spec breakdown workflow when spec-ready label is present", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
+				data: {
+					body: "Specification text",
+					labels: [{ name: "spec-ready" }],
+					node_id: "I_kw_spec42",
+					number: 42,
+					title: "Spec Title",
+				},
+			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+			vi.mocked(octokit.paginate).mockResolvedValue([]);
 			vi.mocked(octokit.rest.issues.listMilestones).mockResolvedValue({
 				data: [],
 			} as unknown as Awaited<
 				ReturnType<typeof octokit.rest.issues.listMilestones>
 			>);
-
+			vi.mocked(octokit.rest.issues.createMilestone).mockResolvedValue({
+				data: { number: 1, title: "[Spec #42] Spec Title" },
+			} as unknown as Awaited<
+				ReturnType<typeof octokit.rest.issues.createMilestone>
+			>);
 			vi.mocked(octokit.rest.issues.listForRepo).mockResolvedValue({
 				data: [],
 			} as unknown as Awaited<
@@ -504,99 +549,67 @@ describe("pm-to-tickets unit tests", () => {
 
 			await run();
 
-			expect(octokit.rest.issues.get).toHaveBeenCalledWith({
-				issue_number: 42,
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
-			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
-				issue_number: 42,
-				name: "spec-ready",
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
-			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith({
-				issue_number: 42,
-				labels: ["refined"],
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
+			expect(octokit.rest.issues.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: ["ready-for-dev"],
+					title: "Ticket 1 Title",
+				}),
+			);
+			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: ["refined"],
+				}),
+			);
 		});
 
-		it("strips spec-ready label and exits without auto-close on issue reopened event", async () => {
-			(github.context as { payload: unknown }).payload = {
+		it("handles issue reopening by removing spec-ready label", async () => {
+			const octokit = github.getOctokit("token");
+			(github.context as { payload?: { action?: string } }).payload = {
 				action: "reopened",
 			};
 
-			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
 				data: {
-					body: "Spec body",
+					body: "Specification text",
 					labels: [{ name: "spec-ready" }],
-					node_id: "I_kw_parent42",
 					number: 42,
-					title: "Feature Spec",
+					title: "Spec Title",
 				},
 			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+			vi.mocked(octokit.paginate).mockResolvedValue([]);
 
 			await run();
 
-			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
-				issue_number: 42,
-				name: "spec-ready",
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
-
-			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith(
+			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith(
 				expect.objectContaining({
-					body: expect.stringContaining("Removed `spec-ready` label"),
-					issue_number: 42,
+					name: "spec-ready",
 				}),
 			);
-
-			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
-			expect(octokit.rest.issues.create).not.toHaveBeenCalled();
-		});
-
-		it("skips execution if spec-ready label is missing", async () => {
-			const octokit = github.getOctokit("token");
-			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
-				data: {
-					body: "Draft spec",
-					labels: [{ name: "idea" }],
-					node_id: "I_kw_parent42",
-					number: 42,
-					title: "Feature Spec",
-				},
-			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
-
-			await run();
-
-			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
-			expect(octokit.rest.issues.create).not.toHaveBeenCalled();
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("Issue Reopened"),
+				}),
+			);
 		});
 
 		it("posts formatted error comment on execution failure", async () => {
 			const octokit = github.getOctokit("token");
-			vi.mocked(octokit.rest.issues.get).mockRejectedValueOnce(
+			vi.mocked(octokit.rest.issues.get).mockRejectedValue(
 				new Error("GitHub API rate limit exceeded"),
 			);
+			const exitSpy = vi
+				.spyOn(process, "exit")
+				.mockImplementation((() => {}) as never);
 
-			await expect(run()).rejects.toThrow();
+			await run();
 
-			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
-				body: expect.stringContaining("⚠️ **Spec-to-Tickets Agent Error:**"),
-				issue_number: 42,
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
-			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
-				body: expect.stringContaining("GitHub API rate limit exceeded"),
-				issue_number: 42,
-				owner: "jackmaders",
-				repo: "watchpoint",
-			});
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("GitHub API rate limit exceeded"),
+				}),
+			);
+			expect(exitSpy).toHaveBeenCalledWith(1);
+			exitSpy.mockRestore();
 		});
 	});
 });

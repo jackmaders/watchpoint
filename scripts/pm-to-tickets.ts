@@ -117,7 +117,6 @@ export function formatChildIssueBody(params: {
 	technicalConstraints?: string[];
 	implementationSteps?: string[];
 	acceptanceCriteria: string[];
-	blockers: string[];
 }): string {
 	const {
 		parentNumber,
@@ -127,7 +126,6 @@ export function formatChildIssueBody(params: {
 		technicalConstraints = [],
 		implementationSteps = [],
 		acceptanceCriteria,
-		blockers,
 	} = params;
 
 	const targetFilesList =
@@ -146,11 +144,6 @@ export function formatChildIssueBody(params: {
 			: "1. **Red (Test First):** Write failing test for slice functionality.\n2. **Implementation:** Implement schema, logic, and UI.\n3. **Green & Refactor:** Verify tests pass and clean up code.";
 
 	const criteriaList = acceptanceCriteria.map((c) => `- [ ] ${c}`).join("\n");
-	const blockersList =
-		blockers.length > 0
-			? blockers.map((b) => `* ${b}`).join("\n")
-			: "None — can start immediately";
-
 	const keyComment = ticketId ? `\n<!-- spec-ticket-key: ${ticketId} -->` : "";
 
 	return `Parent: #${parentNumber}${keyComment}
@@ -177,11 +170,7 @@ ${criteriaList || "- [ ] Complete implementation as specified"}
 - [ ] FSD architecture check passes (\`bun run check:architecture\`)
 - [ ] 100% test coverage threshold met (\`bun run test:coverage\`)
 
-## 6. Blocked By
-
-${blockersList}
-
-## 7. Verification Commands
+## 6. Verification Commands
 \`\`\`bash
 bun run check:architecture
 bun run test:coverage
@@ -348,6 +337,75 @@ export async function closeObsoleteChildIssues(
 	}
 }
 
+export async function linkSubIssue(
+	octokit: IssueContext["octokit"],
+	parentNodeId: string,
+	childNodeId: string,
+) {
+	try {
+		await octokit.graphql(
+			`mutation($issueId: ID!, $subIssueId: ID!) {
+				addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
+					issue { id }
+					subIssue { id }
+				}
+			}`,
+			{
+				headers: { "GraphQL-Features": "sub_issues" },
+				issueId: parentNodeId,
+				subIssueId: childNodeId,
+			},
+		);
+	} catch (graphqlErr) {
+		console.warn("GraphQL addSubIssue failed:", graphqlErr);
+	}
+}
+
+export async function linkSingleBlocker(
+	octokit: IssueContext["octokit"],
+	targetNodeId: string,
+	blockerNodeId: string,
+) {
+	try {
+		await octokit.graphql(
+			`mutation($issueId: ID!, $blockedByIssueId: ID!) {
+				addBlockedBy(input: { issueId: $issueId, blockedByIssueId: $blockedByIssueId }) {
+					issue { id }
+				}
+			}`,
+			{
+				blockedByIssueId: blockerNodeId,
+				headers: { "GraphQL-Features": "sub_issues,issue_dependencies" },
+				issueId: targetNodeId,
+			},
+		);
+	} catch (blockingErr) {
+		console.warn("GraphQL addBlockedBy failed:", blockingErr);
+	}
+}
+
+export async function linkNativeIssueBlockers(
+	octokit: IssueContext["octokit"],
+	sortedTickets: Ticket[],
+	idToNodeIdMap: Map<string, string>,
+) {
+	const tasks: Promise<void>[] = [];
+
+	for (const ticket of sortedTickets) {
+		const targetNodeId = idToNodeIdMap.get(ticket.id);
+		if (!targetNodeId || !ticket.blockers?.length) continue;
+
+		for (const blockerId of ticket.blockers) {
+			const blockerNodeId = idToNodeIdMap.get(blockerId);
+			if (blockerNodeId) {
+				tasks.push(linkSingleBlocker(octokit, targetNodeId, blockerNodeId));
+			}
+		}
+	}
+
+	await Promise.all(tasks);
+}
+
 export async function reviewAndUpdateChildIssues(params: {
 	ctx: IssueContext;
 	parentNodeId: string;
@@ -377,7 +435,7 @@ export async function reviewAndUpdateChildIssues(params: {
 		node_id: string;
 		title: string;
 	}> = [];
-	const idToNumberMap = new Map<string, number>();
+	const idToNodeIdMap = new Map<string, string>();
 	const sortedTickets = topologicalSortTickets(newTickets);
 
 	for (const ticket of sortedTickets) {
@@ -387,14 +445,8 @@ export async function reviewAndUpdateChildIssues(params: {
 			ticket,
 		);
 
-		const mappedBlockers = ticket.blockers.map((b) => {
-			const num = idToNumberMap.get(b);
-			return num ? `#${num}` : b;
-		});
-
 		const bodyContent = formatChildIssueBody({
 			acceptanceCriteria: ticket.acceptanceCriteria,
-			blockers: mappedBlockers,
 			implementationSteps: ticket.implementationSteps,
 			parentNumber: issueNumber,
 			targetFiles: ticket.targetFiles,
@@ -403,9 +455,13 @@ export async function reviewAndUpdateChildIssues(params: {
 			whatToBuild: ticket.whatToBuild,
 		});
 
+		let childNodeId = "";
+		let childNumber = 0;
+
 		if (match) {
 			matchedNumbers.add(match.number);
-			idToNumberMap.set(ticket.id, match.number);
+			childNodeId = match.node_id;
+			childNumber = match.number;
 
 			await octokit.rest.issues.update({
 				body: bodyContent,
@@ -415,13 +471,6 @@ export async function reviewAndUpdateChildIssues(params: {
 				owner,
 				repo,
 				state: "open",
-				title: ticket.title,
-			});
-
-			updatedList.push({
-				id: ticket.id,
-				node_id: match.node_id,
-				number: match.number,
 				title: ticket.title,
 			});
 		} else {
@@ -434,53 +483,24 @@ export async function reviewAndUpdateChildIssues(params: {
 				title: ticket.title,
 			});
 
-			idToNumberMap.set(ticket.id, createdIssue.number);
-			updatedList.push({
-				id: ticket.id,
-				node_id: createdIssue.node_id,
-				number: createdIssue.number,
-				title: createdIssue.title,
-			});
+			childNodeId = createdIssue.node_id;
+			childNumber = createdIssue.number;
 
-			try {
-				await octokit.graphql(
-					`mutation($issueId: ID!, $subIssueId: ID!) {
-						addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
-							issue { id }
-							subIssue { id }
-						}
-					}`,
-					{
-						headers: { "GraphQL-Features": "sub_issues" },
-						issueId: parentNodeId,
-						subIssueId: createdIssue.node_id,
-					},
-				);
-			} catch (graphqlErr) {
-				console.warn("GraphQL addSubIssue failed:", graphqlErr);
-			}
+			await linkSubIssue(octokit, parentNodeId, createdIssue.node_id);
 		}
+
+		idToNodeIdMap.set(ticket.id, childNodeId);
+		updatedList.push({
+			id: ticket.id,
+			node_id: childNodeId,
+			number: childNumber,
+			title: ticket.title,
+		});
 	}
 
+	await linkNativeIssueBlockers(octokit, sortedTickets, idToNodeIdMap);
 	await closeObsoleteChildIssues(ctx, existingChildIssues, matchedNumbers);
 	return updatedList;
-}
-
-export async function createChildIssues(params: {
-	ctx: IssueContext;
-	parentNodeId: string;
-	milestoneNumber: number;
-	tickets: Ticket[];
-}): Promise<
-	Array<{ id: string; number: number; node_id: string; title: string }>
-> {
-	return reviewAndUpdateChildIssues({
-		ctx: params.ctx,
-		existingChildIssues: [],
-		milestoneNumber: params.milestoneNumber,
-		newTickets: params.tickets,
-		parentNodeId: params.parentNodeId,
-	});
 }
 
 export async function postBreakdownSummaryComment(params: {
@@ -524,7 +544,6 @@ export async function run() {
 
 		const labels = extractLabelNames(issue.labels);
 
-		// Handle issue reopening: strip spec-ready label to prevent auto-close loop
 		if (github.context.payload?.action === "reopened") {
 			if (labels.includes(SPEC_READY_LABEL)) {
 				await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
@@ -552,7 +571,6 @@ export async function run() {
 			issue.title,
 		);
 
-		// Check for existing child issues prior to AI generation
 		const { data: existingIssues } = await octokit.rest.issues.listForRepo({
 			milestone: `${milestoneNumber}`,
 			owner,
@@ -598,7 +616,6 @@ export async function run() {
 			parentIssueNumber: issueNumber,
 		});
 
-		// Transition labels: remove spec-ready and add refined
 		await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
 		await octokit.rest.issues.addLabels({
 			issue_number: issueNumber,
