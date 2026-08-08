@@ -529,7 +529,7 @@ export async function run() {
 			if (labels.includes(SPEC_READY_LABEL)) {
 				await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
 				await octokit.rest.issues.createComment({
-					body: `${BOT_COMMENT_MARKER}\n` + "ℹ️ **Issue Reopened:** Removed `spec-ready` label so the specification can be edited and refined. Re-apply `spec-ready` when ready to generate updated child tickets.",
+					body: `${BOT_COMMENT_MARKER}\nℹ️ **Issue Reopened:** Removed \`spec-ready\` label so the specification can be edited and refined. Re-apply \`spec-ready\` when ready to generate updated child tickets.`,
 					issue_number: issueNumber,
 					owner,
 					repo,
