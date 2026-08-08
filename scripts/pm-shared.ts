@@ -3,6 +3,11 @@ import type * as github from "@actions/github";
 export const SPEC_READY_LABEL = "spec-ready";
 export const READY_FOR_DEV_LABEL = "ready-for-dev";
 export const REFINED_LABEL = "refined";
+export const REVIEW_ROUND_1_LABEL = "review-round-1";
+export const REVIEW_ROUND_2_LABEL = "review-round-2";
+export const CHANGES_REQUESTED_LABEL = "changes-requested";
+export const APPROVED_LABEL = "approved";
+export const NEEDS_HUMAN_REVIEW_LABEL = "needs-human-review";
 export const BOT_COMMENT_MARKER = "<!-- bot-comment -->";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
