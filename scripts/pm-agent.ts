@@ -1,6 +1,16 @@
 import { readFile } from "node:fs/promises";
 import * as github from "@actions/github";
 import { GoogleGenAI } from "@google/genai";
+import {
+	extractLabelNames,
+	fetchIssueContext,
+	type IssueContext,
+	postIssueErrorComment,
+	removeLabelIfPresent,
+	SPEC_READY_LABEL,
+} from "./pm-shared";
+
+export { SPEC_READY_LABEL };
 
 declare global {
 	namespace NodeJS {
@@ -13,27 +23,11 @@ declare global {
 	}
 }
 
-export const SPEC_READY_LABEL = "spec-ready";
 export const TO_SPEC_TRIGGER_REGEX = /<!--\s*Trigger:\s*["']to-spec["']\s*-->/i;
-
-export type OctokitClient = ReturnType<typeof github.getOctokit>;
-
-export interface IssueContext {
-	octokit: OctokitClient;
-	issueNumber: number;
-	owner: string;
-	repo: string;
-}
 
 export type AgentAction =
 	| { type: "GRILL"; responseText: string }
 	| { type: "PUBLISH_SPEC"; specText: string };
-
-export function extractLabelNames(
-	labels: Array<string | { name?: string }>,
-): string[] {
-	return labels.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
-}
 
 export function determineSkillPath(
 	labels: Array<string | { name?: string }>,
@@ -76,45 +70,6 @@ export function parseAgentAction(responseText: string): AgentAction {
 	return { responseText, type: "GRILL" };
 }
 
-export async function fetchIssueContext(ctx: IssueContext) {
-	const { octokit, issueNumber, owner, repo } = ctx;
-	const { data: issue } = await octokit.rest.issues.get({
-		issue_number: issueNumber,
-		owner,
-		repo,
-	});
-
-	const comments = await octokit.paginate(octokit.rest.issues.listComments, {
-		issue_number: issueNumber,
-		owner,
-		repo,
-	});
-
-	const issueBodyText = issue.body ?? "";
-	let conversation = `User Context (Issue Body): \n${issueBodyText}\n\n`;
-	let latestUserComment = "";
-
-	for (const comment of comments) {
-		const commentBody = comment.body ?? "";
-		if (
-			commentBody.includes("PM Agent Error") ||
-			commentBody.includes("Feature Specification Published!") ||
-			commentBody.includes("synthesized our discussion")
-		) {
-			continue;
-		}
-
-		const isBot = comment.user?.type === "Bot";
-		const role = isBot ? "Agent" : "User";
-		if (!isBot) {
-			latestUserComment = commentBody;
-		}
-		conversation += `${role}: ${commentBody}\n\n`;
-	}
-
-	return { comments, conversation, issue, latestUserComment };
-}
-
 export async function generateAgentResponse(
 	ai: GoogleGenAI,
 	systemInstruction: string,
@@ -137,36 +92,6 @@ export async function generateAgentResponse(
 	}
 
 	return response.text;
-}
-
-export async function removeLabelIfPresent(
-	ctx: IssueContext,
-	labels: Array<string | { name?: string }>,
-	labelToRemove: string,
-) {
-	const labelNames = extractLabelNames(labels);
-
-	if (labelNames.includes(labelToRemove)) {
-		try {
-			await ctx.octokit.rest.issues.removeLabel({
-				issue_number: ctx.issueNumber,
-				name: labelToRemove,
-				owner: ctx.owner,
-				repo: ctx.repo,
-			});
-		} catch (error: unknown) {
-			if (
-				typeof error === "object" &&
-				error !== null &&
-				"status" in error &&
-				(error as { status?: number }).status === 404
-			) {
-				return;
-			}
-			// Rethrow error if not 404
-			throw error;
-		}
-	}
 }
 
 export async function executeSpecPublishing(
@@ -286,16 +211,7 @@ export async function run() {
 		}
 	} catch (error) {
 		console.error("PM Agent execution error:", error);
-		try {
-			await octokit.rest.issues.createComment({
-				body: "⚠️ **PM Agent Error:** An error occurred while processing this ideation step. Please try again.",
-				issue_number: issueNumber,
-				owner,
-				repo,
-			});
-		} catch (commentError) {
-			console.error("Failed to post error comment:", commentError);
-		}
+		await postIssueErrorComment(ctx, "PM Agent", error);
 		process.exit(1);
 	}
 }

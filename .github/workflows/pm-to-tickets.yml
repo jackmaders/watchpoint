@@ -1,0 +1,46 @@
+name: Spec-to-Tickets AI Agent
+
+on:
+  issues:
+    types: [labeled, edited, reopened]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: pm-to-tickets-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  run-to-tickets-agent:
+    name: 🎫 Generate Child Tickets from Spec
+    if: contains(github.event.issue.labels.*.name, 'spec-ready')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🤖 Execute To-Tickets Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: bun scripts/pm-to-tickets.ts
