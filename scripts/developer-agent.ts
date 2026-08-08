@@ -3,14 +3,16 @@ import * as github from "@actions/github";
 import { GoogleGenAI } from "@google/genai";
 import {
 	BOT_COMMENT_MARKER,
+	DEV_IN_PROGRESS_LABEL,
+	DEV_NEEDED_LABEL,
 	extractLabelNames,
 	fetchIssueContext,
 	type IssueContext,
 	postIssueErrorComment,
-	READY_FOR_DEV_LABEL,
+	transitionState,
 } from "./pm-shared";
 
-export const IN_PROGRESS_LABEL = "in-progress";
+export { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL };
 
 declare global {
 	namespace NodeJS {
@@ -39,7 +41,7 @@ export function isDeveloperTrigger(
 		return true;
 	}
 
-	return labelNames.includes(READY_FOR_DEV_LABEL);
+	return labelNames.includes(DEV_NEEDED_LABEL);
 }
 
 export function extractTargetSliceName(body?: string | null): string {
@@ -88,29 +90,6 @@ export async function generateDeveloperImplementation(
 	return response.text;
 }
 
-export async function postDeveloperStartedComment(
-	ctx: IssueContext,
-	branchName: string,
-) {
-	const { octokit, issueNumber, owner, repo } = ctx;
-
-	const body = `${BOT_COMMENT_MARKER}
-🚀 **Developer AI Agent Starting Work!**
-
-* **Target Branch:** \`${branchName}\`
-* **Workflow:** Following \`implement\` & \`tdd\` skills with AAA testing pattern.
-* **Architecture:** Feature-Sliced Design (\`src/_pages/\`).
-
-Executing implementation plan synthesis and architecture verification...`;
-
-	await octokit.rest.issues.createComment({
-		body,
-		issue_number: issueNumber,
-		owner,
-		repo,
-	});
-}
-
 export async function postDeveloperCompletedComment(
 	ctx: IssueContext,
 	implementationSummary: string,
@@ -126,7 +105,6 @@ ${implementationSummary}
 
 * **Target Branch:** \`${branchName}\`
 * **Architecture:** Feature-Sliced Design (\`src/_pages/\`)
-* **PR Templates Available:** \`.github/PULL_REQUEST_TEMPLATE/\` (\`feature.md\`, \`refactor.md\`, \`bugfix.md\`)
 * **Verification Command:** \`bun run validate\`
 `;
 
@@ -168,7 +146,12 @@ export async function run() {
 		const { conversation, issue } = await fetchIssueContext(ctx);
 
 		const branchName = sanitizeBranchName(issue.title, issueNumber, issue.body);
-		await postDeveloperStartedComment(ctx, branchName);
+
+		// Quiet state transition: remove dev-needed, add dev-in-progress (no noise comment)
+		await transitionState(ctx, issue.labels, {
+			add: [DEV_IN_PROGRESS_LABEL],
+			remove: [DEV_NEEDED_LABEL],
+		});
 
 		const skillInstruction = await readFile(
 			".github/skills/developer-agent.md",
@@ -184,14 +167,6 @@ export async function run() {
 		);
 
 		await postDeveloperCompletedComment(ctx, implementationSummary, branchName);
-
-		// Transition labels: add in-progress
-		await octokit.rest.issues.addLabels({
-			issue_number: issueNumber,
-			labels: [IN_PROGRESS_LABEL],
-			owner,
-			repo,
-		});
 	} catch (error) {
 		console.error("Developer Agent execution error:", error);
 		await postIssueErrorComment(ctx, "Developer Agent", error);

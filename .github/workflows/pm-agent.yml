@@ -17,8 +17,8 @@ jobs:
   run-pm-agent:
     name: 🤖 Run Product Manager AI Agent
     if: >
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'idea')) ||
-      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'idea') && github.event.comment.user.type != 'Bot')
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'spec-needed')) ||
+      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'spec-needed') || contains(github.event.comment.body, '/grill') || contains(github.event.comment.body, '/spec')) && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
 
     steps:

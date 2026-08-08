@@ -7,10 +7,12 @@ import {
 	type IssueContext,
 	postIssueErrorComment,
 	removeLabelIfPresent,
+	SPEC_NEEDED_LABEL,
 	SPEC_READY_LABEL,
+	transitionState,
 } from "./pm-shared";
 
-export { SPEC_READY_LABEL };
+export { SPEC_NEEDED_LABEL, SPEC_READY_LABEL };
 
 declare global {
 	namespace NodeJS {
@@ -36,7 +38,7 @@ export function determineSkillPath(
 	const labelNames = extractLabelNames(labels);
 	const commentText = latestUserComment ?? "";
 
-	if (commentText.includes("/to-spec")) {
+	if (commentText.includes("/to-spec") || commentText.includes("/spec")) {
 		return ".github/skills/to-spec.md";
 	}
 
@@ -44,11 +46,11 @@ export function determineSkillPath(
 		return ".github/skills/grill-me.md";
 	}
 
-	if (labelNames.includes(SPEC_READY_LABEL)) {
-		return null;
+	if (labelNames.includes(SPEC_NEEDED_LABEL)) {
+		return ".github/skills/grill-me.md";
 	}
 
-	return ".github/skills/grill-me.md";
+	return null;
 }
 
 export function extractOriginalProposal(body?: string | null): string {
@@ -113,11 +115,9 @@ export async function executeSpecPublishing(
 		repo,
 	});
 
-	await octokit.rest.issues.addLabels({
-		issue_number: issueNumber,
-		labels: [SPEC_READY_LABEL],
-		owner,
-		repo,
+	await transitionState(ctx, [], {
+		add: [SPEC_READY_LABEL],
+		remove: [SPEC_NEEDED_LABEL],
 	});
 
 	await octokit.rest.issues.createComment({

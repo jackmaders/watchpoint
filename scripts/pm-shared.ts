@@ -1,11 +1,9 @@
 import type * as github from "@actions/github";
 
+export const SPEC_NEEDED_LABEL = "spec-needed";
 export const SPEC_READY_LABEL = "spec-ready";
-export const READY_FOR_DEV_LABEL = "ready-for-dev";
-export const REFINED_LABEL = "refined";
-export const REVIEW_ROUND_1_LABEL = "review-round-1";
-export const REVIEW_ROUND_2_LABEL = "review-round-2";
-export const CHANGES_REQUESTED_LABEL = "changes-requested";
+export const DEV_NEEDED_LABEL = "dev-needed";
+export const DEV_IN_PROGRESS_LABEL = "dev-in-progress";
 export const APPROVED_LABEL = "approved";
 export const NEEDS_HUMAN_REVIEW_LABEL = "needs-human-review";
 export const BOT_COMMENT_MARKER = "<!-- bot-comment -->";
@@ -56,6 +54,36 @@ export async function removeLabelIfPresent(
 			}
 			throw error;
 		}
+	}
+}
+
+export async function transitionState(
+	ctx: IssueContext,
+	currentLabels: Array<string | { name?: string }>,
+	options: {
+		add?: string[];
+		remove?: string[];
+	},
+) {
+	const currentNames = extractLabelNames(currentLabels);
+	const toRemove = (options.remove ?? []).filter((name) =>
+		currentNames.includes(name),
+	);
+	const toAdd = (options.add ?? []).filter(
+		(name) => !currentNames.includes(name),
+	);
+
+	for (const labelToRemove of toRemove) {
+		await removeLabelIfPresent(ctx, currentLabels, labelToRemove);
+	}
+
+	if (toAdd.length > 0) {
+		await ctx.octokit.rest.issues.addLabels({
+			issue_number: ctx.issueNumber,
+			labels: toAdd,
+			owner: ctx.owner,
+			repo: ctx.repo,
+		});
 	}
 }
 

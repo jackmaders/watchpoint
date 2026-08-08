@@ -1,15 +1,14 @@
 import { readFile } from "node:fs/promises";
 import * as github from "@actions/github";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import {
 	BOT_COMMENT_MARKER,
+	DEV_NEEDED_LABEL,
 	extractLabelNames,
 	fetchIssueContext,
 	type IssueContext,
 	postIssueErrorComment,
-	READY_FOR_DEV_LABEL,
-	REFINED_LABEL,
 	removeLabelIfPresent,
 	SPEC_READY_LABEL,
 } from "./pm-shared";
@@ -44,69 +43,8 @@ export const TicketBreakdownSchema = z.object({
 export type Ticket = z.infer<typeof TicketSchema>;
 export type TicketBreakdown = z.infer<typeof TicketBreakdownSchema>;
 
-function unwrapZodType(val: z.ZodTypeAny): {
-	unwrapped: z.ZodTypeAny;
-	isOptional: boolean;
-} {
-	let unwrapped = val;
-	let isOptional = false;
-
-	while (
-		unwrapped instanceof z.ZodDefault ||
-		unwrapped instanceof z.ZodOptional ||
-		unwrapped instanceof z.ZodNullable
-	) {
-		if (
-			unwrapped instanceof z.ZodOptional ||
-			unwrapped instanceof z.ZodNullable
-		) {
-			isOptional = true;
-		}
-		unwrapped = (unwrapped as unknown as { _def: { innerType: z.ZodTypeAny } })
-			._def.innerType;
-	}
-
-	return { isOptional, unwrapped };
-}
-
-function getObjectGeminiProperties(shape: Record<string, z.ZodTypeAny>) {
-	const properties: Record<string, unknown> = {};
-	const required: string[] = [];
-
-	for (const [key, value] of Object.entries(shape)) {
-		const { unwrapped, isOptional } = unwrapZodType(value);
-		properties[key] = zodToGeminiSchema(unwrapped);
-		if (!isOptional) {
-			required.push(key);
-		}
-	}
-
-	return { properties, required };
-}
-
 export function zodToGeminiSchema(schema: z.ZodTypeAny): unknown {
-	if (schema instanceof z.ZodObject) {
-		const { properties, required } = getObjectGeminiProperties(schema.shape);
-		return {
-			properties,
-			type: Type.OBJECT,
-			...(required.length > 0 ? { required } : {}),
-		};
-	}
-
-	if (schema instanceof z.ZodArray) {
-		const element = (schema as unknown as { element: z.ZodTypeAny }).element;
-		return {
-			items: zodToGeminiSchema(element),
-			type: Type.ARRAY,
-		};
-	}
-
-	if (schema instanceof z.ZodString) return { type: Type.STRING };
-	if (schema instanceof z.ZodNumber) return { type: Type.INTEGER };
-	if (schema instanceof z.ZodBoolean) return { type: Type.BOOLEAN };
-
-	return { type: Type.STRING };
+	return z.toJSONSchema(schema);
 }
 
 export function formatChildIssueBody(params: {
@@ -458,6 +396,9 @@ export async function reviewAndUpdateChildIssues(params: {
 		let childNodeId = "";
 		let childNumber = 0;
 
+		const isUnblocked = !ticket.blockers || ticket.blockers.length === 0;
+		const labelsToSet = isUnblocked ? [DEV_NEEDED_LABEL] : [];
+
 		if (match) {
 			matchedNumbers.add(match.number);
 			childNodeId = match.node_id;
@@ -466,7 +407,7 @@ export async function reviewAndUpdateChildIssues(params: {
 			await octokit.rest.issues.update({
 				body: bodyContent,
 				issue_number: match.number,
-				labels: [READY_FOR_DEV_LABEL],
+				labels: labelsToSet,
 				milestone: milestoneNumber,
 				owner,
 				repo,
@@ -476,7 +417,7 @@ export async function reviewAndUpdateChildIssues(params: {
 		} else {
 			const { data: createdIssue } = await octokit.rest.issues.create({
 				body: bodyContent,
-				labels: [READY_FOR_DEV_LABEL],
+				labels: labelsToSet,
 				milestone: milestoneNumber,
 				owner,
 				repo,
@@ -617,12 +558,6 @@ export async function run() {
 		});
 
 		await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
-		await octokit.rest.issues.addLabels({
-			issue_number: issueNumber,
-			labels: [REFINED_LABEL],
-			owner,
-			repo,
-		});
 	} catch (error) {
 		console.error("to-tickets agent execution error:", error);
 		await postIssueErrorComment(ctx, "Spec-to-Tickets Agent", error);
