@@ -126,6 +126,7 @@ ${implementationSummary}
 
 * **Target Branch:** \`${branchName}\`
 * **Architecture:** Feature-Sliced Design (\`src/_pages/\`)
+* **PR Templates Available:** \`.github/PULL_REQUEST_TEMPLATE/\` (\`feature.md\`, \`refactor.md\`, \`bugfix.md\`)
 * **Verification Command:** \`bun run validate\`
 `;
 

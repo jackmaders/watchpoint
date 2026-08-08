@@ -151,9 +151,13 @@ EVERY AI agent developer iteration MUST strictly follow this 3-step Git workflow
      ```
    - **Never hoard uncommitted changes across multiple TDD cycles.** Commit and push every passing test phase.
 3. **Pull Request Creation Upon Completion:**
-   - Once all ticket acceptance criteria are satisfied and `bun run validate` passes clean, open a Pull Request linking to the originating issue:
+   - Select the appropriate PR template based on the change type:
+     - 🚀 **Feature:** `.github/PULL_REQUEST_TEMPLATE/feature.md` (for new slices, capabilities, or user flows)
+     - 🏗️ **Refactor:** `.github/PULL_REQUEST_TEMPLATE/refactor.md` (for structural cleanups, FSD extraction, or dependency updates with zero behavior change)
+     - 🐛 **Bugfix:** `.github/PULL_REQUEST_TEMPLATE/bugfix.md` (for defect fixes or RCA remediations)
+   - Once all ticket acceptance criteria are satisfied and `bun run validate` passes clean, open a Pull Request populated with the selected template schema linking to the originating issue:
      ```bash
-     gh pr create --title "feat(<scope>): 🔑 <title>" --body "Closes #<issue-number>\n\n..."
+     gh pr create --title "<type>(<scope>): <emoji> <title>" --template "<template-name>.md"
      ```
 
 ---
