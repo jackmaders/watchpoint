@@ -1,0 +1,242 @@
+import * as github from "@actions/github";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockOctokit } from "../__mocks__/@actions/github";
+import { mockGenerateContent } from "../__mocks__/@google/genai";
+import {
+	extractTargetSliceName,
+	generateDeveloperImplementation,
+	IN_PROGRESS_LABEL,
+	isDeveloperTrigger,
+	postDeveloperCompletedComment,
+	postDeveloperStartedComment,
+	run,
+	sanitizeBranchName,
+} from "./developer-agent";
+
+vi.mock("@actions/github");
+vi.mock("@google/genai");
+
+describe("developer-agent unit tests", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.GEMINI_API_KEY = "fake-api-key";
+		process.env.ISSUE_NUMBER = "42";
+		delete (github.context as { payload?: unknown }).payload;
+	});
+
+	describe("isDeveloperTrigger helper", () => {
+		it("returns true if ready-for-dev label is present", () => {
+			// Arrange
+			const labels = [{ name: "ready-for-dev" }];
+
+			// Act
+			const trigger = isDeveloperTrigger(labels);
+
+			// Assert
+			expect(trigger).toBe(true);
+		});
+
+		it("returns true if action is assigned", () => {
+			// Arrange
+			const labels: string[] = [];
+			const action = "assigned";
+
+			// Act
+			const trigger = isDeveloperTrigger(labels, action);
+
+			// Assert
+			expect(trigger).toBe(true);
+		});
+
+		it("returns true if comment contains /dev or /implement", () => {
+			// Arrange
+			const labels: string[] = [];
+			const comment = "/implement this slice please";
+
+			// Act
+			const trigger = isDeveloperTrigger(labels, undefined, comment);
+
+			// Assert
+			expect(trigger).toBe(true);
+		});
+
+		it("returns false if ready-for-dev label is missing and no triggers match", () => {
+			// Arrange
+			const labels = [{ name: "idea" }];
+
+			// Act
+			const trigger = isDeveloperTrigger(labels);
+
+			// Assert
+			expect(trigger).toBe(false);
+		});
+	});
+
+	describe("extractTargetSliceName helper", () => {
+		it("extracts slice name from body file paths", () => {
+			// Arrange
+			const body = "Target file scope: `src/_pages/auth/ui/LoginForm.tsx`";
+
+			// Act
+			const slice = extractTargetSliceName(body);
+
+			// Assert
+			expect(slice).toBe("auth");
+		});
+
+		it("returns fallback 'feature' when no slice path is in body", () => {
+			// Arrange
+			const body = "No FSD slice path specified";
+
+			// Act
+			const slice = extractTargetSliceName(body);
+
+			// Assert
+			expect(slice).toBe("feature");
+		});
+	});
+
+	describe("sanitizeBranchName helper", () => {
+		it("formats clean Git branch name from issue title and number", () => {
+			// Arrange
+			const title = "Setup Prisma ORM & Auth System!";
+
+			// Act
+			const branch = sanitizeBranchName(title, 42);
+
+			// Assert
+			expect(branch).toBe("dev/issue-42-setup-prisma-orm-auth-system");
+		});
+	});
+
+	describe("generateDeveloperImplementation helper", () => {
+		it("calls Gemini AI and returns generated code implementation summary", async () => {
+			// Arrange
+			const ai = new (await import("@google/genai")).GoogleGenAI({
+				apiKey: "fake",
+			});
+			mockGenerateContent.mockResolvedValueOnce({
+				text: "```typescript\n// Implementation code\n```",
+			});
+
+			// Act
+			const summary = await generateDeveloperImplementation(
+				ai,
+				"System prompt",
+				"Issue text",
+			);
+
+			// Assert
+			expect(summary).toContain("// Implementation code");
+		});
+
+		it("throws error when Gemini returns empty response", async () => {
+			// Arrange
+			const ai = new (await import("@google/genai")).GoogleGenAI({
+				apiKey: "fake",
+			});
+			mockGenerateContent.mockResolvedValueOnce({
+				text: "",
+			});
+
+			// Act & Assert
+			await expect(
+				generateDeveloperImplementation(ai, "Prompt", "Text"),
+			).rejects.toThrow(
+				"Gemini returned an empty developer implementation response.",
+			);
+		});
+	});
+
+	describe("postDeveloperStartedComment & postDeveloperCompletedComment", () => {
+		it("posts start and completion comments on GitHub issue", async () => {
+			// Arrange
+			const ctx = {
+				issueNumber: 42,
+				octokit: mockOctokit as unknown as ReturnType<typeof github.getOctokit>,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			await postDeveloperStartedComment(ctx, "dev/issue-42-test");
+			await postDeveloperCompletedComment(
+				ctx,
+				"Summary details",
+				"dev/issue-42-test",
+			);
+
+			// Assert
+			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe("run integration workflow execution", () => {
+		it("skips execution smoothly when issue is not ready for dev", async () => {
+			// Arrange
+			mockOctokit.rest.issues.get.mockResolvedValueOnce({
+				data: {
+					body: "Issue body",
+					id: 42,
+					labels: [],
+					number: 42,
+					title: "Unready Issue",
+				},
+			} as never);
+			mockOctokit.paginate.mockResolvedValueOnce([]);
+
+			// Act & Assert
+			await expect(run()).resolves.not.toThrow();
+		});
+
+		it("executes complete developer workflow when issue is ready-for-dev", async () => {
+			// Arrange
+			mockOctokit.rest.issues.get.mockResolvedValueOnce({
+				data: {
+					body: "Scope: `src/_pages/home/`",
+					id: 42,
+					labels: [{ name: "ready-for-dev" }],
+					number: 42,
+					title: "Build Home Page",
+				},
+			} as never);
+			mockOctokit.paginate.mockResolvedValueOnce([]);
+			mockGenerateContent.mockResolvedValueOnce({
+				text: "Implemented feature successfully.",
+			});
+
+			// Act
+			await run();
+
+			// Assert
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: [IN_PROGRESS_LABEL],
+				}),
+			);
+		});
+
+		it("handles errors gracefully and posts issue error comment", async () => {
+			// Arrange
+			mockOctokit.rest.issues.get.mockRejectedValueOnce(
+				new Error("Network Failure"),
+			);
+			const exitSpy = vi
+				.spyOn(process, "exit")
+				.mockImplementation((() => {}) as never);
+
+			// Act
+			await run();
+
+			// Assert
+			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("Network Failure"),
+				}),
+			);
+			expect(exitSpy).toHaveBeenCalledWith(1);
+			exitSpy.mockRestore();
+		});
+	});
+});

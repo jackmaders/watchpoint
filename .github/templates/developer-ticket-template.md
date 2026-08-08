@@ -25,11 +25,7 @@ Parent: #<Parent Spec Issue Number>
 - [ ] FSD architecture check passes (`bun run check:architecture`)
 - [ ] 100% test coverage threshold met (`bun run test:coverage`)
 
-## 6. Blocked By
-
-<#Ticket-ID or "None — can start immediately">
-
-## 7. Verification Commands
+## 6. Verification Commands
 ```bash
 bun run check:architecture
 bun run test:coverage

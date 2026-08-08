@@ -1,0 +1,51 @@
+name: Developer AI Agent
+
+on:
+  issues:
+    types: [labeled, assigned]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: developer-agent-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  run-developer-agent:
+    name: 💻 Run Developer AI Agent
+    if: >
+      (github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'ready-for-dev') || github.event.action == 'assigned')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'ready-for-dev') && github.event.comment.user.type != 'Bot')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 💻 Execute Developer Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: bun scripts/developer-agent.ts
