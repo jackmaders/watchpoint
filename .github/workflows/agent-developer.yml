@@ -1,21 +1,26 @@
-name: Spec-to-Tickets AI Agent
+name: AI Agent Developer
 
 on:
   issues:
-    types: [labeled, edited, reopened]
+    types: [labeled, assigned]
+  issue_comment:
+    types: [created]
 
 permissions:
-  contents: read
+  contents: write
   issues: write
+  pull-requests: write
 
 concurrency:
-  group: pm-to-tickets-issue-${{ github.event.issue.number }}
+  group: agent-developer-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  run-to-tickets-agent:
-    name: 🎫 Generate Child Tickets from Spec
-    if: contains(github.event.issue.labels.*.name, 'spec-ready')
+  run-agent-developer:
+    name: 💻 Run AI Agent Developer
+    if: >
+      (github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'dev-needed') || github.event.action == 'assigned')) ||
+      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'dev-needed') || contains(github.event.comment.body, '/dev') || contains(github.event.comment.body, '/implement')) && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
 
     steps:
@@ -38,9 +43,9 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🤖 Execute To-Tickets Agent
+      - name: 💻 Execute Agent Developer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: bun scripts/pm-to-tickets.ts
+        run: bun scripts/agent-developer.ts

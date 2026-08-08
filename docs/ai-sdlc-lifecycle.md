@@ -45,13 +45,13 @@ The repository operates on a consolidated, 6-label taxonomy to minimize noise an
 
 ## 🤖 The 3 AI Agents
 
-### 1. Product Manager AI Agent (`scripts/pm-agent.ts` & `scripts/pm-to-tickets.ts`)
+### 1. Product Manager AI Agent (`scripts/agent-planner.ts` & `scripts/agent-itemizer.ts`)
 - **Triggers:** Label `spec-needed`, comment commands (`/grill`, `/spec`, `/to-spec`).
 - **Grilling Phase:** Interactively interviews the author on requirements, scope, edge cases, and UI/API contracts.
 - **Spec Publishing Phase:** Synthesizes discussion into a standardized specification and updates the issue body, applying `spec-ready`.
 - **Ticket Breakdown Phase:** Converts the published spec into an ordered set of child issues under a parent milestone. Links native GitHub sub-issues (`addSubIssue`) and blocked-by dependencies (`addBlockedBy`) via GraphQL. Unblocked tickets are tagged with `dev-needed`.
 
-### 2. Developer AI Agent (`scripts/developer-agent.ts`)
+### 2. Developer AI Agent (`scripts/agent-developer.ts`)
 - **Triggers:** Label `dev-needed`, issue assignment, or comment commands (`/dev`, `/implement`).
 - **Quiet State Transition:** Removes `dev-needed` and applies `dev-in-progress` without generating bot comment noise.
 - **Development Standards:**
@@ -59,7 +59,7 @@ The repository operates on a consolidated, 6-label taxonomy to minimize noise an
   - **Test-Driven Development (TDD):** Red -> Green -> Refactor workflow. Every unit test must be structured in **Arrange-Act-Assert (AAA)** blocks and execute in <50ms.
 - **Completion:** Posts implementation summary and target branch name (`dev/issue-<number>-<slice>-<title>`).
 
-### 3. Reviewer AI Agent (`scripts/reviewer-agent.ts`)
+### 3. Reviewer AI Agent (`scripts/agent-reviewer.ts`)
 - **Triggers:** Pull Request actions (`opened`, `synchronize`, `reopened`), or comment commands (`/review`, `/re-review`).
 - **Two-Axis Audit:**
   1. **Standards Axis:** Enforces FSD architecture (`steiger`), Thermo-Nuclear code quality, zero spaghetti conditionals, clean boundary abstractions, and AAA unit tests.
@@ -96,3 +96,20 @@ Sub-commands run by `validate`:
 - `bun run check:architecture` – Steiger FSD v2.1 architectural compliance.
 - `bun run test:coverage` – Vitest unit tests with **100% statement, branch, function, and line coverage** enforcement.
 - `bun run build` – Next.js production build compilation.
+
+---
+
+## 🎨 Google Stitch Design Mockup Workflow
+
+To ensure seamless, interactive page design evolution without full-page redesigns:
+
+1. **Design in Google Stitch:** Create the V1 layout or select a specific area to iterate on (e.g. adding a search bar component) in the Google Stitch canvas (`stitch.withgoogle.com`).
+2. **Embed in Issue:** Export the HTML/Tailwind mockup and paste it directly into the issue description wrapped in a `<!-- design-mockup -->` block:
+   ```markdown
+   <!-- design-mockup -->
+   ```html
+   <div class="header">Mockup HTML</div>
+   ```
+   ```
+3. **Automated Extraction:** When the Developer AI Agent starts work on the ticket (`dev-needed`), it automatically extracts the mockup HTML and writes it to `docs/designs/<slice-name>/layout.html` on the local git branch.
+4. **Side-by-Side PR Review:** The layout HTML and the matching FSD React components are committed to git in the same PR, allowing the Reviewer AI Agent and human maintainers to audit structural and visual layout changes side-by-side.

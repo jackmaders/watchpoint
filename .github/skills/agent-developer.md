@@ -169,6 +169,11 @@ EVERY AI agent developer iteration MUST strictly follow this 3-step Git workflow
 * Next.js routing directory (`app/`) files MUST be simple barrel re-exports (e.g. `export { HomePage as default } from "@/_pages/home"`). Route files MUST NOT contain inline business logic or UI rendering.
 * Verify architecture compliance using `bun run check:architecture`.
 
+### Design Mockups & Layouts (Stitch Workflow)
+* If the issue contains a `<!-- design-mockup -->` block, the agent runner automatically extracts and writes it to `docs/designs/<slice-name>/layout.html`.
+* Ensure this layout file is committed to git on your implementation branch.
+* Implement UI components in `src/_pages/<slice-name>/ui/` to match the HTML tag hierarchy, Tailwind utility classes, and elements defined in the extracted `docs/designs/<slice-name>/layout.html`.
+
 ### Automocking Protection Lock
 * `plugins/enforce-automocking.grit` is locked.
 * Inline manual mock factory overrides `vi.mock("...", () => ...)` are strictly prohibited.

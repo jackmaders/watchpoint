@@ -51,6 +51,11 @@ export type CreateFeatureResponse = {
 ## UI & Design Guidelines
 * **Target UI File:** `src/_pages/<slice-name>/ui/<Component>.tsx`
 * **Styling:** Tailwind CSS v4.
+* **Stitch Design Mockup:**
+  <!-- design-mockup -->
+  ```html
+  <!-- Paste your Google Stitch HTML/Tailwind mockup code here -->
+  ```
 * **Component Prompt / Specifications:**
   * <Natural language prompt or UI breakdown for generating or refining the component structure, responsive behavior, dark mode, and state variants (loading, error, empty, filled)>.
 

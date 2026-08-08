@@ -1,16 +1,19 @@
+import fs from "node:fs";
 import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockOctokit } from "../__mocks__/@actions/github";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
 import {
+	extractAndSaveDesignMockup,
 	extractTargetSliceName,
 	generateDeveloperImplementation,
 	isDeveloperTrigger,
+	parseDesignMockup,
 	postDeveloperCompletedComment,
 	run,
 	sanitizeBranchName,
-} from "./developer-agent";
-import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./pm-shared";
+} from "./agent-developer";
+import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./agent-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");
@@ -19,6 +22,11 @@ describe("developer-agent unit tests", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockOctokit.rest.issues.get.mockReset();
+		vi.spyOn(fs.promises, "readFile").mockResolvedValue(
+			"System instruction stub",
+		);
+		vi.spyOn(fs.promises, "mkdir").mockResolvedValue(undefined);
+		vi.spyOn(fs.promises, "writeFile").mockResolvedValue(undefined);
 		process.env.GITHUB_TOKEN = "fake-token";
 		process.env.GEMINI_API_KEY = "fake-api-key";
 		process.env.ISSUE_NUMBER = "42";
@@ -105,6 +113,105 @@ describe("developer-agent unit tests", () => {
 
 			// Assert
 			expect(slice).toBe("feature");
+		});
+	});
+
+	describe("parseDesignMockup helper", () => {
+		it("extracts html mockup wrapped in markdown code block", () => {
+			// Arrange
+			const body =
+				'Some text\n<!-- design-mockup -->\n```html\n<div class="p-4">Header</div>\n```\nother text';
+
+			// Act
+			const content = parseDesignMockup(body);
+
+			// Assert
+			expect(content).toBe('<div class="p-4">Header</div>');
+		});
+
+		it("extracts raw html without code block wrapper", () => {
+			// Arrange
+			const body =
+				'Some text\n<!-- design-mockup -->\n<div class="p-4">Header</div>\n<!-- another-comment -->';
+
+			// Act
+			const content = parseDesignMockup(body);
+
+			// Assert
+			expect(content).toBe('<div class="p-4">Header</div>');
+		});
+
+		it("returns null when design-mockup marker is missing", () => {
+			// Arrange
+			const body = "Plain text body";
+
+			// Act
+			const content = parseDesignMockup(body);
+
+			// Assert
+			expect(content).toBeNull();
+		});
+	});
+
+	describe("extractAndSaveDesignMockup helper", () => {
+		it("extracts and saves design html from issue body", async () => {
+			// Arrange
+			const issue = {
+				body: "<!-- design-mockup -->\n```html\n<div>Test</div>\n```",
+			};
+
+			// Act
+			await extractAndSaveDesignMockup(
+				mockOctokit as never,
+				issue,
+				"home",
+				"owner",
+				"repo",
+			);
+
+			// Assert
+			expect(fs.promises.mkdir).toHaveBeenCalledWith("docs/designs/home", {
+				recursive: true,
+			});
+			expect(fs.promises.writeFile).toHaveBeenCalledWith(
+				"docs/designs/home/layout.html",
+				"<div>Test</div>",
+				"utf-8",
+			);
+		});
+
+		it("falls back to parent issue when design-mockup marker is missing from child issue", async () => {
+			// Arrange
+			const issue = { body: "Parent: #100" };
+			mockOctokit.rest.issues.get.mockResolvedValueOnce({
+				data: {
+					body: "<!-- design-mockup -->\n```html\n<div>Parent</div>\n```",
+				},
+			} as never);
+
+			// Act
+			await extractAndSaveDesignMockup(
+				mockOctokit as never,
+				issue,
+				"home",
+				"owner",
+				"repo",
+			);
+
+			// Assert
+			expect(mockOctokit.rest.issues.get).toHaveBeenCalledWith({
+				issue_number: 100,
+				owner: "owner",
+				repo: "repo",
+			});
+			expect(fs.promises.mkdir).toHaveBeenCalledWith("docs/designs/home", {
+				recursive: true,
+			});
+			expect(fs.promises.writeFile).toHaveBeenCalledWith(
+				"docs/designs/home/layout.html",
+				"<div>Parent</div>",
+				"utf-8",
+			);
 		});
 	});
 
@@ -250,6 +357,39 @@ describe("developer-agent unit tests", () => {
 				expect.objectContaining({
 					labels: [DEV_IN_PROGRESS_LABEL],
 				}),
+			);
+		});
+
+		it("saves layout.html design mockup if design-mockup block is present in issue body", async () => {
+			// Arrange
+			(github.context as { payload?: unknown }).payload = {
+				issue: { labels: [{ name: DEV_NEEDED_LABEL }] },
+			};
+			mockOctokit.rest.issues.get.mockResolvedValueOnce({
+				data: {
+					body: "Scope: `src/_pages/auth/`\n<!-- design-mockup -->\n```html\n<form>Login</form>\n```",
+					id: 42,
+					labels: [{ name: DEV_NEEDED_LABEL }],
+					number: 42,
+					title: "Build Auth Page",
+				},
+			} as never);
+			mockOctokit.paginate.mockResolvedValueOnce([]);
+			mockGenerateContent.mockResolvedValueOnce({
+				text: "Implemented auth successfully.",
+			});
+
+			// Act
+			await run();
+
+			// Assert
+			expect(fs.promises.mkdir).toHaveBeenCalledWith("docs/designs/auth", {
+				recursive: true,
+			});
+			expect(fs.promises.writeFile).toHaveBeenCalledWith(
+				"docs/designs/auth/layout.html",
+				"<form>Login</form>",
+				"utf-8",
 			);
 		});
 

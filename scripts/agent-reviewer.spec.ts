@@ -2,7 +2,6 @@ import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockOctokit } from "../__mocks__/@actions/github";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
-import { APPROVED_LABEL, NEEDS_HUMAN_REVIEW_LABEL } from "./pm-shared";
 import {
 	determineReviewRound,
 	fetchPRContext,
@@ -11,7 +10,8 @@ import {
 	postPRReviewAndLabels,
 	type ReviewDecisionData,
 	run,
-} from "./reviewer-agent";
+} from "./agent-reviewer";
+import { APPROVED_LABEL, NEEDS_HUMAN_REVIEW_LABEL } from "./agent-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");

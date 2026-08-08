@@ -1,24 +1,21 @@
-name: Product Manager AI Agent
+name: AI Agent Itemizer
 
 on:
   issues:
-    types: [opened, labeled]
-  issue_comment:
-    types: [created]
+    types: [labeled, edited, reopened]
 
 permissions:
   contents: read
   issues: write
 
 concurrency:
-  group: pm-agent-issue-${{ github.event.issue.number }}
+  group: agent-itemizer-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
+
 jobs:
-  run-pm-agent:
-    name: 🤖 Run Product Manager AI Agent
-    if: >
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'spec-needed')) ||
-      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'spec-needed') || contains(github.event.comment.body, '/grill') || contains(github.event.comment.body, '/spec')) && github.event.comment.user.type != 'Bot')
+  run-agent-itemizer:
+    name: 🎯 Run AI Agent Itemizer
+    if: contains(github.event.issue.labels.*.name, 'spec-ready')
     runs-on: ubuntu-latest
 
     steps:
@@ -41,9 +38,9 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🤖 Execute PM Agent
+      - name: 🎯 Execute Agent Itemizer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: bun scripts/pm-agent.ts
+        run: bun scripts/agent-itemizer.ts
