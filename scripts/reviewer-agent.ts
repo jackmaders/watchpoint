@@ -49,10 +49,7 @@ export function determineReviewRound(
 ): "round-1" | "round-2" | "escalated" {
 	const labelNames = extractLabelNames(labels);
 
-	if (
-		labelNames.includes(REVIEW_ROUND_2_LABEL) ||
-		labelNames.includes(NEEDS_HUMAN_REVIEW_LABEL)
-	) {
+	if (labelNames.includes(NEEDS_HUMAN_REVIEW_LABEL)) {
 		return "escalated";
 	}
 
@@ -87,6 +84,9 @@ export async function fetchPRContext(ctx: IssueContext) {
 	let conversation = `PR #${pr.number} - ${pr.title}\nBranch: ${pr.head.ref}\nBody:\n${pr.body ?? ""}\n\nChanged Files:\n`;
 	for (const file of files) {
 		conversation += `- ${file.filename} (${file.status})\n`;
+		if (file.patch) {
+			conversation += `\`\`\`diff\n${file.patch}\n\`\`\`\n`;
+		}
 	}
 
 	let latestCommentText = "";
@@ -165,15 +165,18 @@ export async function postPRReviewAndLabels(
 	ctx: IssueContext,
 	reviewData: ReviewDecisionData,
 	round: "round-1" | "round-2" | "escalated",
+	initialLabels?: Array<string | { name?: string }>,
 ) {
 	const { octokit, issueNumber, owner, repo } = ctx;
-	const currentLabels = (
-		await octokit.rest.issues.get({
-			issue_number: issueNumber,
-			owner,
-			repo,
-		})
-	).data.labels;
+	const currentLabels =
+		initialLabels ??
+		(
+			await octokit.rest.issues.get({
+				issue_number: issueNumber,
+				owner,
+				repo,
+			})
+		).data.labels;
 
 	const isEscalating =
 		round === "escalated" ||
@@ -324,7 +327,7 @@ export async function run() {
 			conversation,
 		);
 
-		await postPRReviewAndLabels(ctx, reviewData, round);
+		await postPRReviewAndLabels(ctx, reviewData, round, pr.labels);
 	} catch (error) {
 		console.error("Reviewer AI Agent execution error:", error);
 		await postIssueErrorComment(ctx, "Reviewer AI Agent", error);

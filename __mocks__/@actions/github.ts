@@ -70,8 +70,16 @@ export const mockOctokit = {
 			listComments: vi.fn().mockResolvedValue({ data: [] }),
 			listFiles: vi.fn().mockResolvedValue({
 				data: [
-					{ filename: "src/_pages/auth/ui/Form.tsx", status: "added" },
-					{ filename: "src/_pages/auth/ui/Form.spec.tsx", status: "added" },
+					{
+						filename: "src/_pages/auth/ui/Form.tsx",
+						patch: "@@ -0,0 +1,5 @@\n+export const Form = () => null;",
+						status: "added",
+					},
+					{
+						filename: "src/_pages/auth/ui/Form.spec.tsx",
+						patch: "@@ -0,0 +1,5 @@\n+test('renders', () => {});",
+						status: "added",
+					},
 				],
 			}),
 			listReviews: vi.fn().mockResolvedValue({ data: [] }),

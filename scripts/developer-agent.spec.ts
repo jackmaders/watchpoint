@@ -19,6 +19,7 @@ vi.mock("@google/genai");
 describe("developer-agent unit tests", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockOctokit.rest.issues.get.mockReset();
 		process.env.GITHUB_TOKEN = "fake-token";
 		process.env.GEMINI_API_KEY = "fake-api-key";
 		process.env.ISSUE_NUMBER = "42";
@@ -226,6 +227,9 @@ describe("developer-agent unit tests", () => {
 
 		it("executes complete developer workflow when issue is ready-for-dev", async () => {
 			// Arrange
+			(github.context as { payload?: unknown }).payload = {
+				issue: { labels: [{ name: "ready-for-dev" }] },
+			};
 			mockOctokit.rest.issues.get.mockResolvedValueOnce({
 				data: {
 					body: "Scope: `src/_pages/home/`",
@@ -253,6 +257,9 @@ describe("developer-agent unit tests", () => {
 
 		it("handles errors gracefully and posts issue error comment", async () => {
 			// Arrange
+			(github.context as { payload?: unknown }).payload = {
+				issue: { labels: [{ name: "ready-for-dev" }] },
+			};
 			mockOctokit.rest.issues.get.mockRejectedValueOnce(
 				new Error("Network Failure"),
 			);

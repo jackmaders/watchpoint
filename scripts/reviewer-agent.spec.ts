@@ -7,7 +7,6 @@ import {
 	CHANGES_REQUESTED_LABEL,
 	NEEDS_HUMAN_REVIEW_LABEL,
 	REVIEW_ROUND_1_LABEL,
-	REVIEW_ROUND_2_LABEL,
 } from "./pm-shared";
 import {
 	determineReviewRound,
@@ -69,11 +68,8 @@ describe("reviewer-agent unit tests", () => {
 			expect(determineReviewRound(labels)).toBe("round-2");
 		});
 
-		it("returns escalated when review-round-2 or needs-human-review label is present", () => {
+		it("returns escalated when needs-human-review label is present", () => {
 			// Arrange & Act & Assert
-			expect(determineReviewRound([{ name: REVIEW_ROUND_2_LABEL }])).toBe(
-				"escalated",
-			);
 			expect(determineReviewRound([{ name: NEEDS_HUMAN_REVIEW_LABEL }])).toBe(
 				"escalated",
 			);
@@ -102,6 +98,7 @@ describe("reviewer-agent unit tests", () => {
 			expect(result.files).toHaveLength(2);
 			expect(result.latestCommentText).toBe("User feedback");
 			expect(result.conversation).toContain("User Comment: User feedback");
+			expect(result.conversation).toContain("```diff\n");
 		});
 	});
 
