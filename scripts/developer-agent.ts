@@ -101,7 +101,7 @@ export async function postDeveloperStartedComment(
 * **Workflow:** Following \`implement\` & \`tdd\` skills with AAA testing pattern.
 * **Architecture:** Feature-Sliced Design (\`src/_pages/\`).
 
-Executing implementation plan and project validation checks (\`bun run validate\`)...`;
+Executing implementation plan synthesis and architecture verification...`;
 
 	await octokit.rest.issues.createComment({
 		body,
@@ -148,26 +148,24 @@ export async function run() {
 	const ctx: IssueContext = { issueNumber, octokit, owner, repo };
 
 	try {
-		const { conversation, issue, latestUserComment } =
-			await fetchIssueContext(ctx);
-
 		const action = github.context.payload?.action;
 		const payloadComment = (
 			github.context.payload?.comment as { body?: string } | undefined
 		)?.body;
+		const payloadLabels = (
+			github.context.payload?.issue as
+				| { labels?: Array<string | { name?: string }> }
+				| undefined
+		)?.labels;
 
-		if (
-			!isDeveloperTrigger(
-				issue.labels,
-				action,
-				payloadComment ?? latestUserComment,
-			)
-		) {
+		if (!isDeveloperTrigger(payloadLabels ?? [], action, payloadComment)) {
 			console.log(
 				"Issue is not ready for development. Skipping developer agent.",
 			);
 			return;
 		}
+
+		const { conversation, issue } = await fetchIssueContext(ctx);
 
 		const branchName = sanitizeBranchName(issue.title, issueNumber, issue.body);
 		await postDeveloperStartedComment(ctx, branchName);

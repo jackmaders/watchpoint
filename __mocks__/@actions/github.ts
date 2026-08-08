@@ -55,6 +55,35 @@ export const mockOctokit = {
 			update: vi.fn().mockResolvedValue({}),
 			updateMilestone: vi.fn().mockResolvedValue({}),
 		},
+		pulls: {
+			createReview: vi.fn().mockResolvedValue({}),
+			get: vi.fn().mockResolvedValue({
+				data: {
+					body: "PR body description",
+					head: { ref: "dev/issue-42-test" },
+					id: 42,
+					labels: [],
+					number: 42,
+					title: "feat(auth): 🔑 setup auth component",
+				},
+			}),
+			listComments: vi.fn().mockResolvedValue({ data: [] }),
+			listFiles: vi.fn().mockResolvedValue({
+				data: [
+					{
+						filename: "src/_pages/auth/ui/Form.tsx",
+						patch: "@@ -0,0 +1,5 @@\n+export const Form = () => null;",
+						status: "added",
+					},
+					{
+						filename: "src/_pages/auth/ui/Form.spec.tsx",
+						patch: "@@ -0,0 +1,5 @@\n+test('renders', () => {});",
+						status: "added",
+					},
+				],
+			}),
+			listReviews: vi.fn().mockResolvedValue({ data: [] }),
+		},
 	},
 };
 
