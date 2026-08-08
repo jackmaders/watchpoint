@@ -53,6 +53,7 @@ export const mockOctokit = {
 			listMilestones: vi.fn().mockResolvedValue({ data: [] }),
 			removeLabel: vi.fn().mockResolvedValue({}),
 			update: vi.fn().mockResolvedValue({}),
+			updateMilestone: vi.fn().mockResolvedValue({}),
 		},
 	},
 };

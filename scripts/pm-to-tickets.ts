@@ -51,15 +51,17 @@ function unwrapZodType(val: z.ZodTypeAny): {
 	let unwrapped = val;
 	let isOptional = false;
 
-	if (unwrapped instanceof z.ZodDefault) {
-		unwrapped = (unwrapped as unknown as { _def: { innerType: z.ZodTypeAny } })
-			._def.innerType;
-	}
-	if (
+	while (
+		unwrapped instanceof z.ZodDefault ||
 		unwrapped instanceof z.ZodOptional ||
 		unwrapped instanceof z.ZodNullable
 	) {
-		isOptional = true;
+		if (
+			unwrapped instanceof z.ZodOptional ||
+			unwrapped instanceof z.ZodNullable
+		) {
+			isOptional = true;
+		}
 		unwrapped = (unwrapped as unknown as { _def: { innerType: z.ZodTypeAny } })
 			._def.innerType;
 	}
@@ -109,6 +111,7 @@ export function zodToGeminiSchema(schema: z.ZodTypeAny): unknown {
 
 export function formatChildIssueBody(params: {
 	parentNumber: number;
+	ticketId?: string;
 	whatToBuild: string;
 	targetFiles?: string[];
 	technicalConstraints?: string[];
@@ -118,6 +121,7 @@ export function formatChildIssueBody(params: {
 }): string {
 	const {
 		parentNumber,
+		ticketId,
 		whatToBuild,
 		targetFiles = [],
 		technicalConstraints = [],
@@ -144,10 +148,12 @@ export function formatChildIssueBody(params: {
 	const criteriaList = acceptanceCriteria.map((c) => `- [ ] ${c}`).join("\n");
 	const blockersList =
 		blockers.length > 0
-			? blockers.map((b) => `- [ ] ${b}`).join("\n")
+			? blockers.map((b) => `* ${b}`).join("\n")
 			: "None — can start immediately";
 
-	return `Parent: #${parentNumber}
+	const keyComment = ticketId ? `\n<!-- spec-ticket-key: ${ticketId} -->` : "";
+
+	return `Parent: #${parentNumber}${keyComment}
 
 ## 1. Goal & Context ("What to Build")
 
@@ -219,9 +225,12 @@ export function topologicalSortTickets(tickets: Ticket[]): Ticket[] {
 
 export async function getOrCreateMilestone(
 	ctx: IssueContext,
-	milestoneTitle: string,
+	parentIssueNumber: number,
+	parentIssueTitle: string,
 ): Promise<number> {
 	const { octokit, owner, repo } = ctx;
+	const milestoneTitle = `[Spec #${parentIssueNumber}] ${parentIssueTitle}`;
+	const prefix = `[Spec #${parentIssueNumber}]`;
 
 	const milestones = await octokit.rest.issues.listMilestones({
 		owner,
@@ -229,8 +238,18 @@ export async function getOrCreateMilestone(
 		state: "open",
 	});
 
-	const existing = milestones.data.find((m) => m.title === milestoneTitle);
+	const existing = milestones.data.find(
+		(m) => m.title === milestoneTitle || m.title.startsWith(prefix),
+	);
 	if (existing) {
+		if (existing.title !== milestoneTitle) {
+			await octokit.rest.issues.updateMilestone({
+				milestone_number: existing.number,
+				owner,
+				repo,
+				title: milestoneTitle,
+			});
+		}
 		return existing.number;
 	}
 
@@ -275,7 +294,7 @@ export async function parseTicketsFromAI(
 }
 
 export function findMatchingChildIssue<
-	T extends { number: number; title: string },
+	T extends { number: number; title: string; body?: string | null },
 >(
 	existingChildIssues: T[],
 	matchedNumbers: Set<number>,
@@ -286,6 +305,13 @@ export function findMatchingChildIssue<
 			(existing) =>
 				!matchedNumbers.has(existing.number) &&
 				ticket.existingNumber === existing.number,
+		) ??
+		existingChildIssues.find(
+			(existing) =>
+				!matchedNumbers.has(existing.number) &&
+				Boolean(
+					existing.body?.includes(`<!-- spec-ticket-key: ${ticket.id} -->`),
+				),
 		) ??
 		existingChildIssues.find(
 			(existing) =>
@@ -373,6 +399,7 @@ export async function reviewAndUpdateChildIssues(params: {
 			parentNumber: issueNumber,
 			targetFiles: ticket.targetFiles,
 			technicalConstraints: ticket.technicalConstraints,
+			ticketId: ticket.id,
 			whatToBuild: ticket.whatToBuild,
 		});
 
@@ -502,7 +529,7 @@ export async function run() {
 			if (labels.includes(SPEC_READY_LABEL)) {
 				await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
 				await octokit.rest.issues.createComment({
-					body: `${BOT_COMMENT_MARKER}\nℹ️ **Issue Reopened:** Removed \`spec-ready\` label so the specification can be edited and refined. Re-apply \`spec-ready\` when ready to generate updated child tickets.`,
+					body: `${BOT_COMMENT_MARKER}\n` + "ℹ️ **Issue Reopened:** Removed `spec-ready` label so the specification can be edited and refined. Re-apply `spec-ready` when ready to generate updated child tickets.",
 					issue_number: issueNumber,
 					owner,
 					repo,
@@ -518,8 +545,12 @@ export async function run() {
 			return;
 		}
 
-		const milestoneTitle = `[Spec] ${issue.title}`;
-		const milestoneNumber = await getOrCreateMilestone(ctx, milestoneTitle);
+		const milestoneTitle = `[Spec #${issue.number}] ${issue.title}`;
+		const milestoneNumber = await getOrCreateMilestone(
+			ctx,
+			issue.number,
+			issue.title,
+		);
 
 		// Check for existing child issues prior to AI generation
 		const { data: existingIssues } = await octokit.rest.issues.listForRepo({

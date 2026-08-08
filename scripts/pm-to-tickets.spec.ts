@@ -2,7 +2,7 @@ import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
 import {
-	createChildIssues,
+	findMatchingChildIssue,
 	formatChildIssueBody,
 	getOrCreateMilestone,
 	parseTicketsFromAI,
@@ -137,21 +137,24 @@ describe("pm-to-tickets unit tests", () => {
 	});
 
 	describe("formatChildIssueBody helper", () => {
-		it("formats issue body with parent reference, acceptance criteria, and blockers", () => {
+		it("formats issue body with parent reference, metadata key, acceptance criteria, and bullet blockers", () => {
 			const body = formatChildIssueBody({
 				acceptanceCriteria: ["Criteria 1", "Criteria 2"],
 				blockers: ["#101"],
 				parentNumber: 42,
+				ticketId: "TICKET-1",
 				whatToBuild: "Build the auth form UI component",
 			});
 
 			expect(body).toContain("Parent: #42");
+			expect(body).toContain("<!-- spec-ticket-key: TICKET-1 -->");
 			expect(body).toContain('## 1. Goal & Context ("What to Build")');
 			expect(body).toContain("Build the auth form UI component");
 			expect(body).toContain("- [ ] Criteria 1");
 			expect(body).toContain("- [ ] Criteria 2");
 			expect(body).toContain("## 6. Blocked By");
-			expect(body).toContain("- [ ] #101");
+			expect(body).toContain("* #101");
+			expect(body).not.toContain("- [ ] #101");
 		});
 
 		it("formats issue body with None when blockers array is empty", () => {
@@ -159,6 +162,7 @@ describe("pm-to-tickets unit tests", () => {
 				acceptanceCriteria: ["Criteria 1"],
 				blockers: [],
 				parentNumber: 42,
+				ticketId: "TICKET-1",
 				whatToBuild: "Build the auth form UI component",
 			});
 
@@ -166,11 +170,79 @@ describe("pm-to-tickets unit tests", () => {
 		});
 	});
 
+	describe("findMatchingChildIssue helper", () => {
+		it("matches existing child issue by spec-ticket-key comment in body even if title changed", () => {
+			const existingChildIssues = [
+				{
+					body: "Parent: #42\n<!-- spec-ticket-key: TICKET-1 -->\nSome old content",
+					number: 101,
+					title: "Old Database Title",
+				},
+			];
+
+			const match = findMatchingChildIssue(existingChildIssues, new Set(), {
+				acceptanceCriteria: [],
+				blockers: [],
+				id: "TICKET-1",
+				title: "Completely New Database Title",
+				whatToBuild: "Build DB",
+			});
+
+			expect(match).toBeDefined();
+			expect(match?.number).toBe(101);
+		});
+
+		it("matches by existingNumber integer first if provided", () => {
+			const existingChildIssues = [
+				{
+					body: "Parent: #42\n<!-- spec-ticket-key: TICKET-2 -->",
+					number: 105,
+					title: "Other Title",
+				},
+			];
+
+			const match = findMatchingChildIssue(existingChildIssues, new Set(), {
+				acceptanceCriteria: [],
+				blockers: [],
+				existingNumber: 105,
+				id: "TICKET-1",
+				title: "Title",
+				whatToBuild: "Build",
+			});
+
+			expect(match).toBeDefined();
+			expect(match?.number).toBe(105);
+		});
+	});
+
 	describe("getOrCreateMilestone helper", () => {
-		it("returns existing milestone if present", async () => {
+		it("returns existing milestone if exact title matches", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.listMilestones).mockResolvedValue({
-				data: [{ number: 5, state: "open", title: "[Spec] Feature X" }],
+				data: [{ number: 5, state: "open", title: "[Spec #42] Feature X" }],
+			} as unknown as Awaited<
+				ReturnType<typeof octokit.rest.issues.listMilestones>
+			>);
+
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+			const milestoneNumber = await getOrCreateMilestone(ctx, 42, "Feature X");
+
+			expect(milestoneNumber).toBe(5);
+			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
+			expect(octokit.rest.issues.updateMilestone).not.toHaveBeenCalled();
+		});
+
+		it("updates existing milestone title if issue title was edited", async () => {
+			const octokit = github.getOctokit("token");
+			vi.mocked(octokit.rest.issues.listMilestones).mockResolvedValue({
+				data: [
+					{ number: 5, state: "open", title: "[Spec #42] Old Feature Name" },
+				],
 			} as unknown as Awaited<
 				ReturnType<typeof octokit.rest.issues.listMilestones>
 			>);
@@ -183,11 +255,17 @@ describe("pm-to-tickets unit tests", () => {
 			};
 			const milestoneNumber = await getOrCreateMilestone(
 				ctx,
-				"[Spec] Feature X",
+				42,
+				"New Feature Name",
 			);
 
 			expect(milestoneNumber).toBe(5);
-			expect(octokit.rest.issues.createMilestone).not.toHaveBeenCalled();
+			expect(octokit.rest.issues.updateMilestone).toHaveBeenCalledWith({
+				milestone_number: 5,
+				owner: "jackmaders",
+				repo: "watchpoint",
+				title: "[Spec #42] New Feature Name",
+			});
 		});
 
 		it("creates new milestone if not existing", async () => {
@@ -198,7 +276,7 @@ describe("pm-to-tickets unit tests", () => {
 				ReturnType<typeof octokit.rest.issues.listMilestones>
 			>);
 			vi.mocked(octokit.rest.issues.createMilestone).mockResolvedValue({
-				data: { number: 10, title: "[Spec] New Feature" },
+				data: { number: 10, title: "[Spec #42] New Feature" },
 			} as unknown as Awaited<
 				ReturnType<typeof octokit.rest.issues.createMilestone>
 			>);
@@ -211,14 +289,15 @@ describe("pm-to-tickets unit tests", () => {
 			};
 			const milestoneNumber = await getOrCreateMilestone(
 				ctx,
-				"[Spec] New Feature",
+				42,
+				"New Feature",
 			);
 
 			expect(milestoneNumber).toBe(10);
 			expect(octokit.rest.issues.createMilestone).toHaveBeenCalledWith({
 				owner: "jackmaders",
 				repo: "watchpoint",
-				title: "[Spec] New Feature",
+				title: "[Spec #42] New Feature",
 			});
 		});
 	});
@@ -263,76 +342,6 @@ describe("pm-to-tickets unit tests", () => {
 		});
 	});
 
-	describe("createChildIssues helper", () => {
-		it("creates issues topologically in 1-pass and sets sub-issue links", async () => {
-			const octokit = github.getOctokit("token");
-			let callCount = 100;
-			vi.mocked(octokit.rest.issues.create).mockImplementation(
-				async (params) => {
-					callCount++;
-					return {
-						data: {
-							body: params?.body ?? "",
-							id: callCount,
-							labels: params?.labels ?? [],
-							milestone: params?.milestone
-								? { number: params.milestone }
-								: null,
-							node_id: `I_kw_child_${callCount}`,
-							number: callCount,
-							state: "open",
-							title: params?.title ?? "",
-						},
-					} as unknown as Awaited<
-						ReturnType<typeof octokit.rest.issues.create>
-					>;
-				},
-			);
-
-			const ctx = {
-				issueNumber: 42,
-				octokit,
-				owner: "jackmaders",
-				repo: "watchpoint",
-			};
-
-			const created = await createChildIssues({
-				ctx,
-				milestoneNumber: 1,
-				parentNodeId: "I_kw_parent42",
-				tickets: [
-					{
-						acceptanceCriteria: ["AC2"],
-						blockers: ["TICKET-1"],
-						id: "TICKET-2",
-						title: "Ticket 2",
-						whatToBuild: "Build 2",
-					},
-					{
-						acceptanceCriteria: ["AC1"],
-						blockers: [],
-						id: "TICKET-1",
-						title: "Ticket 1",
-						whatToBuild: "Build 1",
-					},
-				],
-			});
-
-			expect(created).toHaveLength(2);
-			expect(octokit.rest.issues.create).toHaveBeenCalledTimes(2);
-			// Verify TICKET-2 was created with resolved #101 reference directly on creation
-			expect(octokit.rest.issues.create).toHaveBeenLastCalledWith(
-				expect.objectContaining({
-					body: expect.stringContaining("#101"),
-					title: "Ticket 2",
-				}),
-			);
-			expect(octokit.graphql).toHaveBeenCalledTimes(2);
-			// Verify octokit.rest.issues.update was NOT called (1-pass creation!)
-			expect(octokit.rest.issues.update).not.toHaveBeenCalled();
-		});
-	});
-
 	describe("reviewAndUpdateChildIssues helper", () => {
 		it("updates existing matching child issues, creates new ones, and closes obsolete ones", async () => {
 			const octokit = github.getOctokit("token");
@@ -345,7 +354,7 @@ describe("pm-to-tickets unit tests", () => {
 
 			const existingChildIssues = [
 				{
-					body: "Parent: #42\nOld body content",
+					body: "Parent: #42\n<!-- spec-ticket-key: TICKET-1 -->\nOld body content",
 					node_id: "I_kw_child101",
 					number: 101,
 					state: "open",
@@ -436,7 +445,7 @@ describe("pm-to-tickets unit tests", () => {
 					{ number: 102, title: "Ticket 2" },
 				],
 				ctx,
-				milestoneTitle: "[Spec] Feature X",
+				milestoneTitle: "[Spec #42] Feature X",
 				parentIssueNumber: 42,
 			});
 
