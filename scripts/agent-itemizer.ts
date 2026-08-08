@@ -11,7 +11,7 @@ import {
 	postIssueErrorComment,
 	removeLabelIfPresent,
 	SPEC_READY_LABEL,
-} from "./pm-shared";
+} from "./agent-shared";
 
 declare global {
 	namespace NodeJS {

@@ -11,7 +11,7 @@ import {
 	type IssueContext,
 	postIssueErrorComment,
 	transitionState,
-} from "./pm-shared";
+} from "./agent-shared";
 
 declare global {
 	namespace NodeJS {
@@ -215,7 +215,7 @@ export async function run() {
 		});
 
 		const skillInstruction = await fs.promises.readFile(
-			".github/skills/developer-agent.md",
+			".github/skills/agent-developer.md",
 			"utf-8",
 		);
 

@@ -14,7 +14,7 @@ import {
 	TicketBreakdownSchema,
 	topologicalSortTickets,
 	zodToGeminiSchema,
-} from "./pm-to-tickets";
+} from "./agent-itemizer";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");

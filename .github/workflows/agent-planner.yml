@@ -1,30 +1,24 @@
-name: Reviewer AI Agent
+name: AI Agent Planner
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, labeled]
   issue_comment:
-    types: [created]
-  pull_request_review_comment:
     types: [created]
 
 permissions:
   contents: read
   issues: write
-  pull-requests: write
 
 concurrency:
-  group: reviewer-agent-pr-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: agent-planner-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
-
 jobs:
-  run-reviewer-agent:
-    name: 🔍 Run Reviewer AI Agent
+  run-agent-planner:
+    name: 🤖 Run AI Agent Planner
     if: >
-      (github.event_name == 'pull_request') ||
-      ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-       (contains(github.event.comment.body, '/review') || contains(github.event.comment.body, '/re-review')) &&
-       github.event.comment.user.type != 'Bot')
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'spec-needed')) ||
+      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'spec-needed') || contains(github.event.comment.body, '/grill') || contains(github.event.comment.body, '/spec')) && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
 
     steps:
@@ -47,9 +41,9 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🔍 Execute Reviewer Agent
+      - name: 🤖 Execute Agent Planner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          ISSUE_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-        run: bun scripts/reviewer-agent.ts
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: bun scripts/agent-planner.ts

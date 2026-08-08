@@ -12,8 +12,8 @@ import {
 	postDeveloperCompletedComment,
 	run,
 	sanitizeBranchName,
-} from "./developer-agent";
-import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./pm-shared";
+} from "./agent-developer";
+import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./agent-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");

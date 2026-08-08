@@ -45,13 +45,13 @@ The repository operates on a consolidated, 6-label taxonomy to minimize noise an
 
 ## 🤖 The 3 AI Agents
 
-### 1. Product Manager AI Agent (`scripts/pm-agent.ts` & `scripts/pm-to-tickets.ts`)
+### 1. Product Manager AI Agent (`scripts/agent-planner.ts` & `scripts/agent-itemizer.ts`)
 - **Triggers:** Label `spec-needed`, comment commands (`/grill`, `/spec`, `/to-spec`).
 - **Grilling Phase:** Interactively interviews the author on requirements, scope, edge cases, and UI/API contracts.
 - **Spec Publishing Phase:** Synthesizes discussion into a standardized specification and updates the issue body, applying `spec-ready`.
 - **Ticket Breakdown Phase:** Converts the published spec into an ordered set of child issues under a parent milestone. Links native GitHub sub-issues (`addSubIssue`) and blocked-by dependencies (`addBlockedBy`) via GraphQL. Unblocked tickets are tagged with `dev-needed`.
 
-### 2. Developer AI Agent (`scripts/developer-agent.ts`)
+### 2. Developer AI Agent (`scripts/agent-developer.ts`)
 - **Triggers:** Label `dev-needed`, issue assignment, or comment commands (`/dev`, `/implement`).
 - **Quiet State Transition:** Removes `dev-needed` and applies `dev-in-progress` without generating bot comment noise.
 - **Development Standards:**
@@ -59,7 +59,7 @@ The repository operates on a consolidated, 6-label taxonomy to minimize noise an
   - **Test-Driven Development (TDD):** Red -> Green -> Refactor workflow. Every unit test must be structured in **Arrange-Act-Assert (AAA)** blocks and execute in <50ms.
 - **Completion:** Posts implementation summary and target branch name (`dev/issue-<number>-<slice>-<title>`).
 
-### 3. Reviewer AI Agent (`scripts/reviewer-agent.ts`)
+### 3. Reviewer AI Agent (`scripts/agent-reviewer.ts`)
 - **Triggers:** Pull Request actions (`opened`, `synchronize`, `reopened`), or comment commands (`/review`, `/re-review`).
 - **Two-Axis Audit:**
   1. **Standards Axis:** Enforces FSD architecture (`steiger`), Thermo-Nuclear code quality, zero spaghetti conditionals, clean boundary abstractions, and AAA unit tests.
