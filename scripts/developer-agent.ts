@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import fs from "node:fs";
+import { join } from "node:path";
 import * as github from "@actions/github";
 import { GoogleGenAI } from "@google/genai";
 import {
@@ -46,6 +47,66 @@ export function extractTargetSliceName(body?: string | null): string {
 	if (!body) return "feature";
 	const match = body.match(/(?:src|@)\/_pages\/([a-zA-Z0-9_-]+)/);
 	return match?.[1] ?? "feature";
+}
+
+export function parseDesignMockup(body?: string | null): string | null {
+	if (!body) return null;
+	const blockMatch = body.match(
+		/<!--\s*design-mockup\s*-->[\s\S]*?```html([\s\S]*?)```/i,
+	);
+	if (blockMatch?.[1]) {
+		return blockMatch[1].trim();
+	}
+	const tagMatch = body.match(
+		/<!--\s*design-mockup\s*-->([\s\S]*?)(?:<!--|$)/i,
+	);
+	if (tagMatch?.[1]) {
+		const content = tagMatch[1].trim();
+		if (content.length > 0) {
+			return content;
+		}
+	}
+	return null;
+}
+
+export async function extractAndSaveDesignMockup(
+	octokit: ReturnType<typeof github.getOctokit>,
+	issue: { body?: string | null },
+	sliceName: string,
+	owner: string,
+	repo: string,
+) {
+	let mockupContent = parseDesignMockup(issue.body);
+	if (!mockupContent) {
+		const parentMatch = (issue.body ?? "").match(/Parent:\s*#(\d+)/i);
+		if (parentMatch?.[1]) {
+			const parentNumber = parseInt(parentMatch[1], 10);
+			try {
+				const { data: parentIssue } = await octokit.rest.issues.get({
+					issue_number: parentNumber,
+					owner,
+					repo,
+				});
+				mockupContent = parseDesignMockup(parentIssue.body);
+			} catch (err) {
+				console.warn(
+					`Failed to fetch parent issue #${parentNumber} for design mockup extraction:`,
+					err,
+				);
+			}
+		}
+	}
+
+	if (mockupContent) {
+		const targetDir = join("docs", "designs", sliceName);
+		await fs.promises.mkdir(targetDir, { recursive: true });
+		await fs.promises.writeFile(
+			join(targetDir, "layout.html"),
+			mockupContent,
+			"utf-8",
+		);
+		console.log(`Saved design mockup to docs/designs/${sliceName}/layout.html`);
+	}
 }
 
 export function sanitizeBranchName(
@@ -144,6 +205,8 @@ export async function run() {
 		const { conversation, issue } = await fetchIssueContext(ctx);
 
 		const branchName = sanitizeBranchName(issue.title, issueNumber, issue.body);
+		const sliceName = extractTargetSliceName(issue.body);
+		await extractAndSaveDesignMockup(octokit, issue, sliceName, owner, repo);
 
 		// Quiet state transition: remove dev-needed, add dev-in-progress (no noise comment)
 		await transitionState(ctx, issue.labels, {
@@ -151,7 +214,7 @@ export async function run() {
 			remove: [DEV_NEEDED_LABEL],
 		});
 
-		const skillInstruction = await readFile(
+		const skillInstruction = await fs.promises.readFile(
 			".github/skills/developer-agent.md",
 			"utf-8",
 		);

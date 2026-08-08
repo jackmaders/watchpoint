@@ -96,3 +96,20 @@ Sub-commands run by `validate`:
 - `bun run check:architecture` – Steiger FSD v2.1 architectural compliance.
 - `bun run test:coverage` – Vitest unit tests with **100% statement, branch, function, and line coverage** enforcement.
 - `bun run build` – Next.js production build compilation.
+
+---
+
+## 🎨 Google Stitch Design Mockup Workflow
+
+To ensure seamless, interactive page design evolution without full-page redesigns:
+
+1. **Design in Google Stitch:** Create the V1 layout or select a specific area to iterate on (e.g. adding a search bar component) in the Google Stitch canvas (`stitch.withgoogle.com`).
+2. **Embed in Issue:** Export the HTML/Tailwind mockup and paste it directly into the issue description wrapped in a `<!-- design-mockup -->` block:
+   ```markdown
+   <!-- design-mockup -->
+   ```html
+   <div class="header">Mockup HTML</div>
+   ```
+   ```
+3. **Automated Extraction:** When the Developer AI Agent starts work on the ticket (`dev-needed`), it automatically extracts the mockup HTML and writes it to `docs/designs/<slice-name>/layout.html` on the local git branch.
+4. **Side-by-Side PR Review:** The layout HTML and the matching FSD React components are committed to git in the same PR, allowing the Reviewer AI Agent and human maintainers to audit structural and visual layout changes side-by-side.
