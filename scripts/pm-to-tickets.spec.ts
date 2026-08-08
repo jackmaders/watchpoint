@@ -139,7 +139,7 @@ describe("pm-to-tickets unit tests", () => {
 			expect(body).toContain("- [ ] Criteria 1");
 			expect(body).toContain("- [ ] Criteria 2");
 			expect(body).toContain("## Blocked by");
-			expect(body).toContain("- #101");
+			expect(body).toContain("- [ ] #101");
 		});
 
 		it("formats issue body with None when blockers array is empty", () => {
@@ -409,7 +409,7 @@ describe("pm-to-tickets unit tests", () => {
 	});
 
 	describe("closeParentIssueIfSafe helper", () => {
-		it("posts summary comment and closes parent issue cleanly", async () => {
+		it("posts summary comment on parent issue without closing it", async () => {
 			const octokit = github.getOctokit("token");
 			const ctx = {
 				issueNumber: 42,
@@ -435,13 +435,7 @@ describe("pm-to-tickets unit tests", () => {
 				repo: "watchpoint",
 			});
 
-			expect(octokit.rest.issues.update).toHaveBeenCalledWith({
-				issue_number: 42,
-				owner: "jackmaders",
-				repo: "watchpoint",
-				state: "closed",
-				state_reason: "completed",
-			});
+			expect(octokit.rest.issues.update).not.toHaveBeenCalled();
 		});
 	});
 
@@ -496,7 +490,7 @@ describe("pm-to-tickets unit tests", () => {
 			});
 			expect(octokit.rest.issues.createMilestone).toHaveBeenCalled();
 			expect(octokit.rest.issues.create).toHaveBeenCalled();
-			expect(octokit.rest.issues.update).toHaveBeenCalledWith(
+			expect(octokit.rest.issues.update).not.toHaveBeenCalledWith(
 				expect.objectContaining({
 					issue_number: 42,
 					state: "closed",

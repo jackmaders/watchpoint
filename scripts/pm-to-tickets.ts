@@ -50,7 +50,7 @@ export function formatChildIssueBody(params: {
 	const criteriaList = acceptanceCriteria.map((c) => `- [ ] ${c}`).join("\n");
 	const blockersList =
 		blockers.length > 0
-			? blockers.map((b) => `- ${b}`).join("\n")
+			? blockers.map((b) => `- [ ] ${b}`).join("\n")
 			: "None — can start immediately";
 
 	return `Parent: #${parentNumber}
@@ -187,83 +187,6 @@ export async function parseTicketsFromAI(
 
 	const rawObj = JSON.parse(responseText);
 	return TicketBreakdownSchema.parse(rawObj);
-}
-
-export async function createChildIssues(params: {
-	ctx: IssueContext;
-	parentNodeId: string;
-	milestoneNumber: number;
-	tickets: Ticket[];
-}): Promise<
-	Array<{ id: string; number: number; node_id: string; title: string }>
-> {
-	const { ctx, parentNodeId, milestoneNumber, tickets } = params;
-	const { octokit, issueNumber, owner, repo } = ctx;
-
-	const createdList: Array<{
-		id: string;
-		number: number;
-		node_id: string;
-		title: string;
-	}> = [];
-	const idToNumberMap = new Map<string, number>();
-	const sortedTickets = topologicalSortTickets(tickets);
-
-	for (const ticket of sortedTickets) {
-		const mappedBlockers = ticket.blockers.map((b) => {
-			const num = idToNumberMap.get(b);
-			return num ? `#${num}` : b;
-		});
-
-		const issueBody = formatChildIssueBody({
-			acceptanceCriteria: ticket.acceptanceCriteria,
-			blockers: mappedBlockers,
-			parentNumber: issueNumber,
-			whatToBuild: ticket.whatToBuild,
-		});
-
-		const { data: createdIssue } = await octokit.rest.issues.create({
-			body: issueBody,
-			labels: [READY_FOR_DEV_LABEL],
-			milestone: milestoneNumber,
-			owner,
-			repo,
-			title: ticket.title,
-		});
-
-		idToNumberMap.set(ticket.id, createdIssue.number);
-		createdList.push({
-			id: ticket.id,
-			node_id: createdIssue.node_id,
-			number: createdIssue.number,
-			title: createdIssue.title,
-		});
-
-		try {
-			await octokit.graphql(
-				`mutation($issueId: ID!, $subIssueId: ID!) {
-					addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
-						issue { id }
-						subIssue { id }
-					}
-				}`,
-				{
-					headers: {
-						"GraphQL-Features": "sub_issues",
-					},
-					issueId: parentNodeId,
-					subIssueId: createdIssue.node_id,
-				},
-			);
-		} catch (graphqlErr) {
-			console.warn(
-				"GraphQL addSubIssue failed (may not be supported on repo):",
-				graphqlErr,
-			);
-		}
-	}
-
-	return createdList;
 }
 
 export function findMatchingChildIssue<
@@ -428,6 +351,23 @@ export async function reviewAndUpdateChildIssues(params: {
 	return updatedList;
 }
 
+export async function createChildIssues(params: {
+	ctx: IssueContext;
+	parentNodeId: string;
+	milestoneNumber: number;
+	tickets: Ticket[];
+}): Promise<
+	Array<{ id: string; number: number; node_id: string; title: string }>
+> {
+	return reviewAndUpdateChildIssues({
+		ctx: params.ctx,
+		existingChildIssues: [],
+		milestoneNumber: params.milestoneNumber,
+		newTickets: params.tickets,
+		parentNodeId: params.parentNodeId,
+	});
+}
+
 export async function closeParentIssueIfSafe(params: {
 	ctx: IssueContext;
 	parentIssueNumber: number;
@@ -445,23 +385,13 @@ export async function closeParentIssueIfSafe(params: {
 
 All ${childIssues.length} child issues created/updated and linked under milestone **${milestoneTitle}**:
 
-${childLinks}
-
-Parent specification ticket will now be closed.`;
+${childLinks}`;
 
 	await octokit.rest.issues.createComment({
 		body: commentBody,
 		issue_number: parentIssueNumber,
 		owner,
 		repo,
-	});
-
-	await octokit.rest.issues.update({
-		issue_number: parentIssueNumber,
-		owner,
-		repo,
-		state: "closed",
-		state_reason: "completed",
 	});
 }
 
@@ -534,24 +464,13 @@ export async function run() {
 			promptText,
 		);
 
-		let resultChildIssues: Array<{ number: number; title: string }>;
-
-		if (existingChildIssues.length > 0) {
-			resultChildIssues = await reviewAndUpdateChildIssues({
-				ctx,
-				existingChildIssues,
-				milestoneNumber,
-				newTickets: breakdown.tickets,
-				parentNodeId: issue.node_id,
-			});
-		} else {
-			resultChildIssues = await createChildIssues({
-				ctx,
-				milestoneNumber,
-				parentNodeId: issue.node_id,
-				tickets: breakdown.tickets,
-			});
-		}
+		const resultChildIssues = await reviewAndUpdateChildIssues({
+			ctx,
+			existingChildIssues,
+			milestoneNumber,
+			newTickets: breakdown.tickets,
+			parentNodeId: issue.node_id,
+		});
 
 		await closeParentIssueIfSafe({
 			childIssues: resultChildIssues,
