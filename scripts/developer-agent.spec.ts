@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockOctokit } from "../__mocks__/@actions/github";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
 import {
-	DEV_IN_PROGRESS_LABEL,
-	DEV_NEEDED_LABEL,
 	extractTargetSliceName,
 	generateDeveloperImplementation,
 	isDeveloperTrigger,
@@ -12,6 +10,7 @@ import {
 	run,
 	sanitizeBranchName,
 } from "./developer-agent";
+import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./pm-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");

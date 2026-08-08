@@ -7,9 +7,8 @@ import {
 	extractOriginalProposal,
 	parseAgentAction,
 	run,
-	SPEC_NEEDED_LABEL,
-	SPEC_READY_LABEL,
 } from "./pm-agent";
+import { SPEC_NEEDED_LABEL, SPEC_READY_LABEL } from "./pm-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");

@@ -12,8 +12,6 @@ import {
 	transitionState,
 } from "./pm-shared";
 
-export { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL };
-
 declare global {
 	namespace NodeJS {
 		interface ProcessEnv {

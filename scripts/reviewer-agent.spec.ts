@@ -366,6 +366,41 @@ describe("reviewer-agent unit tests", () => {
 			);
 		});
 
+		it("resets escalation to round-2 during run() when action is synchronize on PR with needs-human-review label", async () => {
+			// Arrange
+			(github.context as { payload?: unknown }).payload = {
+				action: "synchronize",
+			};
+			mockOctokit.rest.pulls.get.mockResolvedValueOnce({
+				data: {
+					body: "PR body",
+					head: { ref: "feature" },
+					labels: [{ name: NEEDS_HUMAN_REVIEW_LABEL }],
+					number: 42,
+					title: "PR Title",
+				},
+			} as never);
+			mockOctokit.paginate.mockResolvedValueOnce([]);
+			const mockDecision: ReviewDecisionData = {
+				decision: "APPROVE",
+				feedbackItems: [],
+				summary: "Approved after push.",
+			};
+			mockGenerateContent.mockResolvedValueOnce({
+				text: JSON.stringify(mockDecision),
+			});
+
+			// Act
+			await run();
+
+			// Assert
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: [APPROVED_LABEL],
+				}),
+			);
+		});
+
 		it("handles runtime errors gracefully and posts issue error comment", async () => {
 			// Arrange
 			(github.context as { payload?: unknown }).payload = { action: "opened" };

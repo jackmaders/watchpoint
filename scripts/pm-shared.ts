@@ -28,6 +28,27 @@ export function extractLabelNames(
 		.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
 }
 
+export async function removeLabel(ctx: IssueContext, name: string) {
+	try {
+		await ctx.octokit.rest.issues.removeLabel({
+			issue_number: ctx.issueNumber,
+			name,
+			owner: ctx.owner,
+			repo: ctx.repo,
+		});
+	} catch (error: unknown) {
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"status" in error &&
+			(error as { status?: number }).status === 404
+		) {
+			return;
+		}
+		throw error;
+	}
+}
+
 export async function removeLabelIfPresent(
 	ctx: IssueContext,
 	labels: Array<string | { name?: string }>,
@@ -36,24 +57,7 @@ export async function removeLabelIfPresent(
 	const labelNames = extractLabelNames(labels);
 
 	if (labelNames.includes(labelToRemove)) {
-		try {
-			await ctx.octokit.rest.issues.removeLabel({
-				issue_number: ctx.issueNumber,
-				name: labelToRemove,
-				owner: ctx.owner,
-				repo: ctx.repo,
-			});
-		} catch (error: unknown) {
-			if (
-				typeof error === "object" &&
-				error !== null &&
-				"status" in error &&
-				(error as { status?: number }).status === 404
-			) {
-				return;
-			}
-			throw error;
-		}
+		await removeLabel(ctx, labelToRemove);
 	}
 }
 
@@ -74,7 +78,7 @@ export async function transitionState(
 	);
 
 	for (const labelToRemove of toRemove) {
-		await removeLabelIfPresent(ctx, currentLabels, labelToRemove);
+		await removeLabel(ctx, labelToRemove);
 	}
 
 	if (toAdd.length > 0) {

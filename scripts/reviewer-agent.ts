@@ -11,8 +11,6 @@ import {
 	transitionState,
 } from "./pm-shared";
 
-export { APPROVED_LABEL, NEEDS_HUMAN_REVIEW_LABEL };
-
 export type ReviewDecision = "APPROVE" | "REQUEST_CHANGES" | "ESCALATE";
 
 export interface ReviewFeedbackItem {
@@ -322,8 +320,12 @@ export async function run() {
 			return;
 		}
 
-		const { conversation, pr } = await fetchPRContext(ctx);
-		const round = determineReviewRound(pr.labels);
+		const { conversation, pr, latestCommentText } = await fetchPRContext(ctx);
+		const round = determineReviewRound(
+			pr.labels,
+			action,
+			latestCommentText || payloadComment,
+		);
 
 		const skillInstruction = await readFile(
 			".github/skills/reviewer-agent.md",
