@@ -43,6 +43,11 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
+      - name: 🚀 Install Antigravity CLI
+        run: |
+          curl -fsSL https://antigravity.google/cli/install.sh | bash
+          echo "$HOME/.antigravity/bin" >> $GITHUB_PATH
+
       - name: 💻 Execute Developer Agent
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
