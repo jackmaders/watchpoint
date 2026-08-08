@@ -62,10 +62,18 @@ ${whatToBuild}
 ## Acceptance criteria
 
 ${criteriaList || "- [ ] Complete implementation as specified"}
+- [ ] FSD architecture check passes (\`bun run check:architecture\`)
+- [ ] 100% test coverage threshold met (\`bun run test:coverage\`)
 
 ## Blocked by
 
 ${blockersList}
+
+## Verification Commands
+\`\`\`bash
+bun run check:architecture
+bun run test:coverage
+\`\`\`
 `;
 }
 

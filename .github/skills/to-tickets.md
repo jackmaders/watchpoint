@@ -38,3 +38,5 @@ Output the tickets strictly adhering to the JSON schema with:
 - `whatToBuild`: End-to-end behavior from user perspective
 - `acceptanceCriteria`: List of acceptance criteria strings
 - `blockers`: Array of temporary ticket IDs that block this ticket (e.g. `["TICKET-1"]`)
+
+Format individual generated tickets using the template defined in [.github/templates/developer-ticket-template.md](file:///home/jackw/projects/watchpoint/.github/templates/developer-ticket-template.md).
