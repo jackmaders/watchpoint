@@ -37,28 +37,34 @@ Review with an explicit adversarial posture — a confident PR title or clean bu
 
 ---
 
-## 3. Thermo-Nuclear Code Quality Standards
+## 3. Thermo-Nuclear Code Quality & Call-Site Signature Audit
 
 Apply these non-negotiable code quality rules during every review:
 
-1. **Ambitious Structural Simplification ("Code Judo"):**
+1. **Never Infer Implementation Details & Trace Call-Site Signatures:**
+   - **DO NOT ASSUME** a caller passes parameters correctly just because a function definition signature is valid or unit tests pass.
+   - **Cross-Reference Call Sites:** For EVERY function, method, or helper modified in the PR, trace every invocation site across the diff and codebase. Verify that updated parameter signatures match caller invocation arguments 1:1.
+   - **Do Not Trust False-Green Unit Tests:** Unit tests often call functions directly with mock parameters. Check if the production runner (`run()`, event handlers, entrypoints) actually passes all arguments expected by lower-level functions.
+   - **Trust CI Status Checks:** You MUST trust automated CI status checks for test execution speed and coverage verification (do NOT re-run tests locally). However, static passing checks do NOT replace rigorous static signature call-site tracing.
+
+2. **Ambitious Structural Simplification ("Code Judo"):**
    - Actively search for restructurings that eliminate entire conditional branches, helper layers, or ad-hoc state variables.
    - Prefer restructurings that make code smaller, more direct, and inevitable in hindsight.
    - Prefer deleting complexity over redistributing it across files.
 
-2. **File & Slice Bloat Guardrails:**
+3. **File & Slice Bloat Guardrails:**
    - Do not allow a PR to expand a file past 1,000 lines without extracting subcomponents or helper modules.
    - Keep FSD slices (`src/_pages/<slice-name>/`) modular and focused.
 
-3. **Zero Spaghetti Conditionals & Random Branching:**
+4. **Zero Spaghetti Conditionals & Random Branching:**
    - Reject ad-hoc `if` statements, scattered special cases, or edge-case flags inserted into unrelated execution paths.
    - Encapsulate variant behavior into dedicated helpers, state machines, or policy objects.
 
-4. **Direct, Boring, & Maintainable Implementations:**
+5. **Direct, Boring, & Maintainable Implementations:**
    - Reject brittle, ad-hoc, or "magic" behavior.
    - Flag pass-through wrappers, identity functions, or thin abstractions that add indirection without adding clarity.
 
-5. **Strict Type & Boundary Safety:**
+6. **Strict Type & Boundary Safety:**
    - Flag usage of `any`, unnecessary `unknown`, or heavy type casts where explicit types/schemas can be used.
    - Ensure input validation schemas (Zod/Drizzle) enforce clean boundaries at entry points.
 
