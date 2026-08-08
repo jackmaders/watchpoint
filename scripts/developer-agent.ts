@@ -44,7 +44,7 @@ export function isDeveloperTrigger(
 
 export function extractTargetSliceName(body?: string | null): string {
 	if (!body) return "feature";
-	const match = body.match(/src\/_pages\/([a-zA-Z0-9_-]+)/);
+	const match = body.match(/(?:src|@)\/_pages\/([a-zA-Z0-9_-]+)/);
 	return match?.[1] ?? "feature";
 }
 
@@ -57,8 +57,8 @@ export function sanitizeBranchName(
 	const cleanTitle = title
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.slice(0, 30);
+		.slice(0, 30)
+		.replace(/^-+|-+$/g, "");
 	return `dev/issue-${issueNumber}-${slice}-${cleanTitle}`;
 }
 
@@ -151,7 +151,17 @@ export async function run() {
 			await fetchIssueContext(ctx);
 
 		const action = github.context.payload?.action;
-		if (!isDeveloperTrigger(issue.labels, action, latestUserComment)) {
+		const payloadComment = (
+			github.context.payload?.comment as { body?: string } | undefined
+		)?.body;
+
+		if (
+			!isDeveloperTrigger(
+				issue.labels,
+				action,
+				payloadComment ?? latestUserComment,
+			)
+		) {
 			console.log(
 				"Issue is not ready for development. Skipping developer agent.",
 			);

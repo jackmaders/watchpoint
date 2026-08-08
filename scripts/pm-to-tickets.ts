@@ -337,6 +337,30 @@ export async function closeObsoleteChildIssues(
 	}
 }
 
+export async function linkSubIssue(
+	octokit: IssueContext["octokit"],
+	parentNodeId: string,
+	childNodeId: string,
+) {
+	try {
+		await octokit.graphql(
+			`mutation($issueId: ID!, $subIssueId: ID!) {
+				addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
+					issue { id }
+					subIssue { id }
+				}
+			}`,
+			{
+				headers: { "GraphQL-Features": "sub_issues" },
+				issueId: parentNodeId,
+				subIssueId: childNodeId,
+			},
+		);
+	} catch (graphqlErr) {
+		console.warn("GraphQL addSubIssue failed:", graphqlErr);
+	}
+}
+
 export async function linkSingleBlocker(
 	octokit: IssueContext["octokit"],
 	targetNodeId: string,
@@ -462,23 +486,7 @@ export async function reviewAndUpdateChildIssues(params: {
 			childNodeId = createdIssue.node_id;
 			childNumber = createdIssue.number;
 
-			try {
-				await octokit.graphql(
-					`mutation($issueId: ID!, $subIssueId: ID!) {
-						addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
-							issue { id }
-							subIssue { id }
-						}
-					}`,
-					{
-						headers: { "GraphQL-Features": "sub_issues" },
-						issueId: parentNodeId,
-						subIssueId: createdIssue.node_id,
-					},
-				);
-			} catch (graphqlErr) {
-				console.warn("GraphQL addSubIssue failed:", graphqlErr);
-			}
+			await linkSubIssue(octokit, parentNodeId, createdIssue.node_id);
 		}
 
 		idToNodeIdMap.set(ticket.id, childNodeId);
@@ -493,23 +501,6 @@ export async function reviewAndUpdateChildIssues(params: {
 	await linkNativeIssueBlockers(octokit, sortedTickets, idToNodeIdMap);
 	await closeObsoleteChildIssues(ctx, existingChildIssues, matchedNumbers);
 	return updatedList;
-}
-
-export async function createChildIssues(params: {
-	ctx: IssueContext;
-	parentNodeId: string;
-	milestoneNumber: number;
-	tickets: Ticket[];
-}): Promise<
-	Array<{ id: string; number: number; node_id: string; title: string }>
-> {
-	return reviewAndUpdateChildIssues({
-		ctx: params.ctx,
-		existingChildIssues: [],
-		milestoneNumber: params.milestoneNumber,
-		newTickets: params.tickets,
-		parentNodeId: params.parentNodeId,
-	});
 }
 
 export async function postBreakdownSummaryComment(params: {

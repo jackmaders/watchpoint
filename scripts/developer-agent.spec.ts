@@ -85,6 +85,17 @@ describe("developer-agent unit tests", () => {
 			expect(slice).toBe("auth");
 		});
 
+		it("extracts slice name from body @/_pages path aliases", () => {
+			// Arrange
+			const body = "Target file scope: `@/_pages/dashboard/ui/Widget.tsx`";
+
+			// Act
+			const slice = extractTargetSliceName(body);
+
+			// Assert
+			expect(slice).toBe("dashboard");
+		});
+
 		it("returns fallback 'feature' when no slice path is in body", () => {
 			// Arrange
 			const body = "No FSD slice path specified";
@@ -108,6 +119,17 @@ describe("developer-agent unit tests", () => {
 
 			// Assert
 			expect(branch).toBe("dev/issue-42-auth-setup-prisma-orm-auth-system");
+		});
+
+		it("trims trailing dashes cleanly even when title slicing occurs", () => {
+			// Arrange
+			const title = "Setup Prisma ORM Auth System Extra Long Title";
+
+			// Act
+			const branch = sanitizeBranchName(title, 42);
+
+			// Assert
+			expect(branch.endsWith("-")).toBe(false);
 		});
 
 		it("uses fallback slice name feature when no body is provided", () => {
