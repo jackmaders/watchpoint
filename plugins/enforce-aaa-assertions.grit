@@ -1,0 +1,19 @@
+`$stmt; $next` where {
+	or {
+		$stmt <: `expect($_)`,
+		$stmt <: `expect($_).$_`,
+		$stmt <: `expect($_).$_($_)`,
+		$stmt <: `await expect($_)`,
+		$stmt <: `await expect($_).$_`,
+		$stmt <: `await expect($_).$_($_)`
+	},
+	not or {
+		$next <: `expect($_)`,
+		$next <: `expect($_).$_`,
+		$next <: `expect($_).$_($_)`,
+		$next <: `await expect($_)`,
+		$next <: `await expect($_).$_`,
+		$next <: `await expect($_).$_($_)`
+	},
+	register_diagnostic(span=$next, message="AAA Violation: Non-assertion statement found after expect(). All actions and setup must precede assertions.")
+}
