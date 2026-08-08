@@ -34,8 +34,8 @@ describe("pm-to-tickets unit tests", () => {
 				type: string;
 				properties: { tickets: { type: string } };
 			};
-			expect(schemaTree.type).toBe("OBJECT");
-			expect(schemaTree.properties.tickets.type).toBe("ARRAY");
+			expect(schemaTree.type).toBe("object");
+			expect(schemaTree.properties.tickets.type).toBe("array");
 		});
 	});
 
@@ -551,13 +551,8 @@ describe("pm-to-tickets unit tests", () => {
 
 			expect(octokit.rest.issues.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					labels: ["ready-for-dev"],
+					labels: ["dev-needed"],
 					title: "Ticket 1 Title",
-				}),
-			);
-			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith(
-				expect.objectContaining({
-					labels: ["refined"],
 				}),
 			);
 		});

@@ -2,12 +2,7 @@ import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockOctokit } from "../__mocks__/@actions/github";
 import { mockGenerateContent } from "../__mocks__/@google/genai";
-import {
-	APPROVED_LABEL,
-	CHANGES_REQUESTED_LABEL,
-	NEEDS_HUMAN_REVIEW_LABEL,
-	REVIEW_ROUND_1_LABEL,
-} from "./pm-shared";
+import { APPROVED_LABEL, NEEDS_HUMAN_REVIEW_LABEL } from "./pm-shared";
 import {
 	determineReviewRound,
 	fetchPRContext,
@@ -60,19 +55,28 @@ describe("reviewer-agent unit tests", () => {
 			expect(determineReviewRound(labels)).toBe("round-1");
 		});
 
-		it("returns round-2 when review-round-1 label is present", () => {
-			// Arrange
-			const labels = [{ name: REVIEW_ROUND_1_LABEL }];
-
-			// Act & Assert
-			expect(determineReviewRound(labels)).toBe("round-2");
-		});
-
-		it("returns escalated when needs-human-review label is present", () => {
+		it("returns escalated when needs-human-review label is present without reset trigger", () => {
 			// Arrange & Act & Assert
 			expect(determineReviewRound([{ name: NEEDS_HUMAN_REVIEW_LABEL }])).toBe(
 				"escalated",
 			);
+		});
+
+		it("resets to round-2 when needs-human-review label is present and /review comment or synchronize occurs", () => {
+			// Arrange & Act & Assert
+			expect(
+				determineReviewRound(
+					[{ name: NEEDS_HUMAN_REVIEW_LABEL }],
+					"synchronize",
+				),
+			).toBe("round-2");
+			expect(
+				determineReviewRound(
+					[{ name: NEEDS_HUMAN_REVIEW_LABEL }],
+					undefined,
+					"/review please",
+				),
+			).toBe("round-2");
 		});
 	});
 
@@ -146,7 +150,7 @@ describe("reviewer-agent unit tests", () => {
 	});
 
 	describe("postPRReviewAndLabels helper", () => {
-		it("posts REQUEST_CHANGES review and labels for Round 1 findings", async () => {
+		it("posts REQUEST_CHANGES review for Round 1 findings", async () => {
 			// Arrange
 			const ctx = {
 				issueNumber: 42,
@@ -172,11 +176,6 @@ describe("reviewer-agent unit tests", () => {
 			await postPRReviewAndLabels(ctx, reviewData, "round-1");
 
 			// Assert
-			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
-				expect.objectContaining({
-					labels: [REVIEW_ROUND_1_LABEL, CHANGES_REQUESTED_LABEL],
-				}),
-			);
 			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith(
 				expect.objectContaining({
 					event: "REQUEST_CHANGES",
@@ -184,7 +183,7 @@ describe("reviewer-agent unit tests", () => {
 			);
 		});
 
-		it("posts APPROVE review and removes previous round labels when clean", async () => {
+		it("posts APPROVE review and applies approved label when clean", async () => {
 			// Arrange
 			const ctx = {
 				issueNumber: 42,
@@ -193,7 +192,7 @@ describe("reviewer-agent unit tests", () => {
 				repo: "watchpoint",
 			};
 			mockOctokit.rest.issues.get.mockResolvedValueOnce({
-				data: { labels: [{ name: CHANGES_REQUESTED_LABEL }] },
+				data: { labels: [] },
 			} as never);
 			const reviewData: ReviewDecisionData = {
 				decision: "APPROVE",
@@ -205,11 +204,6 @@ describe("reviewer-agent unit tests", () => {
 			await postPRReviewAndLabels(ctx, reviewData, "round-2");
 
 			// Assert
-			expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith(
-				expect.objectContaining({
-					name: CHANGES_REQUESTED_LABEL,
-				}),
-			);
 			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
 				expect.objectContaining({
 					labels: [APPROVED_LABEL],
@@ -218,6 +212,47 @@ describe("reviewer-agent unit tests", () => {
 			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith(
 				expect.objectContaining({
 					event: "APPROVE",
+				}),
+			);
+		});
+
+		it("falls back gracefully to COMMENT review event on HTTP 422 permission error when approving", async () => {
+			// Arrange
+			const ctx = {
+				issueNumber: 42,
+				octokit: mockOctokit as unknown as ReturnType<typeof github.getOctokit>,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+			mockOctokit.rest.issues.get.mockResolvedValueOnce({
+				data: { labels: [] },
+			} as never);
+			mockOctokit.rest.pulls.createReview
+				.mockRejectedValueOnce(
+					new Error(
+						"Unprocessable Entity: GitHub Actions is not permitted to approve pull requests.",
+					),
+				)
+				.mockResolvedValueOnce({} as never);
+
+			const reviewData: ReviewDecisionData = {
+				decision: "APPROVE",
+				feedbackItems: [],
+				summary: "All checks passing cleanly.",
+			};
+
+			// Act
+			await postPRReviewAndLabels(ctx, reviewData, "round-1");
+
+			// Assert
+			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith(
+				expect.objectContaining({
+					event: "COMMENT",
+				}),
+			);
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: [APPROVED_LABEL],
 				}),
 			);
 		});
@@ -231,7 +266,7 @@ describe("reviewer-agent unit tests", () => {
 				repo: "watchpoint",
 			};
 			mockOctokit.rest.issues.get.mockResolvedValueOnce({
-				data: { labels: [{ name: REVIEW_ROUND_1_LABEL }] },
+				data: { labels: [] },
 			} as never);
 			const reviewData: ReviewDecisionData = {
 				decision: "REQUEST_CHANGES",
@@ -327,6 +362,41 @@ describe("reviewer-agent unit tests", () => {
 			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith(
 				expect.objectContaining({
 					event: "APPROVE",
+				}),
+			);
+		});
+
+		it("resets escalation to round-2 during run() when action is synchronize on PR with needs-human-review label", async () => {
+			// Arrange
+			(github.context as { payload?: unknown }).payload = {
+				action: "synchronize",
+			};
+			mockOctokit.rest.pulls.get.mockResolvedValueOnce({
+				data: {
+					body: "PR body",
+					head: { ref: "feature" },
+					labels: [{ name: NEEDS_HUMAN_REVIEW_LABEL }],
+					number: 42,
+					title: "PR Title",
+				},
+			} as never);
+			mockOctokit.paginate.mockResolvedValueOnce([]);
+			const mockDecision: ReviewDecisionData = {
+				decision: "APPROVE",
+				feedbackItems: [],
+				summary: "Approved after push.",
+			};
+			mockGenerateContent.mockResolvedValueOnce({
+				text: JSON.stringify(mockDecision),
+			});
+
+			// Act
+			await run();
+
+			// Assert
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({
+					labels: [APPROVED_LABEL],
 				}),
 			);
 		});

@@ -1,14 +1,18 @@
 import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	APPROVED_LABEL,
+	DEV_IN_PROGRESS_LABEL,
+	DEV_NEEDED_LABEL,
 	extractLabelNames,
 	fetchIssueContext,
 	formatGeminiError,
+	NEEDS_HUMAN_REVIEW_LABEL,
 	postIssueErrorComment,
-	READY_FOR_DEV_LABEL,
-	REFINED_LABEL,
 	removeLabelIfPresent,
+	SPEC_NEEDED_LABEL,
 	SPEC_READY_LABEL,
+	transitionState,
 } from "./pm-shared";
 
 vi.mock("@actions/github");
@@ -20,9 +24,12 @@ describe("pm-shared unit tests", () => {
 
 	describe("constants", () => {
 		it("defines correct label constants", () => {
+			expect(SPEC_NEEDED_LABEL).toBe("spec-needed");
 			expect(SPEC_READY_LABEL).toBe("spec-ready");
-			expect(READY_FOR_DEV_LABEL).toBe("ready-for-dev");
-			expect(REFINED_LABEL).toBe("refined");
+			expect(DEV_NEEDED_LABEL).toBe("dev-needed");
+			expect(DEV_IN_PROGRESS_LABEL).toBe("dev-in-progress");
+			expect(APPROVED_LABEL).toBe("approved");
+			expect(NEEDS_HUMAN_REVIEW_LABEL).toBe("needs-human-review");
 		});
 	});
 
@@ -100,6 +107,36 @@ describe("pm-shared unit tests", () => {
 			await expect(
 				removeLabelIfPresent(ctx, ["spec-ready"], "spec-ready"),
 			).rejects.toThrow("Network error");
+		});
+	});
+
+	describe("transitionState helper", () => {
+		it("removes specified labels and adds new specified labels", async () => {
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			await transitionState(ctx, ["spec-needed", "old-label"], {
+				add: ["spec-ready"],
+				remove: ["spec-needed"],
+			});
+
+			expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+				issue_number: 42,
+				name: "spec-needed",
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+			expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+				issue_number: 42,
+				labels: ["spec-ready"],
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
 		});
 	});
 

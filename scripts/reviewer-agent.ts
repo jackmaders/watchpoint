@@ -4,14 +4,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import {
 	APPROVED_LABEL,
 	BOT_COMMENT_MARKER,
-	CHANGES_REQUESTED_LABEL,
 	extractLabelNames,
 	type IssueContext,
 	NEEDS_HUMAN_REVIEW_LABEL,
 	postIssueErrorComment,
-	REVIEW_ROUND_1_LABEL,
-	REVIEW_ROUND_2_LABEL,
-	removeLabelIfPresent,
+	transitionState,
 } from "./pm-shared";
 
 export type ReviewDecision = "APPROVE" | "REQUEST_CHANGES" | "ESCALATE";
@@ -46,15 +43,21 @@ export function isReviewerTrigger(
 
 export function determineReviewRound(
 	labels: Array<string | { name?: string }>,
+	payloadAction?: string,
+	latestComment?: string,
 ): "round-1" | "round-2" | "escalated" {
 	const labelNames = extractLabelNames(labels);
+	const comment = latestComment ?? "";
+	const isResetTrigger =
+		comment.includes("/review") ||
+		comment.includes("/re-review") ||
+		payloadAction === "synchronize";
 
 	if (labelNames.includes(NEEDS_HUMAN_REVIEW_LABEL)) {
+		if (isResetTrigger) {
+			return "round-2";
+		}
 		return "escalated";
-	}
-
-	if (labelNames.includes(REVIEW_ROUND_1_LABEL)) {
-		return "round-2";
 	}
 
 	return "round-1";
@@ -161,6 +164,39 @@ export async function generateReviewDecision(
 	return JSON.parse(response.text) as ReviewDecisionData;
 }
 
+export async function submitApprovalReview(ctx: IssueContext, body: string) {
+	const { octokit, issueNumber, owner, repo } = ctx;
+	try {
+		await octokit.rest.pulls.createReview({
+			body,
+			event: "APPROVE",
+			owner,
+			pull_number: issueNumber,
+			repo,
+		});
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		if (
+			errorMessage.includes(
+				"GitHub Actions is not permitted to approve pull requests",
+			)
+		) {
+			console.warn(
+				"GitHub Actions lacks approval permission. Falling back to review comment.",
+			);
+			await octokit.rest.pulls.createReview({
+				body,
+				event: "COMMENT",
+				owner,
+				pull_number: issueNumber,
+				repo,
+			});
+		} else {
+			throw error;
+		}
+	}
+}
+
 export async function postPRReviewAndLabels(
 	ctx: IssueContext,
 	reviewData: ReviewDecisionData,
@@ -184,15 +220,9 @@ export async function postPRReviewAndLabels(
 		(round === "round-2" && reviewData.decision === "REQUEST_CHANGES");
 
 	if (isEscalating) {
-		await removeLabelIfPresent(ctx, currentLabels, CHANGES_REQUESTED_LABEL);
-		await removeLabelIfPresent(ctx, currentLabels, REVIEW_ROUND_1_LABEL);
-		await removeLabelIfPresent(ctx, currentLabels, REVIEW_ROUND_2_LABEL);
-
-		await octokit.rest.issues.addLabels({
-			issue_number: issueNumber,
-			labels: [NEEDS_HUMAN_REVIEW_LABEL],
-			owner,
-			repo,
+		await transitionState(ctx, currentLabels, {
+			add: [NEEDS_HUMAN_REVIEW_LABEL],
+			remove: [APPROVED_LABEL],
 		});
 
 		const escalationBody = `${BOT_COMMENT_MARKER}
@@ -223,16 +253,6 @@ ${reviewData.feedbackItems
 	}
 
 	if (reviewData.decision === "REQUEST_CHANGES") {
-		const nextRoundLabel =
-			round === "round-1" ? REVIEW_ROUND_1_LABEL : REVIEW_ROUND_2_LABEL;
-
-		await octokit.rest.issues.addLabels({
-			issue_number: issueNumber,
-			labels: [nextRoundLabel, CHANGES_REQUESTED_LABEL],
-			owner,
-			repo,
-		});
-
 		const reviewBody = `${BOT_COMMENT_MARKER}
 🔍 **Reviewer AI Agent - Changes Requested (${round.toUpperCase()})**
 
@@ -259,16 +279,9 @@ ${reviewData.feedbackItems
 	}
 
 	// APPROVE branch
-	await removeLabelIfPresent(ctx, currentLabels, CHANGES_REQUESTED_LABEL);
-	await removeLabelIfPresent(ctx, currentLabels, REVIEW_ROUND_1_LABEL);
-	await removeLabelIfPresent(ctx, currentLabels, REVIEW_ROUND_2_LABEL);
-	await removeLabelIfPresent(ctx, currentLabels, NEEDS_HUMAN_REVIEW_LABEL);
-
-	await octokit.rest.issues.addLabels({
-		issue_number: issueNumber,
-		labels: [APPROVED_LABEL],
-		owner,
-		repo,
+	await transitionState(ctx, currentLabels, {
+		add: [APPROVED_LABEL],
+		remove: [NEEDS_HUMAN_REVIEW_LABEL],
 	});
 
 	const approvalBody = `${BOT_COMMENT_MARKER}
@@ -282,13 +295,7 @@ ${reviewData.summary}
 * Test Standards & Coverage: **Pass**
 `;
 
-	await octokit.rest.pulls.createReview({
-		body: approvalBody,
-		event: "APPROVE",
-		owner,
-		pull_number: issueNumber,
-		repo,
-	});
+	await submitApprovalReview(ctx, approvalBody);
 }
 
 export async function run() {
@@ -313,8 +320,12 @@ export async function run() {
 			return;
 		}
 
-		const { conversation, pr } = await fetchPRContext(ctx);
-		const round = determineReviewRound(pr.labels);
+		const { conversation, pr, latestCommentText } = await fetchPRContext(ctx);
+		const round = determineReviewRound(
+			pr.labels,
+			action,
+			latestCommentText || payloadComment,
+		);
 
 		const skillInstruction = await readFile(
 			".github/skills/reviewer-agent.md",

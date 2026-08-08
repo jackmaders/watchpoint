@@ -5,13 +5,12 @@ import { mockGenerateContent } from "../__mocks__/@google/genai";
 import {
 	extractTargetSliceName,
 	generateDeveloperImplementation,
-	IN_PROGRESS_LABEL,
 	isDeveloperTrigger,
 	postDeveloperCompletedComment,
-	postDeveloperStartedComment,
 	run,
 	sanitizeBranchName,
 } from "./developer-agent";
+import { DEV_IN_PROGRESS_LABEL, DEV_NEEDED_LABEL } from "./pm-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");
@@ -27,9 +26,9 @@ describe("developer-agent unit tests", () => {
 	});
 
 	describe("isDeveloperTrigger helper", () => {
-		it("returns true if ready-for-dev label is present", () => {
+		it("returns true if dev-needed label is present", () => {
 			// Arrange
-			const labels = [{ name: "ready-for-dev" }];
+			const labels = [{ name: DEV_NEEDED_LABEL }];
 
 			// Act
 			const trigger = isDeveloperTrigger(labels);
@@ -62,7 +61,7 @@ describe("developer-agent unit tests", () => {
 			expect(trigger).toBe(true);
 		});
 
-		it("returns false if ready-for-dev label is missing and no triggers match", () => {
+		it("returns false if dev-needed label is missing and no triggers match", () => {
 			// Arrange
 			const labels = [{ name: "idea" }];
 
@@ -184,8 +183,8 @@ describe("developer-agent unit tests", () => {
 		});
 	});
 
-	describe("postDeveloperStartedComment & postDeveloperCompletedComment", () => {
-		it("posts start and completion comments on GitHub issue", async () => {
+	describe("postDeveloperCompletedComment", () => {
+		it("posts completion comment on GitHub issue", async () => {
 			// Arrange
 			const ctx = {
 				issueNumber: 42,
@@ -195,7 +194,6 @@ describe("developer-agent unit tests", () => {
 			};
 
 			// Act
-			await postDeveloperStartedComment(ctx, "dev/issue-42-test");
 			await postDeveloperCompletedComment(
 				ctx,
 				"Summary details",
@@ -203,7 +201,7 @@ describe("developer-agent unit tests", () => {
 			);
 
 			// Assert
-			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledTimes(2);
+			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -225,16 +223,16 @@ describe("developer-agent unit tests", () => {
 			await expect(run()).resolves.not.toThrow();
 		});
 
-		it("executes complete developer workflow when issue is ready-for-dev", async () => {
+		it("executes complete developer workflow when issue has dev-needed label", async () => {
 			// Arrange
 			(github.context as { payload?: unknown }).payload = {
-				issue: { labels: [{ name: "ready-for-dev" }] },
+				issue: { labels: [{ name: DEV_NEEDED_LABEL }] },
 			};
 			mockOctokit.rest.issues.get.mockResolvedValueOnce({
 				data: {
 					body: "Scope: `src/_pages/home/`",
 					id: 42,
-					labels: [{ name: "ready-for-dev" }],
+					labels: [{ name: DEV_NEEDED_LABEL }],
 					number: 42,
 					title: "Build Home Page",
 				},
@@ -250,7 +248,7 @@ describe("developer-agent unit tests", () => {
 			// Assert
 			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
 				expect.objectContaining({
-					labels: [IN_PROGRESS_LABEL],
+					labels: [DEV_IN_PROGRESS_LABEL],
 				}),
 			);
 		});
@@ -258,7 +256,7 @@ describe("developer-agent unit tests", () => {
 		it("handles errors gracefully and posts issue error comment", async () => {
 			// Arrange
 			(github.context as { payload?: unknown }).payload = {
-				issue: { labels: [{ name: "ready-for-dev" }] },
+				issue: { labels: [{ name: DEV_NEEDED_LABEL }] },
 			};
 			mockOctokit.rest.issues.get.mockRejectedValueOnce(
 				new Error("Network Failure"),

@@ -7,8 +7,8 @@ import {
 	extractOriginalProposal,
 	parseAgentAction,
 	run,
-	SPEC_READY_LABEL,
 } from "./pm-agent";
+import { SPEC_NEEDED_LABEL, SPEC_READY_LABEL } from "./pm-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");
@@ -22,29 +22,23 @@ describe("pm-agent unit tests", () => {
 	});
 
 	describe("determineSkillPath state machine & command handling", () => {
-		it("defaults to grill-me skill when spec-ready is absent", () => {
-			const skillPath = determineSkillPath(["idea"]);
+		it("returns grill-me skill when spec-needed label is present", () => {
+			const skillPath = determineSkillPath([SPEC_NEEDED_LABEL]);
 			expect(skillPath).toBe(".github/skills/grill-me.md");
 		});
 
-		it("returns null when issue has spec-ready label and no override command", () => {
-			const skillPath = determineSkillPath(["idea", SPEC_READY_LABEL]);
+		it("returns null when issue lacks spec-needed label and lacks slash command", () => {
+			const skillPath = determineSkillPath([]);
 			expect(skillPath).toBeNull();
 		});
 
-		it("switches to to-spec skill when /to-spec command is present in comment", () => {
-			const skillPath = determineSkillPath(
-				["idea", SPEC_READY_LABEL],
-				"Please generate /to-spec now",
-			);
+		it("switches to to-spec skill when /spec command is present in comment", () => {
+			const skillPath = determineSkillPath([], "Please generate /spec now");
 			expect(skillPath).toBe(".github/skills/to-spec.md");
 		});
 
-		it("switches to grill-me skill when /grill command is present in comment on spec-ready issue", () => {
-			const skillPath = determineSkillPath(
-				["idea", SPEC_READY_LABEL],
-				"I want to /grill more details",
-			);
+		it("switches to grill-me skill when /grill command is present in comment on issue without spec-needed label", () => {
+			const skillPath = determineSkillPath([], "I want to /grill more details");
 			expect(skillPath).toBe(".github/skills/grill-me.md");
 		});
 	});
@@ -161,7 +155,10 @@ describe("pm-agent unit tests", () => {
 		it("executes run() end-to-end for grilling flow without error", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
-				data: { body: "My feature idea", labels: [] },
+				data: {
+					body: "My feature idea",
+					labels: [{ name: SPEC_NEEDED_LABEL }],
+				},
 			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
 			vi.mocked(octokit.paginate).mockResolvedValue([]);
 
@@ -175,7 +172,7 @@ describe("pm-agent unit tests", () => {
 			expect(octokit.rest.issues.createComment).toHaveBeenCalled();
 		});
 
-		it("skips execution smoothly when issue has spec-ready label and no override command", async () => {
+		it("skips execution smoothly when issue lacks spec-needed label and no override command", async () => {
 			const octokit = github.getOctokit("token");
 			vi.mocked(octokit.rest.issues.get).mockResolvedValue({
 				data: { body: "My feature idea", labels: [{ name: SPEC_READY_LABEL }] },

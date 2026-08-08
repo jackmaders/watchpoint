@@ -19,8 +19,8 @@ jobs:
   run-developer-agent:
     name: 💻 Run Developer AI Agent
     if: >
-      (github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'ready-for-dev') || github.event.action == 'assigned')) ||
-      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'ready-for-dev') || contains(github.event.comment.body, '/dev') || contains(github.event.comment.body, '/implement')) && github.event.comment.user.type != 'Bot')
+      (github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'dev-needed') || github.event.action == 'assigned')) ||
+      (github.event_name == 'issue_comment' && (contains(github.event.issue.labels.*.name, 'dev-needed') || contains(github.event.comment.body, '/dev') || contains(github.event.comment.body, '/implement')) && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
 
     steps:
