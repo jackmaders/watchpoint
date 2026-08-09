@@ -44,76 +44,54 @@ Watchpoint is a browser-based interactive learning platform that transforms pass
 
 ### Core Architecture & ADR Compliance
 * **Media Delivery ([ADR-001](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0001-youtube-media-player.md))**: Implemented via the YouTube IFrame API wrapped in a custom minimalist control interface (`Play`, `Pause`, `Replay Scenario`). Native controls are disabled (`controls=0`).
-* **Database Schema ([ADR-002](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a Cloudflare D1 (SQLite) database managed via Prisma ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
+* **Database Schema ([ADR-002](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a Cloudflare D1 (SQLite) database managed via Drizzle ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
 * **Input Engine ([ADR-003](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0003-uniform-multiple-choice-v1-input-engine.md))**: Standardizes V1 interactive modules on uniform multiple-choice UI components while maintaining polymorphic `input_type` metadata to allow future continuous sliders and 2D map pin drops.
 * **Edge Deployment ([ADR-004](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0004-cloudflare-native-deployment.md))**: Deployed natively to Cloudflare Workers using `@opennextjs/cloudflare`, Cloudflare D1, and Cloudflare R2 object storage.
 
-### Database Schema (Prisma)
-Derived from architectural decision records:
+### Database Schema (Drizzle ORM)
+Drizzle is the ORM of record (see [ADR-004](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0004-cloudflare-native-deployment.md)); this spec previously referenced Prisma, which was documentation drift, now corrected. Full schema lives in `src/shared/db/schema/index.ts`; the domain-relevant tables:
 
-```prisma
-model Vod {
-  id              String     @id @default(cuid())
-  title           String
-  youtubeVideoId  String     @map("youtube_video_id")
-  durationSeconds Int        @map("duration_seconds")
-  mapName         String     @map("map_name")
-  rankTier        String     @map("rank_tier")
-  isPublished     Boolean    @default(false) @map("is_published")
-  createdAt       DateTime   @default(now()) @map("created_at")
-  scenarios       Scenario[]
+```ts
+export const vods = sqliteTable("vod", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  youtubeVideoId: text("youtube_video_id").notNull(),
+  durationSeconds: integer("duration_seconds").notNull(),
+  mapName: text("map_name").notNull(),
+  rankTier: text("rank_tier").notNull(),
+  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
 
-  @@map("vod")
-}
+export const moduleTypeEnum = ["STRATEGY", "TACTICS", "ULTIMATE", "COOLDOWN", "SPATIAL"] as const;
+export const inputTypeEnum = ["MULTIPLE_CHOICE", "PERCENT_SLIDER", "TIME_SLIDER", "MAP_PIN_2D"] as const;
 
-enum ModuleType {
-  STRATEGY
-  TACTICS
-  ULTIMATE
-  COOLDOWN
-  SPATIAL
-}
+export const scenarios = sqliteTable("scenario", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  vodId: text("vod_id").notNull().references(() => vods.id, { onDelete: "cascade" }),
+  timestampSeconds: real("timestamp_seconds").notNull(),
+  moduleType: text("module_type", { enum: moduleTypeEnum }).notNull(),
+  timeLimitSeconds: integer("time_limit_seconds"),
+  promptText: text("prompt_text").notNull(),
+  explanationText: text("explanation_text").notNull(),
+  imageUrl: text("image_url"),
+  inputType: text("input_type", { enum: inputTypeEnum }).notNull(),
+  inputConfig: text("input_config", { mode: "json" }).notNull(),
+});
 
-enum InputType {
-  MULTIPLE_CHOICE
-  PERCENT_SLIDER
-  TIME_SLIDER
-  MAP_PIN_2D
-}
-
-model Scenario {
-  id               String          @id @default(cuid())
-  vodId            String          @map("vod_id")
-  vod              Vod             @relation(fields: [vodId], references: [id], onDelete: Cascade)
-  timestampSeconds Float           @map("timestamp_seconds")
-  moduleType       ModuleType      @map("module_type")
-  timeLimitSeconds Int?            @map("time_limit_seconds")
-  promptText       String          @map("prompt_text")
-  explanationText  String          @map("explanation_text")
-  imageUrl         String?         @map("image_url")
-  inputType        InputType       @map("input_type")
-  inputConfig      Json            @map("input_config")
-  attempts         AttemptRecord[]
-
-  @@index([vodId, moduleType])
-  @@map("scenario")
-}
-
-model AttemptRecord {
-  id               String   @id @default(cuid())
-  userId           String   @map("user_id")
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scenarioId       String   @map("scenario_id")
-  scenario         Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
-  selectedOptionId String?  @map("selected_option_id")
-  inputValue       Json?    @map("input_value")
-  isCorrect        Boolean  @map("is_correct")
-  responseTimeMs   Int      @map("response_time_ms")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  @@map("attempt_record")
-}
+export const attemptRecords = sqliteTable("attempt_record", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  scenarioId: text("scenario_id").notNull().references(() => scenarios.id, { onDelete: "cascade" }),
+  selectedOptionId: text("selected_option_id"),
+  inputValue: text("input_value", { mode: "json" }),
+  isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
+  responseTimeMs: integer("response_time_ms").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
 ```
+
+`users` (plus `sessions`/`accounts`/`verifications` for `better-auth`) are also defined in the same schema file — see [glossary](file:///home/jackw/projects/watchpoint/docs/architecture/glossary.md#1-core-platform-concepts) for the domain-level **User** definition.
 
 ---
 

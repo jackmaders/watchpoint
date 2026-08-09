@@ -25,6 +25,11 @@ This document defines the core domain terminology used across product discussion
 * **Attempt Record**  
   A single telemetry log documenting a user's answer choice, PASS/FAIL result, and response latency for a specific scenario.
 
+* **User**  
+  The individual account an Attempt Record is attributed to. Distinct from the **Administrator** role (spec user story 17), which seeds and manages VOD/Scenario content rather than taking training sessions. How a User's identity is established (login, or a V1 stand-in) is an implementation concern, not part of this term's definition.
+
+> **Note on "Session"**: this glossary's **Session Manifest** (a VOD training playthrough) and the authentication layer's `session` table (a login session) are different concepts that happen to share a name. Not a conflict today since no login UX exists yet — but if login UX is ever built, disambiguate explicitly (e.g. "training session" vs. "auth session") rather than letting "session" mean both.
+
 ---
 
 ## 2. Interactive Module Types

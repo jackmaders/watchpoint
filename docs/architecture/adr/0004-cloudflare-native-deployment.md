@@ -20,10 +20,11 @@ We will deploy Watchpoint using an **All-in-Cloudflare Native Architecture** pow
 
 Key architectural choices include:
 1. **Server & Compute Layer**: Deploy Next.js 16 App Router onto **Cloudflare Workers / Pages** using `@opennextjs/cloudflare` with `compatibility_flags = ["nodejs_compat"]`.
-2. **Database Engine**: Migrate from external PostgreSQL to **Cloudflare D1** (Serverless SQLite at the edge) accessed via Prisma ORM / `better-auth` D1 adapters.
+2. **Database Engine**: Migrate from external PostgreSQL to **Cloudflare D1** (Serverless SQLite at the edge) accessed via Drizzle ORM / `better-auth` D1 adapters.
 3. **Media Storage**: Store spatial scenario screenshots and map assets in **Cloudflare R2** with zero egress fees.
 4. **Edge Authentication**: Execute `better-auth` sessions directly at the edge against Cloudflare D1 storage bindings (`env.DB`).
 5. **Local Emulation Workflow**: Use Cloudflare Wrangler (`wrangler.jsonc` + `wrangler d1 execute DB --local`) for local offline development, testing, and seed migrations.
+6. **Continuous Deployment**: The **Cloudflare GitHub App** is connected to this repository and automatically builds and deploys on pushes/merges — this is the deployment mechanism of record, separate from this repo's own `.github/workflows/*` (which run PR quality checks only, no deploy step). The `deploy` / `deploy:worker` `package.json` scripts remain available as a manual escape hatch (e.g. deploying from a local machine outside the normal git flow) but are not part of the standard release path.
 
 ---
 
