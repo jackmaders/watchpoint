@@ -32,6 +32,7 @@ export default defineConfig({
 			".next/**",
 			".wrangler/**",
 			".open-next/**",
+			".claude/**",
 			"dist/**",
 			"generated/**",
 		],

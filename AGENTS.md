@@ -36,6 +36,8 @@ This repository enforces strict technical, architectural, and quality standards 
 - Format commit messages strictly as:
   `<type>(<scope>): <emoji> <description>`
   (e.g., `feat(auth): 🔑 setup Prisma ORM schema and Better Auth authentication`).
+- Commits in this repo are not signed. Do not attempt GPG/SSH commit signing, and do not
+  treat an unsigned commit as something to fix.
 
 ### 7. MCP Server Usage
 - When available MCP servers provide relevant functionality (e.g. GitHub, Sentry, Trello), agents MUST use them instead of falling back to CLI tools or manual API calls.
@@ -47,3 +49,28 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 9. Skip Local Testing During Code Reviews
 - When performing a code review, always skip local test execution and validation.
 - Trust that the PR's CI/CD automated checks are valid; if the checks on the PR pass, do not re-run tests locally.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues on `jackmaders/watchpoint`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Watchpoint's `{role}:{status}` taxonomy, not the plugin's plain defaults. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Skill vendoring
+
+Skills are vendored, not installed at job time — see `.agents/skills/UPSTREAM.md` for the
+pinned upstream SHA and the list of vendored skills. `.claude/skills` is a symlink to
+`.agents/skills` so interactive Claude Code sessions read the same copy.
+
+**Resolution / drift-check contract:** if `.claude/skills` does not resolve as a symlink
+on your installed Claude Code version, copy `.agents/skills/` into `.claude/skills`
+instead of symlinking, and add a CI step that diffs the two directories so the copies
+can't silently drift apart.
