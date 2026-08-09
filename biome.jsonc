@@ -24,7 +24,8 @@
 			"!.next",
 			"!dist",
 			"!build",
-			"!cloudflare-env.d.ts"
+			"!cloudflare-env.d.ts",
+			"!**/*.grit"
 		]
 	},
 	"formatter": {
@@ -79,7 +80,10 @@
 			}
 		}
 	],
-	"plugins": ["./plugins/enforce-automocking.grit"],
+	"plugins": [
+		"./plugins/enforce-automocking.grit",
+		"./plugins/enforce-aaa-assertions.grit"
+	],
 	"vcs": {
 		"clientKind": "git",
 		"enabled": true,

@@ -20,11 +20,15 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 3. Action-First Feature Naming
 - Extracted features in `src/features/` MUST be named using the `{action}-{entity}` (verb-noun) convention (e.g. `create-user`, `submit-feedback`).
 
-### 4. Test-Driven Development (TDD) Protocol
+### 4. Test-Driven Development (TDD) & Organization Protocol
 - Always follow the Red -> Green -> Refactor workflow.
 - Write failing unit tests (`*.spec.ts` / `*.spec.tsx`) first before implementing functional code.
+- ALL unit test files MUST live in dedicated `__tests__` directories (matching `**/__tests__/*.spec.{ts,tsx}`).
 
-### 5. Unit Test Speed & 100% Coverage Enforcement
+### 5. Unit Test Structure, Speed & 100% Coverage Enforcement
+- All test cases MUST explicitly follow the Arrange-Act-Assert (AAA) pattern, utilizing clear `// Arrange`, `// Act`, and `// Assert` block comments.
+- `plugins/enforce-aaa-assertions.grit` MUST NOT be edited or bypassed; no non-assertion statements may follow `expect(...)` or `await expect(...)` in test blocks.
+- Tests MUST NOT output to `console` (`console.log`, `console.warn`, `console.error`, React `act(...)` warnings); any console output will fail the test run via Vitest's `onConsoleLog` hook.
 - Every test block MUST execute in under 50ms.
 - 100% coverage threshold across statements, branches, functions, and lines is strictly enforced via `bun run test:coverage`.
 

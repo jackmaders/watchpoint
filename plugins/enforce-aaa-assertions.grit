@@ -1,0 +1,11 @@
+`{ $before; expect($x).$method($args); $after; }` where {
+	not or {
+		$after <: `expect($_)`,
+		$after <: `expect($_).$_`,
+		$after <: `expect($_).$_($_)`,
+		$after <: `await expect($_)`,
+		$after <: `await expect($_).$_`,
+		$after <: `await expect($_).$_($_)`
+	},
+	register_diagnostic(span=$after, message="AAA Violation: Non-assertion statement found after expect(). All actions and setup must precede assertions.")
+}
