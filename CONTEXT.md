@@ -64,10 +64,10 @@ This document defines the core domain terminology used across product discussion
   User-configured pre-session settings that filter which scenario module types are active during a VOD playthrough (e.g., allowing a user to isolate and practice only Ultimate Tracking).
 
 * **Pre-Session Module Filter UI**  
-  Interactive pill toggle interface on the VOD detail landing view (`/vods/[id]`) allowing users to customize active scenario modules before initiating a session.
+  Interactive pill toggle interface on the VOD detail landing view allowing users to customize active scenario modules before initiating a session.
 
-* **Timeline Manifest API Endpoint (`GET /api/vods/[id]/manifest`)**  
-  REST endpoint serving the ordered session manifest JSON payload filtered dynamically via query parameter module selection (`?modules=STRATEGY,TACTICS`).
+* **Timeline Manifest Endpoint**  
+  The endpoint serving the ordered Session Manifest, filtered dynamically by module selection. See the route handler for the current path and query parameters.
 
 * **Tab Visibility Sync**  
-  An automated event listener using the browser Page Visibility API (`document.hidden`) to pause video playback whenever the user switches browser tabs, preventing missed scenario triggers.
+  An automated event listener that pauses video playback whenever the user switches browser tabs, preventing missed scenario triggers.

@@ -15,6 +15,11 @@ Developer and Reviewer agent skills deleted in #50 — the parts that describe h
 - `bun run check:architecture` (Steiger) enforces this — treat a failure as a real
   violation, not a linter to silence.
 
+## Feature naming — action-first
+
+Features extracted into `src/features/` are named `{action}-{entity}` (verb-noun): `create-user`,
+`submit-feedback`. A feature's name describes what it does, not just what it's about.
+
 ## Next.js routing directory (`app/`) — barrel-only
 
 Every file under `app/` MUST be a simple barrel re-export:
@@ -25,6 +30,11 @@ export { HomePage as default } from "@/_pages/home";
 
 No inline business logic, data fetching, or UI rendering in `app/`. All page logic lives
 in the FSD `src/_pages/` layer.
+
+## Test file location
+
+Every unit test file lives in an adjacent `__tests__` directory (matching
+`**/__tests__/*.spec.{ts,tsx}`), never beside the source file it tests.
 
 ## Test structure — Arrange, Act, Assert
 
