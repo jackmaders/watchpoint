@@ -12,6 +12,7 @@ import {
 	removeLabelIfPresent,
 	SPEC_READY_LABEL,
 } from "./agent-shared";
+import { logger } from "./agents/logger";
 
 declare global {
 	namespace NodeJS {
@@ -295,7 +296,7 @@ export async function linkSubIssue(
 			},
 		);
 	} catch (graphqlErr) {
-		console.warn("GraphQL addSubIssue failed:", graphqlErr);
+		logger.warn("GraphQL addSubIssue failed:", graphqlErr);
 	}
 }
 
@@ -318,7 +319,7 @@ export async function linkSingleBlocker(
 			},
 		);
 	} catch (blockingErr) {
-		console.warn("GraphQL addBlockedBy failed:", blockingErr);
+		logger.warn("GraphQL addBlockedBy failed:", blockingErr);
 	}
 }
 
@@ -499,7 +500,7 @@ export async function run() {
 		}
 
 		if (!labels.includes(SPEC_READY_LABEL)) {
-			console.log(
+			logger.log(
 				"Issue does not have spec-ready label. Skipping to-tickets workflow.",
 			);
 			return;
@@ -559,7 +560,7 @@ export async function run() {
 
 		await removeLabelIfPresent(ctx, issue.labels, SPEC_READY_LABEL);
 	} catch (error) {
-		console.error("to-tickets agent execution error:", error);
+		logger.error("to-tickets agent execution error:", error);
 		await postIssueErrorComment(ctx, "Spec-to-Tickets Agent", error);
 		process.exit(1);
 	}
