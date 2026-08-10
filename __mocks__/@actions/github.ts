@@ -18,7 +18,9 @@ export const mockOctokit = {
 	),
 	rest: {
 		issues: {
+			addBlockedByDependency: vi.fn().mockResolvedValue({}),
 			addLabels: vi.fn().mockResolvedValue({}),
+			addSubIssue: vi.fn().mockResolvedValue({}),
 			create: vi.fn().mockImplementation(async (params) => ({
 				data: {
 					body: params.body ?? "",
@@ -51,6 +53,7 @@ export const mockOctokit = {
 			listComments: vi.fn().mockResolvedValue([]),
 			listForRepo: vi.fn().mockResolvedValue({ data: [] }),
 			listMilestones: vi.fn().mockResolvedValue({ data: [] }),
+			listSubIssues: vi.fn().mockResolvedValue([]),
 			removeLabel: vi.fn().mockResolvedValue({}),
 			update: vi.fn().mockResolvedValue({}),
 			updateMilestone: vi.fn().mockResolvedValue({}),

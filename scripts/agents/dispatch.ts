@@ -2,8 +2,8 @@ import { join } from "node:path";
 import * as github from "@actions/github";
 import { runIfMain } from "./entrypoint";
 import {
-	BOT_COMMENT_MARKER,
 	type IssueContext,
+	isBotComment,
 	postBotComment,
 	postIssueErrorComment,
 } from "./github";
@@ -22,7 +22,8 @@ declare global {
 		interface ProcessEnv {
 			GITHUB_TOKEN: string;
 			ISSUE_NUMBER: string;
-			COMMENT_BODY: string;
+			/** Optional here to merge with `tickets.ts`'s declaration, where it's genuinely absent on a label-triggered run. Always set on the `issue_comment` trigger that fires this script. */
+			COMMENT_BODY?: string;
 		}
 	}
 }
@@ -38,15 +39,8 @@ export function matchesPingCommand(commentBody: string): boolean {
 	return PING_COMMAND_REGEX.test(commentBody);
 }
 
-/**
- * The PAT used to chain workflows makes every agent comment look
- * human-authored (`user.type` is never `"Bot"`), so every reader must filter
- * on the marker instead or a bot reply could be mistaken for a new command
- * (spec §5.8).
- */
-export function isBotComment(commentBody: string): boolean {
-	return commentBody.includes(BOT_COMMENT_MARKER);
-}
+/** Re-exported for this module's own tests — `isBotComment` now lives in `github.ts` since `tickets.ts`'s `/approve` gate needs it too. */
+export { isBotComment };
 
 /** Ping's product is text posted verbatim, so it runs the prose form of `runAgent`. */
 type ProseRunner = (
@@ -86,7 +80,7 @@ export async function run(): Promise<void> {
 		repo: github.context.repo.repo,
 	};
 
-	await dispatchPing(ctx, process.env.COMMENT_BODY);
+	await dispatchPing(ctx, process.env.COMMENT_BODY ?? "");
 }
 
 runIfMain(import.meta.main, run);

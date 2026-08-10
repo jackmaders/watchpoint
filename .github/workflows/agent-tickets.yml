@@ -1,0 +1,91 @@
+name: Agent Tickets
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-mutate-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  tickets:
+    name: 🎫 Propose or wire tickets
+    # Two ways in: the trigger label runs the proposal (no issues created
+    # yet), or a comment while tickets:proposed is present runs tickets.ts
+    # again with COMMENT_BODY set — tickets.ts itself checks that comment for
+    # /approve before wiring anything (unlike agent-grill.yml, any comment
+    # here is NOT treated as an answer; wiring is too consequential to fire on
+    # every reply). Comments carrying the bot marker are filtered here too —
+    # the AGENT_PAT used to chain this workflow makes its own comments look
+    # human-authored (spec §5.8).
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'tickets:needed') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request == null &&
+       contains(github.event.issue.labels.*.name, 'tickets:proposed') &&
+       !contains(github.event.comment.body, '<!-- bot-comment -->'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🌐 Install Gemini CLI
+        run: bun add -g @google/gemini-cli
+
+      - name: 🎫 Propose or wire tickets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # `AGENT_PAT` is what lets tickets.ts label the frontier dev:needed
+          # — a label applied with the default GITHUB_TOKEN above cannot fire
+          # agent-implement.yml (spec §5.8). tickets.ts itself falls back to a
+          # comment listing the frontier when this secret isn't configured.
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          # Only set on the issue_comment trigger — its presence is exactly
+          # how tickets.ts tells the two entry points apart (scripts/agents/tickets.ts).
+          COMMENT_BODY: ${{ github.event_name == 'issue_comment' && github.event.comment.body || '' }}
+          # See agent-dispatch.yml — untrusted-by-default CI runners would
+          # otherwise skip .agents/skills/ and fall back to global-only skills.
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTPUT_DIR: ${{ runner.temp }}
+        run: bun scripts/agents/tickets.ts
+
+      # tickets.ts handles its own agent:blocked labeling and error comment on
+      # a classified failure (matching grill.ts's pattern) and always removes
+      # agent:in-progress itself in a `finally`. This step is only a backstop
+      # for the run's Bun process dying outright — OOM, a runner timeout —
+      # before that cleanup code ever gets to run.
+      - name: 🧹 Remove agent:in-progress (backstop)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "agent:in-progress" || true

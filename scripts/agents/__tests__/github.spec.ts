@@ -5,6 +5,8 @@ import {
 	extractLabelNames,
 	fetchIssueContext,
 	formatGeminiError,
+	hasStatus,
+	isBotComment,
 	LABELS,
 	LabelSchema,
 	postBotComment,
@@ -28,6 +30,30 @@ describe("github helpers", () => {
 			// Act
 			// Assert
 			expect(BOT_COMMENT_MARKER).toBe("<!-- bot-comment -->");
+		});
+	});
+
+	describe("isBotComment", () => {
+		it("recognizes a comment carrying the bot marker", () => {
+			// Arrange
+			const commentBody = "<!-- bot-comment -->\nSome round.";
+
+			// Act
+			const result = isBotComment(commentBody);
+
+			// Assert
+			expect(result).toBe(true);
+		});
+
+		it("does not mistake an ordinary human comment for a bot one", () => {
+			// Arrange
+			const commentBody = "1 yes, 2 no because reasons.";
+
+			// Act
+			const result = isBotComment(commentBody);
+
+			// Assert
+			expect(result).toBe(false);
 		});
 	});
 
@@ -75,12 +101,15 @@ describe("github helpers", () => {
 			expect(LABELS).toEqual({
 				agentBlocked: "agent:blocked",
 				agentInProgress: "agent:in-progress",
+				devNeeded: "dev:needed",
 				grillNeeded: "grill:needed",
 				needsInfo: "needs-info",
 				readyForAgent: "ready-for-agent",
 				specNeeded: "spec:needed",
 				specReady: "spec:ready",
 				ticketsNeeded: "tickets:needed",
+				ticketsProposed: "tickets:proposed",
+				ticketsWired: "tickets:wired",
 			});
 		});
 
@@ -100,6 +129,41 @@ describe("github helpers", () => {
 
 			// Assert
 			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("hasStatus", () => {
+		it("recognizes an error carrying the given status code", () => {
+			// Arrange
+			const error = { status: 422 };
+
+			// Act
+			const result = hasStatus(error, 422);
+
+			// Assert
+			expect(result).toBe(true);
+		});
+
+		it("does not match a different status code", () => {
+			// Arrange
+			const error = { status: 500 };
+
+			// Act
+			const result = hasStatus(error, 422);
+
+			// Assert
+			expect(result).toBe(false);
+		});
+
+		it("does not match a non-object thrown value", () => {
+			// Arrange
+			const error = "plain string error";
+
+			// Act
+			const result = hasStatus(error, 422);
+
+			// Assert
+			expect(result).toBe(false);
 		});
 	});
 
