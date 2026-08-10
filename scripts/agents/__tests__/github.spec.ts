@@ -5,6 +5,8 @@ import {
 	extractLabelNames,
 	fetchIssueContext,
 	formatGeminiError,
+	LABELS,
+	LabelSchema,
 	postBotComment,
 	postIssueErrorComment,
 	removeLabelIfPresent,
@@ -25,6 +27,40 @@ describe("github helpers", () => {
 			// Act
 			// Assert
 			expect(BOT_COMMENT_MARKER).toBe("<!-- bot-comment -->");
+		});
+	});
+
+	describe("LABELS", () => {
+		it("keeps the repo's existing, un-namespaced label strings", () => {
+			// Arrange
+			// Act
+			// Assert
+			expect(LABELS).toEqual({
+				approved: "approved",
+				devInProgress: "dev-in-progress",
+				devNeeded: "dev-needed",
+				needsHumanReview: "needs-human-review",
+				specNeeded: "spec-needed",
+				specReady: "spec-ready",
+			});
+		});
+
+		it("derives LabelSchema's accepted values from LABELS, with no separate list", () => {
+			// Arrange
+			// Act
+			// Assert
+			for (const value of Object.values(LABELS)) {
+				expect(LabelSchema.safeParse(value).success).toBe(true);
+			}
+		});
+
+		it("rejects a string that is not one of LABELS' values", () => {
+			// Arrange
+			// Act
+			const result = LabelSchema.safeParse("not-a-real-label");
+
+			// Assert
+			expect(result.success).toBe(false);
 		});
 	});
 
