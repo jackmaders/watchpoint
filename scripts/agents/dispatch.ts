@@ -1,4 +1,6 @@
+import { join } from "node:path";
 import * as github from "@actions/github";
+import { runIfMain } from "./entrypoint";
 import {
 	BOT_COMMENT_MARKER,
 	type IssueContext,
@@ -6,7 +8,13 @@ import {
 	postIssueErrorComment,
 } from "./github";
 import { MODELS } from "./models";
-import { runAgent } from "./run-agent";
+import {
+	type RunAgentOptions,
+	type RunAgentResult,
+	runAgent,
+} from "./run-agent";
+
+const PING_PROMPT_FILE = join(import.meta.dirname, "prompts", "ping.md");
 
 declare global {
 	namespace NodeJS {
@@ -39,7 +47,11 @@ export function isBotComment(commentBody: string): boolean {
 	return commentBody.includes(BOT_COMMENT_MARKER);
 }
 
-type RunAgentFn = typeof runAgent;
+// Ping's output is always prose, so the injected fake is pinned to `string`
+// rather than inheriting `runAgent`'s generic signature.
+type RunAgentFn = (
+	options: RunAgentOptions<string>,
+) => Promise<RunAgentResult<string>>;
 
 export async function dispatchPing(
 	ctx: IssueContext,
@@ -56,10 +68,12 @@ export async function dispatchPing(
 		const result = await run({
 			cli,
 			model,
-			prompt: "Reply with a short, friendly pong to confirm you're online.",
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: PING_PROMPT_FILE,
 		});
 
-		await postBotComment(ctx, result.text);
+		await postBotComment(ctx, result.output);
 	} catch (error) {
 		await postIssueErrorComment(ctx, "Dispatch", error);
 	}
@@ -78,6 +92,4 @@ export async function run(): Promise<void> {
 	await dispatchPing(ctx, process.env.COMMENT_BODY);
 }
 
-if (process.env.NODE_ENV !== "test") {
-	run();
-}
+runIfMain(run);

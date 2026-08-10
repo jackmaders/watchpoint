@@ -1,8 +1,22 @@
 import * as github from "@actions/github";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { dispatchPing, isBotComment, matchesPingCommand } from "../dispatch";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	dispatchPing,
+	run as dispatchRun,
+	isBotComment,
+	matchesPingCommand,
+} from "../dispatch";
 import { BOT_COMMENT_MARKER } from "../github";
 import type { RunAgentResult } from "../run-agent";
+
+function fakeRunAgentResult(output: string): RunAgentResult<string> {
+	return {
+		output,
+		raw: "",
+		sessionId: "sess_1",
+		usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+	};
+}
 
 vi.mock("@actions/github");
 
@@ -128,12 +142,9 @@ describe("dispatchPing", () => {
 			owner: "jackmaders",
 			repo: "watchpoint",
 		};
-		const run = vi.fn<() => Promise<RunAgentResult>>().mockResolvedValue({
-			events: [],
-			raw: "",
-			sessionId: "sess_1",
-			text: "🏓 pong — I'm online and ready.",
-		});
+		const run = vi
+			.fn<() => Promise<RunAgentResult<string>>>()
+			.mockResolvedValue(fakeRunAgentResult("🏓 pong — I'm online and ready."));
 
 		// Act
 		await dispatchPing(ctx, "/ping", run);
@@ -171,5 +182,43 @@ describe("dispatchPing", () => {
 			owner: "jackmaders",
 			repo: "watchpoint",
 		});
+	});
+});
+
+describe("run", () => {
+	const originalEnv = { ...process.env };
+
+	afterEach(() => {
+		process.env = { ...originalEnv };
+	});
+
+	it("wires an IssueContext from the workflow's env vars and dispatches the comment", async () => {
+		// Arrange
+		// A comment that doesn't match /ping exercises every line of run()'s
+		// wiring without reaching runAgent, so the real dispatch.ts -> run-agent.ts
+		// -> Bun.spawn chain never needs mocking for this test.
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.ISSUE_NUMBER = "42";
+		process.env.COMMENT_BODY = "just chatting";
+
+		// Act
+		await dispatchRun();
+
+		// Assert
+		expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
+	});
+
+	it("defaults the issue number to 0 rather than throwing when ISSUE_NUMBER is unset", async () => {
+		// Arrange
+		process.env.GITHUB_TOKEN = "fake-token";
+		Reflect.deleteProperty(process.env, "ISSUE_NUMBER");
+		process.env.COMMENT_BODY = "just chatting";
+
+		// Act
+		const act = dispatchRun();
+
+		// Assert
+		await expect(act).resolves.not.toThrow();
+		expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
 	});
 });

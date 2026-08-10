@@ -15,7 +15,10 @@ export default defineConfig({
 				"src/**/index.server.ts",
 				"src/app/**",
 			],
-			include: ["src/**/*.{ts,tsx}"],
+			// Scoped to the new agent pipeline, not all of scripts/ — the old
+			// pipeline under scripts/*.ts (agent-itemizer.ts, agent-planner.ts,
+			// agent-shared.ts) is torn down in issue #493, not covered here.
+			include: ["src/**/*.{ts,tsx}", "scripts/agents/**/*.ts"],
 			provider: "v8",
 			reporter: ["text", "html"],
 			thresholds: {
@@ -39,6 +42,15 @@ export default defineConfig({
 		globals: true,
 		include: ["**/*.spec.{ts,tsx}"],
 		maxWorkers: 2,
+		// Console output during a test run is a failure, not a warning
+		// (CODING_STANDARDS.md — "No console output in tests"). Agent scripts
+		// route their logging through scripts/agents/logger.ts, which is silent
+		// under NODE_ENV=test, so this only ever fires on a genuine regression.
+		onConsoleLog(log, type) {
+			throw new Error(
+				`Unexpected console output detected during test execution (${type}):\n${log}`,
+			);
+		},
 		testTimeout: 500,
 	},
 });

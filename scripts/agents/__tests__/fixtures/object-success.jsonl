@@ -1,0 +1,4 @@
+{"type":"init","session_id":"sess_obj_001","model":"gemini-2.5-flash"}
+{"type":"tool_use","tool_name":"activate_skill","tool_id":"t1","parameters":{"name":"to-spec"}}
+{"type":"message","role":"assistant","content":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>\nAnything else?"}
+{"type":"result","status":"success","stats":{"input_tokens":40,"output_tokens":20}}

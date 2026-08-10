@@ -38,6 +38,15 @@ describe("github helpers", () => {
 			// Assert
 			expect(result).toEqual(["idea", "spec-ready", ""]);
 		});
+
+		it("returns an empty array when labels is undefined", () => {
+			// Arrange
+			// Act
+			const result = extractLabelNames(undefined);
+
+			// Assert
+			expect(result).toEqual([]);
+		});
 	});
 
 	describe("removeLabelIfPresent", () => {
@@ -151,6 +160,24 @@ describe("github helpers", () => {
 				repo: "watchpoint",
 			});
 		});
+
+		it("does nothing when neither add nor remove is given", async () => {
+			// Arrange
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			await transitionState(ctx, ["spec-needed"], {});
+
+			// Assert
+			expect(octokit.rest.issues.removeLabel).not.toHaveBeenCalled();
+			expect(octokit.rest.issues.addLabels).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("fetchIssueContext", () => {
@@ -187,6 +214,33 @@ describe("github helpers", () => {
 			expect(result.conversation).toContain("User feedback comment");
 			expect(result.conversation).not.toContain("PM Agent Error");
 		});
+
+		it("defaults a null issue body and a bodyless, userless comment to empty strings", async () => {
+			// Arrange
+			const octokit = github.getOctokit("fake-token");
+			vi.mocked(octokit.rest.issues.get).mockResolvedValueOnce({
+				data: {
+					body: null,
+					labels: [],
+					number: 42,
+					title: "Feature Title",
+				},
+			} as unknown as Awaited<ReturnType<typeof octokit.rest.issues.get>>);
+			vi.mocked(octokit.paginate).mockResolvedValueOnce([{}]);
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			const result = await fetchIssueContext(ctx);
+
+			// Assert
+			expect(result.conversation).toContain("User Context (Issue Body):\n\n\n");
+			expect(result.latestUserComment).toBe("");
+		});
 	});
 
 	describe("formatGeminiError", () => {
@@ -221,6 +275,18 @@ describe("github helpers", () => {
 
 			// Assert
 			expect(result).toContain('{"status":500}');
+		});
+
+		it("falls back to a fixed message when the error can't be JSON.stringify'd", () => {
+			// Arrange
+			const circular: Record<string, unknown> = {};
+			circular.self = circular;
+
+			// Act
+			const result = formatGeminiError(circular);
+
+			// Assert
+			expect(result).toBe("Unknown error occurred.");
 		});
 	});
 
