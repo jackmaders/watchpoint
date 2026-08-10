@@ -12,6 +12,7 @@ import {
 } from "../github";
 
 vi.mock("@actions/github");
+vi.mock("../logger");
 
 describe("github helpers", () => {
 	beforeEach(() => {

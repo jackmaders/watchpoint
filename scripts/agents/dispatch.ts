@@ -9,7 +9,7 @@ import {
 } from "./github";
 import { MODELS } from "./models";
 import {
-	type RunAgentOptions,
+	type ProseRunOptions,
 	type RunAgentResult,
 	runAgent,
 } from "./run-agent";
@@ -47,27 +47,23 @@ export function isBotComment(commentBody: string): boolean {
 	return commentBody.includes(BOT_COMMENT_MARKER);
 }
 
-// Ping's output is always prose, so the injected fake is pinned to `string`
-// rather than inheriting `runAgent`'s generic signature.
-type RunAgentFn = (
-	options: RunAgentOptions<string>,
+/** Ping's product is text posted verbatim, so it runs the prose form of `runAgent`. */
+type ProseRunner = (
+	options: ProseRunOptions,
 ) => Promise<RunAgentResult<string>>;
 
 export async function dispatchPing(
 	ctx: IssueContext,
 	commentBody: string,
-	run: RunAgentFn = runAgent,
+	runner: ProseRunner = runAgent,
 ): Promise<void> {
 	if (isBotComment(commentBody) || !matchesPingCommand(commentBody)) {
 		return;
 	}
 
-	const { cli, model } = MODELS.ping;
-
 	try {
-		const result = await run({
-			cli,
-			model,
+		const result = await runner({
+			model: MODELS.ping,
 			output: { kind: "prose" },
 			promptArgs: {},
 			promptFile: PING_PROMPT_FILE,
@@ -92,4 +88,4 @@ export async function run(): Promise<void> {
 	await dispatchPing(ctx, process.env.COMMENT_BODY);
 }
 
-runIfMain(run);
+runIfMain(import.meta.main, run);

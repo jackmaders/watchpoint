@@ -1,16 +1,18 @@
 /**
- * Every stage script ends with `runIfMain(run)` instead of repeating
- * `if (process.env.NODE_ENV !== "test") run();` inline. Vitest sets
- * `NODE_ENV=test` for every test file, so importing a stage script under
- * test never re-triggers its own entrypoint — but that guard, written
- * inline, is a line no test can ever exercise both branches of (the test
- * that imports the module is, by definition, running with `NODE_ENV=test`).
- * Centralising it here means the guard itself is tested once, rather than
- * leaving an identical, structurally-uncoverable line in every stage script
- * under `scripts/agents/**`.
+ * Every stage script ends with `runIfMain(import.meta.main, run)`.
+ *
+ * `import.meta.main` is the real predicate — "was this file executed, rather
+ * than imported?" — so a script imported for its exported helpers never fires
+ * its own `main`, whether the importer is a test or another stage script.
+ * Passing it in (instead of reading it here) is what keeps this guard testable:
+ * `import.meta.main` is fixed for the lifetime of a module, so a function that
+ * read it directly could never be exercised both ways.
  */
-export function runIfMain(main: () => void | Promise<void>): void {
-	if (process.env.NODE_ENV !== "test") {
+export function runIfMain(
+	isMain: boolean,
+	main: () => void | Promise<void>,
+): void {
+	if (isMain) {
 		main();
 	}
 }

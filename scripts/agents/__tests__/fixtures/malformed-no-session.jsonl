@@ -1,0 +1,2 @@
+{"type":"message","role":"assistant","content":"<result>{not valid json}</result>\n<promise>COMPLETE</promise>"}
+{"type":"result","status":"success","stats":{"input_tokens":30,"output_tokens":15}}

@@ -1,6 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../logger";
 
+// The real module, not the `__mocks__` stand-in: this is the one spec that
+// checks the forwarding itself. Spying on `console` keeps the run silent, which
+// is also why the production logger needs no knowledge of the test environment.
 describe("logger", () => {
 	beforeEach(() => {
 		vi.spyOn(console, "log").mockImplementation(() => {});
@@ -8,73 +11,36 @@ describe("logger", () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
 	});
 
-	afterEach(() => {
-		vi.unstubAllEnvs();
+	it("forwards log to console", () => {
+		// Arrange
+		const message = "hello";
+
+		// Act
+		logger.log(message);
+
+		// Assert
+		expect(console.log).toHaveBeenCalledWith("hello");
 	});
 
-	describe("under NODE_ENV=test", () => {
-		beforeEach(() => {
-			vi.stubEnv("NODE_ENV", "test");
-		});
+	it("forwards warn to console", () => {
+		// Arrange
+		const message = "hello";
 
-		it("stays silent on log", () => {
-			// Arrange
-			// Act
-			logger.log("hello");
+		// Act
+		logger.warn(message);
 
-			// Assert
-			expect(console.log).not.toHaveBeenCalled();
-		});
-
-		it("stays silent on warn", () => {
-			// Arrange
-			// Act
-			logger.warn("hello");
-
-			// Assert
-			expect(console.warn).not.toHaveBeenCalled();
-		});
-
-		it("stays silent on error", () => {
-			// Arrange
-			// Act
-			logger.error("hello");
-
-			// Assert
-			expect(console.error).not.toHaveBeenCalled();
-		});
+		// Assert
+		expect(console.warn).toHaveBeenCalledWith("hello");
 	});
 
-	describe("outside of tests", () => {
-		beforeEach(() => {
-			vi.stubEnv("NODE_ENV", "production");
-		});
+	it("forwards error to console", () => {
+		// Arrange
+		const message = "hello";
 
-		it("forwards log to console", () => {
-			// Arrange
-			// Act
-			logger.log("hello");
+		// Act
+		logger.error(message);
 
-			// Assert
-			expect(console.log).toHaveBeenCalledWith("hello");
-		});
-
-		it("forwards warn to console", () => {
-			// Arrange
-			// Act
-			logger.warn("hello");
-
-			// Assert
-			expect(console.warn).toHaveBeenCalledWith("hello");
-		});
-
-		it("forwards error to console", () => {
-			// Arrange
-			// Act
-			logger.error("hello");
-
-			// Assert
-			expect(console.error).toHaveBeenCalledWith("hello");
-		});
+		// Assert
+		expect(console.error).toHaveBeenCalledWith("hello");
 	});
 });

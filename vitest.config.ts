@@ -44,8 +44,9 @@ export default defineConfig({
 		maxWorkers: 2,
 		// Console output during a test run is a failure, not a warning
 		// (CODING_STANDARDS.md — "No console output in tests"). Agent scripts
-		// route their logging through scripts/agents/logger.ts, which is silent
-		// under NODE_ENV=test, so this only ever fires on a genuine regression.
+		// log through scripts/agents/logger.ts, so a spec that expects output
+		// declares `vi.mock(".../logger")` and picks up the `__mocks__`
+		// stand-in; anything reaching here is an unrouted, unintended write.
 		onConsoleLog(log, type) {
 			throw new Error(
 				`Unexpected console output detected during test execution (${type}):\n${log}`,

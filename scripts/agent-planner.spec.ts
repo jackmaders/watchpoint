@@ -12,6 +12,7 @@ import { SPEC_NEEDED_LABEL, SPEC_READY_LABEL } from "./agent-shared";
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");
+vi.mock("./agents/logger");
 
 describe("pm-agent unit tests", () => {
 	beforeEach(() => {

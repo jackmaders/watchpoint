@@ -1,25 +1,19 @@
 /**
- * The one place agent scripts write to the console. Silent under
- * `NODE_ENV=test` so a genuinely-exercised warning/error branch does not trip
- * `vitest.config.ts`'s `onConsoleLog` hook, which treats any *unrouted*
- * console output as a test failure (CODING_STANDARDS.md — "No console output
- * in tests"). Outside tests this behaves exactly like `console`.
+ * The one place agent scripts write to the console. It exists to be a *seam*,
+ * not to add behaviour: because every script logs through this module, a test
+ * can `vi.mock("./logger")` and pick up the adjacent `__mocks__` stand-in,
+ * which both keeps the run quiet (CODING_STANDARDS.md — "No console output in
+ * tests", enforced by `vitest.config.ts`'s `onConsoleLog`) and makes a warning
+ * assertable. Production behaviour is exactly `console`.
  */
-function isTest(): boolean {
-	return process.env.NODE_ENV === "test";
-}
-
 export const logger = {
 	error(...args: unknown[]): void {
-		if (isTest()) return;
 		console.error(...args);
 	},
 	log(...args: unknown[]): void {
-		if (isTest()) return;
 		console.log(...args);
 	},
 	warn(...args: unknown[]): void {
-		if (isTest()) return;
 		console.warn(...args);
 	},
 };

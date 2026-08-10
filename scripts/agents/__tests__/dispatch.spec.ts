@@ -9,6 +9,8 @@ import {
 import { BOT_COMMENT_MARKER } from "../github";
 import type { RunAgentResult } from "../run-agent";
 
+vi.mock("../logger");
+
 function fakeRunAgentResult(output: string): RunAgentResult<string> {
 	return {
 		output,
@@ -151,7 +153,7 @@ describe("dispatchPing", () => {
 
 		// Assert
 		expect(run).toHaveBeenCalledWith(
-			expect.objectContaining({ cli: "gemini", model: "flash" }),
+			expect.objectContaining({ model: { cli: "gemini", model: "flash" } }),
 		);
 		expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
 			body: `${BOT_COMMENT_MARKER}\n🏓 pong — I'm online and ready.`,
