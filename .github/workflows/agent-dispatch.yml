@@ -47,7 +47,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: 🌐 Install Gemini CLI
-        run: npm install -g @google/gemini-cli
+        run: bun add -g @google/gemini-cli
 
       - name: 🤖 Dispatch command
         env:

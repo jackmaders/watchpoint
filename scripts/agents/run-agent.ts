@@ -1,20 +1,14 @@
-import { spawn as nodeSpawn } from "node:child_process";
-
 /**
  * The seam every model invocation passes through (spec §5.3). Tests inject
  * `spawn` to replay recorded JSONL fixtures — no network, no subprocess.
  * Narrowed to exactly what runAgent uses so a fake process can satisfy it
- * without impersonating the full `ChildProcess` API.
+ * without impersonating the full `Bun.Subprocess` API.
  */
 export interface SpawnedProcess {
 	stdin: { end(): void; write(chunk: string): void };
-	stdout: {
-		on(event: "data", listener: (chunk: Buffer | string) => void): void;
-	};
-	stderr: {
-		on(event: "data", listener: (chunk: Buffer | string) => void): void;
-	};
-	on(event: "close", listener: (code: number | null) => void): void;
+	stdout: ReadableStream<Uint8Array>;
+	stderr: ReadableStream<Uint8Array>;
+	exited: Promise<number>;
 }
 
 export type SpawnFn = (command: string, args: string[]) => SpawnedProcess;
@@ -38,7 +32,7 @@ export interface RunAgentOptions {
 	cli: "gemini" | "claude";
 	model: string;
 	prompt: string;
-	/** Injected for tests; defaults to node:child_process. */
+	/** Injected for tests; defaults to Bun.spawn. */
 	spawn?: SpawnFn;
 }
 
@@ -64,8 +58,19 @@ function buildArgs(model: string): string[] {
 	];
 }
 
-const defaultSpawn: SpawnFn = (command, args) =>
-	nodeSpawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
+const defaultSpawn: SpawnFn = (command, args) => {
+	const child = Bun.spawn([command, ...args], {
+		stderr: "pipe",
+		stdin: "pipe",
+		stdout: "pipe",
+	});
+	return {
+		exited: child.exited,
+		stderr: child.stderr,
+		stdin: child.stdin,
+		stdout: child.stdout,
+	};
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
@@ -157,10 +162,22 @@ function createLineBuffer(onLine: (line: string) => void) {
 	};
 }
 
-function waitForExit(child: SpawnedProcess): Promise<number | null> {
-	return new Promise((resolve) => {
-		child.on("close", resolve);
-	});
+/**
+ * Drains a stream chunk-by-chunk, decoding as it goes. `stdout` and `stderr`
+ * are drained concurrently (see `runAgent`) rather than one after the other,
+ * so a chatty stderr can't stall stdout behind a full OS pipe buffer.
+ */
+async function drainStream(
+	stream: ReadableStream<Uint8Array>,
+	onChunk: (text: string) => void,
+): Promise<void> {
+	const decoder = new TextDecoder();
+	const reader = stream.getReader();
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		onChunk(decoder.decode(value, { stream: true }));
+	}
 }
 
 function collectText(events: StreamEvent[]): string {
@@ -205,16 +222,17 @@ export async function runAgent(
 		events.push(...parseStreamLine(line));
 	});
 
-	child.stdout.on("data", (chunk) => {
-		const text = chunk.toString();
-		raw += text;
-		lineBuffer.push(text);
-	});
-	child.stderr.on("data", (chunk) => {
-		raw += chunk.toString();
-	});
+	await Promise.all([
+		drainStream(child.stdout, (text) => {
+			raw += text;
+			lineBuffer.push(text);
+		}),
+		drainStream(child.stderr, (text) => {
+			raw += text;
+		}),
+	]);
 
-	const exitCode = await waitForExit(child);
+	const exitCode = await child.exited;
 	lineBuffer.flush();
 
 	if (exitCode !== 0) {

@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,19 +7,30 @@ function readFixture(name: string): string {
 	return readFileSync(join(import.meta.dirname, "fixtures", name), "utf-8");
 }
 
-function createFakeProcess() {
-	const stdout = new EventEmitter();
-	const stderr = new EventEmitter();
-	const lifecycle = new EventEmitter();
+function streamFromChunks(chunks: string[]): ReadableStream<Uint8Array> {
+	const encoder = new TextEncoder();
+	return new ReadableStream({
+		start(controller) {
+			for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+			controller.close();
+		},
+	});
+}
+
+function createFakeProcess(options: {
+	exitCode?: number;
+	stderrChunks?: string[];
+	stdoutChunks?: string[];
+}) {
 	const write = vi.fn();
 	const end = vi.fn();
 	const proc: SpawnedProcess = {
-		on: (event, listener) => lifecycle.on(event, listener),
-		stderr: { on: (event, listener) => stderr.on(event, listener) },
+		exited: Promise.resolve(options.exitCode ?? 0),
+		stderr: streamFromChunks(options.stderrChunks ?? []),
 		stdin: { end, write },
-		stdout: { on: (event, listener) => stdout.on(event, listener) },
+		stdout: streamFromChunks(options.stdoutChunks ?? []),
 	};
-	return { end, lifecycle, proc, stderr, stdout, write };
+	return { end, proc, write };
 }
 
 describe("parseStreamLine", () => {
@@ -171,19 +181,16 @@ describe("runAgent", () => {
 	it("spawns the CLI with the prompt on stdin and returns the parsed text", async () => {
 		// Arrange
 		const fixture = readFixture("ping.jsonl");
-		const { lifecycle, proc, stdout, write, end } = createFakeProcess();
+		const { proc, write, end } = createFakeProcess({ stdoutChunks: [fixture] });
 		const spawn = vi.fn().mockReturnValue(proc);
 
 		// Act
-		const resultPromise = runAgent({
+		const result = await runAgent({
 			cli: "gemini",
 			model: "flash",
 			prompt: "Reply with a short, friendly pong to confirm you're online.",
 			spawn,
 		});
-		stdout.emit("data", fixture);
-		lifecycle.emit("close", 0);
-		const result = await resultPromise;
 
 		// Assert
 		expect(spawn).toHaveBeenCalledWith("gemini", [
@@ -207,22 +214,20 @@ describe("runAgent", () => {
 	it("parses a stream split across multiple stdout chunks", async () => {
 		// Arrange
 		const fixture = readFixture("ping.jsonl");
-		const lines = fixture.split("\n").filter(Boolean);
-		const { lifecycle, proc, stdout } = createFakeProcess();
+		const lines = fixture
+			.split("\n")
+			.filter(Boolean)
+			.map((line) => `${line}\n`);
+		const { proc } = createFakeProcess({ stdoutChunks: lines });
 		const spawn = vi.fn().mockReturnValue(proc);
 
 		// Act
-		const resultPromise = runAgent({
+		const result = await runAgent({
 			cli: "gemini",
 			model: "flash",
 			prompt: "ping",
 			spawn,
 		});
-		for (const line of lines) {
-			stdout.emit("data", `${line}\n`);
-		}
-		lifecycle.emit("close", 0);
-		const result = await resultPromise;
 
 		// Assert
 		expect(result.text).toBe("🏓 pong — I'm online and ready.");
@@ -230,20 +235,21 @@ describe("runAgent", () => {
 
 	it("throws with the captured transcript when the CLI exits non-zero", async () => {
 		// Arrange
-		const { lifecycle, proc, stderr } = createFakeProcess();
+		const { proc } = createFakeProcess({
+			exitCode: 1,
+			stderrChunks: ["quota exceeded"],
+		});
 		const spawn = vi.fn().mockReturnValue(proc);
 
 		// Act
-		const resultPromise = runAgent({
+		const act = runAgent({
 			cli: "gemini",
 			model: "flash",
 			prompt: "ping",
 			spawn,
 		});
-		stderr.emit("data", "quota exceeded");
-		lifecycle.emit("close", 1);
 
 		// Assert
-		await expect(resultPromise).rejects.toThrow(/exited with code 1/);
+		await expect(act).rejects.toThrow(/exited with code 1/);
 	});
 });
