@@ -1,4 +1,5 @@
 import type * as github from "@actions/github";
+import { logger } from "./logger";
 
 export const SPEC_NEEDED_LABEL = "spec-needed";
 export const SPEC_READY_LABEL = "spec-ready";
@@ -159,6 +160,6 @@ export async function postIssueErrorComment(
 	try {
 		await postBotComment(ctx, commentBody);
 	} catch (commentError) {
-		console.error(`Failed to post ${agentName} error comment:`, commentError);
+		logger.error(`Failed to post ${agentName} error comment:`, commentError);
 	}
 }

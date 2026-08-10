@@ -18,6 +18,7 @@ import {
 
 vi.mock("@actions/github");
 vi.mock("@google/genai");
+vi.mock("./agents/logger");
 
 describe("pm-to-tickets unit tests", () => {
 	beforeEach(() => {

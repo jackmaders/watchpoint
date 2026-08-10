@@ -15,7 +15,10 @@ export default defineConfig({
 				"src/**/index.server.ts",
 				"src/app/**",
 			],
-			include: ["src/**/*.{ts,tsx}"],
+			// Scoped to the new agent pipeline, not all of scripts/ — the old
+			// pipeline under scripts/*.ts (agent-itemizer.ts, agent-planner.ts,
+			// agent-shared.ts) is torn down in issue #493, not covered here.
+			include: ["src/**/*.{ts,tsx}", "scripts/agents/**/*.ts"],
 			provider: "v8",
 			reporter: ["text", "html"],
 			thresholds: {
@@ -39,6 +42,16 @@ export default defineConfig({
 		globals: true,
 		include: ["**/*.spec.{ts,tsx}"],
 		maxWorkers: 2,
+		// Console output during a test run is a failure, not a warning
+		// (CODING_STANDARDS.md — "No console output in tests"). Agent scripts
+		// log through scripts/agents/logger.ts, so a spec that expects output
+		// declares `vi.mock(".../logger")` and picks up the `__mocks__`
+		// stand-in; anything reaching here is an unrouted, unintended write.
+		onConsoleLog(log, type) {
+			throw new Error(
+				`Unexpected console output detected during test execution (${type}):\n${log}`,
+			);
+		},
 		testTimeout: 500,
 	},
 });

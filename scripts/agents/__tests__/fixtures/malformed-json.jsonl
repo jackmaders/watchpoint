@@ -1,0 +1,3 @@
+{"type":"init","session_id":"sess_retry_001","model":"gemini-2.5-flash"}
+{"type":"message","role":"assistant","content":"<result>{not valid json}</result>\n<promise>COMPLETE</promise>"}
+{"type":"result","status":"success","stats":{"input_tokens":30,"output_tokens":15}}

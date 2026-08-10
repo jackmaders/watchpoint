@@ -16,6 +16,7 @@ import {
 } from "./agent-shared";
 
 vi.mock("@actions/github");
+vi.mock("./agents/logger");
 
 describe("pm-shared unit tests", () => {
 	beforeEach(() => {

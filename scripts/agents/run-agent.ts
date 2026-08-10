@@ -1,51 +1,128 @@
-/**
- * The seam every model invocation passes through (spec §5.3). Tests inject
- * `spawn` to replay recorded JSONL fixtures — no network, no subprocess.
- * Narrowed to exactly what runAgent uses so a fake process can satisfy it
- * without impersonating the full `Bun.Subprocess` API.
- */
-export interface SpawnedProcess {
-	stdin: { end(): void; write(chunk: string): void };
-	stdout: ReadableStream<Uint8Array>;
-	stderr: ReadableStream<Uint8Array>;
-	exited: Promise<number>;
-}
+import { z } from "zod";
+import {
+	appendUsage,
+	resolveArtifactsDir,
+	writeFailureReason,
+} from "./artifacts";
+import { classifyExit, type FailureClass, RunAgentError } from "./failure";
+import { logger } from "./logger";
+import type { ModelConfig } from "./models";
+import {
+	DEFAULT_COMPLETION_SIGNAL,
+	type ObjectOutput,
+	type ProseOutput,
+	truncateAtSignal,
+	type ValidationResult,
+	validateTaggedJson,
+} from "./output";
+import { buildPrompt } from "./prompt";
+import {
+	collectText,
+	defaultSpawn,
+	findSessionId,
+	type ProcessResult,
+	runProcess,
+	type SpawnFn,
+	type StreamEvent,
+	skillActivated,
+	sumUsage,
+	type TokenUsage,
+} from "./stream";
 
-export type SpawnFn = (command: string, args: string[]) => SpawnedProcess;
+export const DEFAULT_MAX_RETRIES = 2;
 
-/**
- * The normalised event union every CLI's JSONL stream is parsed into
- * (spec §5.3, step 4). `tool_result` and `error` are folded into this union
- * rather than added as members of their own — `tool_result` carries nothing
- * a stage script needs yet, and `error` is just a `result` with a failed
- * status.
- */
-export type StreamEvent =
-	| { type: "session_id"; sessionId: string }
-	| { type: "text"; text: string }
-	| { type: "tool_call"; name: string }
-	| { type: "activate_skill"; skill: string }
-	| { type: "result"; status: "success" | "error" }
-	| { type: "usage"; inputTokens: number; outputTokens: number };
-
-export interface RunAgentOptions {
-	cli: "gemini" | "claude";
-	model: string;
-	prompt: string;
+interface BaseRunOptions {
+	/** The stage's entry from `models.ts` — the single place a CLI and model are named. */
+	model: ModelConfig;
+	/** Path to the prompt template on disk; `{{KEY}}` placeholders come from `promptArgs`. */
+	promptFile: string;
+	promptArgs: Record<string, string>;
+	/** Defaults to `<promise>COMPLETE</promise>`. */
+	completionSignal?: string;
+	/** Assert this skill activated during the run — treat a miss as a prompt bug, not a flake. */
+	expectSkill?: string;
+	/** Validation-failure retries, by resuming the same session. Defaults to 2. */
+	maxRetries?: number;
 	/** Injected for tests; defaults to Bun.spawn. */
 	spawn?: SpawnFn;
 }
 
-export interface RunAgentResult {
-	/** Concatenated assistant text — never the raw transcript to branch on. */
-	text: string;
-	/** Full transcript, for logging only. */
-	raw: string;
-	sessionId: string | null;
-	events: StreamEvent[];
+export interface ObjectRunOptions<T> extends BaseRunOptions {
+	output: ObjectOutput<T>;
 }
 
-function buildArgs(model: string): string[] {
+export interface ProseRunOptions extends BaseRunOptions {
+	output: ProseOutput;
+}
+
+export interface RunAgentResult<T> {
+	/** Typed, validated — never a raw string for a stage script to branch on. */
+	output: T;
+	/** Full transcript, for logging only. */
+	raw: string;
+	sessionId?: string;
+	/** Set when the completion signal was seen in the transcript. */
+	completionSignal?: string;
+	usage: TokenUsage & { requests: number };
+}
+
+/**
+ * What the retry loop needs, and nothing else. Resolving `options` into this
+ * shape up front is what keeps the loop free of output kinds, tags, schemas and
+ * defaults: by the time `execute` runs, "what counts as valid output" is just a
+ * function.
+ */
+interface RunRequest<T> {
+	model: ModelConfig;
+	prompt: string;
+	completionSignal: string;
+	expectSkill?: string;
+	maxRetries: number;
+	validate: (text: string) => ValidationResult<T>;
+	spawn: SpawnFn;
+}
+
+/** Everything accumulated across one or more attempts of the same run. */
+interface Transcript {
+	events: StreamEvent[];
+	raw: string;
+	requests: number;
+	sessionId?: string;
+}
+
+/**
+ * The result of a whole run, decided before anything is written or thrown.
+ * `failure: null` is the seventh, outside-the-table case (§5.1): a genuine CLI
+ * or API failure with no `FailureClass` to report, which fails loudly as a
+ * plain `Error` rather than being misfiled under the nearest class.
+ */
+type Outcome<T> =
+	| { ok: true; value: T; signalSeen: boolean }
+	| { ok: false; failure: FailureClass | null; message: string };
+
+const EMPTY_TRANSCRIPT: Transcript = {
+	events: [],
+	raw: "",
+	requests: 0,
+	sessionId: undefined,
+};
+
+function failed(failure: FailureClass | null, message: string): Outcome<never> {
+	return { failure, message, ok: false };
+}
+
+function record(transcript: Transcript, attempt: ProcessResult): Transcript {
+	return {
+		events: [...transcript.events, ...attempt.events],
+		raw: transcript.raw + attempt.raw,
+		requests: transcript.requests + 1,
+		sessionId: findSessionId(attempt.events) ?? transcript.sessionId,
+	};
+}
+
+/** The first attempt starts fresh; every retry resumes the prior session (spec §5.3, step 6). */
+function commandArgs(model: string, resumeSessionId?: string): string[] {
+	const resume = resumeSessionId ? ["--resume", resumeSessionId] : [];
 	return [
 		"--approval-mode",
 		"yolo",
@@ -53,196 +130,222 @@ function buildArgs(model: string): string[] {
 		"stream-json",
 		"-m",
 		model,
+		...resume,
 		"-p",
 		"-",
 	];
 }
 
-const defaultSpawn: SpawnFn = (command, args) => {
-	const child = Bun.spawn([command, ...args], {
-		stderr: "pipe",
-		stdin: "pipe",
-		stdout: "pipe",
-	});
-	return {
-		exited: child.exited,
-		stderr: child.stderr,
-		stdin: child.stdin,
-		stdout: child.stdout,
-	};
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
+interface Attempts<T> {
+	outcome: Outcome<T>;
+	transcript: Transcript;
 }
 
-function parseToolUse(raw: Record<string, unknown>): StreamEvent[] {
-	if (typeof raw.tool_name !== "string") return [];
+/** Either the run is over — however it ended — or there is a retry worth spending. */
+type Verdict<T> =
+	| { kind: "done"; outcome: Outcome<T> }
+	| { kind: "retry"; prompt: string };
 
-	if (raw.tool_name !== "activate_skill") {
-		return [{ name: raw.tool_name, type: "tool_call" }];
-	}
-
-	const parameters = isRecord(raw.parameters) ? raw.parameters : {};
-	const skill = parameters.name ?? parameters.skill;
-	return typeof skill === "string" ? [{ skill, type: "activate_skill" }] : [];
-}
-
-function parseResult(raw: Record<string, unknown>): StreamEvent[] {
-	const events: StreamEvent[] = [
-		{ status: raw.status === "success" ? "success" : "error", type: "result" },
-	];
-
-	const stats = isRecord(raw.stats) ? raw.stats : null;
-	if (stats) {
-		events.push({
-			inputTokens:
-				typeof stats.input_tokens === "number" ? stats.input_tokens : 0,
-			outputTokens:
-				typeof stats.output_tokens === "number" ? stats.output_tokens : 0,
-			type: "usage",
-		});
-	}
-
-	return events;
+function done<T>(outcome: Outcome<T>): Verdict<T> {
+	return { kind: "done", outcome };
 }
 
 /**
- * Parses one line of a CLI's `--output-format stream-json` output into zero
- * or more normalised events. Zero-or-more because a single raw line (e.g.
- * `result`, which carries both a completion status and token stats) can
- * carry more than one fact the pipeline cares about.
+ * Reads one finished attempt. Every reason a run can stop is decided here, in
+ * one place and in one direction, so the loop below is left with nothing but
+ * spawning and accumulation.
  */
-export function parseStreamLine(line: string): StreamEvent[] {
-	const trimmed = line.trim();
-	if (!trimmed) return [];
+function judgeAttempt<T>(
+	request: RunRequest<T>,
+	transcript: Transcript,
+	result: ProcessResult,
+	attempt: number,
+): Verdict<T> {
+	const { cli } = request.model;
 
-	let raw: unknown;
-	try {
-		raw = JSON.parse(trimmed);
-	} catch {
-		return [];
+	if (result.exitCode !== 0) {
+		const classified = classifyExit(result.exitCode, result.stderr);
+		return done(
+			failed(
+				classified === "unclassified" ? null : classified,
+				`${cli} exited with code ${result.exitCode}: ${result.raw}`,
+			),
+		);
 	}
 
-	if (!isRecord(raw) || typeof raw.type !== "string") return [];
-
-	switch (raw.type) {
-		case "init":
-			return typeof raw.session_id === "string"
-				? [{ sessionId: raw.session_id, type: "session_id" }]
-				: [];
-		case "message":
-			return raw.role === "assistant" && typeof raw.content === "string"
-				? [{ text: raw.content, type: "text" }]
-				: [];
-		case "tool_use":
-			return parseToolUse(raw);
-		case "result":
-			return parseResult(raw);
-		case "error":
-			return [{ status: "error", type: "result" }];
-		default:
-			return [];
-	}
-}
-
-function createLineBuffer(onLine: (line: string) => void) {
-	let buffer = "";
-	return {
-		flush() {
-			if (buffer.trim()) onLine(buffer);
-			buffer = "";
-		},
-		push(chunk: string) {
-			buffer += chunk;
-			const lines = buffer.split("\n");
-			buffer = lines.pop() ?? "";
-			for (const line of lines) onLine(line);
-		},
-	};
-}
-
-/**
- * Drains a stream chunk-by-chunk, decoding as it goes. `stdout` and `stderr`
- * are drained concurrently (see `runAgent`) rather than one after the other,
- * so a chatty stderr can't stall stdout behind a full OS pipe buffer.
- */
-async function drainStream(
-	stream: ReadableStream<Uint8Array>,
-	onChunk: (text: string) => void,
-): Promise<void> {
-	const decoder = new TextDecoder();
-	const reader = stream.getReader();
-	for (;;) {
-		const { done, value } = await reader.read();
-		if (done) break;
-		onChunk(decoder.decode(value, { stream: true }));
-	}
-}
-
-function collectText(events: StreamEvent[]): string {
-	return events
-		.filter(
-			(event): event is Extract<StreamEvent, { type: "text" }> =>
-				event.type === "text",
-		)
-		.map((event) => event.text)
-		.join("");
-}
-
-function findSessionId(events: StreamEvent[]): string | null {
-	const sessionEvent = events.find(
-		(event): event is Extract<StreamEvent, { type: "session_id" }> =>
-			event.type === "session_id",
+	const { signalSeen, text } = truncateAtSignal(
+		collectText(result.events),
+		request.completionSignal,
 	);
-	return sessionEvent?.sessionId ?? null;
+	const validation = request.validate(text);
+
+	if (validation.success) {
+		return done({ ok: true, signalSeen, value: validation.value });
+	}
+
+	if (attempt >= request.maxRetries) {
+		return done(failed("bad-output", validation.error));
+	}
+
+	// A retry carries only the validation error as its prompt, so it is
+	// worthless without the session that holds the original task. No session id
+	// means there is nothing to resume — fail on the output we have rather than
+	// spend a request asking a fresh session to fix an error it never saw.
+	if (transcript.sessionId === undefined) {
+		return done(
+			failed(
+				"bad-output",
+				`${validation.error}\n\nCannot retry: ${cli} reported no session id to resume.`,
+			),
+		);
+	}
+
+	return { kind: "retry", prompt: validation.error };
 }
 
 /**
- * Spawns the agent CLI, writes the prompt on stdin (avoids the ~128 KB argv
- * limit), and returns the parsed text once the process exits.
- *
- * This is the tracer-bullet runner (spec §5.3, Ticket 3): text only. Prompt
- * templating, `{{OUTPUT_SCHEMA}}` injection, the completion signal, tagged
- * structured-output extraction and validation-retry-by-resume all come with
- * the completed runner (Ticket 4).
+ * Runs the CLI until `judgeAttempt` says to stop. Decides *what happened* and
+ * nothing more: no files, no throwing — that all belongs to the single tail in
+ * `execute`.
  */
-export async function runAgent(
-	options: RunAgentOptions,
-): Promise<RunAgentResult> {
-	const spawnFn = options.spawn ?? defaultSpawn;
-	const child = spawnFn(options.cli, buildArgs(options.model));
+async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
+	const { cli, model } = request.model;
+	let transcript = EMPTY_TRANSCRIPT;
+	let prompt = request.prompt;
 
-	child.stdin.write(options.prompt);
-	child.stdin.end();
+	for (let attempt = 0; ; attempt++) {
+		const resumeSessionId = attempt === 0 ? undefined : transcript.sessionId;
+		const result = await runProcess(
+			request.spawn,
+			cli,
+			commandArgs(model, resumeSessionId),
+			prompt,
+		);
+		transcript = record(transcript, result);
 
-	const events: StreamEvent[] = [];
-	let raw = "";
-	const lineBuffer = createLineBuffer((line) => {
-		events.push(...parseStreamLine(line));
+		const verdict = judgeAttempt(request, transcript, result, attempt);
+		if (verdict.kind === "done") {
+			return { outcome: verdict.outcome, transcript };
+		}
+
+		prompt = verdict.prompt;
+	}
+}
+
+/** An expected skill that never activated is a prompt bug, not a flake — it fails an otherwise-valid run (spec §5.3). */
+function assertExpectedSkill<T>(
+	request: RunRequest<T>,
+	transcript: Transcript,
+	outcome: Outcome<T>,
+): Outcome<T> {
+	if (!outcome.ok || request.expectSkill === undefined) return outcome;
+	if (skillActivated(transcript.events, request.expectSkill)) return outcome;
+	return failed(
+		"skill-miss",
+		`Expected skill "${request.expectSkill}" to activate, but it did not.`,
+	);
+}
+
+/** The one place either artifact is written — every run path, success or failure, passes through here. */
+function writeArtifacts<T>(
+	request: RunRequest<T>,
+	transcript: Transcript,
+	outcome: Outcome<T>,
+	usage: TokenUsage,
+): void {
+	const dir = resolveArtifactsDir();
+	if (dir === null) {
+		logger.warn(
+			"OUTPUT_DIR is unset — skipping usage.jsonl and failure_reason.txt for this run.",
+		);
+		return;
+	}
+
+	if (!outcome.ok && outcome.failure !== null) {
+		writeFailureReason(dir, outcome.failure, outcome.message);
+	}
+
+	appendUsage(dir, {
+		...usage,
+		cli: request.model.cli,
+		model: request.model.model,
+		requests: transcript.requests,
 	});
+}
 
-	await Promise.all([
-		drainStream(child.stdout, (text) => {
-			raw += text;
-			lineBuffer.push(text);
-		}),
-		drainStream(child.stderr, (text) => {
-			raw += text;
-		}),
-	]);
+async function execute<T>(request: RunRequest<T>): Promise<RunAgentResult<T>> {
+	const { outcome: attempted, transcript } = await runAttempts(request);
+	const outcome = assertExpectedSkill(request, transcript, attempted);
+	const usage = sumUsage(transcript.events);
 
-	const exitCode = await child.exited;
-	lineBuffer.flush();
+	writeArtifacts(request, transcript, outcome, usage);
 
-	if (exitCode !== 0) {
-		throw new Error(`${options.cli} exited with code ${exitCode}: ${raw}`);
+	if (!outcome.ok) {
+		throw outcome.failure === null
+			? new Error(outcome.message)
+			: new RunAgentError(outcome.failure, outcome.message);
 	}
 
 	return {
-		events,
-		raw,
-		sessionId: findSessionId(events),
-		text: collectText(events),
+		completionSignal: outcome.signalSeen ? request.completionSignal : undefined,
+		output: outcome.value,
+		raw: transcript.raw,
+		sessionId: transcript.sessionId,
+		usage: { ...usage, requests: transcript.requests },
 	};
+}
+
+function requestFor<T>(
+	options: BaseRunOptions,
+	prompt: string,
+	validate: (text: string) => ValidationResult<T>,
+): RunRequest<T> {
+	return {
+		completionSignal: options.completionSignal ?? DEFAULT_COMPLETION_SIGNAL,
+		expectSkill: options.expectSkill,
+		maxRetries: options.maxRetries ?? DEFAULT_MAX_RETRIES,
+		model: options.model,
+		prompt,
+		spawn: options.spawn ?? defaultSpawn,
+		validate,
+	};
+}
+
+/**
+ * The single seam every model invocation passes through (spec §5.3): spawns the
+ * agent CLI, writes the prompt on stdin, and returns a typed, validated result.
+ *
+ * The two overloads are the whole reason there is no cast anywhere below: prose
+ * output *is* `string`, object output is whatever its schema parses to, and each
+ * caller gets the one it asked for straight from the signature.
+ */
+export function runAgent(
+	options: ProseRunOptions,
+): Promise<RunAgentResult<string>>;
+export function runAgent<T>(
+	options: ObjectRunOptions<T>,
+): Promise<RunAgentResult<T>>;
+export function runAgent<T>(
+	options: ProseRunOptions | ObjectRunOptions<T>,
+): Promise<RunAgentResult<T | string>> {
+	const output = options.output;
+
+	if (output.kind === "prose") {
+		return execute(
+			requestFor(
+				options,
+				buildPrompt(options.promptFile, options.promptArgs),
+				(text) => ({ success: true, value: text }),
+			),
+		);
+	}
+
+	const schema = JSON.stringify(z.toJSONSchema(output.schema));
+	return execute(
+		requestFor(
+			options,
+			buildPrompt(options.promptFile, options.promptArgs, schema),
+			(text) => validateTaggedJson(text, output),
+		),
+	);
 }

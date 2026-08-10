@@ -1,0 +1,2 @@
+{"type":"message","role":"assistant","content":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>"}
+{"type":"result","status":"success","stats":{"input_tokens":10,"output_tokens":5}}

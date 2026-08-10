@@ -11,6 +11,7 @@ import {
 	SPEC_READY_LABEL,
 	transitionState,
 } from "./agent-shared";
+import { logger } from "./agents/logger";
 
 declare global {
 	namespace NodeJS {
@@ -188,7 +189,7 @@ export async function run() {
 
 		const skillPath = determineSkillPath(issue.labels, latestUserComment);
 		if (!skillPath) {
-			console.log(
+			logger.log(
 				"Issue has spec-ready label and no override command. Skipping PM agent grilling.",
 			);
 			return;
@@ -208,7 +209,7 @@ export async function run() {
 			await executeAction(ctx, ai, action, issue, conversation);
 		}
 	} catch (error) {
-		console.error("PM Agent execution error:", error);
+		logger.error("PM Agent execution error:", error);
 		await postIssueErrorComment(ctx, "PM Agent", error);
 		process.exit(1);
 	}
