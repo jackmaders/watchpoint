@@ -201,11 +201,18 @@ function findBlockerCycle(
 }
 
 /**
- * The two cross-ticket semantic checks (spec §5.4) beyond individual-ticket
- * shape: every blocker id must resolve within this same breakdown, and the
- * blocker graph must be acyclic. Both live in one `superRefine` so a failure
- * here fails `safeParse` for the whole payload — tickets are interdependent,
- * so accepting nine of ten would leave a dangling blocker reference.
+ * The three cross-ticket semantic checks (spec §5.4) beyond individual-ticket
+ * shape: every ticket id must be unique within the breakdown, every blocker
+ * id must resolve within this same breakdown, and the blocker graph must be
+ * acyclic. All three live in one `superRefine` so a failure here fails
+ * `safeParse` for the whole payload — tickets are interdependent, so
+ * accepting nine of ten would leave a dangling blocker reference.
+ *
+ * The uniqueness check matters beyond schema hygiene: `wiring.ts` keys a
+ * `Map` by `ticket.id` to resolve blockers to real issue numbers. Without
+ * this check, a duplicate id would pass validation and then silently drop
+ * one of the two tickets from `topologicalSortTickets`'s output — no error,
+ * just a ticket that never gets created.
  */
 export const TicketBreakdownSchema = z
 	.object({
@@ -218,6 +225,18 @@ export const TicketBreakdownSchema = z
 			),
 	})
 	.superRefine((data, ctx) => {
+		const seenIds = new Set<string>();
+		data.tickets.forEach((ticket, ticketIndex) => {
+			if (seenIds.has(ticket.id)) {
+				ctx.addIssue({
+					code: "custom",
+					message: `Ticket id "${ticket.id}" is used by more than one ticket in this breakdown.`,
+					path: ["tickets", ticketIndex, "id"],
+				});
+			}
+			seenIds.add(ticket.id);
+		});
+
 		const declaredIds = new Set(data.tickets.map((ticket) => ticket.id));
 
 		data.tickets.forEach((ticket, ticketIndex) => {
