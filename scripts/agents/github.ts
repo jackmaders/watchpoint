@@ -27,7 +27,10 @@ export const LABELS = {
 	agentInProgress: "agent:in-progress",
 	grillNeeded: "grill:needed",
 	needsInfo: "needs-info",
+	readyForAgent: "ready-for-agent",
 	specNeeded: "spec:needed",
+	specReady: "spec:ready",
+	ticketsNeeded: "tickets:needed",
 } as const;
 
 export const LabelSchema = z.enum(LABELS);
