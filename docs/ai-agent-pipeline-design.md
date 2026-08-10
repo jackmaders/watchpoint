@@ -422,7 +422,7 @@ guarantees a CI runner gets the same skills you have locally.
    the label is the retry mechanism. On failure: `agent:blocked` + a comment with the
    reason and the run URL. `always()`: remove `agent:in-progress`.
 4. **The three HITL gates stay, asynchronously.** The agent posts a round and applies
-   `grill:waiting`; the human answers in a comment; the comment re-fires the agent. The
+   `needs-info`; the human answers in a comment; the comment re-fires the agent. The
    loop is autonomous *between* human turns, not through them.
 5. **Merging is human, always.** No workflow calls `gh pr merge`. Agents take a PR to
    `review:approved` and stop. This is a deliberate fourth gate on top of the plugin's
@@ -592,8 +592,12 @@ budget where you wanted it: on interactive work and on `implement`.
 
 ## 3.4 The full label taxonomy
 
-Every label is `{role}:{status}`. The `role` segment is the **lifecycle stage** that owns
-the label; `agent:` is the role-agnostic namespace for statuses no single stage owns.
+Every label is `{role}:{status}`, with one deliberate exception: the seven canonical
+triage-role labels (§ "Canonical role labels" below) use the plugin's literal strings
+verbatim instead, because they are a hardcoded contract with the `triage`, `to-spec`, and
+`to-tickets` skills rather than a Watchpoint-owned routing key. The `role` segment on
+every other label is the **lifecycle stage** that owns the label; `agent:` is the
+role-agnostic namespace for statuses no single stage owns.
 
 ### The naming rule
 
@@ -622,9 +626,9 @@ is what keeps the rule from needing a second clause.
 | Label | Target | Applied by | Consumed by | Skill invoked | Produces |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `wayfinder:needed` | Issue | Human | `agent-wayfinder.yml` | `/wayfinder` | A `wayfinder:map` issue + child decision tickets with native `blocked_by` edges |
-| `grill:needed` | Issue | Human, wayfinder | `agent-grill.yml` | `/grilling` + `/domain-modeling` | One round of numbered questions as a comment; `grill:waiting` |
+| `grill:needed` | Issue | Human, wayfinder | `agent-grill.yml` | `/grilling` + `/domain-modeling` | One round of numbered questions as a comment; `needs-info` |
 | `research:needed` | Wayfinder ticket | Wayfinder | `agent-research.yml` | `/research` | A cited findings file on a `research/<name>` branch; resolution comment |
-| `spec:needed` | Issue | Human, grill (on frontier empty) | `agent-spec.yml` | `/to-spec` | Spec written to the issue body; `spec:ready` + `agent:ready` |
+| `spec:needed` | Issue | Human, grill (on frontier empty) | `agent-spec.yml` | `/to-spec` | Spec written to the issue body; `spec:ready` + `ready-for-agent` |
 | `tickets:needed` | Spec issue | Human, spec | `agent-itemizer.yml` | `/to-tickets` → deterministic wiring | Child issues, milestone, `blocked_by` edges; frontier tickets get `dev:needed` |
 | `dev:needed` | Ticket issue | Tickets, frontier | `agent-implement.yml` | `/implement` (drives `/tdd`) | Branch `agent/issue-<n>-<slug>`, commits, draft PR, then applies `review:needed` |
 | `dev:needed` | PR | Review (round 1 findings) | `agent-implement-pr.yml` | `/implement` (address review) | Fix commits on the PR branch, then re-applies `review:needed` |
@@ -641,7 +645,6 @@ merge (§3.6 Stage 7) rather than performing one.
 | :--- | :--- | :--- |
 | `wayfinder:map` | This issue **is** a map | Wayfinder *(upstream string)* |
 | `wayfinder:research` · `:prototype` · `:grilling` · `:task` | Decision-ticket type | Wayfinder *(upstream strings)* |
-| `grill:waiting` | A round is posted; awaiting the human's answers | Grill |
 | `spec:ready` | Spec published on the issue body | Spec |
 | `tickets:proposed` | Breakdown posted as a comment; awaiting `/approve` | Tickets |
 | `tickets:wired` | Child issues created with native sub-issue + `blocked_by` edges | Tickets |
@@ -661,43 +664,49 @@ Applied to any item regardless of which stage is acting.
 | :--- | :--- |
 | `agent:in-progress` | A workflow is running against this item right now |
 | `agent:blocked` | The last run failed; reason + run URL are in a comment |
-| `agent:ready` | Fully specified; an AFK agent may take it |
-| `agent:needs-human` | Needs a human, not an agent |
+
+`ready-for-agent` and `ready-for-human` used to live in this bucket as `agent:ready` and
+`agent:needs-human`. They've moved to the canonical role labels below — same meaning, the
+plugin's literal string instead of a `{role}:{status}` rendering of it.
 
 This is where the format earns its keep operationally:
 `gh issue list --label agent:in-progress` is everything currently burning tokens, and
 `gh issue list --label agent:blocked` is your entire error queue — across every stage, in
 one query.
 
-### Triage labels — `triage:{status}`
+### Canonical role labels — literal upstream strings
 
-| Label | Meaning |
-| :--- | :--- |
-| `triage:needed` | Never triaged; a maintainer must evaluate |
-| `triage:bug` · `triage:enhancement` | Category roles |
-| `triage:wontfix` | Will not be actioned |
+The five triage state roles and two category roles, used as-is rather than translated
+into `{role}:{status}`:
 
-### Mapping back to the plugin's canonical roles
+| Label | Meaning | Also used by |
+| :--- | :--- | :--- |
+| `needs-triage` | Never triaged; a maintainer must evaluate | `/triage` only |
+| `needs-info` | Waiting on reporter/reviewer for more information | Grill loop (§3.6 Stage 2) |
+| `ready-for-agent` | Fully specified; an AFK agent may take it | Spec/tickets stages (§3.6 Stages 3–4) |
+| `ready-for-human` | Needs a human, not an agent | `/triage` only |
+| `wontfix` | Will not be actioned | `/triage` only |
+| `bug` | Category: defect | `/triage` only |
+| `enhancement` | Category: new capability | `/triage` only |
 
-The skills hard-code canonical label strings in their prose — `/to-spec` and
-`/to-tickets` both say "apply the `ready-for-agent` triage label". **Renaming is
-explicitly supported**, but only via the override that `/setup-matt-pocock-skills`
-Section B writes to `docs/agents/triage-labels.md`. Without that file the skills will
-create duplicate labels alongside yours.
-
-| Canonical role | Watchpoint label |
-| :--- | :--- |
-| `needs-triage` | `triage:needed` |
-| `needs-info` | `grill:waiting` |
-| `ready-for-agent` | `agent:ready` |
-| `ready-for-human` | `agent:needs-human` |
-| `wontfix` | `triage:wontfix` |
-| `bug` | `triage:bug` |
-| `enhancement` | `triage:enhancement` |
+`needs-info` and `ready-for-agent` are dual-purpose: `/triage` applies them to incoming
+issues, and the pipeline itself applies the identical string mid-flow (a grill round
+awaiting an answer; a spec that's ready to itemize). That reuse is what makes the literal
+strings worth the naming-convention exception — the alternative is two different labels
+meaning the same thing depending on who asked.
 
 `review:escalated` has no canonical counterpart — it is yours, and distinct from
-`agent:needs-human`: escalated means *an agent tried twice and gave up on this diff*,
-needs-human means *this work was never delegable in the first place*.
+`ready-for-human`: escalated means *an agent tried twice and gave up on this diff*,
+`ready-for-human` means *this work was never delegable in the first place*.
+
+### Mapping to the plugin's canonical roles
+
+The skills hard-code canonical label strings in their prose — `/to-spec` and
+`/to-tickets` both say "apply the `ready-for-agent` triage label". Watchpoint uses those
+strings directly rather than routing them through the `/setup-matt-pocock-skills`
+Section B override, so `docs/agents/triage-labels.md` records an identity mapping (kept
+for documentation completeness and because the setup skill expects the file to exist,
+not because a translation is happening).
 
 ### Slash commands — ergonomic aliases
 
@@ -726,7 +735,7 @@ Match with an anchored regex (`^/implement\b`) at the start of a line, not
 | :-- | :--- | :--- | :--- | :--- | :--- |
 | 1 | `issues: labeled` | `label == wayfinder:needed` | `agent-wayfinder.yml` | `/wayfinder` | ✅ decision tickets need answers |
 | 2 | `issues: labeled` | `label == grill:needed` | `agent-grill.yml` | `/grilling` | ✅ **always** — posts a round, waits |
-| 3 | `issue_comment: created` | `grill:waiting` present **and** author is human | `agent-grill.yml` | `/grilling` (next round) | ✅ until frontier empty |
+| 3 | `issue_comment: created` | `needs-info` present **and** author is human | `agent-grill.yml` | `/grilling` (next round) | ✅ until frontier empty |
 | 4 | `issues: labeled` | `label == research:needed` | `agent-research.yml` | `/research` | ❌ AFK by design |
 | 5 | `issues: labeled` | `label == spec:needed` | `agent-spec.yml` | `/to-spec` | ⚠️ seam confirmation → posted as a comment, auto-proceeds after N hours or on `/approve` |
 | 6 | `issues: labeled` | `label == tickets:needed` | `agent-itemizer.yml` | `/to-tickets` | ⚠️ breakdown quiz → posted as a comment, `/approve` publishes |
@@ -764,9 +773,10 @@ Run `/setup-matt-pocock-skills` locally and commit its output. Then:
   (fixes F9). Both CLIs read them, and CI no longer depends on a marketplace being
   reachable. Symlink `.claude/skills` → `.agents/skills` so local Claude Code sessions use
   the same copy; verify that resolution on your Claude Code version first.
-- Create every label in §3.4 (`gh label create`), and record the canonical-role override
-  table in `docs/agents/triage-labels.md` — **without it, `/to-spec` and `/to-tickets`
-  will create their own `ready-for-agent` label next to your `agent:ready`.**
+- Create every label in §3.4 (`gh label create`), and record the identity mapping in
+  `docs/agents/triage-labels.md` — **without that file, `/to-spec` and `/to-tickets` don't
+  know a mapping has already been decided and may create a duplicate `ready-for-agent`
+  label.**
 - Colour-code by role prefix so the namespacing is visible in the issue list (one hue per
   `{role}`, shades for `{status}`).
 
@@ -777,7 +787,7 @@ Human opens an issue with a loose idea and applies `wayfinder:needed`. The workf
 runner has no human, split it:
 
 - **1a** — the wayfinder agent names a candidate destination and posts a **breadth-first
-  grilling round** as a comment; applies `grill:waiting`.
+  grilling round** as a comment; applies `needs-info`.
 - **1b** — the human answers in a comment; workflow #3 re-fires; iterate until the
   agent's frontier is empty.
 - **1c** — the agent creates the `wayfinder:map` issue, creates the tickets it can
@@ -787,7 +797,7 @@ runner has no human, split it:
 
 Skip this stage entirely for anything that fits one session — go straight to Stage 2.
 
-### Stage 2 — Grill to certainty (`grill:needed` → `grill:waiting` loop)
+### Stage 2 — Grill to certainty (`grill:needed` → `needs-info` loop)
 
 The core HITL loop, and the honest answer to "ensure there is no uncertainty in the
 requirements". The agent posts one round; the human answers; repeat. Termination: the
@@ -798,7 +808,7 @@ agent emits an explicit sentinel when the frontier is empty, e.g.
 ```
 
 which Sandcastle surfaces as `result.completionSignal`. On that signal, the workflow
-removes `grill:waiting` and applies `spec:needed` — chaining into Stage 3 with no human
+removes `needs-info` and applies `spec:needed` — chaining into Stage 3 with no human
 action needed.
 
 ### Stage 3 — Spec (`spec:needed`)
@@ -806,7 +816,7 @@ action needed.
 `/to-spec` synthesises the thread into the spec template and the workflow writes it to
 the issue body (preserving the original proposal in a `<details>` block, as
 `executeSpecPublishing()` already does). Seams are posted as a separate comment for
-review. Apply `spec:ready` + `agent:ready`, then chain `tickets:needed`.
+review. Apply `spec:ready` + `ready-for-agent`, then chain `tickets:needed`.
 
 ### Stage 4 — Tickets (`tickets:needed`)
 
@@ -837,7 +847,7 @@ The workflow then:
 2. On approval, runs the **existing itemizer wiring**: topological sort → create issues
    in dependency order → `addSubIssue` → `addBlockedBy` → milestone. Applies
    `tickets:wired`.
-3. **Strips `agent:ready` from the parent spec issue** (the documented AFK footgun from
+3. **Strips `ready-for-agent` from the parent spec issue** (the documented AFK footgun from
    §1.7 — an AFK poller that sees it will try to build the entire spec in one run).
 4. Applies `dev:needed` to every frontier ticket (blockers all closed).
 
@@ -954,7 +964,7 @@ outside contributions, gate these on `authorAssociation` being `OWNER`/`MEMBER`/
 
 | You do | System does |
 | :--- | :--- |
-| Open an issue: "I want viewers to bookmark moments in a VOD." Add `wayfinder:needed` (big) or `grill:needed` (small). | Posts round 1 of numbered questions, applies `grill:waiting`. |
+| Open an issue: "I want viewers to bookmark moments in a VOD." Add `wayfinder:needed` (big) or `grill:needed` (small). | Posts round 1 of numbered questions, applies `needs-info`. |
 | Reply in a comment: "1 yes, 2 option B, 3 no because…" | Posts round 2. Repeats until the frontier is empty, then auto-applies `spec:needed`. |
 | (Optional) Read the seams comment. | Writes the spec to the issue body, applies `spec:ready`, chains `tickets:needed`. |
 | Read the numbered breakdown, comment `/approve` (or ask to merge/split tickets first). | Creates child issues with native sub-issue + `blocked_by` edges and a milestone; labels the frontier `dev:needed`. |
@@ -1168,8 +1178,8 @@ Each phase leaves the system working.
 | **0 — Foundation** | Run `/setup-matt-pocock-skills`; vendor the plugin skills into `.agents/skills/` at a pinned SHA; write `CONTEXT.md` + `CODING_STANDARDS.md`; move ADRs; create the §3.4 labels + `docs/agents/triage-labels.md` mapping; mint `AGENT_PAT`, `GEMINI_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`. | Skills work locally and in CI, reproducibly, on both CLIs. |
 | **1 — The runner** | Write `scripts/agents/run-agent.ts` (§3.2) with unit tests against recorded JSONL fixtures for both CLIs. No workflows yet. | One tested seam every later phase builds on. |
 | **2 — Prove it end to end** | `agent-implement.yml` (`dev:needed`, Claude) + `agent-review.yml` (`review:needed`, Gemini), hand-triggered by label, workflow shape copied from Sandcastle's own. Leave the old planner running on its hyphenated labels. | **The biggest win.** F1–F3 fixed — agents ship code and review a full diff. |
-| **3 — Replace planning** | `agent-grill.yml` (Gemini, with the `grill:waiting` comment loop), `agent-spec.yml` (Gemini), `agent-dispatch.yml`. Retire `agent-planner.ts` and the `spec-needed`/`spec-ready` labels. | Real `/grilling` and `/to-spec`; F4–F7 fixed. |
-| **4 — Rewire itemization** | Refactor `agent-itemizer.ts` into a post-processor over `/to-tickets`' structured output (Gemini Flash); strip `agent:ready` from spec parents. | Real `/to-tickets`, deterministic edges. |
+| **3 — Replace planning** | `agent-grill.yml` (Gemini, with the `needs-info` comment loop), `agent-spec.yml` (Gemini), `agent-dispatch.yml`. Retire `agent-planner.ts` and the `spec-needed`/`spec-ready` labels. | Real `/grilling` and `/to-spec`; F4–F7 fixed. |
+| **4 — Rewire itemization** | Refactor `agent-itemizer.ts` into a post-processor over `/to-tickets`' structured output (Gemini Flash); strip `ready-for-agent` from spec parents. | Real `/to-tickets`, deterministic edges. |
 | **5 — Close the loop** | `agent-frontier.yml` on `pull_request: closed`. | Autonomous multi-ticket execution. |
 | **6 — Wayfinder** | `agent-wayfinder.yml` + `wayfinder:*` labels + AFK `research:needed` tickets. | Idea → map → spec → tickets → PRs, end to end. |
 

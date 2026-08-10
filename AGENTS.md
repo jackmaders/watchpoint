@@ -73,7 +73,7 @@ Before creating, reading, commenting on, labelling, or triaging a GitHub issue o
 
 ### Triage labels
 
-Watchpoint's `{role}:{status}` taxonomy, not the plugin's plain defaults. See `docs/agents/triage-labels.md`.
+The plugin's plain default label names, used literally. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

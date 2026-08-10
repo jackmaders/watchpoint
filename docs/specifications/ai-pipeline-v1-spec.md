@@ -439,9 +439,12 @@ The agent writes code and text. The workflow performs every GitHub mutation.
 
 Per *the design doc* §3.4 — `{role}:{status}`, where the role names the stage that
 **consumes** the label. Action labels are `{stage}:needed` and are removed by the first
-step of the workflow they fire. Generic states use `agent:`. The canonical-role override
-table **must** be written to `docs/agents/triage-labels.md` or the skills will create
-duplicate labels.
+step of the workflow they fire. Generic states use `agent:`. The seven canonical triage
+roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`,
+`bug`, `enhancement`) are the one exception — they use the plugin's literal strings, not
+a `{role}:{status}` rendering. The mapping **must** be written to
+`docs/agents/triage-labels.md` (an identity mapping, in this repo's case) or the skills
+will create duplicate labels.
 
 ### 5.7 Shared workflow contract
 
@@ -475,7 +478,7 @@ Pushes use `--force-with-lease="refs/heads/$BRANCH:$BRANCH_HEAD_SHA"`, with a
 | File | Trigger | Script | Skill | Chains to |
 | :--- | :--- | :--- | :--- | :--- |
 | `agent-dispatch.yml` | `issue_comment: created` matching `^/<cmd>\b` | `dispatch.ts` | — | the matching `{stage}:needed` |
-| `agent-grill.yml` | `grill:needed`, or comment while `grill:waiting` | `grill.ts` | `grilling` + `domain-modeling` | `spec:needed` when the frontier empties |
+| `agent-grill.yml` | `grill:needed`, or comment while `needs-info` | `grill.ts` | `grilling` + `domain-modeling` | `spec:needed` when the frontier empties |
 | `agent-spec.yml` | `spec:needed` | `spec.ts` | `to-spec` | `tickets:needed` |
 | `agent-tickets.yml` | `tickets:needed` | `tickets.ts` | `to-tickets` | `dev:needed` on frontier tickets |
 | `agent-implement.yml` | `dev:needed` on an **issue** | `implement.ts` | `implement` + `tdd` | `review:needed` on the new PR |
@@ -518,7 +521,7 @@ Blocker ids for `addBlockedBy` are the numeric **database id**
 | File | Purpose |
 | :--- | :--- |
 | `docs/agents/issue-tracker.md` | GitHub `gh` conventions + wayfinding operations |
-| `docs/agents/triage-labels.md` | Canonical role → `{role}:{status}` mapping |
+| `docs/agents/triage-labels.md` | Canonical role → literal label mapping (identity — no local override) |
 | `docs/agents/domain.md` | Domain-doc layout |
 | `CONTEXT.md` | Domain language (VOD, clip, watch-point, …) |
 | `CODING_STANDARDS.md` | **What `code-review`'s Standards axis reads** |
@@ -621,9 +624,9 @@ Tracer-bullet vertical slices, each demoable on its own.
 | **3** | **Tracer bullet: runner skeleton + dispatch** | 1 | `run-agent.ts` (text only, injected `spawn`, JSONL parsing), `github.ts` moved from `agent-shared.ts`, `models.ts`, and `agent-dispatch.yml` handling one command end to end. **Demo:** comment `/ping` on an issue → Gemini responds in a comment. Proves auth, skills, labels, posting, and the seam. |
 | **4** | **Complete the runner** | 3 | `{{KEY}}` substitution, `{{OUTPUT_SCHEMA}}` injection, completion signal, `<tag>` extraction, Zod validation with retry-by-resume, `expectSkill` assertion, failure classification, `failure_reason.txt`, `usage.jsonl`. Coverage + `onConsoleLog` config changes from §6. **Demo:** a fixture-driven suite covering every row of the §5.3 table. |
 | **5** | **Schema registry** | 3 | `schemas.ts` with the `OUTPUTS` registry, every stage schema, the `.superRefine` semantic checks, derived `Stage`/`OutputOf` types, `as const` label and enum sources, and the registry-completeness test. Convert `models.ts` to be keyed by `Stage`. **Demo:** deleting a `models.ts` entry, or a prompt file, fails `bun run check:types` or a unit test — not a workflow run. |
-| **6** | **Grill loop** | 4, 5 | `agent-grill.yml` + `grill.ts` + `grill.md`. Label → questions → `grill:waiting`; human comment → next round; frontier empty → `spec:needed`. **Demo:** label an issue, answer, get round 2, watch it hand off. |
-| **7** | **Spec publication** | 6 | `agent-spec.yml` + `spec.ts` + `spec.md`. Publishes to the issue body preserving the original proposal, posts seams as a comment, applies `spec:ready` + `agent:ready`, chains `tickets:needed`. **Demo:** a grilled issue becomes a spec unattended. |
-| **8** | **Ticket breakdown and wiring** | 7 | `agent-tickets.yml` + `tickets.ts` + `tickets.md`; `wiring.ts` refactored from `agent-itemizer.ts`. Quiz comment → `/approve` → sub-issues + native `blocked_by` + milestone; strips `agent:ready` from the parent; labels the frontier `dev:needed`. **Demo:** a spec becomes a wired dependency graph visible in GitHub's UI. |
+| **6** | **Grill loop** | 4, 5 | `agent-grill.yml` + `grill.ts` + `grill.md`. Label → questions → `needs-info`; human comment → next round; frontier empty → `spec:needed`. **Demo:** label an issue, answer, get round 2, watch it hand off. |
+| **7** | **Spec publication** | 6 | `agent-spec.yml` + `spec.ts` + `spec.md`. Publishes to the issue body preserving the original proposal, posts seams as a comment, applies `spec:ready` + `ready-for-agent`, chains `tickets:needed`. **Demo:** a grilled issue becomes a spec unattended. |
+| **8** | **Ticket breakdown and wiring** | 7 | `agent-tickets.yml` + `tickets.ts` + `tickets.md`; `wiring.ts` refactored from `agent-itemizer.ts`. Quiz comment → `/approve` → sub-issues + native `blocked_by` + milestone; strips `ready-for-agent` from the parent; labels the frontier `dev:needed`. **Demo:** a spec becomes a wired dependency graph visible in GitHub's UI. |
 | **9** | **Implementation agent** | 4, 5 | `agent-implement.yml` + `implement.ts` + `implement.md`. Shape guards, branch, TDD run, `bun run validate`, commit assertion, push, draft PR, chain `review:needed`. **Demo:** label a hand-written ticket → a draft PR with tests appears. |
 | **10** | **Two-axis review** | 9 | `agent-review.yml` + `review.ts` + two prompts. Axes as two separate runs; structured output; inline comments filtered against the diff line map; reported side by side, never merged. **Demo:** a PR receives a Standards and a Spec review. |
 | **11** | **Fix round and the two-round cap** | 10 | `agent-implement-pr.yml` + `implement-pr.ts` + `implement-pr.md`; `review:round-1`/`round-2`/`approved`/`escalated` transitions. **Demo:** review finds an issue → agent fixes it → round 2 approves. |
