@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	BOT_COMMENT_MARKER,
 	extractLabelNames,
@@ -10,6 +10,7 @@ import {
 	postBotComment,
 	postIssueErrorComment,
 	removeLabelIfPresent,
+	resolveRunUrl,
 	transitionState,
 } from "../github";
 
@@ -30,18 +31,53 @@ describe("github helpers", () => {
 		});
 	});
 
+	describe("resolveRunUrl", () => {
+		const originalEnv = { ...process.env };
+
+		afterEach(() => {
+			process.env = { ...originalEnv };
+		});
+
+		it("builds the run URL from the ambient GitHub Actions env vars", () => {
+			// Arrange
+			process.env.GITHUB_SERVER_URL = "https://github.com";
+			process.env.GITHUB_REPOSITORY = "jackmaders/watchpoint";
+			process.env.GITHUB_RUN_ID = "123";
+
+			// Act
+			const url = resolveRunUrl();
+
+			// Assert
+			expect(url).toBe(
+				"https://github.com/jackmaders/watchpoint/actions/runs/123",
+			);
+		});
+
+		it("returns null when any of the three env vars is missing", () => {
+			// Arrange
+			process.env.GITHUB_SERVER_URL = "https://github.com";
+			process.env.GITHUB_REPOSITORY = "jackmaders/watchpoint";
+			Reflect.deleteProperty(process.env, "GITHUB_RUN_ID");
+
+			// Act
+			const url = resolveRunUrl();
+
+			// Assert
+			expect(url).toBeNull();
+		});
+	});
+
 	describe("LABELS", () => {
-		it("keeps the repo's existing, un-namespaced label strings", () => {
+		it("holds the new pipeline's real, {role}:{status}-namespaced label strings", () => {
 			// Arrange
 			// Act
 			// Assert
 			expect(LABELS).toEqual({
-				approved: "approved",
-				devInProgress: "dev-in-progress",
-				devNeeded: "dev-needed",
-				needsHumanReview: "needs-human-review",
-				specNeeded: "spec-needed",
-				specReady: "spec-ready",
+				agentBlocked: "agent:blocked",
+				agentInProgress: "agent:in-progress",
+				grillNeeded: "grill:needed",
+				needsInfo: "needs-info",
+				specNeeded: "spec:needed",
 			});
 		});
 
@@ -215,6 +251,26 @@ describe("github helpers", () => {
 			expect(octokit.rest.issues.removeLabel).not.toHaveBeenCalled();
 			expect(octokit.rest.issues.addLabels).not.toHaveBeenCalled();
 		});
+
+		it("returns the resulting label names, so a caller can chain the next transition off an accurate snapshot", async () => {
+			// Arrange
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			const result = await transitionState(ctx, ["spec-needed", "old-label"], {
+				add: ["spec-ready"],
+				remove: ["spec-needed"],
+			});
+
+			// Assert
+			expect(result).toEqual(["old-label", "spec-ready"]);
+		});
 	});
 
 	describe("fetchIssueContext", () => {
@@ -372,6 +428,12 @@ describe("github helpers", () => {
 	});
 
 	describe("postIssueErrorComment", () => {
+		const originalEnv = { ...process.env };
+
+		afterEach(() => {
+			process.env = { ...originalEnv };
+		});
+
 		it("posts formatted error comment to issue", async () => {
 			// Arrange
 			const octokit = github.getOctokit("fake-token");
@@ -394,6 +456,56 @@ describe("github helpers", () => {
 			});
 			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
 				body: expect.stringContaining("Quota limit"),
+				issue_number: 42,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+		});
+
+		it("appends a link to the run when the GitHub Actions env vars are present", async () => {
+			// Arrange
+			process.env.GITHUB_SERVER_URL = "https://github.com";
+			process.env.GITHUB_REPOSITORY = "jackmaders/watchpoint";
+			process.env.GITHUB_RUN_ID = "123";
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			await postIssueErrorComment(ctx, "Grill", new Error("boom"));
+
+			// Assert
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
+				body: expect.stringContaining(
+					"https://github.com/jackmaders/watchpoint/actions/runs/123",
+				),
+				issue_number: 42,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
+		});
+
+		it("omits the run link when the GitHub Actions env vars are absent", async () => {
+			// Arrange
+			Reflect.deleteProperty(process.env, "GITHUB_RUN_ID");
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 42,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			await postIssueErrorComment(ctx, "Grill", new Error("boom"));
+
+			// Assert
+			expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
+				body: expect.not.stringContaining("/actions/runs/"),
 				issue_number: 42,
 				owner: "jackmaders",
 				repo: "watchpoint",

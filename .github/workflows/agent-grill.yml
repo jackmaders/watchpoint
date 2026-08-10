@@ -1,0 +1,86 @@
+name: Agent Grill
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-mutate-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  grill:
+    name: 🔥 Run grill round
+    # Two ways in: the trigger label fires the first round, or a human reply
+    # while needs-info is present fires the next one. Comments carrying the
+    # bot marker are filtered here too — the AGENT_PAT used to chain this
+    # workflow makes its own comments look human-authored (spec §5.8), so
+    # `user.type != 'Bot'` alone would let a prior round feed back in as a
+    # new human answer.
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'grill:needed') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request == null &&
+       contains(github.event.issue.labels.*.name, 'needs-info') &&
+       !contains(github.event.comment.body, '<!-- bot-comment -->'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🌐 Install Gemini CLI
+        run: bun add -g @google/gemini-cli
+
+      - name: 🔥 Run grill round
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # `AGENT_PAT` is what lets grill.ts chain into spec:needed — a label
+          # applied with the default GITHUB_TOKEN above cannot fire
+          # agent-spec.yml (spec §5.8). grill.ts itself falls back to a
+          # comment when this secret isn't configured.
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          # See agent-dispatch.yml — untrusted-by-default CI runners would
+          # otherwise skip .agents/skills/ and fall back to global-only skills.
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTPUT_DIR: ${{ runner.temp }}
+        run: bun scripts/agents/grill.ts
+
+      # grill.ts handles its own agent:blocked labeling and error comment on
+      # a classified failure (matching dispatch.ts's pattern) and always
+      # removes agent:in-progress itself in a `finally`. This step is only a
+      # backstop for the run's Bun process dying outright — OOM, a runner
+      # timeout — before that cleanup code ever gets to run.
+      - name: 🧹 Remove agent:in-progress (backstop)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "agent:in-progress" || true
