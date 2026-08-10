@@ -1,0 +1,63 @@
+name: Agent Dispatch
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-mutate-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: 🤖 Dispatch agent command
+    # Structural gate only (not a command match) — real command matching is
+    # an anchored regex in scripts/agents/dispatch.ts, so it stays testable.
+    # Comments carrying the bot marker are filtered here too, to avoid
+    # spinning up a job for every agent-authored reply: the PAT used to chain
+    # workflows makes those comments look human-authored (spec §5.8).
+    if: >
+      github.event.issue.pull_request == null &&
+      !contains(github.event.comment.body, '<!-- bot-comment -->')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🌐 Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+
+      - name: 🤖 Dispatch command
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # CI runners are ephemeral and start untrusted every run, so the
+          # Gemini CLI's workspace-trust check would otherwise silently skip
+          # loading .agents/skills/ and fall back to global-only skills
+          # (.agents/skills/UPSTREAM.md). Trust the checkout for this run.
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: bun scripts/agents/dispatch.ts
