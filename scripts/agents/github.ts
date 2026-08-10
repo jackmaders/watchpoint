@@ -1,12 +1,34 @@
 import type * as github from "@actions/github";
+import { z } from "zod";
 import { logger } from "./logger";
 
-export const SPEC_NEEDED_LABEL = "spec-needed";
-export const SPEC_READY_LABEL = "spec-ready";
-export const DEV_NEEDED_LABEL = "dev-needed";
-export const DEV_IN_PROGRESS_LABEL = "dev-in-progress";
-export const APPROVED_LABEL = "approved";
-export const NEEDS_HUMAN_REVIEW_LABEL = "needs-human-review";
+/**
+ * The pipeline's label vocabulary as one `as const` object, rather than six
+ * loose exported constants — `LabelSchema` and `Label` both derive from it,
+ * so a label can never be validated against a list that has silently drifted
+ * from the values scripts actually apply.
+ *
+ * This is the *new* pipeline's copy (`scripts/agents/`), not the old
+ * `scripts/agent-shared.ts` — that file backs the pre-teardown scripts
+ * (`agent-planner.ts`, `agent-itemizer.ts`) that ticket #61 ("Final teardown
+ * and label migration") deletes wholesale; restructuring its exports now
+ * would edit code on its way out. The string values themselves are
+ * unchanged from the repo's existing, pre-namespacing vocabulary — renaming
+ * them to the `{role}:{status}` convention is that same later ticket's job,
+ * not this one's.
+ */
+export const LABELS = {
+	approved: "approved",
+	devInProgress: "dev-in-progress",
+	devNeeded: "dev-needed",
+	needsHumanReview: "needs-human-review",
+	specNeeded: "spec-needed",
+	specReady: "spec-ready",
+} as const;
+
+export const LabelSchema = z.enum(LABELS);
+export type Label = z.infer<typeof LabelSchema>;
+
 export const BOT_COMMENT_MARKER = "<!-- bot-comment -->";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;

@@ -13,6 +13,7 @@ import {
 	type RunAgentResult,
 	runAgent,
 } from "./run-agent";
+import { OUTPUTS } from "./schemas";
 
 const PING_PROMPT_FILE = join(import.meta.dirname, "prompts", "ping.md");
 
@@ -64,7 +65,7 @@ export async function dispatchPing(
 	try {
 		const result = await runner({
 			model: MODELS.ping,
-			output: { kind: "prose" },
+			output: OUTPUTS.ping,
 			promptArgs: {},
 			promptFile: PING_PROMPT_FILE,
 		});
