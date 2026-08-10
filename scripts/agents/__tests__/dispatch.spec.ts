@@ -223,4 +223,17 @@ describe("run", () => {
 		await expect(act).resolves.not.toThrow();
 		expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
 	});
+
+	it("defaults COMMENT_BODY to an empty string rather than throwing when it's unset", async () => {
+		// Arrange
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.ISSUE_NUMBER = "42";
+		Reflect.deleteProperty(process.env, "COMMENT_BODY");
+
+		// Act
+		const act = dispatchRun();
+
+		// Assert
+		await expect(act).resolves.not.toThrow();
+	});
 });

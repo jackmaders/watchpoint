@@ -25,18 +25,34 @@ import { logger } from "./logger";
 export const LABELS = {
 	agentBlocked: "agent:blocked",
 	agentInProgress: "agent:in-progress",
+	devNeeded: "dev:needed",
 	grillNeeded: "grill:needed",
 	needsInfo: "needs-info",
 	readyForAgent: "ready-for-agent",
 	specNeeded: "spec:needed",
 	specReady: "spec:ready",
 	ticketsNeeded: "tickets:needed",
+	ticketsProposed: "tickets:proposed",
+	ticketsWired: "tickets:wired",
 } as const;
 
 export const LabelSchema = z.enum(LABELS);
 export type Label = z.infer<typeof LabelSchema>;
 
 export const BOT_COMMENT_MARKER = "<!-- bot-comment -->";
+
+/**
+ * The `AGENT_PAT` used to chain every stage's next label makes that stage's
+ * own comments look human-authored (`user.type` is never `"Bot"`), so every
+ * reader must filter on the marker instead, or a bot reply could be mistaken
+ * for a new human command or answer (spec §5.8). Shared here — rather than
+ * redefined per stage script, as it originally was in `dispatch.ts` — because
+ * `tickets.ts`'s `/approve` gate needs the exact same check `dispatch.ts`
+ * already made for `/ping`.
+ */
+export function isBotComment(commentBody: string): boolean {
+	return commentBody.includes(BOT_COMMENT_MARKER);
+}
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -58,6 +74,16 @@ export function extractLabelNames(
 		.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
 }
 
+/** A typed status-code guard for an Octokit error shape — shared so every "this failure means the mutation already happened" check reads the same status the same way, rather than each call site re-deriving its own `typeof`/`"status" in error` narrowing. */
+export function hasStatus(error: unknown, status: number): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"status" in error &&
+		(error as { status?: number }).status === status
+	);
+}
+
 export async function removeLabel(ctx: IssueContext, name: string) {
 	try {
 		await ctx.octokit.rest.issues.removeLabel({
@@ -67,14 +93,7 @@ export async function removeLabel(ctx: IssueContext, name: string) {
 			repo: ctx.repo,
 		});
 	} catch (error: unknown) {
-		if (
-			typeof error === "object" &&
-			error !== null &&
-			"status" in error &&
-			(error as { status?: number }).status === 404
-		) {
-			return;
-		}
+		if (hasStatus(error, 404)) return;
 		throw error;
 	}
 }

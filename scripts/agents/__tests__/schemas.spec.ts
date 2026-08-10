@@ -237,6 +237,27 @@ describe("TicketBreakdownSchema", () => {
 		}
 	});
 
+	it("rejects the whole payload when two tickets share the same id", () => {
+		// Arrange
+		const payload = {
+			tickets: [
+				ticket({ id: "t1", title: "First" }),
+				ticket({ id: "t1", title: "Second" }),
+			],
+		};
+
+		// Act
+		const result = TicketBreakdownSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((issue) => issue.message.includes("t1")),
+			).toBe(true);
+		}
+	});
+
 	it("accepts a ticket that blocks on itself indirectly through a longer, acyclic chain", () => {
 		// Arrange
 		const payload = {
