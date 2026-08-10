@@ -43,13 +43,13 @@ Watchpoint is a browser-based interactive learning platform that transforms pass
 ## 4. Implementation Decisions
 
 ### Core Architecture & ADR Compliance
-* **Media Delivery ([ADR-001](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0001-youtube-media-player.md))**: Implemented via the YouTube IFrame API wrapped in a custom minimalist control interface (`Play`, `Pause`, `Replay Scenario`). Native controls are disabled (`controls=0`).
-* **Database Schema ([ADR-002](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a Cloudflare D1 (SQLite) database managed via Drizzle ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
-* **Input Engine ([ADR-003](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0003-uniform-multiple-choice-v1-input-engine.md))**: Standardizes V1 interactive modules on uniform multiple-choice UI components while maintaining polymorphic `input_type` metadata to allow future continuous sliders and 2D map pin drops.
-* **Edge Deployment ([ADR-004](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0004-cloudflare-native-deployment.md))**: Deployed natively to Cloudflare Workers using `@opennextjs/cloudflare`, Cloudflare D1, and Cloudflare R2 object storage.
+* **Media Delivery ([ADR-001](../adr/0001-youtube-media-player.md))**: Implemented via the YouTube IFrame API wrapped in a custom minimalist control interface (`Play`, `Pause`, `Replay Scenario`). Native controls are disabled (`controls=0`).
+* **Database Schema ([ADR-002](../adr/0002-hybrid-relational-schema-polymorphic-input.md))**: Utilizes a Cloudflare D1 (SQLite) database managed via Drizzle ORM using a **Hybrid Relational Schema with Polymorphic JSON Payloads**.
+* **Input Engine ([ADR-003](../adr/0003-uniform-multiple-choice-v1-input-engine.md))**: Standardizes V1 interactive modules on uniform multiple-choice UI components while maintaining polymorphic `input_type` metadata to allow future continuous sliders and 2D map pin drops.
+* **Edge Deployment ([ADR-004](../adr/0004-cloudflare-native-deployment.md))**: Deployed natively to Cloudflare Workers using `@opennextjs/cloudflare`, Cloudflare D1, and Cloudflare R2 object storage.
 
 ### Database Schema (Drizzle ORM)
-Drizzle is the ORM of record (see [ADR-004](file:///home/jackw/projects/watchpoint/docs/architecture/adr/0004-cloudflare-native-deployment.md)); this spec previously referenced Prisma, which was documentation drift, now corrected. Full schema lives in `src/shared/db/schema/index.ts`; the domain-relevant tables:
+Drizzle is the ORM of record (see [ADR-004](../adr/0004-cloudflare-native-deployment.md)); this spec previously referenced Prisma, which was documentation drift, now corrected. Full schema lives in `src/shared/db/schema/index.ts`; the domain-relevant tables:
 
 ```ts
 export const vods = sqliteTable("vod", {
@@ -91,7 +91,7 @@ export const attemptRecords = sqliteTable("attempt_record", {
 });
 ```
 
-`users` (plus `sessions`/`accounts`/`verifications` for `better-auth`) are also defined in the same schema file — see [glossary](file:///home/jackw/projects/watchpoint/docs/architecture/glossary.md#1-core-platform-concepts) for the domain-level **User** definition.
+`users` (plus `sessions`/`accounts`/`verifications` for `better-auth`) are also defined in the same schema file — see [glossary](../../CONTEXT.md#1-core-platform-concepts) for the domain-level **User** definition.
 
 ---
 
@@ -116,5 +116,5 @@ export const attemptRecords = sqliteTable("attempt_record", {
 
 ## 7. Further Notes
 
-* Domain terms used throughout this spec strictly match the [Ubiquitous Language Glossary](file:///home/jackw/projects/watchpoint/docs/architecture/glossary.md).
-* System architecture details match the [System Architecture Specification](file:///home/jackw/projects/watchpoint/docs/architecture/system-architecture.md).
+* Domain terms used throughout this spec strictly match the [Ubiquitous Language Glossary](../../CONTEXT.md).
+* System architecture details match the [System Architecture Specification](../architecture/system-architecture.md).
