@@ -47,3 +47,63 @@ export function parseDiff(diffText: string): Set<string> {
 
 	return validLines;
 }
+
+/** Finds the issue that a generated pull request claims to implement. */
+export function parseOriginatingIssueNumber(
+	prBody: string | null,
+	headRef: string,
+): number | null {
+	const bodyMatch = prBody?.match(/\b(?:closes|fixes|resolves)\s+#(\d+)\b/i);
+	if (bodyMatch) return Number.parseInt(bodyMatch[1], 10);
+
+	const branchMatch = headRef.match(/^agent\/issue-(\d+)-/);
+	return branchMatch ? Number.parseInt(branchMatch[1], 10) : null;
+}
+
+export interface ReviewPayload {
+	body: string;
+	comments: Array<Pick<InlineComment, "body" | "line" | "path">>;
+	event: "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
+}
+
+/** Composes the two axis reports without combining their verdicts or findings. */
+export function buildReviewBody(
+	standards: Review,
+	standardsDropped: number,
+	spec: Review,
+	specDropped: number,
+): string {
+	return `## Standards Review
+
+**Verdict:** ${standards.verdict}
+${standards.summary}
+
+*Inline comments: ${standards.inlineComments.length} posted, ${standardsDropped} dropped.*
+
+## Spec Review
+
+**Verdict:** ${spec.verdict}
+${spec.summary}
+
+*Inline comments: ${spec.inlineComments.length} posted, ${specDropped} dropped.*`;
+}
+
+/** Builds the single GitHub review request from both independently-reviewed axes. */
+export function buildReviewPayload(
+	standards: Review,
+	spec: Review,
+	comments: readonly InlineComment[],
+	_replies: readonly Review["replies"][number][],
+): ReviewPayload {
+	const changesRequested =
+		standards.verdict === "changes-requested" ||
+		spec.verdict === "changes-requested";
+
+	return {
+		body: "",
+		comments: comments.map(({ body, line, path }) => ({ body, line, path })),
+		event: changesRequested ? "REQUEST_CHANGES" : "APPROVE",
+	};
+}
+
+import type { InlineComment, Review } from "./schemas";
