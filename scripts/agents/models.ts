@@ -8,18 +8,12 @@
 
 export const CODEX_CLI = "codex" as const;
 
-export const PROVIDERS = ["anthropic", "google", "openai", "oss"] as const;
+/** The installed Codex CLI authenticates and executes OpenAI models only. */
+export const PROVIDERS = ["openai"] as const;
 export type Provider = (typeof PROVIDERS)[number];
 
 /** Supported model identifiers, grouped by the provider that serves them. */
 export const ALLOWED_MODELS = {
-	anthropic: [
-		"claude-opus-5",
-		"claude-fable-5",
-		"claude-sonnet-5",
-		"claude-haiku-4.5",
-	],
-	google: ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-pro"],
 	openai: [
 		"gpt-5.6-sol",
 		"gpt-5.6-terra",
@@ -28,7 +22,6 @@ export const ALLOWED_MODELS = {
 		"gpt-5.4",
 		"gpt-5.4-mini",
 	],
-	oss: ["gpt-oss-120b", "gpt-oss-20b", "qwen3-coder-30b"],
 } as const satisfies Record<Provider, readonly string[]>;
 
 /** Alias that describes the registry in provider-oriented terms. */
@@ -49,12 +42,9 @@ export type ModelConfig = {
 export const FALLBACK_MODEL: ModelForProvider<"openai"> = "gpt-5.6-luna";
 export const FALLBACK_PROVIDER: Provider = "openai";
 
-/** Provider-specific API key names, including the OpenAI-compatible OSS route. */
+/** API key environment variable made available to each Codex process. */
 export const API_KEY_ENV_VARS = {
-	anthropic: "ANTHROPIC_API_KEY",
-	google: "GEMINI_API_KEY",
 	openai: "OPENAI_API_KEY",
-	oss: "OPENAI_API_KEY",
 } as const satisfies Record<Provider, string>;
 
 export const PROVIDER_API_KEYS = API_KEY_ENV_VARS;
@@ -62,6 +52,13 @@ export const PROVIDER_API_KEYS = API_KEY_ENV_VARS;
 export const GLOBAL_API_KEY_ENV_VARS = [
 	"AGENT_API_KEY",
 	"LLM_API_KEY",
+] as const;
+
+const CREDENTIAL_ENV_VARS = [
+	"ANTHROPIC_API_KEY",
+	"GEMINI_API_KEY",
+	"OPENAI_API_KEY",
+	...GLOBAL_API_KEY_ENV_VARS,
 ] as const;
 
 type Environment = Record<string, string | undefined>;
@@ -83,13 +80,6 @@ function isProvider(value: string): value is Provider {
 
 function allModels(): readonly string[] {
 	return PROVIDERS.flatMap((provider) => ALLOWED_MODELS[provider]);
-}
-
-function isModelForProvider(
-	provider: Provider,
-	model: string,
-): model is ModelForProvider<Provider> {
-	return (ALLOWED_MODELS[provider] as readonly string[]).includes(model);
 }
 
 function invalidProvider(provider: unknown): Error {
@@ -114,21 +104,15 @@ export function validateModelConfig(config: ModelConfig): ModelConfig {
 		throw invalidModel(config.model);
 	}
 
-	if (!isModelForProvider(config.provider, config.model)) {
-		throw new Error(
-			`Invalid model "${config.model}" for provider "${config.provider}".`,
-		);
-	}
-
 	return config;
 }
 
 /**
  * Resolve the active model/provider at invocation time.
  *
- * `AGENT_*` names are the workflow-specific overrides. `MODEL` and `PROVIDER`
- * mirror the short names used by Codex-style configuration, and remain useful
- * for local shell execution.
+ * `AGENT_MODEL` is the workflow-specific override and `MODEL` its local-shell
+ * alias. Provider values are retained for validation, but only OpenAI is
+ * supported by the installed Codex CLI.
  */
 export function resolveModelConfig(
 	environment: Environment = process.env,
@@ -145,12 +129,6 @@ export function resolveModelConfig(
 	if (!allModels().includes(modelValue)) {
 		throw invalidModel(modelValue);
 	}
-	if (!isModelForProvider(providerValue, modelValue)) {
-		throw new Error(
-			`Invalid model "${modelValue}" for provider "${providerValue}".`,
-		);
-	}
-
 	return {
 		model: modelValue as ModelForProvider<typeof providerValue>,
 		provider: providerValue,
@@ -189,10 +167,7 @@ export function createProviderEnvironment(
 	environment: Environment = process.env,
 ): Environment {
 	const scoped = { ...environment };
-	for (const name of new Set([
-		...Object.values(API_KEY_ENV_VARS),
-		...GLOBAL_API_KEY_ENV_VARS,
-	])) {
+	for (const name of CREDENTIAL_ENV_VARS) {
 		delete scoped[name];
 	}
 	scoped[getApiKeyEnvVar(provider)] = apiKey;

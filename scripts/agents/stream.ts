@@ -261,10 +261,10 @@ export interface ProcessResult {
 export const DEFAULT_PROCESS_TIMEOUT_MS = 600_000;
 
 /**
- * Construct the Codex invocation for a model/provider pair.
+ * Construct the Codex invocation for a supported OpenAI model.
  *
- * Codex uses `model_provider` as a config setting. Its `-p` flag instead
- * names a config profile, so provider names must never be passed to `-p`.
+ * Authentication is established by `codex login --with-api-key` in CI rather
+ * than by passing provider configuration to each process invocation.
  */
 export function buildCodexArgs(
 	modelConfig: ModelConfig,
@@ -278,8 +278,6 @@ export function buildCodexArgs(
 		"--json",
 		"-m",
 		modelConfig.model,
-		"-c",
-		`model_provider="${modelConfig.provider}"`,
 		...session,
 		"-",
 	];
