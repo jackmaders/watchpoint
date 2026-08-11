@@ -329,7 +329,7 @@ describe("runTicketsProposal", () => {
 		// Assert
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
-				expectSkill: "to-tickets",
+				skills: ["to-tickets"],
 			}),
 		);
 	});

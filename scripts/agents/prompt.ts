@@ -1,7 +1,26 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { logger } from "./logger";
 
 const PLACEHOLDER_PATTERN = /\{\{([A-Za-z0-9_]+)\}\}/g;
+const SKILLS_DIRECTORY = join(
+	import.meta.dirname,
+	"..",
+	"..",
+	".agents",
+	"skills",
+);
+
+/** Skills the workflow can inject from this repository's vendored copy. */
+export const AGENT_SKILLS = [
+	"grilling",
+	"implement",
+	"tdd",
+	"to-spec",
+	"to-tickets",
+] as const;
+
+export type AgentSkill = (typeof AGENT_SKILLS)[number];
 
 /**
  * `{{KEY}}` substitution from `promptArgs`. An unmatched `{{KEY}}` is an
@@ -45,10 +64,32 @@ export function buildPrompt(
 	promptFile: string,
 	promptArgs: Record<string, string>,
 	outputSchema?: string,
+	skills: readonly AgentSkill[] = [],
 ): string {
 	const args =
 		outputSchema === undefined
 			? promptArgs
 			: { ...promptArgs, OUTPUT_SCHEMA: outputSchema };
-	return substitutePromptArgs(readFileSync(promptFile, "utf-8"), args);
+	const stagePrompt = substitutePromptArgs(
+		readFileSync(promptFile, "utf-8"),
+		args,
+	);
+	if (skills.length === 0) return stagePrompt;
+
+	const skillContext = skills
+		.map((skill) => {
+			const instructions = readFileSync(
+				join(SKILLS_DIRECTORY, skill, "SKILL.md"),
+				"utf-8",
+			);
+			return `## Workflow-invoked skill: ${skill}\n\n${instructions}`;
+		})
+		.join("\n\n");
+
+	return [
+		"The workflow has already invoked the trusted repository skills below. Follow them, but the stage contract that follows takes precedence whenever instructions conflict.",
+		skillContext,
+		"## Stage contract",
+		stagePrompt,
+	].join("\n\n");
 }

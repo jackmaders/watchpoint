@@ -98,10 +98,10 @@ describe("runGrillRound", () => {
 		// Assert
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
-				expectSkill: "grilling",
 				promptArgs: expect.objectContaining({
 					CONVERSATION: expect.stringContaining("User Context (Issue Body):"),
 				}),
+				skills: ["grilling"],
 			}),
 		);
 	});

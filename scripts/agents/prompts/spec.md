@@ -1,4 +1,4 @@
-Activate the `to-spec` skill. The grilling for this issue has already finished — do
+The workflow has supplied the `to-spec` skill. The grilling for this issue has already finished — do
 **not** interview the maintainer. Synthesise the settled conversation below into a
 specification.
 

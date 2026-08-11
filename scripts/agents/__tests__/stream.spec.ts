@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ModelConfig } from "../models";
 import {
 	buildCodexArgs,
+	CODEX_BYPASS_SANDBOX_ENV,
 	defaultSpawn,
 	parseStreamLine,
 	runProcess,
@@ -511,6 +512,58 @@ describe("Codex process execution", () => {
 			"thread_1",
 			"-",
 		]);
+	});
+
+	it("bypasses Codex's nested sandbox only when the workflow opts in", () => {
+		// Arrange
+		// Act
+		const args = buildCodexArgs(modelConfig, undefined, true);
+
+		// Assert
+		expect(args).toEqual([
+			"exec",
+			"--json",
+			"-m",
+			"gpt-5.6-luna",
+			"--dangerously-bypass-approvals-and-sandbox",
+			"-",
+		]);
+	});
+
+	it("passes the CI sandbox opt-in from the process environment to Codex", async () => {
+		// Arrange
+		const processChild: SpawnedProcess = {
+			exited: Promise.resolve(0),
+			stderr: streamFromChunks([]),
+			stdin: { end: vi.fn(), write: vi.fn() },
+			stdout: streamFromChunks([]),
+		};
+		const spawn = vi.fn().mockReturnValue(processChild);
+		const environment = { [CODEX_BYPASS_SANDBOX_ENV]: "1" };
+
+		// Act
+		await runProcess(
+			spawn,
+			modelConfig,
+			"prompt",
+			undefined,
+			undefined,
+			environment,
+		);
+
+		// Assert
+		expect(spawn).toHaveBeenCalledWith(
+			"codex",
+			[
+				"exec",
+				"--json",
+				"-m",
+				"gpt-5.6-luna",
+				"--dangerously-bypass-approvals-and-sandbox",
+				"-",
+			],
+			{ env: environment },
+		);
 	});
 
 	it("mirrors completed agent messages without exposing raw process output", async () => {

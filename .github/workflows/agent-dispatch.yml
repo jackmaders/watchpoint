@@ -67,6 +67,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          # GitHub-hosted runners are already isolated; avoid Codex's nested bwrap sandbox.
+          AGENT_CODEX_BYPASS_SANDBOX: "1"
           AGENT_RUN_TIMEOUT_MS: "720000"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           COMMENT_BODY: ${{ github.event.comment.body }}

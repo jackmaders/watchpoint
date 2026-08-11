@@ -1,5 +1,6 @@
-Activate the `grilling` skill. Activate the `domain-modeling` skill too, if a term or
-decision you surface is worth recording in the domain model.
+The workflow has supplied the `grilling` skill. If a term or decision is worth recording
+in the domain model, identify it for the maintainer rather than assuming a skill can be
+activated during this non-interactive run.
 
 You are running the asynchronous grill loop for a GitHub issue. Interrogate the
 maintainer about the loose idea in the conversation below until nothing is left

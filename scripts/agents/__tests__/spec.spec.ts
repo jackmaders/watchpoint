@@ -216,10 +216,10 @@ describe("runSpecPublication", () => {
 		// Assert
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
-				expectSkill: "to-spec",
 				promptArgs: expect.objectContaining({
 					CONVERSATION: expect.stringContaining("User Context (Issue Body):"),
 				}),
+				skills: ["to-spec"],
 			}),
 		);
 	});

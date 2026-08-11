@@ -229,7 +229,7 @@ async function chainToReview(
  * The failure class read straight off the error's own type — never
  * re-derived by matching substrings of its message. A `RunAgentError` already
  * carries `run-agent.ts`'s classification (`quota`, `turn-limit`,
- * `bad-output`, `skill-miss`, `timeout` — spec §5.3's table); a `StageError` carries this
+ * `bad-output`, `timeout` — spec §5.3's table); a `StageError` carries this
  * module's own post-hoc measured classification (`no-commits`,
  * `validate-failed`, `push-race`), assigned at the exact throw site that
  * measured it. Anything else is a plain rejection with no known shape.
@@ -297,7 +297,6 @@ export async function runImplementation(
 			const branchHeadSha = await createBranchFromMain(exec, branchName);
 
 			const result = await runner({
-				expectSkill: "implement",
 				output: OUTPUTS.implement,
 				promptArgs: {
 					BRANCH_NAME: branchName,
@@ -305,6 +304,7 @@ export async function runImplementation(
 					TICKET: conversation,
 				},
 				promptFile: IMPLEMENT_PROMPT_FILE,
+				skills: ["implement", "tdd"],
 			});
 
 			const commitCount = await countCommits(exec, branchHeadSha);

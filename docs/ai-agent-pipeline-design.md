@@ -1215,11 +1215,10 @@ Phases 1–3 are where nearly all the value is. Phase 6 is optional — `/grill-
 3. **Claude cost on `implement`.** One `/implement` run is documented at 100k+ tokens on
    Opus, plus a fix round. Right-size tickets rather than raising effort, and set
    `timeout-minutes`. This is the stage worth paying for; everything else routes to Gemini.
-4. **Skill-activation drift on Gemini.** Gemini ignores `disable-model-invocation` and
-   activates by description match, so a prompt that doesn't name its skill may fire the
-   wrong one — or none. Name the skill explicitly in every prompt, and assert in the
-   runner that the expected `activate_skill` call appears in the stream before trusting
-   the output.
+4. **Skill-delivery drift in non-interactive runs.** Skills marked
+   `disable-model-invocation` must be supplied by the workflow. Inject each stage's fixed
+   vendored skill text before its stage contract; do not treat a model-emitted activation
+   event as proof that the instructions were applied.
 5. **`pull_request_target`** carries the fork-security caveat in §3.7.
 6. **Plugin drift.** The skills are actively developed (`to-prd` → `to-spec` in v1.1).
    Vendoring into `.agents/skills/` at a pinned SHA makes upgrades a deliberate,

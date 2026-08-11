@@ -197,10 +197,10 @@ nine prompt files, a vendored skill set, and the repo configuration the skills r
 - **Local parity:** symlink `.claude/skills` → `.agents/skills` so interactive Claude Code
   sessions use the same copy. **Verify this resolves on the installed Claude Code version
   before relying on it**; if it does not, copy instead and add a CI drift check.
-- **Every prompt must name its skill explicitly.** Gemini ignores
-  `disable-model-invocation` and activates skills by description match, so an unnamed
-  skill may not fire, or the wrong one may. The runner asserts the expected
-  `activate_skill` call appeared in the stream before trusting a result.
+- **The workflow injects each stage's required skill instructions.** Non-interactive
+  Codex cannot invoke skills marked `disable-model-invocation`, so the runner reads the
+  selected vendored `SKILL.md` files itself and prepends them before the stage contract.
+  The stage contract takes precedence where those generic instructions conflict.
 
 ### 5.3 The runner module — `scripts/agents/run-agent.ts`
 
@@ -213,7 +213,7 @@ export interface RunAgentOptions<T> {
   promptFile: string;
   promptArgs: Record<string, string>;
   completionSignal?: string;          // default "<promise>COMPLETE</promise>"
-  expectSkill?: string;               // assert this skill activated
+  skills?: readonly AgentSkill[];     // trusted vendored instructions injected by the runner
   output: OutputSpec<T>;              // REQUIRED — see §5.4
   spawn?: SpawnFn;                    // injected for tests; defaults to node:child_process
 }
@@ -232,7 +232,7 @@ on it.
 
 Responsibilities, in order:
 
-1. Read `promptFile`, substitute `{{KEY}}` from `promptArgs`. **An unmatched `{{KEY}}` is
+1. Read the selected vendored skill instructions and `promptFile`, then substitute `{{KEY}}` from `promptArgs`. **An unmatched `{{KEY}}` is
    an error; an unused argument is a warning.** Argument *values* are inert — never
    re-scanned for placeholders or shell expressions, so issue text is safe to pass
    through.
@@ -257,7 +257,6 @@ Responsibilities, in order:
 | Exit `53` | `turn-limit` | `agent:blocked` + "ticket too large, split it" |
 | Exit `42` | `bad-input` | fail loudly — a prompt bug |
 | Schema invalid after retries | `bad-output` | `agent:blocked` + the validation error |
-| Expected skill never activated | `skill-miss` | `agent:blocked` + which skill was expected |
 | Process or total run deadline exhausted | `timeout` | `agent:blocked` + the timeout artifact |
 
 8. Append a usage line to `$OUTPUT_DIR/usage.jsonl` on every run.
@@ -626,7 +625,7 @@ Tracer-bullet vertical slices, each demoable on its own.
 | **1** | **Repo foundation for agent skills** | — | `/setup-matt-pocock-skills` output committed; skills vendored to `.agents/skills/` at a pinned SHA; `CONTEXT.md`; `CODING_STANDARDS.md`; ADRs relocated; all `{role}:{status}` labels created; `GEMINI_API_KEY` + `AGENT_PAT` set. **Demo:** `gemini skills list` in the repo shows the vendored skills. |
 | **2** | **Tear down the dead agents** | — | Delete `agent-developer.{ts,spec.ts}`, `agent-reviewer.{ts,spec.ts}`, their two workflows, `agent-developer.md`, `agent-reviewer.md`. Justified by F1/F2 — they provably do not do their documented job. Planner and itemizer keep running. **Demo:** CI green, no behaviour lost. |
 | **3** | **Tracer bullet: runner skeleton + dispatch** | 1 | `run-agent.ts` (text only, injected `spawn`, JSONL parsing), `github.ts` moved from `agent-shared.ts`, `models.ts`, and `agent-dispatch.yml` handling one command end to end. **Demo:** comment `/ping` on an issue → Gemini responds in a comment. Proves auth, skills, labels, posting, and the seam. |
-| **4** | **Complete the runner** | 3 | `{{KEY}}` substitution, `{{OUTPUT_SCHEMA}}` injection, completion signal, `<tag>` extraction, Zod validation with retry-by-resume, `expectSkill` assertion, failure classification, `failure_reason.txt`, `usage.jsonl`. Coverage + `onConsoleLog` config changes from §6. **Demo:** a fixture-driven suite covering every row of the §5.3 table. |
+| **4** | **Complete the runner** | 3 | `{{KEY}}` substitution, vendored skill injection, `{{OUTPUT_SCHEMA}}` injection, completion signal, `<tag>` extraction, Zod validation with retry-by-resume, failure classification, `failure_reason.txt`, `usage.jsonl`. Coverage + `onConsoleLog` config changes from §6. **Demo:** a fixture-driven suite covering every row of the §5.3 table. |
 | **5** | **Schema registry** | 3 | `schemas.ts` with the `OUTPUTS` registry, every stage schema, the `.superRefine` semantic checks, derived `Stage`/`OutputOf` types, `as const` label and enum sources, and the registry-completeness test. Convert `models.ts` to be keyed by `Stage`. **Demo:** deleting a `models.ts` entry, or a prompt file, fails `bun run check:types` or a unit test — not a workflow run. |
 | **6** | **Grill loop** | 4, 5 | `agent-grill.yml` + `grill.ts` + `grill.md`. Label → questions → `needs-info`; human comment → next round; frontier empty → `spec:needed`. **Demo:** label an issue, answer, get round 2, watch it hand off. |
 | **7** | **Spec publication** | 6 | `agent-spec.yml` + `spec.ts` + `spec.md`. Publishes to the issue body preserving the original proposal, posts seams as a comment, applies `spec:ready` + `ready-for-agent`, chains `tickets:needed`. **Demo:** a grilled issue becomes a spec unattended. |
@@ -653,9 +652,9 @@ Tickets 1 and 2 are independent and can start immediately.
    `cli: "claude"` (one field).
 3. **`pull_request_target`** runs with secrets against a PR head. Safe on a private repo;
    if Watchpoint is public, gate on `authorAssociation`.
-4. **Skill-activation drift.** Gemini activates by description match. Mitigated by naming
-   skills explicitly and the `expectSkill` assertion — treat any `skill-miss` as a prompt
-   bug, not a flake.
+4. **Skill-delivery drift.** The runner injects the fixed, vendored skill list for each
+   stage and tests that mapping, so a non-interactive model never has to discover or
+   activate a skill itself.
 5. **Concurrency.** `agent-review` and `agent-implement-pr` must share one `concurrency`
    group per PR or the review and fix rounds will race the branch.
 6. **Plugin drift.** Vendoring at a pinned SHA makes upgrades a reviewable commit rather
