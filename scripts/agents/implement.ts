@@ -257,12 +257,10 @@ function writeImplementFailure(error: unknown): void {
  * `main`, run the `implement` skill, measure commits and validation, push,
  * open a draft PR, and chain to review.
  *
- * Division of labour, non-negotiable: the agent (`runner`) only writes code
- * and commits. Every git and GitHub mutation below is this function's own
- * responsibility, never the model's (the prompt carries the standing
- * prohibition verbatim) — which is what makes a failure at any step
- * debuggable from the workflow's own log rather than from the model's
- * transcript.
+ * Division of labour, non-negotiable: the agent (`runner`) creates or verifies
+ * its dedicated branch, writes code, commits GREEN checkpoints, and pushes each
+ * checkpoint. This function still owns the pre-run branch setup, post-run
+ * commit/validation checks, final push backstop, PR creation, and labels.
  *
  * The shape guards run *before* `runStage` — a refusal never enters
  * `agent:in-progress` at all, so `runStage`'s own `agent:blocked`-on-failure

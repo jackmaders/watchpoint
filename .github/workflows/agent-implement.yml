@@ -59,9 +59,10 @@ jobs:
         run: bun add -g @openai/codex
 
       - name: 🔧 Configure git identity
-        # The agent commits on its own branch (scripts/agents/prompts/implement.md);
-        # a workflow-run commit needs a configured identity or `git commit`
-        # itself fails before implement.ts ever gets to measure anything.
+        # The agent commits and pushes GREEN checkpoints on its own branch
+        # (scripts/agents/prompts/implement.md); a workflow-run commit needs
+        # a configured identity or `git commit` fails before implement.ts can
+        # measure anything.
         run: |
           git config --global user.name "watchpoint-agent[bot]"
           git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"

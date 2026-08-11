@@ -430,10 +430,12 @@ One file per stage: `grill.md`, `spec.md`, `tickets.md`, `implement.md`,
 - names its skill explicitly;
 - points at `CONTEXT.md`, `docs/adr/`, `CODING_STANDARDS.md`;
 - states the completion signal;
-- and carries the standing prohibition, verbatim from Sandcastle's own prompts:
-  **"Do not push. Do not close the issue. Do not edit labels. Do not create or edit PRs."**
+- and carries the standing prohibition for issue/PR side effects:
+  **"Do not close the issue. Do not edit labels. Do not create or edit PRs."**
 
-The agent writes code and text. The workflow performs every GitHub mutation.
+The implement agent writes code, creates or verifies its dedicated branch, commits GREEN
+checkpoints, and pushes immediately after each commit. The workflow performs every issue,
+label, and PR mutation.
 
 ### 5.6 Labels
 

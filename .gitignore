@@ -49,4 +49,6 @@ next-env.d.ts
 .claude/settings.local.json
 .claude/worktrees/
 
-
+# AI SDLC local-only state
+.tmp-agent-output/
+.agent
