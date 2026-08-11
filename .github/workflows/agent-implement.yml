@@ -1,0 +1,97 @@
+name: Agent Implement
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: agent-mutate-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: 🧑‍💻 Implement ticket
+    # `issues: [labeled]` never fires for a pull request — GitHub delivers a
+    # separate `pull_request: [labeled]` event for those, which is what
+    # agent-implement-pr.yml (ticket #11) triggers on instead — so no extra
+    # guard is needed here beyond the label name itself.
+    if: github.event.label.name == 'dev:needed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+        with:
+          # implement.ts creates its branch from `origin/main` itself
+          # (scripts/agents/git.ts's `createBranchFromMain`) and needs the
+          # full history to compute `git rev-list --count` against it.
+          fetch-depth: 0
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🌐 Install Gemini CLI
+        run: bun add -g @google/gemini-cli
+
+      - name: 🔧 Configure git identity
+        # The agent commits on its own branch (scripts/agents/prompts/implement.md);
+        # a workflow-run commit needs a configured identity or `git commit`
+        # itself fails before implement.ts ever gets to measure anything.
+        run: |
+          git config --global user.name "watchpoint-agent[bot]"
+          git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"
+
+      - name: 🧑‍💻 Implement ticket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
+          # and then label it review:needed — both mutations need it, for two
+          # different reasons. Opened with the default GITHUB_TOKEN above, a
+          # PR still triggers PR Quality Checks, but leaves the run sitting in
+          # an approval-required state a maintainer has to click through,
+          # rather than starting automatically (GitHub's own docs on
+          # GITHUB_TOKEN and workflow triggers). A label applied with the
+          # default token, separately, cannot fire agent-review.yml at all
+          # (spec §5.8). implement.ts itself falls back to a comment — and a
+          # notice in the PR body — when this secret isn't configured.
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          # See agent-dispatch.yml — untrusted-by-default CI runners would
+          # otherwise skip .agents/skills/ and fall back to global-only skills.
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTPUT_DIR: ${{ runner.temp }}
+        run: bun scripts/agents/implement.ts
+
+      # implement.ts handles its own agent:blocked labeling and error comment
+      # on a classified failure (matching grill.ts's pattern) and always
+      # removes agent:in-progress itself in a `finally`. This step is only a
+      # backstop for the run's Bun process dying outright — OOM, a runner
+      # timeout — before that cleanup code ever gets to run.
+      - name: 🧹 Remove agent:in-progress (backstop)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "agent:in-progress" || true

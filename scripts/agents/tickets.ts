@@ -1,13 +1,13 @@
 import { join } from "node:path";
-import * as github from "@actions/github";
 import { runIfMain } from "./entrypoint";
 import {
 	fetchIssueContext,
 	type IssueContext,
 	isBotComment,
+	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	postIssueErrorComment,
+	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import { MODELS } from "./models";
@@ -21,6 +21,7 @@ import {
 	type TicketBreakdown,
 	TicketBreakdownSchema,
 } from "./schemas";
+import { runStage } from "./stage";
 import { type WiredTicket, wireTickets } from "./wiring";
 
 const TICKETS_PROMPT_FILE = join(import.meta.dirname, "prompts", "tickets.md");
@@ -29,9 +30,6 @@ const TICKETS_PAYLOAD_PATTERN = /<!-- tickets-payload: ([\s\S]*?) -->/;
 declare global {
 	namespace NodeJS {
 		interface ProcessEnv {
-			GITHUB_TOKEN: string;
-			ISSUE_NUMBER: string;
-			AGENT_PAT?: string;
 			/** Set only when this run was triggered by an issue comment, not the `tickets:needed` label. */
 			COMMENT_BODY?: string;
 		}
@@ -154,8 +152,8 @@ async function labelFrontierAsDevNeeded(
 	wired: readonly WiredTicket[],
 ): Promise<void> {
 	const frontier = wired.filter((ticket) => ticket.isFrontier);
-	const pat = process.env.AGENT_PAT;
-	if (!pat) {
+	const patOctokit = resolvePatOctokit();
+	if (!patOctokit) {
 		await postBotComment(
 			ctx,
 			`🚦 Tickets are wired, but \`AGENT_PAT\` isn't configured, so I can't label the frontier automatically. Please add \`${LABELS.devNeeded}\` yourself to: ${frontier.map((ticket) => `#${ticket.number}`).join(", ")}.`,
@@ -163,7 +161,7 @@ async function labelFrontierAsDevNeeded(
 		return;
 	}
 
-	const patCtx: IssueContext = { ...ctx, octokit: github.getOctokit(pat) };
+	const patCtx: IssueContext = { ...ctx, octokit: patOctokit };
 	for (const ticket of frontier) {
 		await patCtx.octokit.rest.issues.addLabels({
 			issue_number: ticket.number,
@@ -186,34 +184,26 @@ export async function runTicketsProposal(
 ): Promise<void> {
 	const { conversation, issue } = await fetchIssueContext(ctx);
 
-	let labels = await transitionState(ctx, issue.labels, {
-		add: [LABELS.agentInProgress],
-		remove: [LABELS.ticketsNeeded, LABELS.agentBlocked],
-	});
+	await runStage(
+		ctx,
+		issue.labels,
+		{ removeOnEntry: [LABELS.ticketsNeeded], stageName: "Tickets" },
+		async (labels) => {
+			const result = await runner({
+				expectSkill: "to-tickets",
+				model: MODELS.tickets,
+				output: OUTPUTS.tickets,
+				promptArgs: { CONVERSATION: conversation },
+				promptFile: TICKETS_PROMPT_FILE,
+			});
 
-	try {
-		const result = await runner({
-			expectSkill: "to-tickets",
-			model: MODELS.tickets,
-			output: OUTPUTS.tickets,
-			promptArgs: { CONVERSATION: conversation },
-			promptFile: TICKETS_PROMPT_FILE,
-		});
+			await postBotComment(ctx, buildProposalComment(result.output));
 
-		await postBotComment(ctx, buildProposalComment(result.output));
-
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.ticketsProposed],
-		});
-	} catch (error) {
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.agentBlocked],
-		});
-		await postIssueErrorComment(ctx, "Tickets", error);
-		throw error;
-	} finally {
-		await transitionState(ctx, labels, { remove: [LABELS.agentInProgress] });
-	}
+			return transitionState(ctx, labels, {
+				add: [LABELS.ticketsProposed],
+			});
+		},
+	);
 }
 
 /**
@@ -226,58 +216,44 @@ export async function runTicketsProposal(
 export async function runTicketsWiring(ctx: IssueContext): Promise<void> {
 	const { comments, issue } = await fetchIssueContext(ctx);
 
-	// No `ticketsNeeded` in this removal list, unlike `runTicketsProposal`'s:
-	// this path only ever runs from a comment while `tickets:proposed` is
-	// already present, by which point the proposal phase has already removed
-	// `tickets:needed` — including it here would be a no-op that reads as
-	// live cleanup when it never fires.
-	let labels = await transitionState(ctx, issue.labels, {
-		add: [LABELS.agentInProgress],
-		remove: [LABELS.agentBlocked],
-	});
+	await runStage(
+		ctx,
+		issue.labels,
+		// No `removeOnEntry`, unlike `runTicketsProposal`'s: this path only ever
+		// runs from a comment while `tickets:proposed` is already present, by
+		// which point the proposal phase has already removed `tickets:needed` —
+		// removing it again here would be a no-op that reads as live cleanup
+		// when it never fires.
+		{ stageName: "Tickets" },
+		async (labels) => {
+			const breakdown = findLatestTicketsPayload(comments);
+			if (!breakdown) {
+				throw new Error(
+					"No valid ticket breakdown found in this issue's comments — re-add tickets:needed to get a fresh proposal.",
+				);
+			}
 
-	try {
-		const breakdown = findLatestTicketsPayload(comments);
-		if (!breakdown) {
-			throw new Error(
-				"No valid ticket breakdown found in this issue's comments — re-add tickets:needed to get a fresh proposal.",
+			const wired = await wireTickets(
+				ctx,
+				{ number: issue.number, title: issue.title },
+				breakdown,
 			);
-		}
 
-		const wired = await wireTickets(
-			ctx,
-			{ number: issue.number, title: issue.title },
-			breakdown,
-		);
+			await postBotComment(ctx, buildWiredComment(wired));
 
-		await postBotComment(ctx, buildWiredComment(wired));
+			const wiredLabels = await transitionState(ctx, labels, {
+				add: [LABELS.ticketsWired],
+				remove: [LABELS.ticketsProposed, LABELS.readyForAgent],
+			});
 
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.ticketsWired],
-			remove: [LABELS.ticketsProposed, LABELS.readyForAgent],
-		});
-
-		await labelFrontierAsDevNeeded(ctx, wired);
-	} catch (error) {
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.agentBlocked],
-		});
-		await postIssueErrorComment(ctx, "Tickets", error);
-		throw error;
-	} finally {
-		await transitionState(ctx, labels, { remove: [LABELS.agentInProgress] });
-	}
+			await labelFrontierAsDevNeeded(ctx, wired);
+			return wiredLabels;
+		},
+	);
 }
 
 export async function run(): Promise<void> {
-	const issueNumber = parseInt(process.env.ISSUE_NUMBER ?? "0", 10);
-	const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-	const ctx: IssueContext = {
-		issueNumber,
-		octokit,
-		owner: github.context.repo.owner,
-		repo: github.context.repo.repo,
-	};
+	const ctx = issueContextFromEnv();
 
 	// Empty, not just unset: agent-tickets.yml's `env:` block always sets
 	// COMMENT_BODY to *something*, even on the label-triggered run — GitHub

@@ -7,11 +7,13 @@ import {
 	formatGeminiError,
 	hasStatus,
 	isBotComment,
+	issueContextFromEnv,
 	LABELS,
 	LabelSchema,
 	postBotComment,
 	postIssueErrorComment,
 	removeLabelIfPresent,
+	resolvePatOctokit,
 	resolveRunUrl,
 	transitionState,
 } from "../github";
@@ -93,6 +95,72 @@ describe("github helpers", () => {
 		});
 	});
 
+	describe("issueContextFromEnv", () => {
+		const originalEnv = { ...process.env };
+
+		afterEach(() => {
+			process.env = { ...originalEnv };
+		});
+
+		it("builds an IssueContext from ISSUE_NUMBER, GITHUB_TOKEN, and github.context.repo", () => {
+			// Arrange
+			process.env.GITHUB_TOKEN = "fake-token";
+			process.env.ISSUE_NUMBER = "57";
+
+			// Act
+			const ctx = issueContextFromEnv();
+
+			// Assert
+			expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
+			expect(ctx.issueNumber).toBe(57);
+			expect(ctx.owner).toBe(github.context.repo.owner);
+			expect(ctx.repo).toBe(github.context.repo.repo);
+		});
+
+		it("defaults the issue number to 0 rather than throwing when ISSUE_NUMBER is unset", () => {
+			// Arrange
+			process.env.GITHUB_TOKEN = "fake-token";
+			Reflect.deleteProperty(process.env, "ISSUE_NUMBER");
+
+			// Act
+			const ctx = issueContextFromEnv();
+
+			// Assert
+			expect(ctx.issueNumber).toBe(0);
+		});
+	});
+
+	describe("resolvePatOctokit", () => {
+		const originalEnv = { ...process.env };
+
+		afterEach(() => {
+			process.env = { ...originalEnv };
+		});
+
+		it("returns an AGENT_PAT-authenticated client when the secret is configured", () => {
+			// Arrange
+			process.env.AGENT_PAT = "pat-token";
+
+			// Act
+			const client = resolvePatOctokit();
+
+			// Assert
+			expect(github.getOctokit).toHaveBeenCalledWith("pat-token");
+			expect(client).not.toBeNull();
+		});
+
+		it("returns null when AGENT_PAT isn't configured, rather than authenticating with an empty token", () => {
+			// Arrange
+			Reflect.deleteProperty(process.env, "AGENT_PAT");
+
+			// Act
+			const client = resolvePatOctokit();
+
+			// Assert
+			expect(client).toBeNull();
+		});
+	});
+
 	describe("LABELS", () => {
 		it("holds the new pipeline's real, {role}:{status}-namespaced label strings", () => {
 			// Arrange
@@ -105,6 +173,7 @@ describe("github helpers", () => {
 				grillNeeded: "grill:needed",
 				needsInfo: "needs-info",
 				readyForAgent: "ready-for-agent",
+				reviewNeeded: "review:needed",
 				specNeeded: "spec:needed",
 				specReady: "spec:ready",
 				ticketsNeeded: "tickets:needed",

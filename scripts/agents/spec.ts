@@ -1,13 +1,13 @@
 import { join } from "node:path";
-import * as github from "@actions/github";
 import { runIfMain } from "./entrypoint";
 import {
 	extractLabelNames,
 	fetchIssueContext,
 	type IssueContext,
+	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	postIssueErrorComment,
+	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import { MODELS } from "./models";
@@ -17,21 +17,12 @@ import {
 	runAgent,
 } from "./run-agent";
 import { OUTPUTS, type Seam, type Spec } from "./schemas";
+import { runStage } from "./stage";
 
 const SPEC_PROMPT_FILE = join(import.meta.dirname, "prompts", "spec.md");
 
 const ORIGINAL_PROPOSAL_DETAILS_PATTERN =
 	/<details>\s*<summary>📜 Original Issue Proposal<\/summary>\s*([\s\S]*?)\s*<\/details>/i;
-
-declare global {
-	namespace NodeJS {
-		interface ProcessEnv {
-			GITHUB_TOKEN: string;
-			ISSUE_NUMBER: string;
-			AGENT_PAT?: string;
-		}
-	}
-}
 
 /** Spec's product is `SpecSchema`, so it runs the object form of `runAgent`. */
 type SpecRunner = (
@@ -115,8 +106,8 @@ async function chainToTickets(
 	ctx: IssueContext,
 	currentLabels: IssueLabels,
 ): Promise<string[]> {
-	const pat = process.env.AGENT_PAT;
-	if (!pat) {
+	const patOctokit = resolvePatOctokit();
+	if (!patOctokit) {
 		await postBotComment(
 			ctx,
 			`🚦 The spec is published, but \`AGENT_PAT\` isn't configured, so I can't chain to the ticket-breakdown stage automatically. Please add the \`${LABELS.ticketsNeeded}\` label yourself to continue.`,
@@ -124,7 +115,7 @@ async function chainToTickets(
 		return extractLabelNames(currentLabels);
 	}
 
-	const chainCtx: IssueContext = { ...ctx, octokit: github.getOctokit(pat) };
+	const chainCtx: IssueContext = { ...ctx, octokit: patOctokit };
 	return transitionState(chainCtx, currentLabels, {
 		add: [LABELS.ticketsNeeded],
 	});
@@ -135,11 +126,6 @@ async function chainToTickets(
  * design doc §3.6 Stage 3): run the `to-spec` skill, write the spec to the
  * issue body with the original proposal preserved, post the seams as their
  * own comment, mark the issue ready, and chain to `tickets`.
- *
- * As in `grill.ts`, every `transitionState` call threads the *previous*
- * call's returned label names into the next one rather than re-diffing
- * against the initial, now-stale snapshot (CODING_STANDARDS.md, "Call-site
- * signature tracing").
  */
 export async function runSpecPublication(
 	ctx: IssueContext,
@@ -148,55 +134,38 @@ export async function runSpecPublication(
 	const { conversation, issue } = await fetchIssueContext(ctx);
 	const originalBody = issue.body ?? "";
 
-	let labels = await transitionState(ctx, issue.labels, {
-		add: [LABELS.agentInProgress],
-		remove: [LABELS.specNeeded, LABELS.agentBlocked],
-	});
+	await runStage(
+		ctx,
+		issue.labels,
+		{ removeOnEntry: [LABELS.specNeeded], stageName: "Spec" },
+		async (labels) => {
+			const result = await runner({
+				expectSkill: "to-spec",
+				model: MODELS.spec,
+				output: OUTPUTS.spec,
+				promptArgs: { CONVERSATION: conversation },
+				promptFile: SPEC_PROMPT_FILE,
+			});
 
-	try {
-		const result = await runner({
-			expectSkill: "to-spec",
-			model: MODELS.spec,
-			output: OUTPUTS.spec,
-			promptArgs: { CONVERSATION: conversation },
-			promptFile: SPEC_PROMPT_FILE,
-		});
+			await ctx.octokit.rest.issues.update({
+				body: buildSpecBody(result.output, originalBody),
+				issue_number: ctx.issueNumber,
+				owner: ctx.owner,
+				repo: ctx.repo,
+			});
 
-		await ctx.octokit.rest.issues.update({
-			body: buildSpecBody(result.output, originalBody),
-			issue_number: ctx.issueNumber,
-			owner: ctx.owner,
-			repo: ctx.repo,
-		});
+			await postBotComment(ctx, buildSeamsComment(result.output.seams));
 
-		await postBotComment(ctx, buildSeamsComment(result.output.seams));
-
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.specReady, LABELS.readyForAgent],
-		});
-		labels = await chainToTickets(ctx, labels);
-	} catch (error) {
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.agentBlocked],
-		});
-		await postIssueErrorComment(ctx, "Spec", error);
-		throw error;
-	} finally {
-		await transitionState(ctx, labels, { remove: [LABELS.agentInProgress] });
-	}
+			const readyLabels = await transitionState(ctx, labels, {
+				add: [LABELS.specReady, LABELS.readyForAgent],
+			});
+			return chainToTickets(ctx, readyLabels);
+		},
+	);
 }
 
 export async function run(): Promise<void> {
-	const issueNumber = parseInt(process.env.ISSUE_NUMBER ?? "0", 10);
-	const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-	const ctx: IssueContext = {
-		issueNumber,
-		octokit,
-		owner: github.context.repo.owner,
-		repo: github.context.repo.repo,
-	};
-
-	await runSpecPublication(ctx);
+	await runSpecPublication(issueContextFromEnv());
 }
 
 runIfMain(import.meta.main, run);

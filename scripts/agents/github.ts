@@ -1,4 +1,4 @@
-import type * as github from "@actions/github";
+import * as github from "@actions/github";
 import { z } from "zod";
 import { logger } from "./logger";
 
@@ -29,6 +29,7 @@ export const LABELS = {
 	grillNeeded: "grill:needed",
 	needsInfo: "needs-info",
 	readyForAgent: "ready-for-agent",
+	reviewNeeded: "review:needed",
 	specNeeded: "spec:needed",
 	specReady: "spec:ready",
 	ticketsNeeded: "tickets:needed",
@@ -54,6 +55,16 @@ export function isBotComment(commentBody: string): boolean {
 	return commentBody.includes(BOT_COMMENT_MARKER);
 }
 
+declare global {
+	namespace NodeJS {
+		interface ProcessEnv {
+			GITHUB_TOKEN: string;
+			ISSUE_NUMBER: string;
+			AGENT_PAT?: string;
+		}
+	}
+}
+
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
 export interface IssueContext {
@@ -61,6 +72,36 @@ export interface IssueContext {
 	issueNumber: number;
 	owner: string;
 	repo: string;
+}
+
+/**
+ * The `IssueContext` every stage's `run()` builds from the workflow's own
+ * environment — `ISSUE_NUMBER`, `GITHUB_TOKEN`, and `github.context.repo`,
+ * identically, in every stage script. Centralised so a stage's `run()` is one
+ * line rather than a sixth copy of this wiring.
+ */
+export function issueContextFromEnv(): IssueContext {
+	return {
+		issueNumber: parseInt(process.env.ISSUE_NUMBER ?? "0", 10),
+		octokit: github.getOctokit(process.env.GITHUB_TOKEN),
+		owner: github.context.repo.owner,
+		repo: github.context.repo.repo,
+	};
+}
+
+/**
+ * An `AGENT_PAT`-authenticated client for the mutations that must fire a
+ * label- or PR-triggered workflow (spec §5.8): a label applied, or a pull
+ * request opened, with the default `GITHUB_TOKEN` either fires no workflow
+ * run at all, or — for `pull_request: opened` specifically — fires one stuck
+ * in an approval-required state a maintainer has to click through, per
+ * GitHub's own docs on `GITHUB_TOKEN` and workflow triggers. Returns `null`
+ * when the secret isn't configured, so every call site can fall back to a
+ * comment instead of guessing at a broken client.
+ */
+export function resolvePatOctokit(): OctokitClient | null {
+	const pat = process.env.AGENT_PAT;
+	return pat ? github.getOctokit(pat) : null;
 }
 
 export function extractLabelNames(
