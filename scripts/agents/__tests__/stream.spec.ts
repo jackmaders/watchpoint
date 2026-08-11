@@ -494,30 +494,20 @@ describe("Codex process execution", () => {
 		}
 	});
 
-	it("builds Codex commands with the model_provider setting and resume subcommand", () => {
+	it("builds Codex commands for the supported OpenAI execution path", () => {
 		// Arrange
 		// Act
 		const freshArgs = buildCodexArgs(modelConfig);
 		const resumedArgs = buildCodexArgs(modelConfig, "thread_1");
 
 		// Assert
-		expect(freshArgs).toEqual([
-			"exec",
-			"--json",
-			"-m",
-			"gpt-5.6-luna",
-			"-c",
-			'model_provider="openai"',
-			"-",
-		]);
+		expect(freshArgs).toEqual(["exec", "--json", "-m", "gpt-5.6-luna", "-"]);
 		expect(resumedArgs).toEqual([
 			"exec",
 			"resume",
 			"--json",
 			"-m",
 			"gpt-5.6-luna",
-			"-c",
-			'model_provider="openai"',
 			"thread_1",
 			"-",
 		]);
@@ -552,8 +542,6 @@ describe("Codex process execution", () => {
 			"--json",
 			"-m",
 			"gpt-5.6-luna",
-			"-c",
-			'model_provider="openai"',
 			"-",
 		]);
 		expect(write).toHaveBeenCalledWith("prompt\n");

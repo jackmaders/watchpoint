@@ -55,15 +55,15 @@ describe("model and provider resolution", () => {
 	it("falls back to MODEL and PROVIDER when AGENT aliases are absent", () => {
 		// Arrange
 		vi.stubEnv("AGENT_MODEL", "");
-		vi.stubEnv("MODEL", "claude-sonnet-5");
+		vi.stubEnv("MODEL", "gpt-5.4");
 		vi.stubEnv("AGENT_PROVIDER", "");
-		vi.stubEnv("PROVIDER", "anthropic");
+		vi.stubEnv("PROVIDER", "openai");
 
 		// Act
 		const config = resolveModelConfig();
 
 		// Assert
-		expect(config).toEqual({ model: "claude-sonnet-5", provider: "anthropic" });
+		expect(config).toEqual({ model: "gpt-5.4", provider: "openai" });
 	});
 
 	it("rejects an unknown provider with the invalid value in the error", () => {
@@ -77,6 +77,17 @@ describe("model and provider resolution", () => {
 		expect(act).toThrow(/Invalid provider.*mistral/);
 	});
 
+	it("rejects a provider the Codex CLI cannot execute", () => {
+		// Arrange
+		vi.stubEnv("AGENT_PROVIDER", "google");
+
+		// Act
+		const act = () => resolveModelConfig();
+
+		// Assert
+		expect(act).toThrow(/Invalid provider.*google/);
+	});
+
 	it("rejects an unknown model with the invalid value in the error", () => {
 		// Arrange
 		vi.stubEnv("AGENT_MODEL", "gpt-unknown");
@@ -88,7 +99,7 @@ describe("model and provider resolution", () => {
 		expect(act).toThrow(/Invalid model.*gpt-unknown/);
 	});
 
-	it("rejects a model that is registered for a different provider", () => {
+	it("rejects a model outside the installed Codex CLI contract", () => {
 		// Arrange
 		vi.stubEnv("AGENT_MODEL", "claude-sonnet-5");
 		vi.stubEnv("AGENT_PROVIDER", "openai");
@@ -97,7 +108,7 @@ describe("model and provider resolution", () => {
 		const act = () => resolveModelConfig();
 
 		// Assert
-		expect(act).toThrow(/model.*claude-sonnet-5.*provider.*openai/i);
+		expect(act).toThrow(/Invalid model.*claude-sonnet-5/i);
 	});
 
 	it("exposes typed registries for every supported provider", () => {
@@ -106,7 +117,7 @@ describe("model and provider resolution", () => {
 		const providers = [...PROVIDERS];
 
 		// Assert
-		expect(providers).toEqual(["anthropic", "google", "openai", "oss"]);
+		expect(providers).toEqual(["openai"]);
 		expect(Object.keys(ALLOWED_MODELS)).toEqual(providers);
 	});
 
@@ -120,7 +131,7 @@ describe("model and provider resolution", () => {
 			model: "unknown",
 			provider: "openai",
 		} as unknown as ModelConfig;
-		const mismatchedModel = {
+		const unsupportedModel = {
 			model: "claude-sonnet-5",
 			provider: "openai",
 		} as unknown as ModelConfig;
@@ -128,14 +139,12 @@ describe("model and provider resolution", () => {
 		// Act
 		const invalidProviderAct = () => validateModelConfig(invalidProvider);
 		const invalidModelAct = () => validateModelConfig(invalidModel);
-		const mismatchedModelAct = () => validateModelConfig(mismatchedModel);
+		const unsupportedModelAct = () => validateModelConfig(unsupportedModel);
 
 		// Assert
 		expect(invalidProviderAct).toThrow(/Invalid provider.*mistral/);
 		expect(invalidModelAct).toThrow(/Invalid model.*unknown/);
-		expect(mismatchedModelAct).toThrow(
-			/model.*claude-sonnet-5.*provider.*openai/i,
-		);
+		expect(unsupportedModelAct).toThrow(/Invalid model.*claude-sonnet-5/i);
 	});
 });
 
@@ -144,19 +153,17 @@ describe("provider API key resolution", () => {
 		vi.unstubAllEnvs();
 	});
 
-	it.each([
-		["openai", "OPENAI_API_KEY"],
-		["anthropic", "ANTHROPIC_API_KEY"],
-		["google", "GEMINI_API_KEY"],
-		["oss", "OPENAI_API_KEY"],
-	] as const)("maps %s to %s", (provider, envName) => {
-		// Arrange
-		// Act
-		const key = API_KEY_ENV_VARS[provider];
+	it.each([["openai", "OPENAI_API_KEY"]] as const)(
+		"maps %s to %s",
+		(provider, envName) => {
+			// Arrange
+			// Act
+			const key = API_KEY_ENV_VARS[provider];
 
-		// Assert
-		expect(key).toBe(envName);
-	});
+			// Assert
+			expect(key).toBe(envName);
+		},
+	);
 
 	it("prefers the provider key over global fallbacks", () => {
 		// Arrange
@@ -173,11 +180,12 @@ describe("provider API key resolution", () => {
 
 	it("uses AGENT_API_KEY before LLM_API_KEY as global fallbacks", () => {
 		// Arrange
+		vi.stubEnv("OPENAI_API_KEY", "");
 		vi.stubEnv("AGENT_API_KEY", "agent-key");
 		vi.stubEnv("LLM_API_KEY", "llm-key");
 
 		// Act
-		const key = getApiKey("anthropic");
+		const key = getApiKey("openai");
 
 		// Assert
 		expect(key).toBe("agent-key");
@@ -196,14 +204,14 @@ describe("provider API key resolution", () => {
 
 		// Act
 		const scoped = createProviderEnvironment(
-			"anthropic",
+			"openai",
 			"selected-key",
 			environment,
 		);
 
 		// Assert
 		expect(scoped).toEqual({
-			ANTHROPIC_API_KEY: "selected-key",
+			OPENAI_API_KEY: "selected-key",
 			PATH: "/usr/bin",
 		});
 	});
@@ -211,7 +219,10 @@ describe("provider API key resolution", () => {
 	it("returns undefined when no provider or global key is configured", () => {
 		// Arrange
 		// Act
-		const key = resolveApiKey("google");
+		vi.stubEnv("OPENAI_API_KEY", "");
+		vi.stubEnv("AGENT_API_KEY", "");
+		vi.stubEnv("LLM_API_KEY", "");
+		const key = resolveApiKey("openai");
 
 		// Assert
 		expect(key).toBeUndefined();

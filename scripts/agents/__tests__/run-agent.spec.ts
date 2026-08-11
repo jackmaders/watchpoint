@@ -140,16 +140,7 @@ describe("runAgent", () => {
 
 			// Assert
 			expect(bunSpawn).toHaveBeenCalledWith(
-				[
-					"codex",
-					"exec",
-					"--json",
-					"-m",
-					"gpt-5.6-luna",
-					"-c",
-					'model_provider="openai"',
-					"-",
-				],
+				["codex", "exec", "--json", "-m", "gpt-5.6-luna", "-"],
 				{
 					env: expect.objectContaining({ OPENAI_API_KEY: "test-key" }),
 					stderr: "pipe",
@@ -180,15 +171,7 @@ describe("runAgent", () => {
 		// Assert
 		expect(spawn).toHaveBeenCalledWith(
 			"codex",
-			[
-				"exec",
-				"--json",
-				"-m",
-				"gpt-5.6-terra",
-				"-c",
-				'model_provider="openai"',
-				"-",
-			],
+			["exec", "--json", "-m", "gpt-5.6-terra", "-"],
 			expect.objectContaining({ env: expect.any(Object) }),
 		);
 	});
@@ -281,15 +264,7 @@ describe("runAgent", () => {
 			// Assert
 			expect(spawn).toHaveBeenCalledWith(
 				"codex",
-				[
-					"exec",
-					"--json",
-					"-m",
-					"gpt-5.6-luna",
-					"-c",
-					'model_provider="openai"',
-					"-",
-				],
+				["exec", "--json", "-m", "gpt-5.6-luna", "-"],
 				expect.objectContaining({ env: expect.any(Object) }),
 			);
 			expect(write).toHaveBeenCalledWith(
@@ -466,8 +441,6 @@ describe("runAgent", () => {
 					"--json",
 					"-m",
 					"gpt-5.6-luna",
-					"-c",
-					'model_provider="openai"',
 					"sess_retry_001",
 					"-",
 				],

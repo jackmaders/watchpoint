@@ -58,6 +58,11 @@ jobs:
       - name: 🌐 Install Codex CLI
         run: bun add -g @openai/codex
 
+      - name: 🔐 Authenticate Codex
+        env:
+          OPENAI_API_KEY: ${{ secrets.AGENT_API_KEY }}
+        run: printf '%s' "$OPENAI_API_KEY" | codex login --with-api-key
+
       - name: 🔧 Configure git identity
         # The agent commits and pushes GREEN checkpoints on its own branch
         # (scripts/agents/prompts/implement.md); a workflow-run commit needs
@@ -71,7 +76,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
-          AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           AGENT_RUN_TIMEOUT_MS: "1620000"
           # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
