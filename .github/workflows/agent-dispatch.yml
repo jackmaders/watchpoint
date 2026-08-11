@@ -11,6 +11,14 @@ permissions:
 concurrency:
   group: agent-mutate-${{ github.event.issue.number }}
   cancel-in-progress: false
+  # This group is shared with agent-grill/implement/spec/tickets.yml so agent
+  # mutations on the same issue always serialize. Default GH queueing keeps
+  # only ONE pending run per group and cancels older pending ones outright —
+  # with five workflows racing into this group off the same issue event, the
+  # one that should actually run could be the one silently cancelled before
+  # it ever starts. `queue: max` keeps every queued run pending (FIFO) instead
+  # of dropping any of them.
+  queue: max
 
 jobs:
   dispatch:

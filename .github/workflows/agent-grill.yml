@@ -13,6 +13,12 @@ permissions:
 concurrency:
   group: agent-mutate-${{ github.event.issue.number }}
   cancel-in-progress: false
+  # See agent-dispatch.yml — this group is shared across all agent-mutate-*
+  # workflows so mutations on the same issue serialize. Without `queue: max`,
+  # GH keeps only one pending run per group and cancels older pending ones,
+  # so the run whose job `if` actually matches this event isn't guaranteed
+  # to survive the race against the other workflows sharing the group.
+  queue: max
 
 jobs:
   grill:
