@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import * as github from "@actions/github";
+import { z } from "zod";
 import { resolveArtifactsDir, writeFailureReason } from "./artifacts";
 import { runIfMain } from "./entrypoint";
 import { defaultExec, type ExecFn } from "./exec";
-import { RunAgentError } from "./failure";
+import { RunAgentError, StageError, type WrittenFailure } from "./failure";
 import {
 	buildBranchName,
 	countCommits,
@@ -15,9 +15,10 @@ import {
 	fetchIssueContext,
 	formatGeminiError,
 	type IssueContext,
+	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	postIssueErrorComment,
+	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import { MODELS } from "./models";
@@ -26,7 +27,8 @@ import {
 	type RunAgentResult,
 	runAgent,
 } from "./run-agent";
-import { type Implement, OUTPUTS } from "./schemas";
+import { buildPullRequestTitle, type Implement, OUTPUTS } from "./schemas";
+import { runStage } from "./stage";
 
 const IMPLEMENT_PROMPT_FILE = join(
 	import.meta.dirname,
@@ -41,23 +43,29 @@ const TEMPLATE_DIR = join(
 	"PULL_REQUEST_TEMPLATE",
 );
 
-declare global {
-	namespace NodeJS {
-		interface ProcessEnv {
-			GITHUB_TOKEN: string;
-			ISSUE_NUMBER: string;
-			AGENT_PAT?: string;
-		}
-	}
-}
-
 /** Implement's product is `ImplementSchema`, so it runs the object form of `runAgent`. */
 type ImplementRunner = (
 	options: ObjectRunOptions<Implement>,
 ) => Promise<RunAgentResult<Implement>>;
 
-/** The subset of `octokit.rest.issues.get`'s response this module's shape guards read — kept narrow so a test can hand-build one without impersonating the full GitHub schema. */
-interface ShapeGuardIssue {
+/**
+ * The subset of `octokit.rest.issues.get`'s response the first two shape
+ * guards read. Both summaries are required, not optional: GitHub always
+ * computes them for a repo with sub-issues and issue dependencies enabled
+ * (which every ticket in this pipeline assumes — `docs/agents/issue-
+ * tracker.md`'s wayfinding section is built entirely on native sub-issues and
+ * native blocking), so a response missing either is an API-shape anomaly, not
+ * evidence of zero sub-issues or zero blockers. `findShapeGuardRefusal`
+ * refuses on that anomaly rather than defaulting it to zero — a ticket
+ * report of "the guard let a blocked ticket through" is far more expensive
+ * than a report of "the guard refused with a confusing summary".
+ */
+const ShapeGuardSummariesSchema = z.object({
+	issue_dependencies_summary: z.object({ blocked_by: z.number() }),
+	sub_issues_summary: z.object({ total: z.number() }),
+});
+
+export interface ShapeGuardIssue {
 	number: number;
 	sub_issues_summary?: { total: number } | null;
 	issue_dependencies_summary?: { blocked_by: number } | null;
@@ -91,24 +99,29 @@ export async function findExistingPullRequest(
 
 /**
  * The three shape guards (spec §5.8, design doc §3.6 Stage 5), each refusing
- * with a specific, actionable comment: a spec/ticket-breakdown parent isn't
- * an implementable ticket; an open blocker means it isn't on the frontier
- * yet; an open PR that already closes this issue means someone is already
- * on it. Returns `null` when none apply — the only case `runImplementation`
- * proceeds past.
+ * with a specific, actionable comment: a response missing its sub-issue or
+ * blocker summary can't be trusted to prove the frontier invariant either
+ * way; a spec/ticket-breakdown parent isn't an implementable ticket; an open
+ * blocker means it isn't on the frontier yet; an open PR that already closes
+ * this issue means someone is already on it. Returns `null` when none apply
+ * — the only case `runImplementation` proceeds past.
  */
 export async function findShapeGuardRefusal(
 	ctx: IssueContext,
 	issue: ShapeGuardIssue,
 ): Promise<string | null> {
-	const subIssueCount = issue.sub_issues_summary?.total ?? 0;
-	if (subIssueCount > 0) {
-		return `🚫 **Refused:** this issue has ${subIssueCount} sub-issue(s) — that makes it a spec or ticket-breakdown parent, not an implementable ticket. Pick one of its child tickets instead.`;
+	const summaries = ShapeGuardSummariesSchema.safeParse(issue);
+	if (!summaries.success) {
+		return `🚫 **Refused:** GitHub's response for this issue is missing its sub-issue or blocker summary, so I can't confirm it's actually on the frontier. Re-add \`${LABELS.devNeeded}\` to retry, or check the run log if this keeps happening.`;
 	}
 
-	const blockedByCount = issue.issue_dependencies_summary?.blocked_by ?? 0;
-	if (blockedByCount > 0) {
-		return `🚫 **Refused:** this ticket has ${blockedByCount} open blocker(s) — it isn't on the frontier yet. Re-add \`${LABELS.devNeeded}\` once every blocker closes.`;
+	const { sub_issues_summary, issue_dependencies_summary } = summaries.data;
+	if (sub_issues_summary.total > 0) {
+		return `🚫 **Refused:** this issue has ${sub_issues_summary.total} sub-issue(s) — that makes it a spec or ticket-breakdown parent, not an implementable ticket. Pick one of its child tickets instead.`;
+	}
+
+	if (issue_dependencies_summary.blocked_by > 0) {
+		return `🚫 **Refused:** this ticket has ${issue_dependencies_summary.blocked_by} open blocker(s) — it isn't on the frontier yet. Re-add \`${LABELS.devNeeded}\` once every blocker closes.`;
 	}
 
 	const existingPr = await findExistingPullRequest(ctx, issue.number);
@@ -135,6 +148,24 @@ export function buildPullRequestBody(
 	return `Closes #${issueNumber}\n\n${summary}\n\n---\n\n${templateContent}`;
 }
 
+/**
+ * Posted inside the PR body — not a separate comment — so the warning is
+ * visible the moment a maintainer opens the PR, wherever they open it from.
+ */
+const NO_PAT_CI_NOTICE =
+	"\n\n> ⚠️ Opened with the default `GITHUB_TOKEN` because `AGENT_PAT` isn't configured. Per GitHub's own docs on `GITHUB_TOKEN` and workflow triggers, a `pull_request` event created this way still queues `PR Quality Checks`, but leaves it waiting for a maintainer to approve the run rather than starting it automatically — open the Actions tab and approve it to get checks running.";
+
+/**
+ * Opens the draft PR with the `AGENT_PAT`-authenticated client when it's
+ * configured: per GitHub's docs on `GITHUB_TOKEN` and workflow triggers, a
+ * `pull_request: opened` event created by a workflow using the default
+ * `GITHUB_TOKEN` still creates a run of `PR Quality Checks`
+ * (`pull_request: branches: [main]`) — but leaves it sitting in an
+ * approval-required state a maintainer has to click through, rather than
+ * running automatically. Falls back to `ctx.octokit` when `AGENT_PAT` isn't
+ * configured, same as every other PAT-gated mutation in this pipeline, and
+ * says so in the PR body so a maintainer knows checks need a manual nudge.
+ */
 async function createDraftPullRequest(
 	ctx: IssueContext,
 	options: {
@@ -148,20 +179,22 @@ async function createDraftPullRequest(
 		join(TEMPLATE_DIR, options.pr.template),
 		"utf-8",
 	);
-	const body = buildPullRequestBody(
-		options.issueNumber,
-		options.summary,
-		templateContent,
-	);
+	const patOctokit = resolvePatOctokit();
+	const body =
+		buildPullRequestBody(
+			options.issueNumber,
+			options.summary,
+			templateContent,
+		) + (patOctokit ? "" : NO_PAT_CI_NOTICE);
 
-	const { data } = await ctx.octokit.rest.pulls.create({
+	const { data } = await (patOctokit ?? ctx.octokit).rest.pulls.create({
 		base: "main",
 		body,
 		draft: true,
 		head: options.branchName,
 		owner: ctx.owner,
 		repo: ctx.repo,
-		title: options.pr.title,
+		title: buildPullRequestTitle(options.pr),
 	});
 	return data.number;
 }
@@ -176,8 +209,8 @@ async function chainToReview(
 	ctx: IssueContext,
 	prNumber: number,
 ): Promise<void> {
-	const pat = process.env.AGENT_PAT;
-	if (!pat) {
+	const patOctokit = resolvePatOctokit();
+	if (!patOctokit) {
 		await postBotComment(
 			ctx,
 			`🚦 #${prNumber} is open, but \`AGENT_PAT\` isn't configured, so I can't chain to the review stage automatically. Please add the \`${LABELS.reviewNeeded}\` label to #${prNumber} yourself.`,
@@ -185,7 +218,6 @@ async function chainToReview(
 		return;
 	}
 
-	const patOctokit = github.getOctokit(pat);
 	await patOctokit.rest.issues.addLabels({
 		issue_number: prNumber,
 		labels: [LABELS.reviewNeeded],
@@ -195,37 +227,27 @@ async function chainToReview(
 }
 
 /**
- * A `RunAgentError` already carries `run-agent.ts`'s own classification
- * (`quota`, `turn-limit`, `bad-output`, `skill-miss` — spec §5.3's table),
- * decided at the throw site, never re-derived here. Everything else is one
- * of this stage's own post-hoc measured checks (`git rev-list`, `bun run
- * validate`'s exit code, `git push`'s stderr) — each one a fact the workflow
- * itself measured, never self-reported by the model (spec §5.4) — matched by
- * the literal message each throw site below uses, or `unclassified` for
- * anything else (a plain rejection with no known shape).
+ * The failure class read straight off the error's own type — never
+ * re-derived by matching substrings of its message. A `RunAgentError` already
+ * carries `run-agent.ts`'s classification (`quota`, `turn-limit`,
+ * `bad-output`, `skill-miss` — spec §5.3's table); a `StageError` carries this
+ * module's own post-hoc measured classification (`no-commits`,
+ * `validate-failed`, `push-race`), assigned at the exact throw site that
+ * measured it. Anything else is a plain rejection with no known shape.
  */
-function classifyImplementFailure(error: unknown): string {
+function classifyStageFailure(error: unknown): WrittenFailure {
 	if (error instanceof RunAgentError) return error.failureClass;
-	const message = error instanceof Error ? error.message : String(error);
-	if (message.includes("No commits were made")) return "no-commits";
-	if (message.includes("bun run validate failed")) return "validate-failed";
-	if (message.includes("advanced during the run")) return "push-race";
+	if (error instanceof StageError) return error.failureClass;
 	return "unclassified";
 }
 
-/**
- * Written on every failure path, via the same writer `run-agent.ts` uses for
- * its own classified failures. For a `RunAgentError`, `run-agent.ts` already
- * wrote this file with the correct classification before throwing — this
- * call re-derives the identical classification and overwrites the file with
- * the same content, rather than risk clobbering it with `unclassified`.
- */
+/** Written on every failure path, via the same writer `run-agent.ts` uses for its own classified failures. */
 function writeImplementFailure(error: unknown): void {
 	const dir = resolveArtifactsDir();
 	if (dir === null) return;
 	writeFailureReason(
 		dir,
-		classifyImplementFailure(error),
+		classifyStageFailure(error),
 		formatGeminiError(error),
 	);
 }
@@ -242,6 +264,10 @@ function writeImplementFailure(error: unknown): void {
  * prohibition verbatim) — which is what makes a failure at any step
  * debuggable from the workflow's own log rather than from the model's
  * transcript.
+ *
+ * The shape guards run *before* `runStage` — a refusal never enters
+ * `agent:in-progress` at all, so `runStage`'s own `agent:blocked`-on-failure
+ * path never applies to a ticket that was refused for being the wrong shape.
  */
 export async function runImplementation(
 	ctx: IssueContext,
@@ -260,75 +286,68 @@ export async function runImplementation(
 		return;
 	}
 
-	let labels = await transitionState(ctx, issue.labels, {
-		add: [LABELS.agentInProgress],
-		remove: [LABELS.devNeeded, LABELS.agentBlocked],
-	});
-
 	const branchName = buildBranchName(issue.number, issue.title);
 
-	try {
-		const branchHeadSha = await createBranchFromMain(exec, branchName);
+	await runStage(
+		ctx,
+		issue.labels,
+		{
+			onFailure: writeImplementFailure,
+			removeOnEntry: [LABELS.devNeeded],
+			stageName: "Implement",
+		},
+		async (labels) => {
+			const branchHeadSha = await createBranchFromMain(exec, branchName);
 
-		const result = await runner({
-			expectSkill: "implement",
-			model: MODELS.implement,
-			output: OUTPUTS.implement,
-			promptArgs: {
-				BRANCH_NAME: branchName,
-				ISSUE_NUMBER: String(issue.number),
-				TICKET: conversation,
-			},
-			promptFile: IMPLEMENT_PROMPT_FILE,
-		});
+			const result = await runner({
+				expectSkill: "implement",
+				model: MODELS.implement,
+				output: OUTPUTS.implement,
+				promptArgs: {
+					BRANCH_NAME: branchName,
+					ISSUE_NUMBER: String(issue.number),
+					TICKET: conversation,
+				},
+				promptFile: IMPLEMENT_PROMPT_FILE,
+			});
 
-		const commitCount = await countCommits(exec, branchHeadSha);
-		if (commitCount === 0) {
-			throw new Error(
-				"No commits were made — the implement run produced no changes to review.",
-			);
-		}
+			const commitCount = await countCommits(exec, branchHeadSha);
+			if (commitCount === 0) {
+				throw new StageError(
+					"no-commits",
+					"No commits were made — the implement run produced no changes to review.",
+				);
+			}
 
-		const validation = await exec("bun", ["run", "validate"]);
-		if (validation.exitCode !== 0) {
-			throw new Error(
-				`bun run validate failed:\n${(validation.stderr || validation.stdout).slice(-4000)}`,
-			);
-		}
+			const validation = await exec("bun", ["run", "validate"]);
+			if (validation.exitCode !== 0) {
+				throw new StageError(
+					"validate-failed",
+					`bun run validate failed:\n${(validation.stderr || validation.stdout).slice(-4000)}`,
+				);
+			}
 
-		await pushBranch(exec, branchName, branchHeadSha);
+			await pushBranch(exec, branchName);
 
-		const prNumber = await createDraftPullRequest(ctx, {
-			branchName,
-			issueNumber: issue.number,
-			pr: result.output.pr,
-			summary: result.output.summary,
-		});
+			const prNumber = await createDraftPullRequest(ctx, {
+				branchName,
+				issueNumber: issue.number,
+				pr: result.output.pr,
+				summary: result.output.summary,
+			});
 
-		await chainToReview(ctx, prNumber);
-	} catch (error) {
-		writeImplementFailure(error);
-		labels = await transitionState(ctx, labels, {
-			add: [LABELS.agentBlocked],
-		});
-		await postIssueErrorComment(ctx, "Implement", error);
-		throw error;
-	} finally {
-		await transitionState(ctx, labels, { remove: [LABELS.agentInProgress] });
-	}
+			await chainToReview(ctx, prNumber);
+
+			// Nothing here changes the issue's own labels — the PR and its
+			// review:needed label belong to a different issue — so the entry
+			// snapshot `runStage` handed in is still accurate for its `finally`.
+			return labels;
+		},
+	);
 }
 
 export async function run(): Promise<void> {
-	const issueNumber = parseInt(process.env.ISSUE_NUMBER ?? "0", 10);
-	const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-	const ctx: IssueContext = {
-		issueNumber,
-		octokit,
-		owner: github.context.repo.owner,
-		repo: github.context.repo.repo,
-	};
-
-	await runImplementation(ctx);
+	await runImplementation(issueContextFromEnv());
 }
 
 runIfMain(import.meta.main, run);

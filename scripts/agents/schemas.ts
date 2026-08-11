@@ -266,6 +266,13 @@ export type TicketBreakdown = z.infer<typeof TicketBreakdownSchema>;
 // ---------------------------------------------------------------------------
 
 export const PullRequestMetadataSchema = z.object({
+	description: z
+		.string()
+		.min(1)
+		.max(200)
+		.describe(
+			"Just the <description> in AGENTS.md's `<type>(<scope>): <emoji> <description>` format — the workflow composes the full title from this plus type, scope, and emoji, so this must not repeat any of them.",
+		),
 	emoji: z
 		.string()
 		.min(1)
@@ -283,18 +290,24 @@ export const PullRequestMetadataSchema = z.object({
 	template: PrTemplateSchema.describe(
 		"Which file in .github/PULL_REQUEST_TEMPLATE/ this PR's body is structured against.",
 	),
-	title: z
-		.string()
-		.min(1)
-		.max(200)
-		.describe(
-			"The PR title, in `<type>(<scope>): <emoji> <description>` format.",
-		),
 	type: ConventionalCommitTypeSchema.describe(
 		"The conventional-commit type this PR's commits are shaped as.",
 	),
 });
 export type PullRequestMetadata = z.infer<typeof PullRequestMetadataSchema>;
+
+/**
+ * `<type>(<scope>): <emoji> <description>` — AGENTS.md's commit format,
+ * composed here rather than asked of the model as a single `title` field.
+ * The model already names `type`, `scope`, and `emoji` individually (each
+ * validated on its own — a real conventional-commit type, a bounded scope);
+ * composing the title from them is one guaranteed-well-formed string instead
+ * of trusting the model to reproduce the format correctly *and* stay
+ * consistent with the three parts it named beside it.
+ */
+export function buildPullRequestTitle(pr: PullRequestMetadata): string {
+	return `${pr.type}(${pr.scope}): ${pr.emoji} ${pr.description}`;
+}
 
 export const ImplementSchema = z.object({
 	pr: PullRequestMetadataSchema,

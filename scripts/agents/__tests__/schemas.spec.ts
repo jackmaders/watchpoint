@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { MODELS } from "../models";
 import {
+	buildPullRequestTitle,
 	CONVENTIONAL_COMMIT_TYPES,
 	filterReviewComments,
 	GrillRoundSchema,
@@ -352,10 +353,10 @@ describe("ImplementSchema", () => {
 	function implementPayload(templateOverride?: string) {
 		return {
 			pr: {
+				description: "add login",
 				emoji: "🔑",
 				scope: "auth",
 				template: templateOverride ?? "feature.md",
-				title: "feat(auth): 🔑 add login",
 				type: "feat",
 			},
 			summary: "Added login.",
@@ -410,6 +411,25 @@ describe("ImplementSchema", () => {
 
 		// Assert
 		expect(result.success).toBe(false);
+	});
+});
+
+describe("buildPullRequestTitle", () => {
+	it("composes type, scope, emoji, and description in AGENTS.md's commit format", () => {
+		// Arrange
+		const pr = {
+			description: "add login",
+			emoji: "🔑",
+			scope: "auth",
+			template: "feature.md" as const,
+			type: "feat" as const,
+		};
+
+		// Act
+		const title = buildPullRequestTitle(pr);
+
+		// Assert
+		expect(title).toBe("feat(auth): 🔑 add login");
 	});
 });
 

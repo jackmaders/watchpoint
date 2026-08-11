@@ -1,5 +1,6 @@
 import { appendFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { WrittenFailure } from "./failure";
 
 export interface UsageEntry {
 	cli: string;
@@ -21,16 +22,17 @@ export function resolveArtifactsDir(): string | null {
 
 /**
  * Written only on a classified failure (spec §5.3, step 7) — its absence
- * tells a workflow the run was fine. `reason` is `string`, not the narrower
- * `FailureClass`, because this is the one place the file's on-disk shape is
- * decided — `run-agent.ts` passes its own `FailureClass`, and a stage script
- * with a post-hoc measured failure of its own (`implement.ts`'s "no
- * commits were made", say) reuses the exact same writer rather than
- * duplicating the path and format.
+ * tells a workflow the run was fine. This is the one place the file's on-disk
+ * shape is decided: `run-agent.ts` passes a `FailureClass` for a failure
+ * inside the model run, and a stage script passes a `StageFailure` for one of
+ * its own post-hoc measured failures, rather than duplicating the path and
+ * format. `WrittenFailure`, never a bare `string` — an unrecognised class here
+ * means a workflow reads a `failure_reason.txt` it has no branch for, so the
+ * set of writable values is worth a compile error.
  */
 export function writeFailureReason(
 	dir: string,
-	reason: string,
+	reason: WrittenFailure,
 	message: string,
 ): void {
 	writeFileSync(join(dir, "failure_reason.txt"), `${reason}\n${message}\n`);

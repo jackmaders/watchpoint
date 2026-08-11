@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ExecFn } from "../exec";
+import { StageError } from "../failure";
 import {
 	buildBranchName,
 	countCommits,
@@ -181,23 +182,38 @@ describe("countCommits", () => {
 });
 
 describe("pushBranch", () => {
-	it("pushes with force-with-lease pinned to the branch's starting sha", async () => {
+	it("pushes the branch plainly, without any force flag", async () => {
 		// Arrange
 		const exec = fakeExec(() => ({ exitCode: 0 }));
 
 		// Act
-		await pushBranch(exec, "agent/issue-57-x", "abc123");
+		await pushBranch(exec, "agent/issue-57-x");
 
 		// Assert
 		expect(exec).toHaveBeenCalledWith("git", [
 			"push",
-			"--force-with-lease=refs/heads/agent/issue-57-x:abc123",
 			"origin",
 			"agent/issue-57-x",
 		]);
 	});
 
-	it("raises a specific, actionable error when the race-detection pattern matches stderr", async () => {
+	it("succeeds on the first push of a brand-new branch, which a force-with-lease pinned to main's sha could never do", async () => {
+		// Arrange — this is the regression this module's history warns about:
+		// a lease naming main's tip as <expect> is satisfied only when the
+		// remote ref already equals that sha, which is never true for a branch
+		// being pushed for the first time (git-push(1): an empty <expect> is
+		// the only form meaning "must not exist"). A plain push has no such
+		// precondition, so the first push of a new branch just succeeds.
+		const exec = fakeExec(() => ({ exitCode: 0 }));
+
+		// Act
+		const act = pushBranch(exec, "agent/issue-57-x");
+
+		// Assert
+		await expect(act).resolves.toBeUndefined();
+	});
+
+	it("raises a push-race StageError when the remote branch already has commits this run doesn't", async () => {
 		// Arrange
 		const exec = fakeExec(() => ({
 			exitCode: 1,
@@ -205,13 +221,30 @@ describe("pushBranch", () => {
 		}));
 
 		// Act
-		const act = pushBranch(exec, "agent/issue-57-x", "abc123");
+		const act = pushBranch(exec, "agent/issue-57-x");
 
 		// Assert
-		await expect(act).rejects.toThrow(/advanced during the run/);
+		await expect(act).rejects.toBeInstanceOf(StageError);
+		await expect(act).rejects.toMatchObject({ failureClass: "push-race" });
+		await expect(act).rejects.toThrow(/a previous run of this ticket/);
 	});
 
-	it("raises the raw git error for a push failure that isn't a race", async () => {
+	it("recognises a plain non-fast-forward rejection as the same push-race condition", async () => {
+		// Arrange
+		const exec = fakeExec(() => ({
+			exitCode: 1,
+			stderr:
+				"! [rejected] agent/issue-57-x -> agent/issue-57-x (non-fast-forward)",
+		}));
+
+		// Act
+		const act = pushBranch(exec, "agent/issue-57-x");
+
+		// Assert
+		await expect(act).rejects.toMatchObject({ failureClass: "push-race" });
+	});
+
+	it("raises the raw git error, unclassified, for a push failure that isn't a race", async () => {
 		// Arrange
 		const exec = fakeExec(() => ({
 			exitCode: 1,
@@ -219,11 +252,11 @@ describe("pushBranch", () => {
 		}));
 
 		// Act
-		const act = pushBranch(exec, "agent/issue-57-x", "abc123");
+		const act = pushBranch(exec, "agent/issue-57-x");
 
 		// Assert
+		await expect(act).rejects.not.toBeInstanceOf(StageError);
 		await expect(act).rejects.toThrow(/unable to access origin/);
-		await expect(act).rejects.not.toThrow(/advanced during the run/);
 	});
 
 	it("falls back to stdout in the thrown message when a non-race push failure wrote nothing to stderr", async () => {
@@ -234,7 +267,7 @@ describe("pushBranch", () => {
 		}));
 
 		// Act
-		const act = pushBranch(exec, "agent/issue-57-x", "abc123");
+		const act = pushBranch(exec, "agent/issue-57-x");
 
 		// Assert
 		await expect(act).rejects.toThrow(/permission denied/);

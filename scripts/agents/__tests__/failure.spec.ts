@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyExit } from "../failure";
+import { classifyExit, StageError } from "../failure";
 
 describe("classifyExit", () => {
 	it("classifies exit 42 as bad-input", () => {
@@ -66,5 +66,21 @@ describe("classifyExit", () => {
 
 		// Assert
 		expect(result).toBe("unclassified");
+	});
+});
+
+describe("StageError", () => {
+	it("carries its failure class and message from the throw site", () => {
+		// Arrange
+		// Act
+		const error = new StageError(
+			"push-race",
+			"Branch advanced during the run.",
+		);
+
+		// Assert
+		expect(error.failureClass).toBe("push-race");
+		expect(error.message).toBe("Branch advanced during the run.");
+		expect(error).toBeInstanceOf(Error);
 	});
 });

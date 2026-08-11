@@ -64,11 +64,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          # `AGENT_PAT` is what lets implement.ts label the new draft PR
-          # review:needed — a label applied with the default GITHUB_TOKEN
-          # above cannot fire agent-review.yml (spec §5.8). implement.ts
-          # itself falls back to a comment listing the PR when this secret
-          # isn't configured.
+          # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
+          # and then label it review:needed — both mutations need it, for two
+          # different reasons. Opened with the default GITHUB_TOKEN above, a
+          # PR still triggers PR Quality Checks, but leaves the run sitting in
+          # an approval-required state a maintainer has to click through,
+          # rather than starting automatically (GitHub's own docs on
+          # GITHUB_TOKEN and workflow triggers). A label applied with the
+          # default token, separately, cannot fire agent-review.yml at all
+          # (spec §5.8). implement.ts itself falls back to a comment — and a
+          # notice in the PR body — when this secret isn't configured.
           AGENT_PAT: ${{ secrets.AGENT_PAT }}
           # See agent-dispatch.yml — untrusted-by-default CI runners would
           # otherwise skip .agents/skills/ and fall back to global-only skills.

@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import * as github from "@actions/github";
 import { runIfMain } from "./entrypoint";
 import {
 	type IssueContext,
 	isBotComment,
+	issueContextFromEnv,
 	postBotComment,
 	postIssueErrorComment,
 } from "./github";
@@ -20,8 +20,6 @@ const PING_PROMPT_FILE = join(import.meta.dirname, "prompts", "ping.md");
 declare global {
 	namespace NodeJS {
 		interface ProcessEnv {
-			GITHUB_TOKEN: string;
-			ISSUE_NUMBER: string;
 			/** Optional here to merge with `tickets.ts`'s declaration, where it's genuinely absent on a label-triggered run. Always set on the `issue_comment` trigger that fires this script. */
 			COMMENT_BODY?: string;
 		}
@@ -71,16 +69,7 @@ export async function dispatchPing(
 }
 
 export async function run(): Promise<void> {
-	const issueNumber = parseInt(process.env.ISSUE_NUMBER ?? "0", 10);
-	const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-	const ctx: IssueContext = {
-		issueNumber,
-		octokit,
-		owner: github.context.repo.owner,
-		repo: github.context.repo.repo,
-	};
-
-	await dispatchPing(ctx, process.env.COMMENT_BODY ?? "");
+	await dispatchPing(issueContextFromEnv(), process.env.COMMENT_BODY ?? "");
 }
 
 runIfMain(import.meta.main, run);

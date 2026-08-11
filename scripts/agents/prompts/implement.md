@@ -18,8 +18,10 @@ measures both itself, by running `bun run validate` and counting commits with
 Do not push. Do not close the issue. Do not edit labels. Do not create or edit PRs.
 
 Choose the file under `.github/PULL_REQUEST_TEMPLATE/` that best matches this change, and
-the conventional-commit type, scope, and emoji for the PR title. Wrap your final answer
-in `<implement>...</implement>`, matching the schema below exactly, then signal completion
-with <promise>COMPLETE</promise>.
+the conventional-commit type, scope, and emoji for the PR title. The workflow composes
+the final title itself from those three plus your `description` — give just the
+`<description>` part, not the whole `<type>(<scope>): <emoji> <description>` line. Wrap
+your final answer in `<implement>...</implement>`, matching the schema below exactly, then
+signal completion with <promise>COMPLETE</promise>.
 
 {{OUTPUT_SCHEMA}}

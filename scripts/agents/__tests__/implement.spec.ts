@@ -20,13 +20,35 @@ vi.mock("@actions/github");
 vi.mock("../logger");
 vi.mock("../run-agent");
 
+/** Sets `AGENT_PAT` for the duration of `fn`, restoring the prior value (present or absent) afterwards — the one idiom every AGENT_PAT-branching test in this file uses, rather than each hand-rolling its own try/finally or env snapshot. */
+async function withAgentPat<T>(
+	value: string | undefined,
+	fn: () => Promise<T>,
+): Promise<T> {
+	const original = process.env.AGENT_PAT;
+	if (value === undefined) {
+		Reflect.deleteProperty(process.env, "AGENT_PAT");
+	} else {
+		process.env.AGENT_PAT = value;
+	}
+	try {
+		return await fn();
+	} finally {
+		if (original === undefined) {
+			Reflect.deleteProperty(process.env, "AGENT_PAT");
+		} else {
+			process.env.AGENT_PAT = original;
+		}
+	}
+}
+
 function fakeImplementOutput(overrides: Partial<Implement> = {}): Implement {
 	return {
 		pr: {
+			description: "do the thing",
 			emoji: "🎫",
 			scope: "agents",
 			template: "feature.md",
-			title: "feat(agents): 🎫 do the thing",
 			type: "feat",
 		},
 		summary: "Built the thing.",
@@ -80,26 +102,23 @@ function mockIssue(
 	} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.issues.get>>);
 }
 
-function mockNoComments(ctx: IssueContext): void {
-	vi.mocked(ctx.octokit.paginate).mockImplementation((async (
-		method: unknown,
-	) => {
-		if (method === ctx.octokit.rest.issues.listComments) return [];
-		return [];
-	}) as unknown as typeof ctx.octokit.paginate);
-}
-
+/** `[]` for every `paginate` call — every open-PR test that isn't asserting on the PR list itself just needs comments and pulls both empty. */
 function mockOpenPulls(
 	ctx: IssueContext,
-	pulls: Array<{ number: number; body: string | null }>,
+	pulls: Array<{ number: number; body: string | null }> = [],
 ): void {
 	vi.mocked(ctx.octokit.paginate).mockImplementation((async (
 		method: unknown,
 	) => {
 		if (method === ctx.octokit.rest.pulls.list) return pulls;
-		if (method === ctx.octokit.rest.issues.listComments) return [];
 		return [];
 	}) as unknown as typeof ctx.octokit.paginate);
+}
+
+function mockCreatedPull(ctx: IssueContext, number: number): void {
+	vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
+		data: { number },
+	} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.create>>);
 }
 
 interface StubResult {
@@ -231,7 +250,7 @@ describe("findShapeGuardRefusal", () => {
 	it("refuses an issue that has sub-issues — a spec, not a ticket", async () => {
 		// Arrange
 		const ctx = buildCtx();
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 		const issue = {
 			issue_dependencies_summary: { blocked_by: 0 },
 			number: 57,
@@ -248,7 +267,7 @@ describe("findShapeGuardRefusal", () => {
 	it("refuses a ticket with open blockers — not on the frontier", async () => {
 		// Arrange
 		const ctx = buildCtx();
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 		const issue = {
 			issue_dependencies_summary: { blocked_by: 1 },
 			number: 57,
@@ -282,7 +301,7 @@ describe("findShapeGuardRefusal", () => {
 	it("returns null when the ticket is a valid, unblocked, PR-less frontier item", async () => {
 		// Arrange
 		const ctx = buildCtx();
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 		const issue = {
 			issue_dependencies_summary: { blocked_by: 0 },
 			number: 57,
@@ -296,17 +315,34 @@ describe("findShapeGuardRefusal", () => {
 		expect(refusal).toBeNull();
 	});
 
-	it("treats a missing sub_issues_summary and issue_dependencies_summary as zero rather than throwing", async () => {
-		// Arrange
+	it("refuses, rather than defaulting to zero, when GitHub's response omits sub_issues_summary and issue_dependencies_summary", async () => {
+		// Arrange — a response missing either summary is an API-shape anomaly
+		// (every repo this pipeline runs against has sub-issues and issue
+		// dependencies enabled), not evidence the ticket has zero of either.
+		// Defaulting it to zero would silently implement a ticket the guard
+		// could not actually prove was unblocked.
 		const ctx = buildCtx();
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 		const issue = { number: 57 };
 
 		// Act
 		const refusal = await findShapeGuardRefusal(ctx, issue);
 
 		// Assert
-		expect(refusal).toBeNull();
+		expect(refusal).toContain("missing its sub-issue or blocker summary");
+	});
+
+	it("refuses when only one of the two summaries is present", async () => {
+		// Arrange
+		const ctx = buildCtx();
+		mockOpenPulls(ctx);
+		const issue = { number: 57, sub_issues_summary: { total: 0 } };
+
+		// Act
+		const refusal = await findShapeGuardRefusal(ctx, issue);
+
+		// Assert
+		expect(refusal).toContain("missing its sub-issue or blocker summary");
 	});
 });
 
@@ -320,7 +356,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { labelNames: ["dev:needed"], subIssuesTotal: 3 });
-			mockNoComments(ctx);
+			mockOpenPulls(ctx);
 			const runner = vi.fn();
 			const exec = happyExec();
 
@@ -353,7 +389,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { blockedBy: 1, labelNames: ["dev:needed"] });
-			mockNoComments(ctx);
+			mockOpenPulls(ctx);
 
 			// Act
 			await runImplementation(ctx, vi.fn(), happyExec());
@@ -370,16 +406,12 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { labelNames: ["dev:needed", "agent:blocked"] });
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
 			// Act
 			await runImplementation(ctx, runner, exec);
@@ -411,20 +443,16 @@ describe("runImplementation", () => {
 			);
 		});
 
-		it("runs bun run validate and pushes with the branch's starting sha", async () => {
+		it("runs bun run validate and pushes the branch plainly, without any force flag", async () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
 			// Act
 			await runImplementation(ctx, runner, exec);
@@ -433,25 +461,24 @@ describe("runImplementation", () => {
 			expect(exec).toHaveBeenCalledWith("bun", ["run", "validate"]);
 			expect(exec).toHaveBeenCalledWith("git", [
 				"push",
-				"--force-with-lease=refs/heads/agent/issue-57-09-implementation-agent:abc123",
 				"origin",
 				"agent/issue-57-09-implementation-agent",
 			]);
 		});
 
-		it("opens a draft PR with Closes # and the model-selected template, title, and base", async () => {
+		it("opens a draft PR with Closes #, a title composed from type/scope/emoji/description, and the model-selected template", async () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi.fn().mockResolvedValue(
 				fakeResult(
 					fakeImplementOutput({
 						pr: {
+							description: "fix the thing",
 							emoji: "🐛",
 							scope: "agents",
 							template: "bugfix.md",
-							title: "fix(agents): 🐛 fix the thing",
 							type: "fix",
 						},
 						summary: "Fixed the thing.",
@@ -459,11 +486,7 @@ describe("runImplementation", () => {
 				),
 			);
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
 			// Act
 			await runImplementation(ctx, runner, exec);
@@ -494,86 +517,96 @@ describe("runImplementation", () => {
 
 		it("chains review:needed onto the new PR through an AGENT_PAT-authenticated client", async () => {
 			// Arrange
-			process.env.AGENT_PAT = "pat-token";
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
-			try {
-				// Act
-				await runImplementation(ctx, runner, exec);
+			// Act
+			await withAgentPat("pat-token", () =>
+				runImplementation(ctx, runner, exec),
+			);
 
-				// Assert
-				expect(github.getOctokit).toHaveBeenCalledWith("pat-token");
-				expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
-					issue_number: 200,
-					labels: ["review:needed"],
-					owner: "jackmaders",
-					repo: "watchpoint",
-				});
-			} finally {
-				Reflect.deleteProperty(process.env, "AGENT_PAT");
-			}
+			// Assert
+			expect(github.getOctokit).toHaveBeenCalledWith("pat-token");
+			expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+				issue_number: 200,
+				labels: ["review:needed"],
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
 		});
 
-		it("falls back to a comment when AGENT_PAT is absent, without labelling anything", async () => {
-			// Arrange
-			const originalEnv = { ...process.env };
-			Reflect.deleteProperty(process.env, "AGENT_PAT");
+		it("carries no CI-approval notice in the PR body when AGENT_PAT is configured", async () => {
+			// Arrange — the notice text itself names GITHUB_TOKEN, so its
+			// absence from the body is direct evidence createDraftPullRequest
+			// took the PAT branch rather than the no-PAT fallback.
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
-			try {
-				// Act
-				await runImplementation(ctx, runner, exec);
+			// Act
+			await withAgentPat("pat-token", () =>
+				runImplementation(ctx, runner, exec),
+			);
 
-				// Assert
-				expect(ctx.octokit.rest.issues.createComment).toHaveBeenCalledWith(
-					expect.objectContaining({
-						body: expect.stringContaining("review:needed"),
-					}),
-				);
-				expect(ctx.octokit.rest.issues.addLabels).not.toHaveBeenCalledWith(
-					expect.objectContaining({ labels: ["review:needed"] }),
-				);
-			} finally {
-				process.env = originalEnv;
-			}
+			// Assert
+			expect(ctx.octokit.rest.pulls.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.not.stringContaining("GITHUB_TOKEN"),
+				}),
+			);
+		});
+
+		it("falls back to a comment when AGENT_PAT is absent, and notes the CI approval gate in the PR body", async () => {
+			// Arrange
+			const ctx = buildCtx();
+			mockIssue(ctx, {});
+			mockOpenPulls(ctx);
+			const runner = vi
+				.fn()
+				.mockResolvedValue(fakeResult(fakeImplementOutput()));
+			const exec = happyExec();
+			mockCreatedPull(ctx, 200);
+
+			// Act
+			await withAgentPat(undefined, () => runImplementation(ctx, runner, exec));
+
+			// Assert
+			expect(ctx.octokit.rest.issues.createComment).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("review:needed"),
+				}),
+			);
+			expect(ctx.octokit.rest.issues.addLabels).not.toHaveBeenCalledWith(
+				expect.objectContaining({ labels: ["review:needed"] }),
+			);
+			expect(ctx.octokit.rest.pulls.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.stringContaining("waiting for a maintainer to approve"),
+				}),
+			);
 		});
 
 		it("removes agent:in-progress once the happy path completes", async () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { labelNames: ["agent:in-progress"] });
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
 			const exec = happyExec();
-			vi.mocked(ctx.octokit.rest.pulls.create).mockResolvedValue({
-				data: { number: 200 },
-			} as unknown as Awaited<
-				ReturnType<typeof ctx.octokit.rest.pulls.create>
-			>);
+			mockCreatedPull(ctx, 200);
 
 			// Act
 			await runImplementation(ctx, runner, exec);
@@ -609,7 +642,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { labelNames: ["agent:in-progress"] });
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
@@ -633,7 +666,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
@@ -654,7 +687,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi.fn().mockRejectedValue("plain string rejection");
 			const exec = happyExec();
 
@@ -675,7 +708,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
@@ -702,11 +735,11 @@ describe("runImplementation", () => {
 			expect(reason).toContain("3 tests failed");
 		});
 
-		it("fails with push-race when the push is rejected as advanced during the run", async () => {
+		it("fails with push-race when the push is rejected because a previous run got further", async () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockResolvedValue(fakeResult(fakeImplementOutput()));
@@ -720,7 +753,7 @@ describe("runImplementation", () => {
 			const act = runImplementation(ctx, runner, exec);
 
 			// Assert
-			await expect(act).rejects.toThrow(/advanced during the run/);
+			await expect(act).rejects.toThrow(/a previous run of this ticket/);
 			expect(ctx.octokit.rest.pulls.create).not.toHaveBeenCalled();
 			const reason = readFileSync(
 				join(outputDir, "failure_reason.txt"),
@@ -733,7 +766,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi.fn().mockRejectedValue(new Error("network timeout"));
 			const exec = happyExec();
 
@@ -752,14 +785,9 @@ describe("runImplementation", () => {
 
 		it("preserves the runner's own failure classification instead of overwriting it with unclassified", async () => {
 			// Arrange
-			// run-agent.ts's execute() already writes a correctly-classified
-			// failure_reason.txt for a RunAgentError before throwing — this
-			// stage's own catch-all must re-derive the same classification, not
-			// clobber it with "unclassified" (the substring checks below all
-			// miss a RunAgentError's own message).
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi
 				.fn()
 				.mockRejectedValue(new RunAgentError("quota", "rate limit exceeded"));
@@ -784,7 +812,7 @@ describe("runImplementation", () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, { labelNames: ["agent:in-progress"] });
-			mockOpenPulls(ctx, []);
+			mockOpenPulls(ctx);
 			const runner = vi.fn().mockRejectedValue(new Error("quota exceeded"));
 
 			// Act
@@ -830,7 +858,7 @@ describe("run", () => {
 		process.env.ISSUE_NUMBER = "57";
 		const ctx = buildCtx();
 		mockIssue(ctx, { subIssuesTotal: 1 });
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 
 		// Act
 		await implementRun();
@@ -845,7 +873,7 @@ describe("run", () => {
 		Reflect.deleteProperty(process.env, "ISSUE_NUMBER");
 		const ctx = buildCtx();
 		mockIssue(ctx, { subIssuesTotal: 1 });
-		mockOpenPulls(ctx, []);
+		mockOpenPulls(ctx);
 
 		// Act
 		const act = implementRun();

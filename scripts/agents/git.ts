@@ -1,4 +1,5 @@
 import type { ExecFn } from "./exec";
+import { StageError } from "./failure";
 
 /**
  * The git operations `implement.ts` (and, later, `implement-pr.ts`) needs to
@@ -7,6 +8,12 @@ import type { ExecFn } from "./exec";
  * measure"). Every function here is parameterised by an `ExecFn`, the same
  * injected-subprocess shape `run-agent.ts` uses for `spawn` — no real git
  * repository, network access, or subprocess in a test.
+ *
+ * Which is also this module's standing hazard: a stubbed `exec` will happily
+ * report success for a command real git would reject, so a test here proves the
+ * argument list is what we meant to send, never that git accepts it. Anything
+ * that turns on git's own semantics belongs in a comment citing the manual, and
+ * every argument list below is deliberately plain for that reason.
  */
 
 const MAX_SLUG_LENGTH = 50;
@@ -42,10 +49,12 @@ export function buildBranchName(issueNumber: number, title: string): string {
 }
 
 /**
- * Creates `branchName` from `origin/main`'s current tip — never from
- * whatever ref the runner happens to have checked out — and returns that
- * tip's sha, the "run's starting sha" `pushBranch` later pins its
- * `--force-with-lease` to.
+ * Creates `branchName` from `origin/main`'s current tip — never from whatever
+ * ref the runner happens to have checked out — and returns that tip's sha, the
+ * base `countCommits` measures the run's commits against. The sha, rather than
+ * the `origin/main` ref itself: the agent runs with the whole repository at its
+ * disposal, so a `git fetch` of its own during the run could move that ref and
+ * silently undercount.
  */
 export async function createBranchFromMain(
 	exec: ExecFn,
@@ -69,33 +78,38 @@ export async function countCommits(
 	return Number.parseInt(count, 10);
 }
 
-const RACE_PATTERN = /non-fast-forward|rejected|stale info/i;
+const REJECTED_PATTERN = /non-fast-forward|rejected|stale info|fetch first/i;
 
 /**
- * Pushes with `--force-with-lease` pinned to `branchHeadSha` — the sha
- * `createBranchFromMain` captured before the agent made any commits — so a
- * push that lands on top of a branch something else advanced in the
- * meantime fails loudly instead of silently overwriting it. A failure whose
- * stderr matches the race pattern is re-thrown as a specific, actionable
- * message; any other failure keeps the raw git error.
+ * Pushes the run's branch, plainly and without force of any kind. The branch
+ * was created from `origin/main` moments ago in this same run, so the only way
+ * the remote ref can already exist is a previous run of this same ticket that
+ * got further than this one — and a plain push already refuses that as a
+ * non-fast-forward, which is exactly the outcome wanted. There is nothing here
+ * a lease could protect that the absence of `--force` doesn't.
+ *
+ * (It cannot be a lease pinned to the branch's starting sha, which is what
+ * this originally did: `--force-with-lease=<ref>:<expect>` requires the remote
+ * ref to *currently equal* `<expect>`, and only an empty `<expect>` means "must
+ * not exist" — see git-push(1). On the first push of a new branch the remote
+ * ref doesn't exist, so a lease naming `origin/main`'s tip is never satisfied
+ * and every first push is rejected as `stale info`.)
+ *
+ * A rejection is thrown as a `push-race` `StageError` — classified here, at
+ * the throw site, where the evidence is; any other failure keeps the raw git
+ * error and stays unclassified.
  */
 export async function pushBranch(
 	exec: ExecFn,
 	branchName: string,
-	branchHeadSha: string,
 ): Promise<void> {
-	const lease = `refs/heads/${branchName}:${branchHeadSha}`;
-	const result = await exec("git", [
-		"push",
-		`--force-with-lease=${lease}`,
-		"origin",
-		branchName,
-	]);
+	const result = await exec("git", ["push", "origin", branchName]);
 	if (result.exitCode === 0) return;
 
-	if (RACE_PATTERN.test(result.stderr)) {
-		throw new Error(
-			`Branch ${branchName} advanced during the run — re-add dev:needed to retry.\n${result.stderr}`,
+	if (REJECTED_PATTERN.test(result.stderr)) {
+		throw new StageError(
+			"push-race",
+			`Branch ${branchName} already exists on the remote with commits this run doesn't have — a previous run of this ticket got further. Close or delete that branch, then re-add dev:needed to retry.\n${result.stderr}`,
 		);
 	}
 	throw new Error(`git push failed:\n${result.stderr || result.stdout}`);
