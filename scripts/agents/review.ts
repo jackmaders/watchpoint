@@ -1,3 +1,6 @@
+import { defaultExec, type ExecFn } from "./exec";
+import type { InlineComment, Review } from "./schemas";
+
 interface DiffState {
 	path: string;
 	rightLine: number;
@@ -46,6 +49,38 @@ export function parseDiff(diffText: string): Set<string> {
 	}
 
 	return validLines;
+}
+
+function assertCommandSucceeded(
+	command: string,
+	args: string[],
+	result: { exitCode: number; stderr: string },
+): void {
+	if (result.exitCode !== 0) {
+		throw new Error(
+			`${command} ${args.join(" ")} failed: ${result.stderr.trim() || "unknown error"}`,
+		);
+	}
+}
+
+export async function getReviewDiff(
+	exec: ExecFn = defaultExec,
+): Promise<{ diff: string; validLines: Set<string> }> {
+	const fetchArgs = ["fetch", "origin", "main"];
+	const fetchResult = await exec("git", fetchArgs);
+	assertCommandSucceeded("git", fetchArgs, fetchResult);
+
+	const mergeBaseArgs = ["merge-base", "origin/main", "HEAD"];
+	const mergeBaseResult = await exec("git", mergeBaseArgs);
+	assertCommandSucceeded("git", mergeBaseArgs, mergeBaseResult);
+	const mergeBase = mergeBaseResult.stdout.trim();
+	if (!mergeBase) throw new Error("git merge-base failed: empty merge-base");
+
+	const diffArgs = ["diff", mergeBase, "HEAD"];
+	const diffResult = await exec("git", diffArgs);
+	assertCommandSucceeded("git", diffArgs, diffResult);
+
+	return { diff: diffResult.stdout, validLines: parseDiff(diffResult.stdout) };
 }
 
 /** Finds the issue that a generated pull request claims to implement. */
@@ -105,5 +140,3 @@ export function buildReviewPayload(
 		event: changesRequested ? "REQUEST_CHANGES" : "APPROVE",
 	};
 }
-
-import type { InlineComment, Review } from "./schemas";

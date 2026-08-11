@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { ExecFn } from "../exec";
 import {
 	buildReviewBody,
 	buildReviewPayload,
+	getReviewDiff,
 	parseDiff,
 	parseOriginatingIssueNumber,
 } from "../review";
@@ -50,6 +52,62 @@ describe("parseDiff", () => {
 
 		// Assert
 		expect(lines).toEqual(new Set(["old.ts:1", "new.ts:1"]));
+	});
+});
+
+describe("getReviewDiff", () => {
+	it("fetches main, diffs from its merge-base, and returns valid comment lines", async () => {
+		// Arrange
+		const calls: Array<{ command: string; args: string[] }> = [];
+		const exec: ExecFn = async (command, args) => {
+			calls.push({ args, command });
+			if (args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			return {
+				exitCode: 0,
+				stderr: "",
+				stdout: [
+					"diff --git a/src/example.ts b/src/example.ts",
+					"--- a/src/example.ts",
+					"+++ b/src/example.ts",
+					"@@ -1,0 +1,1 @@",
+					"+export const answer = 42;",
+				].join("\n"),
+			};
+		};
+
+		// Act
+		const result = await getReviewDiff(exec);
+
+		// Assert
+		expect(calls).toEqual([
+			{ args: ["fetch", "origin", "main"], command: "git" },
+			{ args: ["merge-base", "origin/main", "HEAD"], command: "git" },
+			{ args: ["diff", "abc123", "HEAD"], command: "git" },
+		]);
+		expect(result.diff).toContain("answer = 42");
+		expect(result.validLines).toEqual(new Set(["src/example.ts:1"]));
+	});
+
+	it("throws the command error when the merge-base cannot be resolved", async () => {
+		// Arrange
+		const exec: ExecFn = async (_command, args) =>
+			args[0] === "fetch"
+				? { exitCode: 0, stderr: "", stdout: "" }
+				: {
+						exitCode: 1,
+						stderr: "fatal: no common ancestor",
+						stdout: "",
+					};
+
+		// Act
+		const result = getReviewDiff(exec);
+
+		// Assert
+		await expect(result).rejects.toThrow(
+			"git merge-base origin/main HEAD failed",
+		);
 	});
 });
 
