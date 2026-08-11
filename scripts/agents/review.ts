@@ -281,7 +281,6 @@ async function postReview(
 }
 
 async function postReviewReplies(
-	ctx: IssueContext,
 	replies: readonly Review["replies"][number][],
 	exec: ExecFn,
 ): Promise<void> {
@@ -341,6 +340,98 @@ async function markPullRequestReady(
 	assertCommandSucceeded("gh", args, result);
 }
 
+async function runReviewAgents(
+	runner: ReviewRunner,
+	initialDiff: string,
+	codingStandards: string,
+	unresolvedThreads: string,
+	specContext: string,
+): Promise<{ standards: Review; spec: Review }> {
+	const [standards, spec] = await Promise.all([
+		runReviewAxis(
+			{
+				output: OUTPUTS["review-standards"],
+				promptArgs: {
+					CODING_STANDARDS: codingStandards,
+					DIFF: initialDiff,
+					UNRESOLVED_THREADS: unresolvedThreads,
+				},
+				promptFile: REVIEW_STANDARDS_PROMPT_FILE,
+				skills: ["code-review"],
+			},
+			runner,
+		),
+		runReviewAxis(
+			{
+				output: OUTPUTS["review-spec"],
+				promptArgs: {
+					DIFF: initialDiff,
+					SPEC_CONTEXT: specContext,
+					UNRESOLVED_THREADS: unresolvedThreads,
+				},
+				promptFile: REVIEW_SPEC_PROMPT_FILE,
+				skills: ["code-review"],
+			},
+			runner,
+		),
+	]);
+	return { spec, standards };
+}
+
+async function publishReview(
+	ctx: IssueContext,
+	standards: Review,
+	spec: Review,
+	validLines: ReadonlySet<string>,
+	exec: ExecFn,
+): Promise<ReviewPayload["event"]> {
+	const standardsFiltered = filterReviewComments(
+		standards.inlineComments,
+		validLines,
+	);
+	const specFiltered = filterReviewComments(spec.inlineComments, validLines);
+	const standardsReport = {
+		...standards,
+		inlineComments: standardsFiltered.comments,
+	};
+	const specReport = { ...spec, inlineComments: specFiltered.comments };
+	const body = buildReviewBody(
+		standardsReport,
+		standardsFiltered.droppedCount,
+		specReport,
+		specFiltered.droppedCount,
+	);
+	const payload = buildReviewPayload(body, standardsReport, specReport);
+	await postReview(ctx, payload, exec);
+	await postReviewReplies([...standards.replies, ...spec.replies], exec);
+	return payload.event;
+}
+
+async function applyReviewState(
+	ctx: IssueContext,
+	labels: string[],
+	isRound2: boolean,
+	event: ReviewPayload["event"],
+	exec: ExecFn,
+): Promise<string[]> {
+	if (event === "REQUEST_CHANGES") {
+		return isRound2
+			? transitionState(ctx, labels, {
+					add: [LABELS.reviewRound2, LABELS.reviewEscalated],
+				})
+			: transitionState(ctx, labels, {
+					add: [LABELS.reviewRound1, LABELS.devNeeded],
+				});
+	}
+
+	const nextLabels = await transitionState(ctx, labels, {
+		add: [LABELS.reviewApproved],
+		remove: [LABELS.reviewRound1, LABELS.reviewRound2],
+	});
+	await markPullRequestReady(ctx, exec);
+	return nextLabels;
+}
+
 export async function runReview(
 	ctx: IssueContext,
 	runner: ReviewRunner = runAgent,
@@ -371,89 +462,31 @@ export async function runReview(
 		pullRequest.labels,
 		{ removeOnEntry: [LABELS.reviewNeeded], stageName: "Review" },
 		async (labels) => {
-			const [initialDiff, codingStandards, unresolvedThreads, specContext] =
+			const [diff, codingStandards, unresolvedThreads, specContext] =
 				await Promise.all([
 					getReviewDiff(exec),
 					Promise.resolve(readFileSync(CODING_STANDARDS_FILE, "utf-8")),
 					fetchReviewThreads(ctx),
 					fetchSpecContext(ctx, pullRequest.body, pullRequest.head.ref),
 				]);
-
-			const [standards, spec] = await Promise.all([
-				runReviewAxis(
-					{
-						output: OUTPUTS["review-standards"],
-						promptArgs: {
-							CODING_STANDARDS: codingStandards,
-							DIFF: initialDiff.diff,
-							UNRESOLVED_THREADS: unresolvedThreads,
-						},
-						promptFile: REVIEW_STANDARDS_PROMPT_FILE,
-						skills: ["code-review"],
-					},
-					runner,
-				),
-				runReviewAxis(
-					{
-						output: OUTPUTS["review-spec"],
-						promptArgs: {
-							DIFF: initialDiff.diff,
-							SPEC_CONTEXT: specContext,
-							UNRESOLVED_THREADS: unresolvedThreads,
-						},
-						promptFile: REVIEW_SPEC_PROMPT_FILE,
-						skills: ["code-review"],
-					},
-					runner,
-				),
-			]);
+			const { standards, spec } = await runReviewAgents(
+				runner,
+				diff.diff,
+				codingStandards,
+				unresolvedThreads,
+				specContext,
+			);
 
 			await commitReviewerImprovements(exec);
 			const currentDiff = await getReviewDiff(exec);
-			const standardsFiltered = filterReviewComments(
-				standards.inlineComments,
-				currentDiff.validLines,
-			);
-			const specFiltered = filterReviewComments(
-				spec.inlineComments,
-				currentDiff.validLines,
-			);
-			const standardsReport = {
-				...standards,
-				inlineComments: standardsFiltered.comments,
-			};
-			const specReport = { ...spec, inlineComments: specFiltered.comments };
-			const body = buildReviewBody(
-				standardsReport,
-				standardsFiltered.droppedCount,
-				specReport,
-				specFiltered.droppedCount,
-			);
-			const payload = buildReviewPayload(body, standardsReport, specReport);
-			await postReview(ctx, payload, exec);
-			await postReviewReplies(
+			const event = await publishReview(
 				ctx,
-				[...standards.replies, ...spec.replies],
+				standards,
+				spec,
+				currentDiff.validLines,
 				exec,
 			);
-
-			const changesRequested = payload.event === "REQUEST_CHANGES";
-			if (changesRequested) {
-				return isRound2
-					? transitionState(ctx, labels, {
-							add: [LABELS.reviewRound2, LABELS.reviewEscalated],
-						})
-					: transitionState(ctx, labels, {
-							add: [LABELS.reviewRound1, LABELS.devNeeded],
-						});
-			}
-
-			const nextLabels = await transitionState(ctx, labels, {
-				add: [LABELS.reviewApproved],
-				remove: [LABELS.reviewRound1, LABELS.reviewRound2],
-			});
-			await markPullRequestReady(ctx, exec);
-			return nextLabels;
+			return applyReviewState(ctx, labels, isRound2, event, exec);
 		},
 	);
 }

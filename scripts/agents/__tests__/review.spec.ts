@@ -6,6 +6,7 @@ import type { IssueContext } from "../github";
 import {
 	buildReviewBody,
 	buildReviewPayload,
+	commitReviewerImprovements,
 	getReviewDiff,
 	parseDiff,
 	parseOriginatingIssueNumber,
@@ -272,6 +273,40 @@ describe("runReview", () => {
 		expect(readFileSync(payloadPath as string, "utf-8")).toContain(
 			"1 posted, 1 dropped",
 		);
+	});
+});
+
+describe("commitReviewerImprovements", () => {
+	it("commits and pushes dirty reviewer changes as one conventional commit", async () => {
+		// Arrange
+		const calls: Array<{ command: string; args: string[] }> = [];
+		const exec: ExecFn = async (command, args) => {
+			calls.push({ args, command });
+			return {
+				exitCode: 0,
+				stderr: "",
+				stdout: args[0] === "status" ? " M src/review.ts\n" : "",
+			};
+		};
+
+		// Act
+		const committed = await commitReviewerImprovements(exec);
+
+		// Assert
+		expect(committed).toBe(true);
+		expect(calls).toEqual([
+			{ args: ["status", "--porcelain"], command: "git" },
+			{ args: ["add", "-A"], command: "git" },
+			{
+				args: [
+					"commit",
+					"-m",
+					"chore(review): 📝 apply automated reviewer improvements",
+				],
+				command: "git",
+			},
+			{ args: ["push", "origin", "HEAD"], command: "git" },
+		]);
 	});
 });
 
