@@ -10,7 +10,6 @@ import {
 	resolvePatOctokit,
 	transitionState,
 } from "./github";
-import { MODELS } from "./models";
 import {
 	type ObjectRunOptions,
 	type RunAgentResult,
@@ -141,7 +140,6 @@ export async function runSpecPublication(
 		async (labels) => {
 			const result = await runner({
 				expectSkill: "to-spec",
-				model: MODELS.spec,
 				output: OUTPUTS.spec,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: SPEC_PROMPT_FILE,

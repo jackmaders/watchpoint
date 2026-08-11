@@ -151,12 +151,12 @@ declaring its **blocking edges**.
 
 ### Execution skills
 
-**`/implement`** — the whole file is nine lines. Implement the spec/ticket; use `/tdd`
-at pre-agreed seams; typecheck often, single test files often, full suite once at the
-end; run `/code-review`; commit to the **current branch**. It does not create a branch,
-does not open a PR, does not close the ticket, does not tick acceptance criteria, and
-does not act on the review's findings. One invocation = one ticket; parallel runs in one
-checkout are documented as actively harmful.
+**`/implement`** — implement the spec/ticket; create or verify the dedicated branch
+before editing; use `/tdd` at pre-agreed seams; typecheck often, single test files often,
+full suite once at the end; run `/code-review`; commit each GREEN checkpoint and push
+immediately after every commit. It does not open a PR, does not close the ticket, does not
+tick acceptance criteria, and does not act on the review's findings. One invocation = one
+ticket; parallel runs in one checkout are documented as actively harmful.
 
 **`/tdd`** — red-green-refactor, one vertical slice at a time. Refuses to write a test
 at an unconfirmed seam.
@@ -865,16 +865,18 @@ and the one the free Gemini tier provably cannot carry (§3.3).
    model: "claude-opus-5", … })`. The prompt hands the agent the ticket body and comments
    (`gh issue view <n> --comments`), points it at `CONTEXT.md`, `docs/adr/`,
    `CODING_STANDARDS.md`, and instructs: use the `implement` skill, red-green-refactor at
-   existing seams, **do not improvise new seams**, run `bun run validate`, commit
-   conventionally, **do not push, do not close the issue, do not edit labels, do not
-   create PRs**, then emit `<promise>COMPLETE</promise>`.
+   existing seams, **do not improvise new seams**, run focused checks regularly, commit
+   conventionally at each GREEN checkpoint, push immediately after every commit, **do not
+   close the issue, do not edit labels, do not create PRs**, then emit
+   `<promise>COMPLETE</promise>`.
 4. Post-run assertion in code: `git rev-list --count main..HEAD` must be > 0, else fail
    with a written `failure_reason.txt`.
-5. Push; `gh pr create --draft` with `Closes #<n>` and the right
+5. Final push backstop; `gh pr create --draft` with `Closes #<n>` and the right
    `.github/PULL_REQUEST_TEMPLATE/*`; apply `review:needed` **using the PAT**.
 
-Note the division of labour: the *agent* only writes code and commits. Every GitHub
-mutation is a workflow step. That is what makes it debuggable.
+Note the division of labour: the *agent* writes code, commits, and pushes GREEN
+checkpoints. Every issue, label, and PR mutation is still a workflow step. That is what
+makes it debuggable.
 
 ### Stage 6 — Review (`review:needed`) — Gemini, max 2 rounds
 
@@ -1043,9 +1045,10 @@ timeout-minutes: 60
 
 Every design decision worth stealing is visible here:
 
-- **The agent never touches GitHub.** The implement prompt says, verbatim: *"Do not push
-  the branch. Do not close the issue. Do not edit labels. Do not create or edit PRs."*
-  The TS script writes JSON to `$OUTPUT_DIR`; workflow steps post it with `gh api`.
+- **Issue/PR mutations stay outside the agent.** The current implement prompt allows git
+  pushes for GREEN-checkpoint preservation, but still says: *"Do not close the issue. Do
+  not edit labels. Do not create or edit PRs."* The TS script writes JSON to
+  `$OUTPUT_DIR`; workflow steps post it with `gh api`.
 - **The label is consumed, not held.** Re-adding it is the retry.
 - **Failure is a written artifact.** `fail()` writes `failure_reason.txt`; the
   `failure()` step reads it into the comment. No log-diving.

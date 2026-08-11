@@ -433,7 +433,6 @@ describe("runImplementation", () => {
 			expect(runner).toHaveBeenCalledWith(
 				expect.objectContaining({
 					expectSkill: "implement",
-					model: { cli: "gemini", model: "flash" },
 					promptArgs: expect.objectContaining({
 						BRANCH_NAME: "agent/issue-57-09-implementation-agent",
 						ISSUE_NUMBER: "57",

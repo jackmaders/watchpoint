@@ -135,7 +135,7 @@ describe("dispatchPing", () => {
 		expect(octokit.rest.issues.createComment).not.toHaveBeenCalled();
 	});
 
-	it("runs the ping stage's model against the gemini CLI and posts a marked reply", async () => {
+	it("runs the ping stage through the provider-neutral runner and posts a marked reply", async () => {
 		// Arrange
 		const octokit = github.getOctokit("fake-token");
 		const ctx = {
@@ -152,9 +152,10 @@ describe("dispatchPing", () => {
 		await dispatchPing(ctx, "/ping", run);
 
 		// Assert
-		expect(run).toHaveBeenCalledWith(
-			expect.objectContaining({ model: { cli: "gemini", model: "flash" } }),
-		);
+		const options = (run.mock.calls as unknown[][])[0]?.[0] as
+			| Record<string, unknown>
+			| undefined;
+		expect(options).not.toHaveProperty("model");
 		expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
 			body: `${BOT_COMMENT_MARKER}\n🏓 pong — I'm online and ready.`,
 			issue_number: 42,

@@ -217,7 +217,6 @@ describe("runSpecPublication", () => {
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
 				expectSkill: "to-spec",
-				model: { cli: "gemini", model: "flash" },
 				promptArgs: expect.objectContaining({
 					CONVERSATION: expect.stringContaining("User Context (Issue Body):"),
 				}),

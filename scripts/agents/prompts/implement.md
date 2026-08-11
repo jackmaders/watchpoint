@@ -1,7 +1,17 @@
 Activate the `implement` skill, using `tdd` at the ticket's agreed seams — do not
-improvise new ones. You are already on the branch `{{BRANCH_NAME}}`, created fresh from
-`main`. Build the ticket below on this branch and commit your work as you go, following
-AGENTS.md's conventional commit format exactly: `<type>(<scope>): <emoji> <description>`.
+improvise new ones. Before touching implementation files, explicitly establish the dedicated
+branch `{{BRANCH_NAME}}`: verify it with `git branch --show-current` and
+`git status --short --branch`. The runner normally creates it fresh from `origin/main`; if it is
+not already present, fetch `origin/main` and create it with
+`git switch -c {{BRANCH_NAME}} origin/main`. Never work on `main` or another branch.
+
+Build the ticket on this branch and commit incrementally whenever a vertical slice reaches
+GREEN, following AGENTS.md's conventional commit format exactly:
+`<type>(<scope>): <emoji> <description>`.
+
+After every commit, immediately push it to the remote. Use
+`git push --set-upstream origin HEAD` for the first commit and `git push origin HEAD` for each
+later commit. Treat a failed push as a hard stop and do not continue with local-only commits.
 
 Read `CONTEXT.md`, `docs/adr/`, and `CODING_STANDARDS.md` in this repo first, so the
 implementation uses this project's domain vocabulary, respects any ADR in the area it
@@ -15,7 +25,7 @@ Do not report whether validation passed or how many commits you made — the wor
 measures both itself, by running `bun run validate` and counting commits with
 `git rev-list`, never by asking you.
 
-Do not push. Do not close the issue. Do not edit labels. Do not create or edit PRs.
+Do not close the issue. Do not edit labels. Do not create or edit PRs.
 
 Choose the file under `.github/PULL_REQUEST_TEMPLATE/` that best matches this change, and
 the conventional-commit type, scope, and emoji for the PR title. The workflow composes

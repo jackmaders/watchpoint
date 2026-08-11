@@ -10,7 +10,6 @@ import {
 	resolvePatOctokit,
 	transitionState,
 } from "./github";
-import { MODELS } from "./models";
 import {
 	type ObjectRunOptions,
 	type RunAgentResult,
@@ -88,7 +87,6 @@ export async function runGrillRound(
 		async (labels) => {
 			const result = await runner({
 				expectSkill: "grilling",
-				model: MODELS.grill,
 				output: OUTPUTS.grill,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: GRILL_PROMPT_FILE,

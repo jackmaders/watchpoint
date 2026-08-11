@@ -55,13 +55,14 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🌐 Install Gemini CLI
-        run: bun add -g @google/gemini-cli
+      - name: 🌐 Install Codex CLI
+        run: bun add -g @openai/codex
 
       - name: 🔧 Configure git identity
-        # The agent commits on its own branch (scripts/agents/prompts/implement.md);
-        # a workflow-run commit needs a configured identity or `git commit`
-        # itself fails before implement.ts ever gets to measure anything.
+        # The agent commits and pushes GREEN checkpoints on its own branch
+        # (scripts/agents/prompts/implement.md); a workflow-run commit needs
+        # a configured identity or `git commit` fails before implement.ts can
+        # measure anything.
         run: |
           git config --global user.name "watchpoint-agent[bot]"
           git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"
@@ -69,7 +70,10 @@ jobs:
       - name: 🧑‍💻 Implement ticket
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
+          AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          AGENT_RUN_TIMEOUT_MS: "1620000"
           # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
           # and then label it review:needed — both mutations need it, for two
           # different reasons. Opened with the default GITHUB_TOKEN above, a
@@ -81,9 +85,6 @@ jobs:
           # (spec §5.8). implement.ts itself falls back to a comment — and a
           # notice in the PR body — when this secret isn't configured.
           AGENT_PAT: ${{ secrets.AGENT_PAT }}
-          # See agent-dispatch.yml — untrusted-by-default CI runners would
-          # otherwise skip .agents/skills/ and fall back to global-only skills.
-          GEMINI_CLI_TRUST_WORKSPACE: "true"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           OUTPUT_DIR: ${{ runner.temp }}
         run: bun scripts/agents/implement.ts

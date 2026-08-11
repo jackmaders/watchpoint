@@ -1,7 +1,16 @@
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { z } from "zod";
 import { RunAgentError } from "../failure";
 import { logger } from "../logger";
@@ -15,7 +24,7 @@ vi.mock("../logger");
 // seam and real OUTPUT_DIR files — the two lower-level seams from the spec's
 // testing decisions (§6).
 
-const PING = { cli: "gemini", model: "flash" } as const;
+const PING = { model: "gpt-5.6-luna", provider: "openai" } as const;
 
 function fixturePath(...segments: string[]): string {
 	return join(import.meta.dirname, "fixtures", ...segments);
@@ -71,8 +80,30 @@ function objectOutput() {
 }
 
 describe("runAgent", () => {
+	let stdoutWrite: ReturnType<typeof vi.spyOn>;
+	let stderrWrite: ReturnType<typeof vi.spyOn>;
+
+	beforeAll(() => {
+		stdoutWrite = vi
+			.spyOn(process.stdout, "write")
+			.mockImplementation(() => true);
+		stderrWrite = vi
+			.spyOn(process.stderr, "write")
+			.mockImplementation(() => true);
+	});
+
+	afterAll(() => {
+		stdoutWrite.mockRestore();
+		stderrWrite.mockRestore();
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.stubEnv("OPENAI_API_KEY", "test-key");
+	});
+
+	afterEach(() => {
+		vi.unstubAllEnvs();
 	});
 
 	describe("default spawn", () => {
@@ -110,20 +141,123 @@ describe("runAgent", () => {
 			// Assert
 			expect(bunSpawn).toHaveBeenCalledWith(
 				[
-					"gemini",
-					"--approval-mode",
-					"yolo",
-					"--output-format",
-					"stream-json",
+					"codex",
+					"exec",
+					"--json",
 					"-m",
-					"flash",
-					"-p",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
 					"-",
 				],
-				{ stderr: "pipe", stdin: "pipe", stdout: "pipe" },
+				{
+					env: expect.objectContaining({ OPENAI_API_KEY: "test-key" }),
+					stderr: "pipe",
+					stdin: "pipe",
+					stdout: "pipe",
+				},
 			);
 			expect(result.output).toBe("🏓 pong — I'm online and ready.");
 		});
+	});
+
+	it("resolves the active model and provider from the environment when model is omitted", async () => {
+		// Arrange
+		vi.stubEnv("AGENT_MODEL", "gpt-5.6-terra");
+		vi.stubEnv("AGENT_PROVIDER", "openai");
+		const fixture = readFixture("ping.jsonl");
+		const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
+		const spawn = vi.fn().mockReturnValue(proc);
+
+		// Act
+		await runAgent({
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		expect(spawn).toHaveBeenCalledWith(
+			"codex",
+			[
+				"exec",
+				"--json",
+				"-m",
+				"gpt-5.6-terra",
+				"-c",
+				'model_provider="openai"',
+				"-",
+			],
+			expect.objectContaining({ env: expect.any(Object) }),
+		);
+	});
+
+	it("rejects a missing provider key before spawning Codex", async () => {
+		// Arrange
+		vi.stubEnv("OPENAI_API_KEY", "");
+		vi.stubEnv("AGENT_API_KEY", "");
+		vi.stubEnv("LLM_API_KEY", "");
+		const spawn = vi.fn();
+
+		// Act
+		const act = runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		await expect(act).rejects.toThrow(/OPENAI_API_KEY/);
+		expect(spawn).not.toHaveBeenCalled();
+	});
+
+	it("rejects an invalid configured total timeout before spawning Codex", async () => {
+		// Arrange
+		vi.stubEnv("AGENT_RUN_TIMEOUT_MS", "0");
+		const spawn = vi.fn();
+
+		// Act
+		const act = runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		await expect(act).rejects.toThrow(/AGENT_RUN_TIMEOUT_MS/);
+		expect(spawn).not.toHaveBeenCalled();
+	});
+
+	it("passes a global fallback as the selected provider key only", async () => {
+		// Arrange
+		vi.stubEnv("OPENAI_API_KEY", "");
+		vi.stubEnv("AGENT_API_KEY", "agent-key");
+		vi.stubEnv("ANTHROPIC_API_KEY", "unrelated-key");
+		const fixture = readFixture("ping.jsonl");
+		const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
+		const spawn = vi.fn().mockReturnValue(proc);
+
+		// Act
+		await runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		const options = (spawn.mock.calls as unknown[][])[0]?.[2] as
+			| { env: Record<string, string | undefined> }
+			| undefined;
+		expect(options?.env).toMatchObject({ OPENAI_API_KEY: "agent-key" });
+		expect(options?.env).not.toHaveProperty("AGENT_API_KEY");
+		expect(options?.env).not.toHaveProperty("ANTHROPIC_API_KEY");
 	});
 
 	describe("prose output", () => {
@@ -145,16 +279,19 @@ describe("runAgent", () => {
 			});
 
 			// Assert
-			expect(spawn).toHaveBeenCalledWith("gemini", [
-				"--approval-mode",
-				"yolo",
-				"--output-format",
-				"stream-json",
-				"-m",
-				"flash",
-				"-p",
-				"-",
-			]);
+			expect(spawn).toHaveBeenCalledWith(
+				"codex",
+				[
+					"exec",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
+					"-",
+				],
+				expect.objectContaining({ env: expect.any(Object) }),
+			);
 			expect(write).toHaveBeenCalledWith(
 				"Reply with a short, friendly pong to confirm you're online.\n",
 			);
@@ -320,18 +457,22 @@ describe("runAgent", () => {
 			// Assert
 			expect(result.output).toEqual({ ok: true });
 			expect(spawn).toHaveBeenCalledTimes(2);
-			expect(spawn).toHaveBeenNthCalledWith(2, "gemini", [
-				"--approval-mode",
-				"yolo",
-				"--output-format",
-				"stream-json",
-				"-m",
-				"flash",
-				"--resume",
-				"sess_retry_001",
-				"-p",
-				"-",
-			]);
+			expect(spawn).toHaveBeenNthCalledWith(
+				2,
+				"codex",
+				[
+					"exec",
+					"resume",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
+					"sess_retry_001",
+					"-",
+				],
+				expect.objectContaining({ env: expect.any(Object) }),
+			);
 		});
 
 		it("sends only the validation error as the retry prompt, not the original prompt", async () => {
@@ -533,7 +674,7 @@ describe("runAgent", () => {
 			// Arrange
 			const { proc } = createFakeProcess({
 				exitCode: 2,
-				stderrChunks: ["usage: gemini [options]"],
+				stderrChunks: ["usage: codex [options]"],
 			});
 			const spawn = vi.fn().mockReturnValue(proc);
 
@@ -630,9 +771,9 @@ describe("runAgent", () => {
 			// Assert
 			const usage = readFileSync(join(outputDir, "usage.jsonl"), "utf-8");
 			expect(JSON.parse(usage.trim())).toMatchObject({
-				cli: "gemini",
+				cli: "codex",
 				inputTokens: 40,
-				model: "flash",
+				model: "gpt-5.6-luna",
 				outputTokens: 20,
 				requests: 1,
 			});
@@ -664,6 +805,38 @@ describe("runAgent", () => {
 			expect(failureReason).toContain("turn-limit");
 		});
 
+		it("classifies a process timeout and writes its failure artifact", async () => {
+			// Arrange
+			vi.stubEnv("AGENT_RUN_TIMEOUT_MS", "5");
+			const neverSettles = new Promise<number>(() => undefined);
+			const pendingStream = new ReadableStream<Uint8Array>({
+				start() {},
+			});
+			const spawn = vi.fn().mockReturnValue({
+				exited: neverSettles,
+				kill: vi.fn(),
+				stderr: pendingStream,
+				stdin: { end: vi.fn(), write: vi.fn() },
+				stdout: new ReadableStream<Uint8Array>({ start() {} }),
+			});
+
+			// Act
+			const act = runAgent({
+				maxRetries: 0,
+				model: PING,
+				output: { kind: "prose" },
+				promptArgs: {},
+				promptFile: fixturePath("prompts", "prose.md"),
+				spawn,
+			});
+
+			// Assert
+			await expect(act).rejects.toMatchObject({ failureClass: "timeout" });
+			expect(
+				readFileSync(join(outputDir, "failure_reason.txt"), "utf-8"),
+			).toContain("timeout");
+		});
+
 		it("still appends usage, but writes no failure_reason.txt, for an unclassified failure", async () => {
 			// Arrange
 			// Usage is logged on every run; failure_reason.txt is deliberately
@@ -688,7 +861,7 @@ describe("runAgent", () => {
 			// Assert
 			const usage = readFileSync(join(outputDir, "usage.jsonl"), "utf-8");
 			expect(JSON.parse(usage.trim())).toMatchObject({
-				cli: "gemini",
+				cli: "codex",
 				requests: 1,
 			});
 			expect(() =>

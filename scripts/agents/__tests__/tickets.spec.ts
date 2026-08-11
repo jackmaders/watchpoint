@@ -330,7 +330,6 @@ describe("runTicketsProposal", () => {
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
 				expectSkill: "to-tickets",
-				model: { cli: "gemini", model: "flash" },
 			}),
 		);
 	});

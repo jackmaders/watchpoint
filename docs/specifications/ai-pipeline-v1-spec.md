@@ -246,7 +246,8 @@ Responsibilities, in order:
 6. Extract the `<tag>…</tag>` payload, parse, validate against the schema. On failure,
    **resume the same session** (`--resume <sessionId>`) with only the validation error as
    the new prompt, up to `maxRetries`. Resuming rather than re-invoking means the retry
-   costs one request instead of re-running the whole task.
+   costs one request instead of re-running the whole task. All attempts share one
+   `AGENT_RUN_TIMEOUT_MS` budget, leaving the workflow's remaining time for cleanup.
 7. Classify failure and write `$OUTPUT_DIR/failure_reason.txt`:
 
 | Condition | Classification | Workflow response |
@@ -257,6 +258,7 @@ Responsibilities, in order:
 | Exit `42` | `bad-input` | fail loudly — a prompt bug |
 | Schema invalid after retries | `bad-output` | `agent:blocked` + the validation error |
 | Expected skill never activated | `skill-miss` | `agent:blocked` + which skill was expected |
+| Process or total run deadline exhausted | `timeout` | `agent:blocked` + the timeout artifact |
 
 8. Append a usage line to `$OUTPUT_DIR/usage.jsonl` on every run.
 
@@ -430,10 +432,12 @@ One file per stage: `grill.md`, `spec.md`, `tickets.md`, `implement.md`,
 - names its skill explicitly;
 - points at `CONTEXT.md`, `docs/adr/`, `CODING_STANDARDS.md`;
 - states the completion signal;
-- and carries the standing prohibition, verbatim from Sandcastle's own prompts:
-  **"Do not push. Do not close the issue. Do not edit labels. Do not create or edit PRs."**
+- and carries the standing prohibition for issue/PR side effects:
+  **"Do not close the issue. Do not edit labels. Do not create or edit PRs."**
 
-The agent writes code and text. The workflow performs every GitHub mutation.
+The implement agent writes code, creates or verifies its dedicated branch, commits GREEN
+checkpoints, and pushes immediately after each commit. The workflow performs every issue,
+label, and PR mutation.
 
 ### 5.6 Labels
 

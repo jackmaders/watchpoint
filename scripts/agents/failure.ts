@@ -1,5 +1,5 @@
 /**
- * The five ways a run can fail (spec §5.3's table). Success is the *absence* of
+ * The six ways a run can fail (spec §5.3's table). Success is the *absence* of
  * a `FailureClass`, never a member of it: `failure_reason.txt` exists only for
  * a failure, so a class meaning "fine" would tell a workflow the opposite of
  * the truth.
@@ -9,7 +9,8 @@ export type FailureClass =
 	| "turn-limit"
 	| "bad-input"
 	| "bad-output"
-	| "skill-miss";
+	| "skill-miss"
+	| "timeout";
 
 /** The subset an exit code on its own is evidence for. */
 export type ExitFailure = Extract<
