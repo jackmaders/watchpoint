@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { describe, expect, it, vi } from "vitest";
 import type { ExecFn } from "../exec";
+import { RunAgentError } from "../failure";
+import type { IssueContext } from "../github";
 import {
 	buildReviewBody,
 	buildReviewPayload,
 	getReviewDiff,
 	parseDiff,
 	parseOriginatingIssueNumber,
+	runReview,
+	runReviewAxis,
 } from "../review";
-import type { Review } from "../schemas";
+import type { ObjectRunOptions, RunAgentResult } from "../run-agent";
+import { OUTPUTS, type Review } from "../schemas";
 
 describe("parseDiff", () => {
 	it("maps right-side context and added lines to their file paths", () => {
@@ -111,6 +117,164 @@ describe("getReviewDiff", () => {
 	});
 });
 
+describe("runReviewAxis", () => {
+	it("retries a quota failure once with the configured fallback model", async () => {
+		// Arrange
+		const calls: ObjectRunOptions<Review>[] = [];
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Reviewed.",
+			verdict: "approved",
+		};
+		const result = { output } as RunAgentResult<Review>;
+		const runner = async (
+			options: ObjectRunOptions<Review>,
+		): Promise<RunAgentResult<Review>> => {
+			calls.push(options);
+			if (calls.length === 1) {
+				throw new RunAgentError("quota", "rate limit reached");
+			}
+			return result;
+		};
+		const options: ObjectRunOptions<Review> = {
+			output: OUTPUTS["review-standards"],
+			promptArgs: {},
+			promptFile: "review.md",
+		};
+
+		// Act
+		const review = await runReviewAxis(options, runner);
+
+		// Assert
+		expect(review).toBe(output);
+		expect(calls).toHaveLength(2);
+		expect(calls[1].model).toEqual({
+			model: "gpt-5.4",
+			provider: "openai",
+		});
+	});
+
+	it("does not retry non-quota failures", async () => {
+		// Arrange
+		const runner = async (): Promise<RunAgentResult<Review>> => {
+			throw new RunAgentError("timeout", "timed out");
+		};
+		const options: ObjectRunOptions<Review> = {
+			output: OUTPUTS["review-spec"],
+			promptArgs: {},
+			promptFile: "review.md",
+		};
+
+		// Act
+		const result = runReviewAxis(options, runner);
+
+		// Assert
+		await expect(result).rejects.toThrow("timed out");
+	});
+});
+
+describe("runReview", () => {
+	it("runs both axes, filters comments, and posts one side-by-side review", async () => {
+		// Arrange
+		const runnerCalls: ObjectRunOptions<Review>[] = [];
+		const execCalls: Array<{ command: string; args: string[] }> = [];
+		const output: Review = {
+			inlineComments: [
+				{ body: "Valid finding.", line: 1, path: "src/example.ts" },
+				{ body: "Dropped finding.", line: 99, path: "src/example.ts" },
+			],
+			replies: [],
+			summary: "Reviewed independently.",
+			verdict: "approved",
+		};
+		const runner = async (
+			options: ObjectRunOptions<Review>,
+		): Promise<RunAgentResult<Review>> => {
+			runnerCalls.push(options);
+			return { output } as RunAgentResult<Review>;
+		};
+		const exec: ExecFn = async (command, args) => {
+			execCalls.push({ args, command });
+			if (command === "git" && args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			if (command === "git" && args[0] === "diff") {
+				return {
+					exitCode: 0,
+					stderr: "",
+					stdout: [
+						"diff --git a/src/example.ts b/src/example.ts",
+						"--- a/src/example.ts",
+						"+++ b/src/example.ts",
+						"@@ -1,0 +1,1 @@",
+						"+export const answer = 42;",
+					].join("\n"),
+				};
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const ctx = {
+			issueNumber: 42,
+			octokit: {
+				rest: {
+					issues: {
+						addLabels: vi.fn().mockResolvedValue({}),
+						createComment: vi.fn().mockResolvedValue({}),
+						removeLabel: vi.fn().mockResolvedValue({}),
+					},
+					pulls: {
+						get: vi.fn().mockResolvedValue({
+							data: {
+								body: "No issue link.",
+								head: { ref: "feature/review" },
+								labels: [],
+							},
+						}),
+						listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
+					},
+				},
+			},
+			owner: "jackmaders",
+			repo: "watchpoint",
+		} as unknown as IssueContext;
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls).toHaveLength(2);
+		expect(runnerCalls.map((call) => call.output)).toEqual([
+			OUTPUTS["review-standards"],
+			OUTPUTS["review-spec"],
+		]);
+		expect(
+			runnerCalls.every((call) => call.skills?.includes("code-review")),
+		).toBe(true);
+		expect(execCalls).toContainEqual({
+			args: expect.arrayContaining([
+				"api",
+				"--method",
+				"POST",
+				"repos/{owner}/{repo}/pulls/42/reviews",
+			]),
+			command: "gh",
+		});
+		expect(execCalls).toContainEqual({
+			args: ["pr", "ready", "42", "--repo", "jackmaders/watchpoint"],
+			command: "gh",
+		});
+		const payloadCall = execCalls.find((call) =>
+			call.args.includes("repos/{owner}/{repo}/pulls/42/reviews"),
+		);
+		const payloadPath = payloadCall?.args.at(-1);
+		expect(payloadPath).toBeDefined();
+		expect(readFileSync(payloadPath as string, "utf-8")).toContain(
+			"1 posted, 1 dropped",
+		);
+	});
+});
+
 describe("parseOriginatingIssueNumber", () => {
 	it("prefers a closing issue reference in the pull request body", () => {
 		// Arrange
@@ -181,9 +345,10 @@ describe("review composition", () => {
 		const spec = review({ verdict: "changes-requested" });
 
 		// Act
-		const payload = buildReviewPayload(standards, spec, [], []);
+		const payload = buildReviewPayload("Review body.", standards, spec);
 
 		// Assert
 		expect(payload.event).toBe("REQUEST_CHANGES");
+		expect(payload.body).toBe("Review body.");
 	});
 });
