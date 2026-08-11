@@ -99,7 +99,6 @@ describe("runGrillRound", () => {
 		expect(runner).toHaveBeenCalledWith(
 			expect.objectContaining({
 				expectSkill: "grilling",
-				model: { cli: "gemini", model: "flash" },
 				promptArgs: expect.objectContaining({
 					CONVERSATION: expect.stringContaining("User Context (Issue Body):"),
 				}),

@@ -21,7 +21,6 @@ import {
 	resolvePatOctokit,
 	transitionState,
 } from "./github";
-import { MODELS } from "./models";
 import {
 	type ObjectRunOptions,
 	type RunAgentResult,
@@ -301,7 +300,6 @@ export async function runImplementation(
 
 			const result = await runner({
 				expectSkill: "implement",
-				model: MODELS.implement,
 				output: OUTPUTS.implement,
 				promptArgs: {
 					BRANCH_NAME: branchName,

@@ -28,7 +28,7 @@ jobs:
     # guard is needed here beyond the label name itself.
     if: github.event.label.name == 'dev:needed'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - name: 🛒 Checkout
@@ -55,8 +55,8 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🌐 Install Gemini CLI
-        run: bun add -g @google/gemini-cli
+      - name: 🌐 Install Codex CLI
+        run: bun add -g @openai/codex
 
       - name: 🔧 Configure git identity
         # The agent commits on its own branch (scripts/agents/prompts/implement.md);
@@ -69,6 +69,11 @@ jobs:
       - name: 🧑‍💻 Implement ticket
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
+          AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
           # and then label it review:needed — both mutations need it, for two
@@ -81,9 +86,6 @@ jobs:
           # (spec §5.8). implement.ts itself falls back to a comment — and a
           # notice in the PR body — when this secret isn't configured.
           AGENT_PAT: ${{ secrets.AGENT_PAT }}
-          # See agent-dispatch.yml — untrusted-by-default CI runners would
-          # otherwise skip .agents/skills/ and fall back to global-only skills.
-          GEMINI_CLI_TRUST_WORKSPACE: "true"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           OUTPUT_DIR: ${{ runner.temp }}
         run: bun scripts/agents/implement.ts

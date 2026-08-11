@@ -6,7 +6,14 @@ import {
 } from "./artifacts";
 import { classifyExit, type FailureClass, RunAgentError } from "./failure";
 import { logger } from "./logger";
-import type { ModelConfig } from "./models";
+import {
+	CODEX_CLI,
+	getModelConfig,
+	type ModelConfig,
+	missingApiKeyMessage,
+	resolveApiKey,
+	validateModelConfig,
+} from "./models";
 import {
 	DEFAULT_COMPLETION_SIGNAL,
 	type ObjectOutput,
@@ -32,8 +39,8 @@ import {
 export const DEFAULT_MAX_RETRIES = 2;
 
 interface BaseRunOptions {
-	/** The stage's entry from `models.ts` — the single place a CLI and model are named. */
-	model: ModelConfig;
+	/** Optional override; omitted runs use the active environment configuration. */
+	model?: ModelConfig;
 	/** Path to the prompt template on disk; `{{KEY}}` placeholders come from `promptArgs`. */
 	promptFile: string;
 	promptArgs: Record<string, string>;
@@ -120,22 +127,6 @@ function record(transcript: Transcript, attempt: ProcessResult): Transcript {
 	};
 }
 
-/** The first attempt starts fresh; every retry resumes the prior session (spec §5.3, step 6). */
-function commandArgs(model: string, resumeSessionId?: string): string[] {
-	const resume = resumeSessionId ? ["--resume", resumeSessionId] : [];
-	return [
-		"--approval-mode",
-		"yolo",
-		"--output-format",
-		"stream-json",
-		"-m",
-		model,
-		...resume,
-		"-p",
-		"-",
-	];
-}
-
 interface Attempts<T> {
 	outcome: Outcome<T>;
 	transcript: Transcript;
@@ -161,7 +152,7 @@ function judgeAttempt<T>(
 	result: ProcessResult,
 	attempt: number,
 ): Verdict<T> {
-	const { cli } = request.model;
+	const cli = CODEX_CLI;
 
 	if (result.exitCode !== 0) {
 		const classified = classifyExit(result.exitCode, result.stderr);
@@ -209,7 +200,6 @@ function judgeAttempt<T>(
  * `execute`.
  */
 async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
-	const { cli, model } = request.model;
 	let transcript = EMPTY_TRANSCRIPT;
 	let prompt = request.prompt;
 
@@ -217,9 +207,9 @@ async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
 		const resumeSessionId = attempt === 0 ? undefined : transcript.sessionId;
 		const result = await runProcess(
 			request.spawn,
-			cli,
-			commandArgs(model, resumeSessionId),
+			request.model,
 			prompt,
+			resumeSessionId,
 		);
 		transcript = record(transcript, result);
 
@@ -267,7 +257,7 @@ function writeArtifacts<T>(
 
 	appendUsage(dir, {
 		...usage,
-		cli: request.model.cli,
+		cli: CODEX_CLI,
 		model: request.model.model,
 		requests: transcript.requests,
 	});
@@ -300,11 +290,15 @@ function requestFor<T>(
 	prompt: string,
 	validate: (text: string) => ValidationResult<T>,
 ): RunRequest<T> {
+	const model = validateModelConfig(options.model ?? getModelConfig());
+	if (!resolveApiKey(model.provider)) {
+		throw new Error(missingApiKeyMessage(model.provider));
+	}
 	return {
 		completionSignal: options.completionSignal ?? DEFAULT_COMPLETION_SIGNAL,
 		expectSkill: options.expectSkill,
 		maxRetries: options.maxRetries ?? DEFAULT_MAX_RETRIES,
-		model: options.model,
+		model,
 		prompt,
 		spawn: options.spawn ?? defaultSpawn,
 		validate,
@@ -325,7 +319,7 @@ export function runAgent(
 export function runAgent<T>(
 	options: ObjectRunOptions<T>,
 ): Promise<RunAgentResult<T>>;
-export function runAgent<T>(
+export async function runAgent<T>(
 	options: ProseRunOptions | ObjectRunOptions<T>,
 ): Promise<RunAgentResult<T | string>> {
 	const output = options.output;

@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { MODELS } from "../models";
+import { ALLOWED_MODELS, PROVIDERS } from "../models";
 import {
 	buildPullRequestTitle,
 	CONVENTIONAL_COMMIT_TYPES,
@@ -648,24 +648,27 @@ describe("PR_TEMPLATE_NAMES", () => {
 	});
 });
 
-describe("OUTPUTS registry completeness", () => {
+describe("model registry completeness", () => {
+	it("has at least one configured provider and model", () => {
+		// Arrange
+		// Act
+		const providers = Object.keys(ALLOWED_MODELS);
+
+		// Assert
+		expect(providers).toEqual([...PROVIDERS]);
+		expect(providers.length).toBeGreaterThan(0);
+	});
+
+	it.each([...PROVIDERS])("provider %s has at least one model", (provider) => {
+		// Arrange
+		// Act
+		const models = ALLOWED_MODELS[provider];
+
+		// Assert
+		expect(models.length).toBeGreaterThan(0);
+	});
+
 	const stages = Object.keys(OUTPUTS) as (keyof typeof OUTPUTS)[];
-
-	it("has at least one stage", () => {
-		// Arrange
-		// Act
-		// Assert
-		expect(stages.length).toBeGreaterThan(0);
-	});
-
-	it.each(stages)("stage %s has a models.ts entry", (stage) => {
-		// Arrange
-		// Act
-		const entry = MODELS[stage];
-
-		// Assert
-		expect(entry).toBeDefined();
-	});
 
 	it.each(stages)("stage %s has a prompt file on disk", (stage) => {
 		// Arrange

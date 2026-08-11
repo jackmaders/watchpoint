@@ -1,7 +1,16 @@
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { z } from "zod";
 import { RunAgentError } from "../failure";
 import { logger } from "../logger";
@@ -15,7 +24,7 @@ vi.mock("../logger");
 // seam and real OUTPUT_DIR files — the two lower-level seams from the spec's
 // testing decisions (§6).
 
-const PING = { cli: "gemini", model: "flash" } as const;
+const PING = { model: "gpt-5.6-luna", provider: "openai" } as const;
 
 function fixturePath(...segments: string[]): string {
 	return join(import.meta.dirname, "fixtures", ...segments);
@@ -71,8 +80,30 @@ function objectOutput() {
 }
 
 describe("runAgent", () => {
+	let stdoutWrite: ReturnType<typeof vi.spyOn>;
+	let stderrWrite: ReturnType<typeof vi.spyOn>;
+
+	beforeAll(() => {
+		stdoutWrite = vi
+			.spyOn(process.stdout, "write")
+			.mockImplementation(() => true);
+		stderrWrite = vi
+			.spyOn(process.stderr, "write")
+			.mockImplementation(() => true);
+	});
+
+	afterAll(() => {
+		stdoutWrite.mockRestore();
+		stderrWrite.mockRestore();
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.stubEnv("OPENAI_API_KEY", "test-key");
+	});
+
+	afterEach(() => {
+		vi.unstubAllEnvs();
 	});
 
 	describe("default spawn", () => {
@@ -110,20 +141,68 @@ describe("runAgent", () => {
 			// Assert
 			expect(bunSpawn).toHaveBeenCalledWith(
 				[
-					"gemini",
-					"--approval-mode",
-					"yolo",
-					"--output-format",
-					"stream-json",
+					"codex",
+					"exec",
+					"--json",
 					"-m",
-					"flash",
-					"-p",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
 					"-",
 				],
 				{ stderr: "pipe", stdin: "pipe", stdout: "pipe" },
 			);
 			expect(result.output).toBe("🏓 pong — I'm online and ready.");
 		});
+	});
+
+	it("resolves the active model and provider from the environment when model is omitted", async () => {
+		// Arrange
+		vi.stubEnv("AGENT_MODEL", "gpt-5.6-terra");
+		vi.stubEnv("AGENT_PROVIDER", "openai");
+		const fixture = readFixture("ping.jsonl");
+		const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
+		const spawn = vi.fn().mockReturnValue(proc);
+
+		// Act
+		await runAgent({
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		expect(spawn).toHaveBeenCalledWith("codex", [
+			"exec",
+			"--json",
+			"-m",
+			"gpt-5.6-terra",
+			"-c",
+			'model_provider="openai"',
+			"-",
+		]);
+	});
+
+	it("rejects a missing provider key before spawning Codex", async () => {
+		// Arrange
+		vi.stubEnv("OPENAI_API_KEY", "");
+		vi.stubEnv("AGENT_API_KEY", "");
+		vi.stubEnv("LLM_API_KEY", "");
+		const spawn = vi.fn();
+
+		// Act
+		const act = runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		await expect(act).rejects.toThrow(/OPENAI_API_KEY/);
+		expect(spawn).not.toHaveBeenCalled();
 	});
 
 	describe("prose output", () => {
@@ -145,14 +224,13 @@ describe("runAgent", () => {
 			});
 
 			// Assert
-			expect(spawn).toHaveBeenCalledWith("gemini", [
-				"--approval-mode",
-				"yolo",
-				"--output-format",
-				"stream-json",
+			expect(spawn).toHaveBeenCalledWith("codex", [
+				"exec",
+				"--json",
 				"-m",
-				"flash",
-				"-p",
+				"gpt-5.6-luna",
+				"-c",
+				'model_provider="openai"',
 				"-",
 			]);
 			expect(write).toHaveBeenCalledWith(
@@ -320,16 +398,15 @@ describe("runAgent", () => {
 			// Assert
 			expect(result.output).toEqual({ ok: true });
 			expect(spawn).toHaveBeenCalledTimes(2);
-			expect(spawn).toHaveBeenNthCalledWith(2, "gemini", [
-				"--approval-mode",
-				"yolo",
-				"--output-format",
-				"stream-json",
+			expect(spawn).toHaveBeenNthCalledWith(2, "codex", [
+				"exec",
+				"resume",
+				"--json",
 				"-m",
-				"flash",
-				"--resume",
+				"gpt-5.6-luna",
+				"-c",
+				'model_provider="openai"',
 				"sess_retry_001",
-				"-p",
 				"-",
 			]);
 		});
@@ -533,7 +610,7 @@ describe("runAgent", () => {
 			// Arrange
 			const { proc } = createFakeProcess({
 				exitCode: 2,
-				stderrChunks: ["usage: gemini [options]"],
+				stderrChunks: ["usage: codex [options]"],
 			});
 			const spawn = vi.fn().mockReturnValue(proc);
 
@@ -630,9 +707,9 @@ describe("runAgent", () => {
 			// Assert
 			const usage = readFileSync(join(outputDir, "usage.jsonl"), "utf-8");
 			expect(JSON.parse(usage.trim())).toMatchObject({
-				cli: "gemini",
+				cli: "codex",
 				inputTokens: 40,
-				model: "flash",
+				model: "gpt-5.6-luna",
 				outputTokens: 20,
 				requests: 1,
 			});
@@ -688,7 +765,7 @@ describe("runAgent", () => {
 			// Assert
 			const usage = readFileSync(join(outputDir, "usage.jsonl"), "utf-8");
 			expect(JSON.parse(usage.trim())).toMatchObject({
-				cli: "gemini",
+				cli: "codex",
 				requests: 1,
 			});
 			expect(() =>

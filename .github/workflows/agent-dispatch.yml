@@ -32,7 +32,7 @@ jobs:
       github.event.issue.pull_request == null &&
       !contains(github.event.comment.body, '<!-- bot-comment -->')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - name: 🛒 Checkout
@@ -54,18 +54,18 @@ jobs:
       - name: 📦 Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🌐 Install Gemini CLI
-        run: bun add -g @google/gemini-cli
+      - name: 🌐 Install Codex CLI
+        run: bun add -g @openai/codex
 
       - name: 🤖 Dispatch command
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
+          AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          # CI runners are ephemeral and start untrusted every run, so the
-          # Gemini CLI's workspace-trust check would otherwise silently skip
-          # loading .agents/skills/ and fall back to global-only skills
-          # (.agents/skills/UPSTREAM.md). Trust the checkout for this run.
-          GEMINI_CLI_TRUST_WORKSPACE: "true"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: bun scripts/agents/dispatch.ts

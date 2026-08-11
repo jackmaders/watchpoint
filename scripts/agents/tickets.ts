@@ -10,7 +10,6 @@ import {
 	resolvePatOctokit,
 	transitionState,
 } from "./github";
-import { MODELS } from "./models";
 import {
 	type ObjectRunOptions,
 	type RunAgentResult,
@@ -191,7 +190,6 @@ export async function runTicketsProposal(
 		async (labels) => {
 			const result = await runner({
 				expectSkill: "to-tickets",
-				model: MODELS.tickets,
 				output: OUTPUTS.tickets,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: TICKETS_PROMPT_FILE,
