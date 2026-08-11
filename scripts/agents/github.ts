@@ -29,6 +29,7 @@ export const LABELS = {
 	grillNeeded: "grill:needed",
 	needsInfo: "needs-info",
 	readyForAgent: "ready-for-agent",
+	reviewNeeded: "review:needed",
 	specNeeded: "spec:needed",
 	specReady: "spec:ready",
 	ticketsNeeded: "tickets:needed",

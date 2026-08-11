@@ -59,6 +59,12 @@ export const mockOctokit = {
 			updateMilestone: vi.fn().mockResolvedValue({}),
 		},
 		pulls: {
+			create: vi.fn().mockResolvedValue({
+				data: {
+					number: 101,
+					title: "Mock PR",
+				},
+			}),
 			createReview: vi.fn().mockResolvedValue({}),
 			get: vi.fn().mockResolvedValue({
 				data: {
@@ -70,6 +76,7 @@ export const mockOctokit = {
 					title: "feat(auth): 🔑 setup auth component",
 				},
 			}),
+			list: vi.fn().mockResolvedValue({ data: [] }),
 			listComments: vi.fn().mockResolvedValue({ data: [] }),
 			listFiles: vi.fn().mockResolvedValue({
 				data: [
