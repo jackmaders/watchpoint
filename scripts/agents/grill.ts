@@ -86,10 +86,10 @@ export async function runGrillRound(
 		{ removeOnEntry: [LABELS.grillNeeded], stageName: "Grill" },
 		async (labels) => {
 			const result = await runner({
-				expectSkill: "grilling",
 				output: OUTPUTS.grill,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: GRILL_PROMPT_FILE,
+				skills: ["grilling"],
 			});
 
 			await postBotComment(ctx, result.output.roundMarkdown);

@@ -1,6 +1,7 @@
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { logger } from "../logger";
-import { substitutePromptArgs } from "../prompt";
+import { buildPrompt, substitutePromptArgs } from "../prompt";
 
 vi.mock("../logger");
 
@@ -67,5 +68,24 @@ describe("substitutePromptArgs", () => {
 
 		// Assert
 		expect(result).toBe("Issue text: here's a command: `rm -rf /`");
+	});
+});
+
+describe("buildPrompt", () => {
+	it("prepends workflow-selected skill instructions before the stage prompt", () => {
+		// Arrange
+		const promptFile = join(
+			import.meta.dirname,
+			"fixtures",
+			"prompts",
+			"prose.md",
+		);
+
+		// Act
+		const prompt = buildPrompt(promptFile, {}, undefined, ["implement"]);
+
+		// Assert
+		expect(prompt).toContain("## Git safety and branch setup");
+		expect(prompt).toContain("Reply with a short, friendly pong");
 	});
 });

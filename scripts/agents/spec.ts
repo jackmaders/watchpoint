@@ -139,10 +139,10 @@ export async function runSpecPublication(
 		{ removeOnEntry: [LABELS.specNeeded], stageName: "Spec" },
 		async (labels) => {
 			const result = await runner({
-				expectSkill: "to-spec",
 				output: OUTPUTS.spec,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: SPEC_PROMPT_FILE,
+				skills: ["to-spec"],
 			});
 
 			await ctx.octokit.rest.issues.update({

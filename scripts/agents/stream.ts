@@ -259,6 +259,8 @@ export interface ProcessResult {
 }
 
 export const DEFAULT_PROCESS_TIMEOUT_MS = 600_000;
+/** CI-only opt-in for externally sandboxed GitHub-hosted runners. */
+export const CODEX_BYPASS_SANDBOX_ENV = "AGENT_CODEX_BYPASS_SANDBOX";
 
 /**
  * Construct the Codex invocation for a supported OpenAI model.
@@ -269,6 +271,7 @@ export const DEFAULT_PROCESS_TIMEOUT_MS = 600_000;
 export function buildCodexArgs(
 	modelConfig: ModelConfig,
 	resumeSessionId?: string,
+	bypassSandbox = false,
 ): string[] {
 	const resume = resumeSessionId ? ["resume"] : [];
 	const session = resumeSessionId ? [resumeSessionId] : [];
@@ -278,6 +281,7 @@ export function buildCodexArgs(
 		"--json",
 		"-m",
 		modelConfig.model,
+		...(bypassSandbox ? ["--dangerously-bypass-approvals-and-sandbox"] : []),
 		...session,
 		"-",
 	];
@@ -300,7 +304,11 @@ export async function runProcess(
 	timeoutMs = DEFAULT_PROCESS_TIMEOUT_MS,
 	environment?: Record<string, string | undefined>,
 ): Promise<ProcessResult> {
-	const args = buildCodexArgs(modelConfig, resumeSessionId);
+	const args = buildCodexArgs(
+		modelConfig,
+		resumeSessionId,
+		environment?.[CODEX_BYPASS_SANDBOX_ENV] === "1",
+	);
 	const child = environment
 		? spawn(CODEX_CLI, args, { env: environment })
 		: spawn(CODEX_CLI, args);
@@ -371,12 +379,6 @@ export function findSessionId(events: StreamEvent[]): string | undefined {
 			event.type === "session_id",
 	);
 	return sessionEvent?.sessionId;
-}
-
-export function skillActivated(events: StreamEvent[], skill: string): boolean {
-	return events.some(
-		(event) => event.type === "activate_skill" && event.skill === skill,
-	);
 }
 
 export function sumUsage(events: StreamEvent[]): TokenUsage {

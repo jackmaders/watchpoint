@@ -1,4 +1,4 @@
-Activate the `to-tickets` skill. The spec below is already published and settled — do
+The workflow has supplied the `to-tickets` skill. The spec below is already published and settled — do
 **not** interview the maintainer. Break it into tracer-bullet tickets: vertical slices,
 each cutting a complete path through schema, logic, UI and tests, each demoable on its
 own.

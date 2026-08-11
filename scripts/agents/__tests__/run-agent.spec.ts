@@ -539,46 +539,28 @@ describe("runAgent", () => {
 		});
 	});
 
-	describe("expectSkill", () => {
-		it("succeeds when the expected skill activated during the run", async () => {
+	describe("workflow-invoked skills", () => {
+		it("includes workflow-selected skill instructions without requiring an activation event", async () => {
 			// Arrange
 			const fixture = readFixture("object-success.jsonl");
-			const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
+			const { proc, write } = createFakeProcess({ stdoutChunks: [fixture] });
 			const spawn = vi.fn().mockReturnValue(proc);
 
 			// Act
 			const result = await runAgent({
-				expectSkill: "to-spec",
 				model: PING,
 				output: objectOutput(),
 				promptArgs: { TASK: "the ticket" },
 				promptFile: fixturePath("prompts", "object.md"),
+				skills: ["implement"],
 				spawn,
 			});
 
 			// Assert
 			expect(result.output).toEqual({ ok: true });
-		});
-
-		it("throws a skill-miss RunAgentError when the expected skill never activated", async () => {
-			// Arrange
-			const fixture = readFixture("object-success.jsonl");
-			const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
-			const spawn = vi.fn().mockReturnValue(proc);
-
-			// Act
-			const act = runAgent({
-				expectSkill: "grilling",
-				model: PING,
-				output: objectOutput(),
-				promptArgs: { TASK: "the ticket" },
-				promptFile: fixturePath("prompts", "object.md"),
-				spawn,
-			});
-
-			// Assert
-			await expect(act).rejects.toThrow(RunAgentError);
-			await expect(act).rejects.toMatchObject({ failureClass: "skill-miss" });
+			expect(write).toHaveBeenCalledWith(
+				expect.stringContaining("## Git safety and branch setup"),
+			);
 		});
 	});
 

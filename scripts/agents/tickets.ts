@@ -189,10 +189,10 @@ export async function runTicketsProposal(
 		{ removeOnEntry: [LABELS.ticketsNeeded], stageName: "Tickets" },
 		async (labels) => {
 			const result = await runner({
-				expectSkill: "to-tickets",
 				output: OUTPUTS.tickets,
 				promptArgs: { CONVERSATION: conversation },
 				promptFile: TICKETS_PROMPT_FILE,
+				skills: ["to-tickets"],
 			});
 
 			await postBotComment(ctx, buildProposalComment(result.output));

@@ -1,4 +1,4 @@
-Activate the `implement` skill, using `tdd` at the ticket's agreed seams — do not
+The workflow has supplied the `implement` and `tdd` skills. Use TDD at the ticket's agreed seams — do not
 improvise new ones. Before touching implementation files, explicitly establish the dedicated
 branch `{{BRANCH_NAME}}`: verify it with `git branch --show-current` and
 `git status --short --branch`. The runner normally creates it fresh from `origin/main`; if it is

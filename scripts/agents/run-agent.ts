@@ -23,7 +23,7 @@ import {
 	type ValidationResult,
 	validateTaggedJson,
 } from "./output";
-import { buildPrompt } from "./prompt";
+import { type AgentSkill, buildPrompt } from "./prompt";
 import {
 	collectText,
 	defaultSpawn,
@@ -32,7 +32,6 @@ import {
 	runProcess,
 	type SpawnFn,
 	type StreamEvent,
-	skillActivated,
 	sumUsage,
 	type TokenUsage,
 } from "./stream";
@@ -61,8 +60,8 @@ interface BaseRunOptions {
 	promptArgs: Record<string, string>;
 	/** Defaults to `<promise>COMPLETE</promise>`. */
 	completionSignal?: string;
-	/** Assert this skill activated during the run — treat a miss as a prompt bug, not a flake. */
-	expectSkill?: string;
+	/** Trusted vendored skills injected by the workflow before the stage contract. */
+	skills?: readonly AgentSkill[];
 	/** Validation-failure retries, by resuming the same session. Defaults to 2. */
 	maxRetries?: number;
 	/** Total time available to all attempts, including retries. */
@@ -101,7 +100,6 @@ interface RunRequest<T> {
 	model: ModelConfig;
 	prompt: string;
 	completionSignal: string;
-	expectSkill?: string;
 	maxRetries: number;
 	timeoutMs: number;
 	validate: (text: string) => ValidationResult<T>;
@@ -254,20 +252,6 @@ async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
 	}
 }
 
-/** An expected skill that never activated is a prompt bug, not a flake — it fails an otherwise-valid run (spec §5.3). */
-function assertExpectedSkill<T>(
-	request: RunRequest<T>,
-	transcript: Transcript,
-	outcome: Outcome<T>,
-): Outcome<T> {
-	if (!outcome.ok || request.expectSkill === undefined) return outcome;
-	if (skillActivated(transcript.events, request.expectSkill)) return outcome;
-	return failed(
-		"skill-miss",
-		`Expected skill "${request.expectSkill}" to activate, but it did not.`,
-	);
-}
-
 /** The one place either artifact is written — every run path, success or failure, passes through here. */
 function writeArtifacts<T>(
 	request: RunRequest<T>,
@@ -296,8 +280,7 @@ function writeArtifacts<T>(
 }
 
 async function execute<T>(request: RunRequest<T>): Promise<RunAgentResult<T>> {
-	const { outcome: attempted, transcript } = await runAttempts(request);
-	const outcome = assertExpectedSkill(request, transcript, attempted);
+	const { outcome, transcript } = await runAttempts(request);
 	const usage = sumUsage(transcript.events);
 
 	writeArtifacts(request, transcript, outcome, usage);
@@ -330,7 +313,6 @@ function requestFor<T>(
 	return {
 		completionSignal: options.completionSignal ?? DEFAULT_COMPLETION_SIGNAL,
 		environment: createProviderEnvironment(model.provider, apiKey),
-		expectSkill: options.expectSkill,
 		maxRetries: options.maxRetries ?? DEFAULT_MAX_RETRIES,
 		model,
 		prompt,
@@ -363,7 +345,12 @@ export async function runAgent<T>(
 		return execute(
 			requestFor(
 				options,
-				buildPrompt(options.promptFile, options.promptArgs),
+				buildPrompt(
+					options.promptFile,
+					options.promptArgs,
+					undefined,
+					options.skills,
+				),
 				(text) => ({ success: true, value: text }),
 			),
 		);
@@ -373,7 +360,12 @@ export async function runAgent<T>(
 	return execute(
 		requestFor(
 			options,
-			buildPrompt(options.promptFile, options.promptArgs, schema),
+			buildPrompt(
+				options.promptFile,
+				options.promptArgs,
+				schema,
+				options.skills,
+			),
 			(text) => validateTaggedJson(text, output),
 		),
 	);
