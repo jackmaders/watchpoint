@@ -14,7 +14,15 @@ export interface SpawnedProcess {
 	kill?: () => void;
 }
 
-export type SpawnFn = (command: string, args: string[]) => SpawnedProcess;
+export interface SpawnOptions {
+	env: Record<string, string | undefined>;
+}
+
+export type SpawnFn = (
+	command: string,
+	args: string[],
+	options?: SpawnOptions,
+) => SpawnedProcess;
 
 export type StreamEvent =
 	| { type: "session_id"; sessionId: string }
@@ -29,8 +37,9 @@ export interface TokenUsage {
 	outputTokens: number;
 }
 
-export const defaultSpawn: SpawnFn = (command, args) => {
+export const defaultSpawn: SpawnFn = (command, args, options) => {
 	const child = Bun.spawn([command, ...args], {
+		env: options?.env,
 		stderr: "pipe",
 		stdin: "pipe",
 		stdout: "pipe",
@@ -45,14 +54,6 @@ export const defaultSpawn: SpawnFn = (command, args) => {
 };
 
 type RawRecord = Record<string, unknown>;
-
-const CODEX_TOOL_ITEM_TYPES = new Set([
-	"command_execution",
-	"file_change",
-	"function_call",
-	"mcp_tool_call",
-	"tool_call",
-]);
 
 function isRecord(value: unknown): value is RawRecord {
 	return typeof value === "object" && value !== null;
@@ -79,18 +80,8 @@ function parseObject(value: unknown): RawRecord | undefined {
 }
 
 function parseSessionInit(raw: RawRecord, type: string): StreamEvent[] {
-	const isInitEvent = [
-		"init",
-		"session_init",
-		"session.started",
-		"thread.started",
-	].includes(type);
-	const sessionId = firstString(raw.session_id, raw.thread_id);
-	if (!isInitEvent && sessionId === undefined) return [];
-
-	const fallbackId = isInitEvent ? firstString(raw.id) : undefined;
-	const resolvedId = sessionId ?? fallbackId;
-	return resolvedId ? [{ sessionId: resolvedId, type: "session_id" }] : [];
+	if (type !== "thread.started" || typeof raw.thread_id !== "string") return [];
+	return [{ sessionId: raw.thread_id, type: "session_id" }];
 }
 
 function extractItem(raw: RawRecord): RawRecord | undefined {
@@ -99,32 +90,12 @@ function extractItem(raw: RawRecord): RawRecord | undefined {
 
 function extractText(raw: RawRecord): string {
 	const item = extractItem(raw);
-	const delta = asRecord(raw.delta) ?? asRecord(item?.delta);
-	return (
-		firstString(
-			raw.content,
-			raw.text,
-			typeof raw.delta === "string" ? raw.delta : undefined,
-			delta?.text,
-			delta?.content,
-			item?.text,
-			item?.content,
-		) ?? ""
-	);
+	return typeof item?.text === "string" ? item.text : "";
 }
 
 function isAssistantTextEvent(raw: RawRecord, type: string): boolean {
 	const item = extractItem(raw);
-	const delta = asRecord(raw.delta) ?? asRecord(item?.delta);
-	const deltaType = firstString(delta?.type, raw.delta_type);
-	const itemType = firstString(item?.type);
-
-	if (type === "message") return raw.role === "assistant";
-	if (type === "item.completed") return itemType === "agent_message";
-	if (type === "item.delta" || type === "item_delta") return true;
-	if (type === "response.output_text.delta" || type === "text") return true;
-	if (raw.role === "assistant") return true;
-	return deltaType === "text_delta";
+	return type === "item.completed" && item?.type === "agent_message";
 }
 
 function parseTextDelta(raw: RawRecord, type: string): StreamEvent[] {
@@ -146,14 +117,10 @@ function extractToolArguments(raw: RawRecord, item?: RawRecord): RawRecord {
 
 function parseToolUse(raw: RawRecord): StreamEvent[] {
 	const item = extractItem(raw);
-	const itemType = firstString(item?.type);
-	const toolName = firstString(
-		raw.tool_name,
-		raw.name,
-		item?.tool_name,
-		item?.name,
-		itemType && CODEX_TOOL_ITEM_TYPES.has(itemType) ? itemType : undefined,
-	);
+	const toolName =
+		item?.type === "function_call" && typeof item.name === "string"
+			? item.name
+			: undefined;
 	if (toolName === undefined) return [];
 
 	const parameters = extractToolArguments(raw, item);
@@ -171,10 +138,9 @@ function parseToolUse(raw: RawRecord): StreamEvent[] {
 }
 
 function isToolEvent(raw: RawRecord, type: string): boolean {
-	if (type === "tool_use" || type === "tool_call") return true;
-	if (!type.startsWith("item.")) return false;
+	if (type !== "item.started") return false;
 	const item = extractItem(raw);
-	return CODEX_TOOL_ITEM_TYPES.has(firstString(item?.type) ?? "");
+	return item?.type === "function_call";
 }
 
 function tokenCount(stats: RawRecord, names: readonly string[]): number {
@@ -186,7 +152,7 @@ function tokenCount(stats: RawRecord, names: readonly string[]): number {
 }
 
 function parseUsage(raw: RawRecord): StreamEvent[] {
-	const stats = asRecord(raw.usage) ?? asRecord(raw.stats);
+	const stats = asRecord(raw.usage);
 	if (!stats) return [];
 	return [
 		{
@@ -198,13 +164,7 @@ function parseUsage(raw: RawRecord): StreamEvent[] {
 }
 
 function parseTurnResult(raw: RawRecord, type: string): StreamEvent[] {
-	const completionTypes = [
-		"result",
-		"turn.completed",
-		"turn_complete",
-		"turn.failed",
-		"turn.aborted",
-	];
+	const completionTypes = ["turn.completed", "turn.failed", "turn.aborted"];
 	if (completionTypes.includes(type)) {
 		const failedTurn =
 			type === "turn.failed" ||
@@ -218,7 +178,7 @@ function parseTurnResult(raw: RawRecord, type: string): StreamEvent[] {
 		return events;
 	}
 
-	return type === "error" ? [{ status: "error", type: "result" }] : [];
+	return [];
 }
 
 /** Parse one JSONL record into the runner's provider-neutral event union. */
@@ -266,7 +226,6 @@ function createLineBuffer(onLine: (line: string) => void) {
 async function drainStream(
 	stream: ReadableStream<Uint8Array>,
 	onChunk: (text: string) => void,
-	isStderr: boolean,
 ): Promise<void> {
 	const decoder = new TextDecoder();
 	const reader = stream.getReader();
@@ -276,19 +235,18 @@ async function drainStream(
 
 		const text = decoder.decode(value, { stream: true });
 		if (!text) continue;
-		mirrorChunk(text, isStderr);
 		onChunk(text);
 	}
 
 	const remaining = decoder.decode();
 	if (!remaining) return;
-	mirrorChunk(remaining, isStderr);
 	onChunk(remaining);
 }
 
-function mirrorChunk(text: string, isStderr: boolean): void {
-	const output = isStderr ? process.stderr : process.stdout;
-	output.write(text);
+function mirrorAssistantText(events: StreamEvent[]): void {
+	for (const event of events) {
+		if (event.type === "text") process.stdout.write(event.text);
+	}
 }
 
 export interface ProcessResult {
@@ -296,6 +254,8 @@ export interface ProcessResult {
 	exitCode: number;
 	raw: string;
 	stderr: string;
+	timedOut: boolean;
+	timeoutMs: number;
 }
 
 export const DEFAULT_PROCESS_TIMEOUT_MS = 600_000;
@@ -333,12 +293,6 @@ function stopChild(child: SpawnedProcess): void {
 	}
 }
 
-function timeoutError(modelConfig: ModelConfig, timeoutMs: number): Error {
-	return new Error(
-		`codex execution timed out after ${timeoutMs / 1000}s (model: ${modelConfig.model}, provider: ${modelConfig.provider})`,
-	);
-}
-
 /** Spawn Codex, mirror both output streams, and enforce one hard deadline. */
 export async function runProcess(
 	spawn: SpawnFn,
@@ -346,8 +300,12 @@ export async function runProcess(
 	prompt: string,
 	resumeSessionId?: string,
 	timeoutMs = DEFAULT_PROCESS_TIMEOUT_MS,
+	environment?: Record<string, string | undefined>,
 ): Promise<ProcessResult> {
-	const child = spawn(CODEX_CLI, buildCodexArgs(modelConfig, resumeSessionId));
+	const args = buildCodexArgs(modelConfig, resumeSessionId);
+	const child = environment
+		? spawn(CODEX_CLI, args, { env: environment })
+		: spawn(CODEX_CLI, args);
 	child.stdin.write(prompt);
 	child.stdin.end();
 
@@ -355,38 +313,40 @@ export async function runProcess(
 	let raw = "";
 	let stderr = "";
 	const lines = createLineBuffer((line) => {
-		events.push(...parseStreamLine(line));
+		const parsed = parseStreamLine(line);
+		events.push(...parsed);
+		mirrorAssistantText(parsed);
 	});
 
 	const outputPromise = Promise.all([
-		drainStream(
-			child.stdout,
-			(text) => {
-				raw += text;
-				lines.push(text);
-			},
-			false,
-		),
-		drainStream(
-			child.stderr,
-			(text) => {
-				raw += text;
-				stderr += text;
-			},
-			true,
-		),
+		drainStream(child.stdout, (text) => {
+			raw += text;
+			lines.push(text);
+		}),
+		drainStream(child.stderr, (text) => {
+			raw += text;
+			stderr += text;
+		}),
 	]);
 	const complete = Promise.all([outputPromise, child.exited]).then(
 		([, exitCode]) => {
 			lines.flush();
-			return { events, exitCode, raw, stderr };
+			return { events, exitCode, raw, stderr, timedOut: false, timeoutMs: 0 };
 		},
 	);
 	let timer!: ReturnType<typeof setTimeout>;
-	const timeout = new Promise<never>((_, reject) => {
+	const timeout = new Promise<ProcessResult>((resolve) => {
 		timer = setTimeout(() => {
 			stopChild(child);
-			reject(timeoutError(modelConfig, timeoutMs));
+			lines.flush();
+			resolve({
+				events,
+				exitCode: -1,
+				raw,
+				stderr,
+				timedOut: true,
+				timeoutMs,
+			});
 		}, timeoutMs);
 	});
 

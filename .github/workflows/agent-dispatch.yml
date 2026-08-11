@@ -63,9 +63,7 @@ jobs:
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
           AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGENT_RUN_TIMEOUT_MS: "720000"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: bun scripts/agents/dispatch.ts

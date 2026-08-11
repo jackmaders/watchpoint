@@ -3,6 +3,7 @@ import type { ModelConfig } from "../models";
 import {
 	ALLOWED_MODELS,
 	API_KEY_ENV_VARS,
+	createProviderEnvironment,
 	FALLBACK_MODEL,
 	FALLBACK_PROVIDER,
 	GLOBAL_API_KEY_ENV_VARS,
@@ -180,6 +181,31 @@ describe("provider API key resolution", () => {
 
 		// Assert
 		expect(key).toBe("agent-key");
+	});
+
+	it("maps the selected key to its provider and omits every credential alias", () => {
+		// Arrange
+		const environment = {
+			AGENT_API_KEY: "agent-key",
+			ANTHROPIC_API_KEY: "anthropic-key",
+			GEMINI_API_KEY: "google-key",
+			LLM_API_KEY: "llm-key",
+			OPENAI_API_KEY: "openai-key",
+			PATH: "/usr/bin",
+		};
+
+		// Act
+		const scoped = createProviderEnvironment(
+			"anthropic",
+			"selected-key",
+			environment,
+		);
+
+		// Assert
+		expect(scoped).toEqual({
+			ANTHROPIC_API_KEY: "selected-key",
+			PATH: "/usr/bin",
+		});
 	});
 
 	it("returns undefined when no provider or global key is configured", () => {

@@ -1,6 +1,4 @@
-{"type":"init","session_id":"sess_ping_001","model":"gemini-2.5-flash","timestamp":"2026-08-10T00:00:00Z"}
-{"type":"message","role":"user","content":"Reply with a short, friendly pong to confirm you're online.","timestamp":"2026-08-10T00:00:00Z"}
-{"type":"tool_use","tool_name":"activate_skill","tool_id":"tool_1","parameters":{"name":"grilling"},"timestamp":"2026-08-10T00:00:01Z"}
-{"type":"tool_result","tool_id":"tool_1","status":"success","output":"activated","timestamp":"2026-08-10T00:00:01Z"}
-{"type":"message","role":"assistant","content":"🏓 pong — I'm online and ready.","timestamp":"2026-08-10T00:00:02Z"}
-{"type":"result","status":"success","stats":{"input_tokens":18,"output_tokens":11,"total_cost_usd":0},"timestamp":"2026-08-10T00:00:03Z"}
+{"type":"thread.started","thread_id":"sess_ping_001"}
+{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":"{\"name\":\"grilling\"}"}}
+{"type":"item.completed","item":{"type":"agent_message","text":"🏓 pong — I'm online and ready."}}
+{"type":"turn.completed","usage":{"input_tokens":18,"output_tokens":11}}

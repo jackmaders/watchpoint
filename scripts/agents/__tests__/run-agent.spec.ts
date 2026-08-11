@@ -150,7 +150,12 @@ describe("runAgent", () => {
 					'model_provider="openai"',
 					"-",
 				],
-				{ stderr: "pipe", stdin: "pipe", stdout: "pipe" },
+				{
+					env: expect.objectContaining({ OPENAI_API_KEY: "test-key" }),
+					stderr: "pipe",
+					stdin: "pipe",
+					stdout: "pipe",
+				},
 			);
 			expect(result.output).toBe("🏓 pong — I'm online and ready.");
 		});
@@ -173,15 +178,19 @@ describe("runAgent", () => {
 		});
 
 		// Assert
-		expect(spawn).toHaveBeenCalledWith("codex", [
-			"exec",
-			"--json",
-			"-m",
-			"gpt-5.6-terra",
-			"-c",
-			'model_provider="openai"',
-			"-",
-		]);
+		expect(spawn).toHaveBeenCalledWith(
+			"codex",
+			[
+				"exec",
+				"--json",
+				"-m",
+				"gpt-5.6-terra",
+				"-c",
+				'model_provider="openai"',
+				"-",
+			],
+			expect.objectContaining({ env: expect.any(Object) }),
+		);
 	});
 
 	it("rejects a missing provider key before spawning Codex", async () => {
@@ -205,6 +214,52 @@ describe("runAgent", () => {
 		expect(spawn).not.toHaveBeenCalled();
 	});
 
+	it("rejects an invalid configured total timeout before spawning Codex", async () => {
+		// Arrange
+		vi.stubEnv("AGENT_RUN_TIMEOUT_MS", "0");
+		const spawn = vi.fn();
+
+		// Act
+		const act = runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		await expect(act).rejects.toThrow(/AGENT_RUN_TIMEOUT_MS/);
+		expect(spawn).not.toHaveBeenCalled();
+	});
+
+	it("passes a global fallback as the selected provider key only", async () => {
+		// Arrange
+		vi.stubEnv("OPENAI_API_KEY", "");
+		vi.stubEnv("AGENT_API_KEY", "agent-key");
+		vi.stubEnv("ANTHROPIC_API_KEY", "unrelated-key");
+		const fixture = readFixture("ping.jsonl");
+		const { proc } = createFakeProcess({ stdoutChunks: [fixture] });
+		const spawn = vi.fn().mockReturnValue(proc);
+
+		// Act
+		await runAgent({
+			model: PING,
+			output: { kind: "prose" },
+			promptArgs: {},
+			promptFile: fixturePath("prompts", "prose.md"),
+			spawn,
+		});
+
+		// Assert
+		const options = (spawn.mock.calls as unknown[][])[0]?.[2] as
+			| { env: Record<string, string | undefined> }
+			| undefined;
+		expect(options?.env).toMatchObject({ OPENAI_API_KEY: "agent-key" });
+		expect(options?.env).not.toHaveProperty("AGENT_API_KEY");
+		expect(options?.env).not.toHaveProperty("ANTHROPIC_API_KEY");
+	});
+
 	describe("prose output", () => {
 		it("spawns the CLI with the templated prompt on stdin and returns the parsed text", async () => {
 			// Arrange
@@ -224,15 +279,19 @@ describe("runAgent", () => {
 			});
 
 			// Assert
-			expect(spawn).toHaveBeenCalledWith("codex", [
-				"exec",
-				"--json",
-				"-m",
-				"gpt-5.6-luna",
-				"-c",
-				'model_provider="openai"',
-				"-",
-			]);
+			expect(spawn).toHaveBeenCalledWith(
+				"codex",
+				[
+					"exec",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
+					"-",
+				],
+				expect.objectContaining({ env: expect.any(Object) }),
+			);
 			expect(write).toHaveBeenCalledWith(
 				"Reply with a short, friendly pong to confirm you're online.\n",
 			);
@@ -398,17 +457,22 @@ describe("runAgent", () => {
 			// Assert
 			expect(result.output).toEqual({ ok: true });
 			expect(spawn).toHaveBeenCalledTimes(2);
-			expect(spawn).toHaveBeenNthCalledWith(2, "codex", [
-				"exec",
-				"resume",
-				"--json",
-				"-m",
-				"gpt-5.6-luna",
-				"-c",
-				'model_provider="openai"',
-				"sess_retry_001",
-				"-",
-			]);
+			expect(spawn).toHaveBeenNthCalledWith(
+				2,
+				"codex",
+				[
+					"exec",
+					"resume",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_provider="openai"',
+					"sess_retry_001",
+					"-",
+				],
+				expect.objectContaining({ env: expect.any(Object) }),
+			);
 		});
 
 		it("sends only the validation error as the retry prompt, not the original prompt", async () => {
@@ -739,6 +803,38 @@ describe("runAgent", () => {
 				"utf-8",
 			);
 			expect(failureReason).toContain("turn-limit");
+		});
+
+		it("classifies a process timeout and writes its failure artifact", async () => {
+			// Arrange
+			vi.stubEnv("AGENT_RUN_TIMEOUT_MS", "5");
+			const neverSettles = new Promise<number>(() => undefined);
+			const pendingStream = new ReadableStream<Uint8Array>({
+				start() {},
+			});
+			const spawn = vi.fn().mockReturnValue({
+				exited: neverSettles,
+				kill: vi.fn(),
+				stderr: pendingStream,
+				stdin: { end: vi.fn(), write: vi.fn() },
+				stdout: new ReadableStream<Uint8Array>({ start() {} }),
+			});
+
+			// Act
+			const act = runAgent({
+				maxRetries: 0,
+				model: PING,
+				output: { kind: "prose" },
+				promptArgs: {},
+				promptFile: fixturePath("prompts", "prose.md"),
+				spawn,
+			});
+
+			// Assert
+			await expect(act).rejects.toMatchObject({ failureClass: "timeout" });
+			expect(
+				readFileSync(join(outputDir, "failure_reason.txt"), "utf-8"),
+			).toContain("timeout");
 		});
 
 		it("still appends usage, but writes no failure_reason.txt, for an unclassified failure", async () => {

@@ -8,6 +8,7 @@ import { classifyExit, type FailureClass, RunAgentError } from "./failure";
 import { logger } from "./logger";
 import {
 	CODEX_CLI,
+	createProviderEnvironment,
 	getModelConfig,
 	type ModelConfig,
 	missingApiKeyMessage,
@@ -37,6 +38,20 @@ import {
 } from "./stream";
 
 export const DEFAULT_MAX_RETRIES = 2;
+export const DEFAULT_RUN_TIMEOUT_MS = 12 * 60_000;
+
+function resolveRunTimeout(environment = process.env): number {
+	const configured = environment.AGENT_RUN_TIMEOUT_MS;
+	if (!configured?.trim()) return DEFAULT_RUN_TIMEOUT_MS;
+
+	const timeoutMs = Number(configured);
+	if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+		throw new Error(
+			`AGENT_RUN_TIMEOUT_MS must be a positive number of milliseconds, received "${configured}".`,
+		);
+	}
+	return timeoutMs;
+}
 
 interface BaseRunOptions {
 	/** Optional override; omitted runs use the active environment configuration. */
@@ -50,6 +65,8 @@ interface BaseRunOptions {
 	expectSkill?: string;
 	/** Validation-failure retries, by resuming the same session. Defaults to 2. */
 	maxRetries?: number;
+	/** Total time available to all attempts, including retries. */
+	timeoutMs?: number;
 	/** Injected for tests; defaults to Bun.spawn. */
 	spawn?: SpawnFn;
 }
@@ -80,11 +97,13 @@ export interface RunAgentResult<T> {
  * function.
  */
 interface RunRequest<T> {
+	environment: Record<string, string | undefined>;
 	model: ModelConfig;
 	prompt: string;
 	completionSignal: string;
 	expectSkill?: string;
 	maxRetries: number;
+	timeoutMs: number;
 	validate: (text: string) => ValidationResult<T>;
 	spawn: SpawnFn;
 }
@@ -153,6 +172,14 @@ function judgeAttempt<T>(
 	attempt: number,
 ): Verdict<T> {
 	const cli = CODEX_CLI;
+	if (result.timedOut) {
+		return done(
+			failed(
+				"timeout",
+				`${cli} execution timed out after ${result.timeoutMs / 1000}s (model: ${request.model.model}, provider: ${request.model.provider})`,
+			),
+		);
+	}
 
 	if (result.exitCode !== 0) {
 		const classified = classifyExit(result.exitCode, result.stderr);
@@ -202,14 +229,19 @@ function judgeAttempt<T>(
 async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
 	let transcript = EMPTY_TRANSCRIPT;
 	let prompt = request.prompt;
+	const deadline = Date.now() + request.timeoutMs;
 
 	for (let attempt = 0; ; attempt++) {
+		const attemptsRemaining = request.maxRetries - attempt + 1;
+		const remainingMs = deadline - Date.now();
 		const resumeSessionId = attempt === 0 ? undefined : transcript.sessionId;
 		const result = await runProcess(
 			request.spawn,
 			request.model,
 			prompt,
 			resumeSessionId,
+			Math.max(1, Math.ceil(remainingMs / attemptsRemaining)),
+			request.environment,
 		);
 		transcript = record(transcript, result);
 
@@ -291,16 +323,19 @@ function requestFor<T>(
 	validate: (text: string) => ValidationResult<T>,
 ): RunRequest<T> {
 	const model = validateModelConfig(options.model ?? getModelConfig());
-	if (!resolveApiKey(model.provider)) {
+	const apiKey = resolveApiKey(model.provider);
+	if (!apiKey) {
 		throw new Error(missingApiKeyMessage(model.provider));
 	}
 	return {
 		completionSignal: options.completionSignal ?? DEFAULT_COMPLETION_SIGNAL,
+		environment: createProviderEnvironment(model.provider, apiKey),
 		expectSkill: options.expectSkill,
 		maxRetries: options.maxRetries ?? DEFAULT_MAX_RETRIES,
 		model,
 		prompt,
 		spawn: options.spawn ?? defaultSpawn,
+		timeoutMs: options.timeoutMs ?? resolveRunTimeout(),
 		validate,
 	};
 }

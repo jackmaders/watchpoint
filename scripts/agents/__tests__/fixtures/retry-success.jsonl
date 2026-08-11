@@ -1,2 +1,2 @@
-{"type":"message","role":"assistant","content":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>"}
-{"type":"result","status":"success","stats":{"input_tokens":10,"output_tokens":5}}
+{"type":"item.completed","item":{"type":"agent_message","text":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>"}}
+{"type":"turn.completed","usage":{"input_tokens":10,"output_tokens":5}}

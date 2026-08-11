@@ -73,9 +73,7 @@ jobs:
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
           AGENT_PROVIDER: ${{ vars.AGENT_PROVIDER || 'openai' }}
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AGENT_RUN_TIMEOUT_MS: "1620000"
           # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
           # and then label it review:needed — both mutations need it, for two
           # different reasons. Opened with the default GITHUB_TOKEN above, a

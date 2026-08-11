@@ -178,6 +178,27 @@ export function resolveApiKey(
 	]);
 }
 
+/**
+ * Preserve non-credential process configuration while giving Codex exactly one
+ * provider-native API key. This makes the generic fallback names real without
+ * leaking unrelated provider credentials into the agent subprocess.
+ */
+export function createProviderEnvironment(
+	provider: Provider,
+	apiKey: string,
+	environment: Environment = process.env,
+): Environment {
+	const scoped = { ...environment };
+	for (const name of new Set([
+		...Object.values(API_KEY_ENV_VARS),
+		...GLOBAL_API_KEY_ENV_VARS,
+	])) {
+		delete scoped[name];
+	}
+	scoped[getApiKeyEnvVar(provider)] = apiKey;
+	return scoped;
+}
+
 /** Backward-compatible short name for provider key lookup. */
 export const getApiKey = resolveApiKey;
 

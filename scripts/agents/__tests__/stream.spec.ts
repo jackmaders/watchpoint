@@ -24,7 +24,7 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([{ sessionId: "thread_1", type: "session_id" }]);
 	});
 
-	it("uses an init event's ID when no session ID is present", () => {
+	it("drops legacy session start events", () => {
 		// Arrange
 		const line = '{"type":"session.started","id":"session_1"}';
 
@@ -32,10 +32,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ sessionId: "session_1", type: "session_id" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("preserves a session ID carried by a non-init event", () => {
+	it("drops session IDs from non-Codex events", () => {
 		// Arrange
 		const line = '{"type":"custom","session_id":"session_1"}';
 
@@ -43,10 +43,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ sessionId: "session_1", type: "session_id" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses a Codex text delta event into a text event", () => {
+	it("drops text deltas outside completed Codex agent messages", () => {
 		// Arrange
 		const line =
 			'{"type":"item.delta","item_id":"item_1","delta":{"type":"text_delta","text":"hello"}}';
@@ -55,10 +55,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ text: "hello", type: "text" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses a string-form Codex text delta", () => {
+	it("drops string-form deltas", () => {
 		// Arrange
 		const line = '{"type":"item.delta","delta":"hello"}';
 
@@ -66,7 +66,7 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ text: "hello", type: "text" }]);
+		expect(events).toEqual([]);
 	});
 
 	it("parses a completed Codex agent message", () => {
@@ -105,6 +105,18 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([{ skill: "tdd", type: "activate_skill" }]);
 	});
 
+	it("accepts decoded Codex function arguments", () => {
+		// Arrange
+		const line =
+			'{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":{"name":"tdd"}}}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([{ skill: "tdd", type: "activate_skill" }]);
+	});
+
 	it("ignores malformed tool argument JSON", () => {
 		// Arrange
 		const line =
@@ -132,18 +144,7 @@ describe("parseStreamLine", () => {
 		]);
 	});
 
-	it("parses an init event into a session_id event", () => {
-		// Arrange
-		const line = '{"type":"init","session_id":"sess_1","model":"flash"}';
-
-		// Act
-		const events = parseStreamLine(line);
-
-		// Assert
-		expect(events).toEqual([{ sessionId: "sess_1", type: "session_id" }]);
-	});
-
-	it("parses an assistant message into a text event", () => {
+	it("rejects legacy non-Codex event shapes", () => {
 		// Arrange
 		const line = '{"type":"message","role":"assistant","content":"hello"}';
 
@@ -151,10 +152,32 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ text: "hello", type: "text" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses assistant text carried by a non-message event", () => {
+	it("drops legacy init events", () => {
+		// Arrange
+		const line = '{"type":"init","session_id":"sess_1","model":"flash"}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([]);
+	});
+
+	it("drops legacy assistant messages", () => {
+		// Arrange
+		const line = '{"type":"message","role":"assistant","content":"hello"}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([]);
+	});
+
+	it("drops unrecognised assistant event types", () => {
 		// Arrange
 		const line =
 			'{"type":"response.completed","role":"assistant","content":"done"}';
@@ -163,12 +186,23 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ text: "done", type: "text" }]);
+		expect(events).toEqual([]);
 	});
 
 	it("drops text events without a text delta", () => {
 		// Arrange
 		const line = '{"type":"text"}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([]);
+	});
+
+	it("drops completed agent messages without text", () => {
+		// Arrange
+		const line = '{"type":"item.completed","item":{"type":"agent_message"}}';
 
 		// Act
 		const events = parseStreamLine(line);
@@ -188,7 +222,7 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([]);
 	});
 
-	it("parses a tool_use event into a tool_call event", () => {
+	it("drops legacy tool events", () => {
 		// Arrange
 		const line =
 			'{"type":"tool_use","tool_name":"Bash","tool_id":"t1","parameters":{"command":"echo hi"}}';
@@ -197,10 +231,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ name: "Bash", type: "tool_call" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses an activate_skill tool_use event into an activate_skill event", () => {
+	it("drops legacy skill activations", () => {
 		// Arrange
 		const line =
 			'{"type":"tool_use","tool_name":"activate_skill","tool_id":"t1","parameters":{"name":"grilling"}}';
@@ -209,10 +243,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ skill: "grilling", type: "activate_skill" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses a result event with stats into result and usage events", () => {
+	it("drops legacy result events", () => {
 		// Arrange
 		const line =
 			'{"type":"result","status":"success","stats":{"input_tokens":10,"output_tokens":5}}';
@@ -221,13 +255,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([
-			{ status: "success", type: "result" },
-			{ inputTokens: 10, outputTokens: 5, type: "usage" },
-		]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses a result event without stats into a result event only", () => {
+	it("drops legacy error results", () => {
 		// Arrange
 		const line = '{"type":"result","status":"error"}';
 
@@ -235,10 +266,10 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ status: "error", type: "result" }]);
+		expect(events).toEqual([]);
 	});
 
-	it("parses an error event into a result event with error status", () => {
+	it("drops standalone errors outside the Codex turn contract", () => {
 		// Arrange
 		const line = '{"type":"error","message":"API key invalid"}';
 
@@ -246,7 +277,7 @@ describe("parseStreamLine", () => {
 		const events = parseStreamLine(line);
 
 		// Assert
-		expect(events).toEqual([{ status: "error", type: "result" }]);
+		expect(events).toEqual([]);
 	});
 
 	it("drops tool_result events, which are not part of the normalised union", () => {
@@ -337,6 +368,29 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([]);
 	});
 
+	it("drops a Codex function call with no name", () => {
+		// Arrange
+		const line = '{"type":"item.started","item":{"type":"function_call"}}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([]);
+	});
+
+	it("parses a named Codex function call", () => {
+		// Arrange
+		const line =
+			'{"type":"item.started","item":{"type":"function_call","name":"run_command"}}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([{ name: "run_command", type: "tool_call" }]);
+	});
+
 	it("drops an activate_skill tool_use with no parameters", () => {
 		// Arrange
 		const line =
@@ -349,10 +403,10 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([]);
 	});
 
-	it("reads the skill name from parameters.skill when parameters.name is absent", () => {
+	it("reads the skill name from Codex function-call arguments", () => {
 		// Arrange
 		const line =
-			'{"type":"tool_use","tool_name":"activate_skill","tool_id":"t1","parameters":{"skill":"grilling"}}';
+			'{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":"{\\"skill\\":\\"grilling\\"}"}}';
 
 		// Act
 		const events = parseStreamLine(line);
@@ -361,9 +415,9 @@ describe("parseStreamLine", () => {
 		expect(events).toEqual([{ skill: "grilling", type: "activate_skill" }]);
 	});
 
-	it("defaults token counts to 0 when stats carries non-numeric values", () => {
+	it("defaults token counts to 0 when Codex usage carries no token values", () => {
 		// Arrange
-		const line = '{"type":"result","status":"success","stats":{}}';
+		const line = '{"type":"turn.completed","usage":{}}';
 
 		// Act
 		const events = parseStreamLine(line);
@@ -373,6 +427,28 @@ describe("parseStreamLine", () => {
 			{ status: "success", type: "result" },
 			{ inputTokens: 0, outputTokens: 0, type: "usage" },
 		]);
+	});
+
+	it("parses a completed turn without usage", () => {
+		// Arrange
+		const line = '{"type":"turn.completed"}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([{ status: "success", type: "result" }]);
+	});
+
+	it("parses failed Codex turns as errors", () => {
+		// Arrange
+		const line = '{"type":"turn.failed"}';
+
+		// Act
+		const events = parseStreamLine(line);
+
+		// Assert
+		expect(events).toEqual([{ status: "error", type: "result" }]);
 	});
 });
 
@@ -447,7 +523,7 @@ describe("Codex process execution", () => {
 		]);
 	});
 
-	it("mirrors stdout and stderr while sending the prompt through stdin", async () => {
+	it("mirrors completed agent messages without exposing raw process output", async () => {
 		// Arrange
 		const write = vi.fn();
 		const end = vi.fn();
@@ -462,7 +538,7 @@ describe("Codex process execution", () => {
 			stderr: streamFromChunks(["diagnostic\n"]),
 			stdin: { end, write },
 			stdout: streamFromChunks([
-				'{"type":"thread.started","thread_id":"thread_1"}\n',
+				'{"type":"thread.started","thread_id":"thread_1"}\n{"type":"item.completed","item":{"type":"agent_message","text":"hello"}}\n',
 			]),
 		};
 		const spawn = vi.fn().mockReturnValue(processChild);
@@ -482,12 +558,11 @@ describe("Codex process execution", () => {
 		]);
 		expect(write).toHaveBeenCalledWith("prompt\n");
 		expect(end).toHaveBeenCalled();
-		expect(stdoutWrite).toHaveBeenCalledWith(
-			'{"type":"thread.started","thread_id":"thread_1"}\n',
-		);
-		expect(stderrWrite).toHaveBeenCalledWith("diagnostic\n");
+		expect(stdoutWrite).toHaveBeenCalledWith("hello");
+		expect(stderrWrite).not.toHaveBeenCalled();
 		expect(result.events).toEqual([
 			{ sessionId: "thread_1", type: "session_id" },
+			{ text: "hello", type: "text" },
 		]);
 		stdoutWrite.mockRestore();
 		stderrWrite.mockRestore();
@@ -516,7 +591,7 @@ describe("Codex process execution", () => {
 
 		// Assert
 		expect(result.raw).toBe("�");
-		expect(stdoutWrite).toHaveBeenCalledWith("�");
+		expect(stdoutWrite).not.toHaveBeenCalled();
 		stdoutWrite.mockRestore();
 	});
 
@@ -543,10 +618,10 @@ describe("Codex process execution", () => {
 		const spawn = vi.fn().mockReturnValue(processChild);
 
 		// Act
-		const act = runProcess(spawn, modelConfig, "prompt", undefined, 5);
+		const result = await runProcess(spawn, modelConfig, "prompt", undefined, 5);
 
 		// Assert
-		await expect(act).rejects.toThrow(/ timed out .*gpt-5\.6-luna.*openai/);
+		expect(result).toMatchObject({ timedOut: true, timeoutMs: 5 });
 		expect(kill).toHaveBeenCalled();
 	});
 });

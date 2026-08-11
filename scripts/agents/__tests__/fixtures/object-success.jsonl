@@ -1,4 +1,4 @@
-{"type":"init","session_id":"sess_obj_001","model":"gemini-2.5-flash"}
-{"type":"tool_use","tool_name":"activate_skill","tool_id":"t1","parameters":{"name":"to-spec"}}
-{"type":"message","role":"assistant","content":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>\nAnything else?"}
-{"type":"result","status":"success","stats":{"input_tokens":40,"output_tokens":20}}
+{"type":"thread.started","thread_id":"sess_obj_001"}
+{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":"{\"name\":\"to-spec\"}"}}
+{"type":"item.completed","item":{"type":"agent_message","text":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>\nAnything else?"}}
+{"type":"turn.completed","usage":{"input_tokens":40,"output_tokens":20}}
