@@ -15,9 +15,36 @@ concurrency:
   queue: max
 
 jobs:
+  handoff-untrusted:
+    name: 🧑‍⚖️ Escalate untrusted PR
+    if: >
+      github.event.label.name == 'dev:needed' &&
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 🧑‍⚖️ Hand off to a human
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh pr edit "$PR_NUMBER" --repo "$REPOSITORY" --add-label "review:escalated"
+          gh pr edit "$PR_NUMBER" --repo "$REPOSITORY" --remove-label "dev:needed" || true
+          gh pr edit "$PR_NUMBER" --repo "$REPOSITORY" --remove-label "review:needed" || true
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body '<!-- bot-comment -->
+          🚦 This PR is from an untrusted author, so automated PR mutation is disabled. A human must review it.'
+
   implement-pr:
     name: 🛠️ Fix reviewed pull request
-    if: github.event.label.name == 'dev:needed'
+    if: >
+      github.event.label.name == 'dev:needed' &&
+      (github.event.pull_request.author_association == 'OWNER' ||
+       github.event.pull_request.author_association == 'MEMBER' ||
+       github.event.pull_request.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

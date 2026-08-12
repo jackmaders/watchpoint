@@ -27,6 +27,15 @@ const WORKFLOW_FILE = join(
 	"workflows",
 	"agent-implement-pr.yml",
 );
+const REVIEW_WORKFLOW_FILE = join(
+	import.meta.dirname,
+	"..",
+	"..",
+	"..",
+	".github",
+	"workflows",
+	"agent-review.yml",
+);
 const PROMPT_FILE = join(
 	import.meta.dirname,
 	"..",
@@ -69,6 +78,27 @@ describe("implement-pr workflow contract", () => {
 			`group: agent-mutate-pr-\${{ github.event.pull_request.number }}`,
 		);
 		expect(workflow).not.toContain("gh pr merge");
+	});
+
+	it("gates both mutating PR workflows and hands untrusted authors to a human", () => {
+		// Arrange
+		const implementWorkflow = readFileSync(WORKFLOW_FILE, "utf-8");
+		const reviewWorkflow = readFileSync(REVIEW_WORKFLOW_FILE, "utf-8");
+		const workflows = `${implementWorkflow}\n${reviewWorkflow}`;
+
+		// Act
+		const allowedAssociations = ["OWNER", "MEMBER", "COLLABORATOR"];
+
+		// Assert
+		for (const association of allowedAssociations) {
+			expect(workflows).toContain(
+				`github.event.pull_request.author_association == '${association}'`,
+			);
+		}
+		expect(workflows).toContain("review:escalated");
+		expect(workflows).toContain("dev:needed");
+		expect(workflows).toContain("review:needed");
+		expect(workflows).toContain("untrusted author");
 	});
 
 	it("gives the fix agent the four standing GitHub prohibitions", () => {
