@@ -650,6 +650,47 @@ describe("runReview", () => {
 	});
 });
 
+describe("runReview PAT chaining", () => {
+	const originalPat = process.env.AGENT_PAT;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		process.env.AGENT_PAT = "pat-token";
+	});
+
+	afterEach(() => {
+		if (originalPat === undefined) {
+			Reflect.deleteProperty(process.env, "AGENT_PAT");
+		} else {
+			process.env.AGENT_PAT = originalPat;
+		}
+	});
+
+	it("uses the PAT client when round-one findings chain dev:needed", async () => {
+		// Arrange
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Blocking finding.",
+			verdict: "changes-requested",
+		};
+		const runner = async (): Promise<RunAgentResult<Review>> => ({
+			output,
+			raw: "",
+			sessionId: "session-pat",
+			usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+		});
+		const ctx = buildReviewContext();
+		const exec = buildReviewExec([]);
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(github.getOctokit).toHaveBeenCalledWith("pat-token");
+	});
+});
+
 describe("run", () => {
 	const originalEnv = { ...process.env };
 
