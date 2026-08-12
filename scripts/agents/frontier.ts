@@ -24,10 +24,12 @@ export interface FrontierDecision {
 
 export function decideFrontier(
 	children: readonly FrontierChildIssue[],
+	newlyUnblockedChildNumbers: ReadonlySet<number>,
 ): FrontierDecision {
 	const openChildren = children.filter((child) => child.state === "open");
 	const frontier = openChildren.filter(
 		(child) =>
+			newlyUnblockedChildNumbers.has(child.number) &&
 			child.issue_dependencies_summary?.blocked_by === 0 &&
 			(child.assignees?.length ?? 0) === 0,
 	);
@@ -70,12 +72,24 @@ export async function runFrontier(
 		return { frontier: [], parentComplete: false };
 	}
 
-	const children = (await octokit.paginate(octokit.rest.issues.listSubIssues, {
+	const newlyUnblockedChildren = await octokit.paginate(
+		octokit.rest.issues.listDependenciesBlocking,
+		{
+			issue_number: ticketNumber,
+			owner,
+			repo,
+		},
+	);
+	const newlyUnblockedChildNumbers = new Set(
+		newlyUnblockedChildren.map((child) => child.number),
+	);
+
+	const children = await octokit.paginate(octokit.rest.issues.listSubIssues, {
 		issue_number: parentNumber,
 		owner,
 		repo,
-	})) as FrontierChildIssue[];
-	const decision = decideFrontier(children);
+	});
+	const decision = decideFrontier(children, newlyUnblockedChildNumbers);
 
 	if (decision.parentComplete) {
 		await postBotComment(

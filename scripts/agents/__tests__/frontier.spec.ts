@@ -71,7 +71,7 @@ describe("decideFrontier", () => {
 		const children = [child({ issue_dependencies_summary: { blocked_by: 1 } })];
 
 		// Act
-		const decision = decideFrontier(children);
+		const decision = decideFrontier(children, new Set([101]));
 
 		// Assert
 		expect(decision.frontier).toEqual([]);
@@ -83,7 +83,7 @@ describe("decideFrontier", () => {
 		const children = [child({ number: 102 })];
 
 		// Act
-		const decision = decideFrontier(children);
+		const decision = decideFrontier(children, new Set([102]));
 
 		// Assert
 		expect(decision.frontier).toEqual(children);
@@ -95,7 +95,7 @@ describe("decideFrontier", () => {
 		const children = [child({ assignees: [{ login: "maintainer" }] })];
 
 		// Act
-		const decision = decideFrontier(children);
+		const decision = decideFrontier(children, new Set([101]));
 
 		// Assert
 		expect(decision.frontier).toEqual([]);
@@ -110,10 +110,22 @@ describe("decideFrontier", () => {
 		];
 
 		// Act
-		const decision = decideFrontier(children);
+		const decision = decideFrontier(children, new Set([103]));
 
 		// Assert
 		expect(decision.frontier).toEqual([children[1]]);
+	});
+
+	it("keeps an unrelated unblocked child out of the frontier", () => {
+		// Arrange
+		const children = [child({ number: 102 })];
+
+		// Act
+		const decision = decideFrontier(children, new Set([103]));
+
+		// Assert
+		expect(decision.frontier).toEqual([]);
+		expect(decision.parentComplete).toBe(false);
 	});
 
 	it("marks the parent complete when it has no open children", () => {
@@ -121,7 +133,7 @@ describe("decideFrontier", () => {
 		const children = [child({ state: "closed" })];
 
 		// Act
-		const decision = decideFrontier(children);
+		const decision = decideFrontier(children, new Set());
 
 		// Assert
 		expect(decision.frontier).toEqual([]);
@@ -207,11 +219,21 @@ describe("runFrontier", () => {
 		vi.mocked(ctx.octokit.rest.issues.listSubIssues).mockResolvedValue([
 			child({ number: 102 }),
 		] as never);
+		vi.mocked(
+			ctx.octokit.rest.issues.listDependenciesBlocking,
+		).mockResolvedValue([{ number: 102 }] as never);
 
 		// Act
 		await runFrontier(ctx, 77);
 
 		// Assert
+		expect(
+			ctx.octokit.rest.issues.listDependenciesBlocking,
+		).toHaveBeenCalledWith({
+			issue_number: 101,
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
 		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
 			issue_number: 102,
 			labels: [LABELS.devNeeded],
@@ -269,6 +291,9 @@ describe("runFrontier", () => {
 		vi.mocked(ctx.octokit.rest.issues.listSubIssues).mockResolvedValue([
 			child({ number: 102 }),
 		] as never);
+		vi.mocked(
+			ctx.octokit.rest.issues.listDependenciesBlocking,
+		).mockResolvedValue([{ number: 102 }] as never);
 
 		// Act
 		await runFrontier(ctx, 77);
