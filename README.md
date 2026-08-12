@@ -14,7 +14,7 @@ A production-ready Next.js App Router project template scaffolded using **Bun**,
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Shadcn UI](https://ui.shadcn.com)
 - **Form Handling & Validation**: [TanStack React Form](https://tanstack.com/form) & [Zod](https://zod.dev)
 - **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold) & [Playwright](https://playwright.dev) (E2E)
-- **Automated AI SDLC**: [Multi-Agent AI Refinement, Development, and Review Lifecycle](docs/ai-sdlc-lifecycle.md)
+- **Automated AI SDLC**: [Gemini-Driven AI Development Pipeline](docs/specifications/ai-pipeline-v1-spec.md)
 
 ---
 

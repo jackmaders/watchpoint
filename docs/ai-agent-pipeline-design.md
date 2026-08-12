@@ -11,7 +11,7 @@ comparison against Sandcastle, and a migration recommendation.
 | Current agent workflows | `.github/workflows/agent-{planner,itemizer,developer,reviewer}.yml` |
 | Current agent runners | `scripts/agent-{planner,itemizer,developer,reviewer,shared}.ts` |
 | Current custom skills | `.github/skills/{grill-me,to-spec,to-tickets,agent-developer,agent-reviewer}.md` |
-| Current docs | `docs/ai-sdlc-lifecycle.md`, `AGENTS.md`, `docs/architecture/` |
+| Current docs | `docs/specifications/ai-pipeline-v1-spec.md`, `AGENTS.md`, `docs/architecture/` |
 | Plugin | `mattpocock-skills@claude-plugins-official` v1.2.3 (25 skills + `docs/engineering`, `docs/productivity`) |
 | Sandcastle | `mattpocock/sandcastle` @ `e99f832` — `README.md`, `.sandcastle/`, `.github/workflows/agent-*.yml` |
 
@@ -298,12 +298,12 @@ comment string** (`agent-developer.ts:165`). There is no `git checkout -b`, no `
 commit`, no `git push`, no `gh pr create`.
 
 The workflow requests `contents: write` and `pull-requests: write`
-(`agent-developer.yml:11-14`) and never exercises either. `docs/ai-sdlc-lifecycle.md:23`
+(`agent-developer.yml:11-14`) and never exercises either. The retired lifecycle draft
 documents `K["Pull Request Created"]` as a pipeline stage; it does not exist.
 
 Corollary: `extractAndSaveDesignMockup()` writes `docs/designs/<slice>/layout.html` into
 the runner's ephemeral checkout (`agent-developer.ts:100-110`) and nothing ever commits
-it. The Stitch workflow in `docs/ai-sdlc-lifecycle.md:102-116` describes a file that is
+it. The Stitch workflow in the retired lifecycle draft describes a file that is
 deleted when the job ends. The developer skill's instruction *"Ensure this layout file is
 committed to git on your implementation branch"* (`agent-developer.md:174`) is addressed
 to a model that cannot run git.
@@ -442,7 +442,7 @@ vendors ship one.
 
 | Option | Verdict |
 | :--- | :--- |
-| Keep `@google/genai` + `generateContent` | **No.** Tool-less. Every finding in Part 2 traces back here. |
+| Keep the tool-less model SDK + `generateContent` | **No.** Tool-less. Every finding in Part 2 traces back here. |
 | Sandcastle + `noSandbox()` | **No — for GitHub-hosted runs.** Its unique value is sandbox isolation, worktrees and branch-merge-back parallelism, all of which a GH runner already provides. The two features you *do* want from it (iteration loop, structured output) are ~150 lines. Revisit if the pipeline ever moves to a self-hosted runner, where those features become the whole point. |
 | `anthropic/claude-code-action@v1` | Viable, but Claude-only — it can't carry the Gemini stages. |
 | **Two CLIs behind one thin runner module** | **Recommended.** `claude` and `gemini` are both installed in the workflow; one internal `runAgent()` abstracts the difference. |
@@ -1118,7 +1118,7 @@ management.**
 
 Concretely:
 
-- Retire the tool-less `@google/genai` harness — but **keep Gemini**, now as the `gemini`
+- Retire the tool-less model SDK harness — but **keep Gemini**, now as the `gemini`
   CLI with real tools and native Agent Skills support. The problem was never the vendor.
 - Vendor the plugin's skills into `.agents/skills/` at a pinned SHA; both CLIs read them.
 - Delete the five forked skills; move their durable content to `CODING_STANDARDS.md`.
@@ -1140,8 +1140,8 @@ Concretely:
 | `scripts/agent-planner.ts` (+ spec) | Gemini harness | `agent-grill.yml` + `agent-spec.yml` |
 | `scripts/agent-developer.ts` (+ spec) | Doesn't implement anything | `agent-implement.yml` |
 | `scripts/agent-reviewer.ts` (+ spec) | Truncated diff, dead state machine | `agent-review.yml` |
-| `@google/genai` dependency | Tool-less SDK — the root cause of F1–F4 | `@google/gemini-cli` + `@anthropic-ai/claude-code`, installed in the workflow |
-| `docs/ai-sdlc-lifecycle.md` | Documents stages that don't exist | This document |
+| Tool-less model SDK dependency | Tool-less SDK — the root cause of F1–F4 | `@google/gemini-cli` + `@anthropic-ai/claude-code`, installed in the workflow |
+| Retired AI SDLC lifecycle draft | Documents stages that don't exist | This document |
 
 Not deleted, and worth saying explicitly: **Gemini stays.** F1–F4 were caused by calling a
 model with no tools, not by which model it was. The `gemini` CLI has tools, runs the same

@@ -8,12 +8,7 @@ import { logger } from "./logger";
  * from it, so a label can never be validated against a list that has
  * silently drifted from the values scripts actually apply.
  *
- * This is the *new* pipeline's copy (`scripts/agents/`), not the old
- * `scripts/agent-shared.ts` — that file backs the pre-teardown scripts
- * (`agent-planner.ts`, `agent-itemizer.ts`) that ticket #61 ("Final teardown
- * and label migration") deletes wholesale, and keeps its own separate,
- * un-namespaced vocabulary (`spec-needed`, `dev-needed`, …) until then. This
- * object holds only the `{role}:{status}` labels the *new* pipeline's own
+ * This object holds only the `{role}:{status}` labels the live pipeline's own
  * scripts actually apply, growing one entry per ticket as each stage script
  * is built — the same incremental-registry shape as `schemas.ts`'s
  * `OUTPUTS`. A label with no TypeScript consumer (every generic `agent:*`
