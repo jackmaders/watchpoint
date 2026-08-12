@@ -459,9 +459,9 @@ describe("runImplementPr", () => {
 			if (endpoint === ctx.octokit.rest.issues.listComments) {
 				return [
 					{
-						body: "Top-level finding.",
+						body: null,
 						id: 7001,
-						user: { login: "reviewer" },
+						user: null,
 					},
 					{
 						body: "<!-- bot-comment -->\nPrior automation note.",
@@ -473,10 +473,10 @@ describe("runImplementPr", () => {
 			if (endpoint === ctx.octokit.rest.pulls.listReviews) {
 				return [
 					{
-						body: "Review body finding.",
+						body: null,
 						id: 8001,
-						state: "CHANGES_REQUESTED",
-						user: { login: "reviewer" },
+						state: null,
+						user: null,
 					},
 				];
 			}
@@ -803,7 +803,7 @@ describe("runImplementPr", () => {
 							id: 9002,
 							in_reply_to_id: null,
 							line: null,
-							path: "README.md",
+							path: null,
 							user: null,
 						},
 					]
@@ -828,7 +828,7 @@ describe("runImplementPr", () => {
 
 		// Assert
 		expect(runnerCalls[0]?.promptArgs.REVIEW_THREADS).toContain(
-			"[inline:9002] @unknown at **README.md:?**:",
+			"[inline:9002] @unknown at **?:?**:",
 		);
 	});
 
@@ -879,6 +879,32 @@ describe("runImplementPr", () => {
 			);
 		},
 	);
+
+	it("rejects an empty pushed SHA", async () => {
+		// Arrange
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: "Closes #17",
+				head: { ref: "feature/empty-sha" },
+				labels: [],
+			},
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+		const runner = async (): Promise<RunAgentResult<ImplementPr>> =>
+			fakeResult({ feedback: [], summary: "Fixed." });
+		const exec: ExecFn = async (command, args) => {
+			if (command === "git" && args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+
+		// Act
+		const act = runImplementPr(ctx, runner, exec);
+
+		// Assert
+		await expect(act).rejects.toThrow("empty SHA");
+	});
 
 	it("wires its workflow environment into the default runner", async () => {
 		// Arrange
