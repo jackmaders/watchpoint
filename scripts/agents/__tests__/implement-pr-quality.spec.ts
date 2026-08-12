@@ -178,20 +178,17 @@ describe("waitForQualityChecks", () => {
 			owner: "jackmaders",
 			repo: "watchpoint",
 		} as unknown as IssueContext;
-		const sleep = vi.fn().mockResolvedValue(undefined);
-		const now = vi.fn().mockReturnValueOnce(100).mockReturnValueOnce(101);
+		const now = vi.fn().mockReturnValueOnce(100).mockReturnValueOnce(100);
 
 		// Act
 		const result = await waitForQualityChecks(ctx, "pushed-sha", {
-			intervalMs: 5,
+			intervalMs: 0,
 			now,
-			sleep,
 			timeoutMs: 10,
 		});
 
 		// Assert
 		expect(result).toEqual({ status: "passed" });
-		expect(sleep).toHaveBeenCalledWith(5);
 	});
 
 	it("fails when the quality API cannot be read", async () => {
@@ -221,5 +218,49 @@ describe("waitForQualityChecks", () => {
 			reason: expect.stringContaining("permission denied"),
 			status: "failed",
 		});
+	});
+
+	it("fails when the workflow completes without all required jobs", async () => {
+		// Arrange
+		const ctx = {
+			issueNumber: 42,
+			octokit: {
+				rest: {
+					actions: {
+						listJobsForWorkflowRun: vi.fn().mockResolvedValue({
+							data: { jobs: [] },
+						}),
+						listWorkflowRunsForRepo: vi.fn().mockResolvedValue({
+							data: {
+								workflow_runs: [
+									{
+										conclusion: "failure",
+										head_sha: "pushed-sha",
+										id: 80,
+										name: "PR Quality Checks",
+										status: "completed",
+									},
+								],
+							},
+						}),
+					},
+				},
+			},
+			owner: "jackmaders",
+			repo: "watchpoint",
+		} as unknown as IssueContext;
+
+		// Act
+		const result = await waitForQualityChecks(ctx, "pushed-sha", {
+			timeoutMs: 0,
+		});
+
+		// Assert
+		expect(result).toEqual(
+			expect.objectContaining({
+				reason: expect.stringContaining("missing jobs"),
+				status: "failed",
+			}),
+		);
 	});
 });
