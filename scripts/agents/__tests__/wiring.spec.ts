@@ -1,15 +1,21 @@
 import * as github from "@actions/github";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IssueContext } from "../github";
-import type { Ticket, TicketBreakdown } from "../schemas";
+import type { Ticket, TicketBreakdown, WayfinderTicket } from "../schemas";
 import {
 	buildChildIssueBody,
+	buildWayfinderTicketBody,
 	type ExistingChildIssue,
 	findMatchingChildIssue,
+	findMatchingWayfinderChildIssue,
 	getOrCreateMilestone,
 	ticketKeyMarker,
 	topologicalSortTickets,
+	topologicalSortWayfinderTickets,
+	wayfinderTicketKeyMarker,
+	wayfinderTicketLabel,
 	wireTickets,
+	wireWayfinderTickets,
 } from "../wiring";
 
 vi.mock("@actions/github");
@@ -26,6 +32,25 @@ function fakeTicket(overrides: Partial<Ticket> = {}): Ticket {
 		...overrides,
 	};
 }
+
+function fakeWayfinderTicket(
+	overrides: Partial<WayfinderTicket> = {},
+): WayfinderTicket {
+	return {
+		blockers: [],
+		id: "decision-1",
+		question: "Which option is correct?",
+		title: "Resolve the option",
+		type: "task",
+		...overrides,
+	};
+}
+
+const wayfinderMap = {
+	number: 62,
+	title: "Wayfinder — Ship the map",
+	url: "https://github.com/jackmaders/watchpoint/issues/62",
+};
 
 function buildCtx(): IssueContext {
 	return {
@@ -225,6 +250,295 @@ None — can start immediately.`,
 
 		// Assert
 		expect(body).toContain("## Blocked by\n\n- #201\n- #202");
+	});
+});
+
+describe("Wayfinder ticket wiring helpers", () => {
+	it("renders a distinct marker for a Wayfinder ticket id", () => {
+		// Arrange
+		// Act
+		const marker = wayfinderTicketKeyMarker("decision-1");
+
+		// Assert
+		expect(marker).toBe("<!-- wayfinder-ticket-key: decision-1 -->");
+	});
+
+	it("maps every Wayfinder type to exactly one wayfinder label", () => {
+		// Arrange
+		const types = ["research", "prototype", "grilling", "task"] as const;
+
+		// Act
+		const labels = types.map(wayfinderTicketLabel);
+
+		// Assert
+		expect(labels).toEqual([
+			"wayfinder:research",
+			"wayfinder:prototype",
+			"wayfinder:grilling",
+			"wayfinder:task",
+		]);
+	});
+
+	it("renders map and blocker titles as links without bare issue-number prose", () => {
+		// Arrange
+		const ticket = fakeWayfinderTicket({
+			blockers: ["decision-0"],
+			id: "decision-1",
+			question: "Which API contract is authoritative?",
+		});
+		const blocker = {
+			number: 61,
+			title: "Establish the API contract",
+			url: "https://github.com/jackmaders/watchpoint/issues/61",
+		};
+
+		// Act
+		const body = buildWayfinderTicketBody(wayfinderMap, ticket, [blocker]);
+
+		// Assert
+		expect(body).toContain(
+			"[Wayfinder — Ship the map](https://github.com/jackmaders/watchpoint/issues/62)",
+		);
+		expect(body).toContain(
+			"[Establish the API contract](https://github.com/jackmaders/watchpoint/issues/61)",
+		);
+		expect(body).toContain(
+			"## Question\n\nWhich API contract is authoritative?",
+		);
+		expect(body).not.toContain("#62");
+		expect(body).not.toContain("#61");
+	});
+
+	it("renders an explicit no-blockers sentence for a frontier ticket", () => {
+		// Arrange
+		const ticket = fakeWayfinderTicket({ blockers: [] });
+
+		// Act
+		const body = buildWayfinderTicketBody(wayfinderMap, ticket, []);
+
+		// Assert
+		expect(body).toContain("## Blocked by\n\nNone — can start immediately.");
+	});
+
+	it("orders Wayfinder tickets so blockers are handled before dependents", () => {
+		// Arrange
+		const blocker = fakeWayfinderTicket({ id: "decision-0" });
+		const dependent = fakeWayfinderTicket({
+			blockers: ["decision-0"],
+			id: "decision-1",
+		});
+
+		// Act
+		const sorted = topologicalSortWayfinderTickets([dependent, blocker]);
+
+		// Assert
+		expect(sorted.map((ticket) => ticket.id)).toEqual([
+			"decision-0",
+			"decision-1",
+		]);
+	});
+
+	it("matches a prior Wayfinder ticket by its marker before its title", () => {
+		// Arrange
+		const existing: ExistingChildIssue[] = [
+			{
+				body: "<!-- wayfinder-ticket-key: decision-1 -->",
+				id: 401,
+				number: 501,
+				state: "open",
+				title: "Old title",
+			},
+		];
+
+		// Act
+		const match = findMatchingWayfinderChildIssue(
+			existing,
+			new Set(),
+			fakeWayfinderTicket({
+				id: "decision-1",
+				title: "A revised title",
+			}),
+		);
+
+		// Assert
+		expect(match?.number).toBe(501);
+	});
+});
+
+describe("wireWayfinderTickets", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	function mockWayfinderDefaults(ctx: IssueContext): void {
+		vi.mocked(ctx.octokit.paginate).mockResolvedValue([]);
+		vi.mocked(ctx.octokit.rest.issues.create).mockResolvedValue({
+			data: { id: 401, number: 501 },
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.issues.create>>);
+		vi.mocked(ctx.octokit.rest.issues.addSubIssue).mockResolvedValue(
+			{} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.issues.addSubIssue>
+			>,
+		);
+		vi.mocked(ctx.octokit.rest.issues.addBlockedByDependency).mockResolvedValue(
+			{} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.issues.addBlockedByDependency>
+			>,
+		);
+		vi.mocked(ctx.octokit.rest.issues.update).mockResolvedValue(
+			{} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.issues.update>
+			>,
+		);
+		vi.mocked(ctx.octokit.rest.issues.removeLabel).mockResolvedValue(
+			{} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.issues.removeLabel>
+			>,
+		);
+		vi.mocked(ctx.octokit.rest.issues.addLabels).mockResolvedValue(
+			{} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.issues.addLabels>
+			>,
+		);
+	}
+
+	it("creates each decision ticket with one typed label and links it as a native sub-issue", async () => {
+		// Arrange
+		const ctx = buildCtx();
+		mockWayfinderDefaults(ctx);
+		const ticket = fakeWayfinderTicket({ type: "research" });
+
+		// Act
+		const wired = await wireWayfinderTickets(ctx, wayfinderMap, [ticket]);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				labels: ["wayfinder:research"],
+				title: "Resolve the option",
+			}),
+		);
+		expect(ctx.octokit.rest.issues.addSubIssue).toHaveBeenCalledWith({
+			issue_number: 62,
+			owner: "jackmaders",
+			repo: "watchpoint",
+			sub_issue_id: 401,
+		});
+		expect(wired).toEqual([
+			{
+				isFrontier: true,
+				isNew: true,
+				number: 501,
+				ticketId: "decision-1",
+				title: "Resolve the option",
+				type: "research",
+			},
+		]);
+	});
+
+	it("wires blockers with native dependencies in topological order", async () => {
+		// Arrange
+		const ctx = buildCtx();
+		mockWayfinderDefaults(ctx);
+		vi.mocked(ctx.octokit.rest.issues.create).mockImplementation((async (
+			params: unknown,
+		) => {
+			const title = (params as { title: string }).title;
+			return {
+				data:
+					title === "Resolve the option"
+						? { id: 402, number: 502 }
+						: { id: 401, number: 501 },
+			};
+		}) as unknown as typeof ctx.octokit.rest.issues.create);
+		const blocker = fakeWayfinderTicket({
+			id: "decision-0",
+			title: "Establish the option",
+		});
+		const dependent = fakeWayfinderTicket({
+			blockers: ["decision-0"],
+			id: "decision-1",
+		});
+
+		// Act
+		await wireWayfinderTickets(ctx, wayfinderMap, [dependent, blocker]);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.addBlockedByDependency).toHaveBeenCalledWith(
+			{
+				issue_id: 401,
+				issue_number: 502,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			},
+		);
+	});
+
+	it("updates a matched ticket and replaces stale Wayfinder type labels", async () => {
+		// Arrange
+		const ctx = buildCtx();
+		mockWayfinderDefaults(ctx);
+		vi.mocked(ctx.octokit.paginate).mockResolvedValue([
+			{
+				body: "<!-- wayfinder-ticket-key: decision-1 -->",
+				id: 401,
+				labels: [{ name: "wayfinder:task" }, { name: "keep-me" }],
+				number: 501,
+				state: "open",
+				title: "Old title",
+			},
+		]);
+		const ticket = fakeWayfinderTicket({ type: "research" });
+
+		// Act
+		await wireWayfinderTickets(ctx, wayfinderMap, [ticket]);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				issue_number: 501,
+				title: "Resolve the option",
+			}),
+		);
+		expect(ctx.octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+			issue_number: 501,
+			name: "wayfinder:task",
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+			issue_number: 501,
+			labels: ["wayfinder:research"],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+	});
+
+	it("keeps a matched ticket's closed state and existing desired label", async () => {
+		// Arrange
+		const ctx = buildCtx();
+		mockWayfinderDefaults(ctx);
+		vi.mocked(ctx.octokit.paginate).mockResolvedValue([
+			{
+				body: "<!-- wayfinder-ticket-key: decision-1 -->",
+				id: 401,
+				labels: [{ name: "wayfinder:task" }],
+				number: 501,
+				state: "closed",
+				title: "Old title",
+			},
+		]);
+		const ticket = fakeWayfinderTicket({ type: "task" });
+
+		// Act
+		const wired = await wireWayfinderTickets(ctx, wayfinderMap, [ticket]);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.update).toHaveBeenCalledWith(
+			expect.not.objectContaining({ state: expect.anything() }),
+		);
+		expect(ctx.octokit.rest.issues.addLabels).not.toHaveBeenCalled();
+		expect(wired[0]?.isFrontier).toBe(true);
 	});
 });
 
