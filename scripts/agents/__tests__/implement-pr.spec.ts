@@ -176,7 +176,7 @@ describe("runImplementPr", () => {
 			}),
 		);
 		expect(execCalls).toContainEqual({
-			args: ["push", "origin", "agent/issue-17-fix-review"],
+			args: ["push", "origin", "HEAD:agent/issue-17-fix-review"],
 			command: "git",
 		});
 		expect(execCalls).toContainEqual({
