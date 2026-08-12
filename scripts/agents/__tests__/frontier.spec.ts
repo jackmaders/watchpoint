@@ -341,7 +341,9 @@ describe("agent-frontier workflow", () => {
 		expect(workflowContract).toContain(
 			"github.event.pull_request.merged == true",
 		);
-		expect(workflowContract).toContain("AGENT_PAT: ${{ secrets.AGENT_PAT }}");
+		expect(workflowContract).toContain(
+			"AGENT_PAT: $" + "{{ secrets.AGENT_PAT }}",
+		);
 		expect(workflowContract).toContain("bun scripts/agents/frontier.ts");
 		expect(workflowContract).not.toContain("gh pr merge");
 	});
