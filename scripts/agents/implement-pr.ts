@@ -99,7 +99,7 @@ async function commitAndPushFixes(
 		assertCommandSucceeded("git", commitArgs, commit);
 	}
 
-	const pushArgs = ["push", "origin", branchName];
+	const pushArgs = ["push", "origin", `HEAD:${branchName}`];
 	const push = await exec("git", pushArgs);
 	assertCommandSucceeded("git", pushArgs, push);
 }
