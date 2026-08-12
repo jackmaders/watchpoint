@@ -10,6 +10,7 @@ import {
 	issueContextFromEnv,
 	LABELS,
 	postBotComment,
+	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import { logger } from "./logger";
@@ -52,6 +53,17 @@ type ReviewRunner = (
 interface DiffState {
 	path: string;
 	rightLine: number;
+}
+
+function reviewLabelContext(ctx: IssueContext): {
+	context: IssueContext;
+	hasPat: boolean;
+} {
+	const patOctokit = resolvePatOctokit();
+	return {
+		context: patOctokit ? { ...ctx, octokit: patOctokit } : ctx,
+		hasPat: patOctokit !== null,
+	};
 }
 
 function updateDiffHeader(line: string, state: DiffState): boolean {
@@ -414,17 +426,29 @@ async function applyReviewState(
 	event: ReviewPayload["event"],
 	exec: ExecFn,
 ): Promise<string[]> {
+	const { context: labelContext, hasPat } = reviewLabelContext(ctx);
+
 	if (event === "REQUEST_CHANGES") {
-		return isRound2
-			? transitionState(ctx, labels, {
+		const nextLabels = await (isRound2
+			? transitionState(labelContext, labels, {
 					add: [LABELS.reviewRound2, LABELS.reviewEscalated],
+					remove: [LABELS.devNeeded],
 				})
-			: transitionState(ctx, labels, {
-					add: [LABELS.reviewRound1, LABELS.devNeeded],
-				});
+			: transitionState(labelContext, labels, {
+					add: hasPat
+						? [LABELS.reviewRound1, LABELS.devNeeded]
+						: [LABELS.reviewRound1],
+				}));
+		if (!isRound2 && !hasPat) {
+			await postBotComment(
+				ctx,
+				`🚦 Round 1 found changes, but \`AGENT_PAT\` isn't configured, so GitHub won't trigger the fix workflow automatically. Please add the \`${LABELS.devNeeded}\` label to this PR manually.`,
+			);
+		}
+		return nextLabels;
 	}
 
-	const nextLabels = await transitionState(ctx, labels, {
+	const nextLabels = await transitionState(labelContext, labels, {
 		add: [LABELS.reviewApproved],
 		remove: [LABELS.reviewRound1, LABELS.reviewRound2],
 	});
@@ -449,9 +473,10 @@ export async function runReview(
 			ctx,
 			"⚠️ **Review Escalated:** This pull request has failed review in both round 1 and round 2. Escalating to human review.",
 		);
-		await transitionState(ctx, pullRequest.labels, {
+		const { context: labelContext } = reviewLabelContext(ctx);
+		await transitionState(labelContext, pullRequest.labels, {
 			add: [LABELS.reviewEscalated],
-			remove: [LABELS.reviewNeeded],
+			remove: [LABELS.reviewNeeded, LABELS.devNeeded],
 		});
 		return;
 	}

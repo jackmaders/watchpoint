@@ -1,10 +1,11 @@
-name: Agent Review
+name: Agent Implement PR
 
 on:
   pull_request_target:
     types: [labeled]
 
 permissions:
+  actions: read
   contents: write
   issues: write
   pull-requests: write
@@ -18,7 +19,7 @@ jobs:
   handoff-untrusted:
     name: 🧑‍⚖️ Escalate untrusted PR
     if: >
-      github.event.label.name == 'review:needed' &&
+      github.event.label.name == 'dev:needed' &&
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR'
@@ -38,10 +39,10 @@ jobs:
           gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body '<!-- bot-comment -->
           🚦 This PR is from an untrusted author, so automated PR mutation is disabled. A human must review it.'
 
-  review:
-    name: 🔍 Review Pull Request
+  implement-pr:
+    name: 🛠️ Fix reviewed pull request
     if: >
-      github.event.label.name == 'review:needed' &&
+      github.event.label.name == 'dev:needed' &&
       (github.event.pull_request.author_association == 'OWNER' ||
        github.event.pull_request.author_association == 'MEMBER' ||
        github.event.pull_request.author_association == 'COLLABORATOR')
@@ -52,6 +53,7 @@ jobs:
       - name: 🛒 Checkout PR head
         uses: actions/checkout@v5
         with:
+          token: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
@@ -84,7 +86,7 @@ jobs:
           git config --global user.name "watchpoint-agent[bot]"
           git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"
 
-      - name: 🔍 Run PR review
+      - name: 🛠️ Fix review findings
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
@@ -94,7 +96,7 @@ jobs:
           AGENT_RUN_TIMEOUT_MS: "1620000"
           ISSUE_NUMBER: ${{ github.event.pull_request.number }}
           OUTPUT_DIR: ${{ runner.temp }}
-        run: bun scripts/agents/review.ts
+        run: bun scripts/agents/implement-pr.ts
 
       - name: 🧹 Remove agent:in-progress (backstop)
         if: always()

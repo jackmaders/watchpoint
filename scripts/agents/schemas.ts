@@ -398,14 +398,54 @@ export function filterReviewComments(
 }
 
 // ---------------------------------------------------------------------------
-// implement-pr — the fix round's thread replies
+// implement-pr — source-aware feedback outcomes for the fix round
 // ---------------------------------------------------------------------------
 
+export const IMPLEMENT_PR_FEEDBACK_STATUSES = [
+	"fixed",
+	"invalid",
+	"transiently-not-actionable",
+] as const;
+export const ImplementPrFeedbackStatusSchema = z.enum(
+	IMPLEMENT_PR_FEEDBACK_STATUSES,
+);
+export type ImplementPrFeedbackStatus = z.infer<
+	typeof ImplementPrFeedbackStatusSchema
+>;
+
+export const ImplementPrFeedbackSchema = z.object({
+	reason: z
+		.string()
+		.min(1)
+		.max(4000)
+		.describe(
+			"Why this feedback is fixed, invalid, or transiently not actionable; invalid findings must explain why they do not apply.",
+		),
+	response: z
+		.string()
+		.min(1)
+		.max(4000)
+		.describe("The response to post back to the feedback source."),
+	sourceId: z
+		.string()
+		.min(1)
+		.max(128)
+		.describe(
+			"The exact source-aware id from the supplied PR context, such as inline:123, comment:456, or review:789.",
+		),
+	status: ImplementPrFeedbackStatusSchema.describe(
+		"Whether this source was fixed, invalid, or transiently not actionable.",
+	),
+});
+export type ImplementPrFeedback = z.infer<typeof ImplementPrFeedbackSchema>;
+
 export const ImplementPrSchema = z.object({
-	replies: z
-		.array(ReplySchema)
+	feedback: z
+		.array(ImplementPrFeedbackSchema)
 		.max(50)
-		.describe("Replies to the review threads this fix round addressed."),
+		.describe(
+			"Exactly one outcome for every source in the supplied PR feedback context.",
+		),
 	summary: z
 		.string()
 		.min(1)

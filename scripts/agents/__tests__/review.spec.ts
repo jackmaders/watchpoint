@@ -400,6 +400,7 @@ describe("runReview", () => {
 
 	it("marks a first-round changes request for implementation", async () => {
 		// Arrange
+		Reflect.deleteProperty(process.env, "AGENT_PAT");
 		const output: Review = {
 			inlineComments: [],
 			replies: [],
@@ -462,7 +463,7 @@ describe("runReview", () => {
 		// Assert
 		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
 			issue_number: 42,
-			labels: [LABELS.reviewRound1, LABELS.devNeeded],
+			labels: [LABELS.reviewRound1],
 			owner: "jackmaders",
 			repo: "watchpoint",
 		});
@@ -470,6 +471,7 @@ describe("runReview", () => {
 
 	it("escalates a second-round changes request", async () => {
 		// Arrange
+		Reflect.deleteProperty(process.env, "AGENT_PAT");
 		const output: Review = {
 			inlineComments: [],
 			replies: [],
@@ -515,7 +517,10 @@ describe("runReview", () => {
 							data: {
 								body: "No issue link.",
 								head: { ref: "feature/review" },
-								labels: [{ name: LABELS.reviewRound1 }],
+								labels: [
+									{ name: LABELS.reviewRound1 },
+									{ name: LABELS.devNeeded },
+								],
 							},
 						}),
 						listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
@@ -533,6 +538,12 @@ describe("runReview", () => {
 		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
 			issue_number: 42,
 			labels: [LABELS.reviewRound2, LABELS.reviewEscalated],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+		expect(ctx.octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+			issue_number: 42,
+			name: LABELS.devNeeded,
 			owner: "jackmaders",
 			repo: "watchpoint",
 		});
@@ -637,6 +648,94 @@ describe("runReview", () => {
 		);
 		expect(runnerCalls[1]?.promptArgs.SPEC_CONTEXT).toBe(
 			"Could not fetch originating issue context.",
+		);
+	});
+});
+
+describe("runReview PAT chaining", () => {
+	const originalPat = process.env.AGENT_PAT;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		process.env.AGENT_PAT = "pat-token";
+	});
+
+	afterEach(() => {
+		if (originalPat === undefined) {
+			Reflect.deleteProperty(process.env, "AGENT_PAT");
+		} else {
+			process.env.AGENT_PAT = originalPat;
+		}
+	});
+
+	it("uses the PAT client when round-one findings chain dev:needed", async () => {
+		// Arrange
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Blocking finding.",
+			verdict: "changes-requested",
+		};
+		const runner = async (): Promise<RunAgentResult<Review>> => ({
+			output,
+			raw: "",
+			sessionId: "session-pat",
+			usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+		});
+		const ctx = buildReviewContext();
+		const exec = buildReviewExec([]);
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(github.getOctokit).toHaveBeenCalledWith("pat-token");
+	});
+});
+
+describe("runReview without a PAT", () => {
+	const originalPat = process.env.AGENT_PAT;
+
+	afterEach(() => {
+		if (originalPat === undefined) {
+			Reflect.deleteProperty(process.env, "AGENT_PAT");
+		} else {
+			process.env.AGENT_PAT = originalPat;
+		}
+	});
+
+	it("does not apply the chaining label with GITHUB_TOKEN", async () => {
+		// Arrange
+		Reflect.deleteProperty(process.env, "AGENT_PAT");
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Blocking finding.",
+			verdict: "changes-requested",
+		};
+		const runner = async (): Promise<RunAgentResult<Review>> => ({
+			output,
+			raw: "",
+			sessionId: "session-no-pat",
+			usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+		});
+		const ctx = buildReviewContext();
+		const exec = buildReviewExec([]);
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith(
+			expect.objectContaining({ labels: [LABELS.reviewRound1] }),
+		);
+		expect(ctx.octokit.rest.issues.addLabels).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				labels: expect.arrayContaining([LABELS.devNeeded]),
+			}),
+		);
+		expect(ctx.octokit.rest.issues.createComment).toHaveBeenCalledWith(
+			expect.objectContaining({ body: expect.stringContaining("AGENT_PAT") }),
 		);
 	});
 });
