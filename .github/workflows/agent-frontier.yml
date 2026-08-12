@@ -1,0 +1,40 @@
+name: Agent Frontier
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: agent-frontier-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  advance:
+    name: 🚦 Advance frontier
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🚦 Advance frontier
+        env:
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.pull_request.number }}
+        run: bun scripts/agents/frontier.ts

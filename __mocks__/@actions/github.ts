@@ -51,6 +51,7 @@ export const mockOctokit = {
 				},
 			}),
 			listComments: vi.fn().mockResolvedValue([]),
+			listDependenciesBlocking: vi.fn().mockResolvedValue([]),
 			listForRepo: vi.fn().mockResolvedValue({ data: [] }),
 			listMilestones: vi.fn().mockResolvedValue({ data: [] }),
 			listSubIssues: vi.fn().mockResolvedValue([]),
