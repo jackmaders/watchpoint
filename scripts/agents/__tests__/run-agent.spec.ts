@@ -559,7 +559,9 @@ describe("runAgent", () => {
 			// Assert
 			expect(result.output).toEqual({ ok: true });
 			expect(write).toHaveBeenCalledWith(
-				expect.stringContaining("## Git safety and branch setup"),
+				expect.stringContaining(
+					"Implement the work described by the user in the spec or tickets.",
+				),
 			);
 		});
 	});
