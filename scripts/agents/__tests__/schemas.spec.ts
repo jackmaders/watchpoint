@@ -535,10 +535,26 @@ describe("filterReviewComments", () => {
 });
 
 describe("ImplementPrSchema", () => {
+	function feedback(
+		sourceId: string,
+		status: "fixed" | "invalid" | "transiently-not-actionable" = "fixed",
+	) {
+		return {
+			reason: "The response is grounded in the current diff.",
+			response: "Addressed this feedback.",
+			sourceId,
+			status,
+		};
+	}
+
 	it("accepts a well-formed implement-pr payload", () => {
 		// Arrange
 		const payload = {
-			replies: [{ body: "Fixed.", commentId: "abc" }],
+			feedback: [
+				feedback("inline:abc", "fixed"),
+				feedback("comment:def", "invalid"),
+				feedback("review:ghi", "transiently-not-actionable"),
+			],
 			summary: "Fixed the nit.",
 		};
 
@@ -551,7 +567,7 @@ describe("ImplementPrSchema", () => {
 
 	it("rejects an empty summary", () => {
 		// Arrange
-		const payload = { replies: [], summary: "" };
+		const payload = { feedback: [], summary: "" };
 
 		// Act
 		const result = ImplementPrSchema.safeParse(payload);
@@ -560,13 +576,12 @@ describe("ImplementPrSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects more than 50 replies", () => {
+	it("rejects more than 50 feedback outcomes", () => {
 		// Arrange
 		const payload = {
-			replies: Array.from({ length: 51 }, (_unused, i) => ({
-				body: "Fixed.",
-				commentId: `c${i}`,
-			})),
+			feedback: Array.from({ length: 51 }, (_unused, i) =>
+				feedback(`inline:${i}`),
+			),
 			summary: "Fixed the nits.",
 		};
 

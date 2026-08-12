@@ -5,6 +5,7 @@ on:
     types: [labeled]
 
 permissions:
+  actions: read
   contents: write
   issues: write
   pull-requests: write
@@ -52,6 +53,7 @@ jobs:
       - name: 🛒 Checkout PR head
         uses: actions/checkout@v5
         with:
+          token: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
