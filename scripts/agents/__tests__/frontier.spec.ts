@@ -6,6 +6,7 @@ import {
 	decideFrontier,
 	type FrontierChildIssue,
 	parseParentIssueNumber,
+	run,
 	runFrontier,
 } from "../frontier";
 import type { IssueContext } from "../github";
@@ -59,6 +60,8 @@ function configureMergedPullRequest(ctx: IssueContext): void {
 
 afterEach(() => {
 	Reflect.deleteProperty(process.env, "AGENT_PAT");
+	Reflect.deleteProperty(process.env, "GITHUB_TOKEN");
+	Reflect.deleteProperty(process.env, "ISSUE_NUMBER");
 	vi.clearAllMocks();
 });
 
@@ -99,6 +102,20 @@ describe("decideFrontier", () => {
 		expect(decision.parentComplete).toBe(false);
 	});
 
+	it("treats incomplete child metadata conservatively", () => {
+		// Arrange
+		const children = [
+			child({ issue_dependencies_summary: null }),
+			child({ assignees: null, number: 103 }),
+		];
+
+		// Act
+		const decision = decideFrontier(children);
+
+		// Assert
+		expect(decision.frontier).toEqual([children[1]]);
+	});
+
 	it("marks the parent complete when it has no open children", () => {
 		// Arrange
 		const children = [child({ state: "closed" })];
@@ -123,9 +140,65 @@ describe("parseParentIssueNumber", () => {
 		// Assert
 		expect(parentNumber).toBe(42);
 	});
+
+	it("returns null when a ticket has no parent reference", () => {
+		// Arrange
+		const body = "A standalone ticket.";
+
+		// Act
+		const parentNumber = parseParentIssueNumber(body);
+
+		// Assert
+		expect(parentNumber).toBeNull();
+	});
+
+	it("returns null when the ticket body is missing", () => {
+		// Arrange
+		const body = null;
+
+		// Act
+		const parentNumber = parseParentIssueNumber(body);
+
+		// Assert
+		expect(parentNumber).toBeNull();
+	});
 });
 
 describe("runFrontier", () => {
+	it("ignores a merged pull request without an originating ticket", async () => {
+		// Arrange
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: { body: "A manually created pull request.", head: { ref: "main" } },
+		} as never);
+
+		// Act
+		const decision = await runFrontier(ctx, 77);
+
+		// Assert
+		expect(decision).toEqual({ frontier: [], parentComplete: false });
+	});
+
+	it("ignores a merged ticket that has no parent reference", async () => {
+		// Arrange
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: "Closes #101",
+				head: { ref: "agent/issue-101-frontier" },
+			},
+		} as never);
+		vi.mocked(ctx.octokit.rest.issues.get).mockResolvedValue({
+			data: { body: "A standalone ticket." },
+		} as never);
+
+		// Act
+		const decision = await runFrontier(ctx, 77);
+
+		// Assert
+		expect(decision).toEqual({ frontier: [], parentComplete: false });
+	});
+
 	it("labels newly unblocked children through the PAT client", async () => {
 		// Arrange
 		process.env.AGENT_PAT = "pat-token";
@@ -145,6 +218,21 @@ describe("runFrontier", () => {
 			owner: "jackmaders",
 			repo: "watchpoint",
 		});
+	});
+
+	it("leaves the frontier waiting when open children remain blocked", async () => {
+		// Arrange
+		const ctx = buildContext();
+		configureMergedPullRequest(ctx);
+		vi.mocked(ctx.octokit.rest.issues.listSubIssues).mockResolvedValue([
+			child({ issue_dependencies_summary: { blocked_by: 1 } }),
+		] as never);
+
+		// Act
+		const decision = await runFrontier(ctx, 77);
+
+		// Assert
+		expect(decision).toEqual({ frontier: [], parentComplete: false });
 	});
 
 	it("comments on and closes the parent when no open children remain", async () => {
@@ -172,6 +260,45 @@ describe("runFrontier", () => {
 			state: "closed",
 			state_reason: "completed",
 		});
+	});
+
+	it("comments with a manual fallback when the PAT is missing", async () => {
+		// Arrange
+		const ctx = buildContext();
+		configureMergedPullRequest(ctx);
+		vi.mocked(ctx.octokit.rest.issues.listSubIssues).mockResolvedValue([
+			child({ number: 102 }),
+		] as never);
+
+		// Act
+		await runFrontier(ctx, 77);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.createComment).toHaveBeenCalledWith(
+			expect.objectContaining({
+				body: expect.stringContaining("dev:needed"),
+				issue_number: 101,
+			}),
+		);
+	});
+
+	it("builds its context from the workflow environment", async () => {
+		// Arrange
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.ISSUE_NUMBER = "77";
+		const ctx = buildContext();
+		configureMergedPullRequest(ctx);
+		vi.mocked(ctx.octokit.rest.issues.listSubIssues).mockResolvedValue(
+			[] as never,
+		);
+
+		// Act
+		await run();
+
+		// Assert
+		expect(ctx.octokit.rest.issues.update).toHaveBeenCalledWith(
+			expect.objectContaining({ issue_number: 42, state: "closed" }),
+		);
 	});
 });
 
