@@ -8,7 +8,6 @@ import {
 	LABELS,
 	postBotComment,
 	resolvePatOctokit,
-	transitionState,
 } from "./github";
 import { getReviewDiff, parseOriginatingIssueNumber } from "./review";
 import {
@@ -106,7 +105,6 @@ async function commitAndPushFixes(
 }
 
 async function postReviewReplies(
-	ctx: IssueContext,
 	replies: readonly ImplementPr["replies"][number][],
 	exec: ExecFn,
 ): Promise<void> {
@@ -182,7 +180,7 @@ export async function runImplementPr(
 			});
 
 			await commitAndPushFixes(exec, pullRequest.head.ref);
-			await postReviewReplies(ctx, result.output.replies, exec);
+			await postReviewReplies(result.output.replies, exec);
 			await chainToReview(ctx);
 			return labels;
 		},

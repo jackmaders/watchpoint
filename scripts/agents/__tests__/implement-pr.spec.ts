@@ -60,7 +60,7 @@ describe("implement-pr workflow contract", () => {
 		expect(workflow).toContain("pull_request_target:");
 		expect(trigger).toBe(true);
 		expect(workflow).toContain(
-			"group: agent-mutate-pr-${{ github.event.pull_request.number }}",
+			`group: agent-mutate-pr-\${{ github.event.pull_request.number }}`,
 		);
 		expect(workflow).not.toContain("gh pr merge");
 	});
@@ -129,22 +129,27 @@ describe("runImplementPr", () => {
 			});
 		};
 		const execCalls: Array<{ command: string; args: string[] }> = [];
+		const responses: Record<
+			string,
+			{ exitCode: number; stderr: string; stdout: string }
+		> = {
+			"git:diff": {
+				exitCode: 0,
+				stderr: "",
+				stdout: "+export const fixed = true;",
+			},
+			"git:merge-base": { exitCode: 0, stderr: "", stdout: "abc123\n" },
+			"git:status": { exitCode: 0, stderr: "", stdout: " M src/fix.ts\n" },
+		};
 		const exec: ExecFn = async (command, args) => {
 			execCalls.push({ args, command });
-			if (command === "git" && args[0] === "merge-base") {
-				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
-			}
-			if (command === "git" && args[0] === "diff") {
-				return {
+			return (
+				responses[`${command}:${args[0] as string}`] ?? {
 					exitCode: 0,
 					stderr: "",
-					stdout: "+export const fixed = true;",
-				};
-			}
-			if (command === "git" && args[0] === "status") {
-				return { exitCode: 0, stderr: "", stdout: " M src/fix.ts\n" };
-			}
-			return { exitCode: 0, stderr: "", stdout: "" };
+					stdout: "",
+				}
+			);
 		};
 
 		// Act

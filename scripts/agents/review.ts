@@ -418,6 +418,7 @@ async function applyReviewState(
 		return isRound2
 			? transitionState(ctx, labels, {
 					add: [LABELS.reviewRound2, LABELS.reviewEscalated],
+					remove: [LABELS.devNeeded],
 				})
 			: transitionState(ctx, labels, {
 					add: [LABELS.reviewRound1, LABELS.devNeeded],
@@ -451,7 +452,7 @@ export async function runReview(
 		);
 		await transitionState(ctx, pullRequest.labels, {
 			add: [LABELS.reviewEscalated],
-			remove: [LABELS.reviewNeeded],
+			remove: [LABELS.reviewNeeded, LABELS.devNeeded],
 		});
 		return;
 	}
