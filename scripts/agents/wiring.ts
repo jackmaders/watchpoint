@@ -1,5 +1,10 @@
-import { hasStatus, type IssueContext } from "./github";
-import type { Ticket, TicketBreakdown } from "./schemas";
+import { extractLabelNames, hasStatus, type IssueContext } from "./github";
+import type {
+	Ticket,
+	TicketBreakdown,
+	WayfinderTicket,
+	WayfinderTicketType,
+} from "./schemas";
 
 /**
  * `agent-itemizer.ts`'s valuable half (spec §5.9), repurposed as a pure
@@ -29,6 +34,8 @@ export interface ExistingChildIssue {
 	title: string;
 	body: string | null;
 	state: string;
+	labels?: Array<string | { name?: string }>;
+	htmlUrl?: string;
 }
 
 export interface WiredTicket {
@@ -38,6 +45,18 @@ export interface WiredTicket {
 	isNew: boolean;
 	/** Every declared blocker is closed (vacuously true when there are none) — eligible for `dev:needed` on this same run. */
 	isFrontier: boolean;
+}
+
+export interface WayfinderIssueRef {
+	number: number;
+	title: string;
+	url: string;
+}
+
+export interface WayfinderMapRef extends WayfinderIssueRef {}
+
+export interface WiredWayfinderTicket extends WiredTicket {
+	type: WayfinderTicketType;
 }
 
 /** The two identities every issue this module touches needs: the human-facing number (body text, `addSubIssue`'s parent) and the database id (`addBlockedByDependency`) — see the module doc comment on why both, and never `node_id`, are what's threaded through here. */
@@ -52,18 +71,33 @@ export function ticketKeyMarker(ticketId: string): string {
 	return `<!-- spec-ticket-key: ${ticketId} -->`;
 }
 
+export function wayfinderTicketKeyMarker(ticketId: string): string {
+	return `<!-- wayfinder-ticket-key: ${ticketId} -->`;
+}
+
+export function wayfinderMapMarker(mapNumber: number): string {
+	return `<!-- wayfinder-map: ${mapNumber} -->`;
+}
+
+export function extractWayfinderMapNumber(body: string): number | null {
+	const match = body.match(/<!-- wayfinder-map: (\d+) -->/);
+	return match ? Number.parseInt(match[1], 10) : null;
+}
+
 /**
  * Kahn-style DFS topological sort. `TicketBreakdownSchema`'s `superRefine`
  * (schemas.ts) already rejects a cyclic blocker graph before this function
  * ever sees one, so — unlike `agent-itemizer.ts`'s version — this carries no
  * ancestor-tracking cycle guard: `visited` alone is enough to terminate.
  */
-export function topologicalSortTickets(tickets: readonly Ticket[]): Ticket[] {
+function topologicalSortByBlockers<
+	T extends { id: string; blockers: readonly string[] },
+>(tickets: readonly T[]): T[] {
 	const byId = new Map(tickets.map((ticket) => [ticket.id, ticket]));
-	const sorted: Ticket[] = [];
+	const sorted: T[] = [];
 	const visited = new Set<string>();
 
-	function visit(ticket: Ticket): void {
+	function visit(ticket: T): void {
 		if (visited.has(ticket.id)) return;
 		visited.add(ticket.id);
 		for (const blockerId of ticket.blockers) {
@@ -75,6 +109,16 @@ export function topologicalSortTickets(tickets: readonly Ticket[]): Ticket[] {
 
 	for (const ticket of tickets) visit(ticket);
 	return sorted;
+}
+
+export function topologicalSortTickets(tickets: readonly Ticket[]): Ticket[] {
+	return topologicalSortByBlockers(tickets);
+}
+
+export function topologicalSortWayfinderTickets(
+	tickets: readonly WayfinderTicket[],
+): WayfinderTicket[] {
+	return topologicalSortByBlockers(tickets);
 }
 
 function normalizeTitle(title: string): string {
@@ -95,15 +139,41 @@ export function findMatchingChildIssue(
 	matchedNumbers: ReadonlySet<number>,
 	ticket: Ticket,
 ): ExistingChildIssue | undefined {
+	return findMatchingIssue(
+		existingChildIssues,
+		matchedNumbers,
+		ticketKeyMarker(ticket.id),
+		ticket.title,
+	);
+}
+
+export function findMatchingWayfinderChildIssue(
+	existingChildIssues: readonly ExistingChildIssue[],
+	matchedNumbers: ReadonlySet<number>,
+	ticket: WayfinderTicket,
+): ExistingChildIssue | undefined {
+	return findMatchingIssue(
+		existingChildIssues,
+		matchedNumbers,
+		wayfinderTicketKeyMarker(ticket.id),
+		ticket.title,
+	);
+}
+
+function findMatchingIssue(
+	existingChildIssues: readonly ExistingChildIssue[],
+	matchedNumbers: ReadonlySet<number>,
+	marker: string,
+	title: string,
+): ExistingChildIssue | undefined {
 	const available = existingChildIssues.filter(
 		(issue) => !matchedNumbers.has(issue.number),
 	);
-	const marker = ticketKeyMarker(ticket.id);
 
 	return (
 		available.find((issue) => issue.body?.includes(marker)) ??
 		available.find(
-			(issue) => normalizeTitle(issue.title) === normalizeTitle(ticket.title),
+			(issue) => normalizeTitle(issue.title) === normalizeTitle(title),
 		)
 	);
 }
@@ -153,6 +223,38 @@ ${criteria}
 ## Blocked by
 
 ${blockedBy}`;
+}
+
+export function buildWayfinderTicketBody(
+	map: WayfinderMapRef,
+	ticket: WayfinderTicket,
+	blockers: readonly WayfinderIssueRef[],
+): string {
+	const blockedBy =
+		blockers.length > 0
+			? blockers
+					.map((blocker) => `[${blocker.title}](${blocker.url})`)
+					.join("\n")
+			: "None — can start immediately.";
+
+	return `## Map
+
+[${map.title}](${map.url})
+
+${wayfinderMapMarker(map.number)}
+${wayfinderTicketKeyMarker(ticket.id)}
+
+## Question
+
+${ticket.question}
+
+## Blocked by
+
+${blockedBy}`;
+}
+
+export function wayfinderTicketLabel(type: WayfinderTicketType): string {
+	return `wayfinder:${type}`;
 }
 
 /**
@@ -209,7 +311,9 @@ async function fetchExistingChildIssues(
 	});
 	return issues.map((issue) => ({
 		body: issue.body ?? null,
+		htmlUrl: issue.html_url,
 		id: issue.id,
+		labels: issue.labels,
 		number: issue.number,
 		state: issue.state,
 		title: issue.title,
@@ -352,6 +456,144 @@ export async function wireTickets(
 			number: ref.number,
 			ticketId: ticket.id,
 			title: ticket.title,
+		});
+	}
+
+	return wired;
+}
+
+interface WayfinderRef {
+	id: number;
+	number: number;
+	state: string;
+	title: string;
+	url: string;
+}
+
+function fallbackIssueUrl(ctx: IssueContext, number: number): string {
+	return `https://github.com/${ctx.owner}/${ctx.repo}/issues/${number}`;
+}
+
+async function syncWayfinderTicketLabel(
+	ctx: IssueContext,
+	issueNumber: number,
+	labels: Array<string | { name?: string }> | undefined,
+	desiredLabel: string,
+): Promise<void> {
+	const currentWayfinderLabels = extractLabelNames(labels).filter((label) =>
+		label.startsWith("wayfinder:"),
+	);
+
+	for (const label of currentWayfinderLabels) {
+		if (label === desiredLabel) continue;
+		await ctx.octokit.rest.issues.removeLabel({
+			issue_number: issueNumber,
+			name: label,
+			owner: ctx.owner,
+			repo: ctx.repo,
+		});
+	}
+
+	if (!currentWayfinderLabels.includes(desiredLabel)) {
+		await ctx.octokit.rest.issues.addLabels({
+			issue_number: issueNumber,
+			labels: [desiredLabel],
+			owner: ctx.owner,
+			repo: ctx.repo,
+		});
+	}
+}
+
+/**
+ * Creates or updates Wayfinder decision tickets under a map. The model only
+ * supplies titles, questions, types, and run-local blocker ids; this function
+ * resolves those ids to real issue refs, creates native sub-issue links, and
+ * adds native `blocked_by` edges in dependency order. Visible issue text
+ * links to map and ticket titles, never bare issue numbers.
+ */
+export async function wireWayfinderTickets(
+	ctx: IssueContext,
+	map: WayfinderMapRef,
+	tickets: readonly WayfinderTicket[],
+): Promise<WiredWayfinderTicket[]> {
+	const existingChildIssues = await fetchExistingChildIssues(ctx, map.number);
+	const sorted = topologicalSortWayfinderTickets(tickets);
+	const matchedNumbers = new Set<number>();
+	const refs = new Map<string, WayfinderRef>();
+	const wired: WiredWayfinderTicket[] = [];
+
+	for (const ticket of sorted) {
+		const blockerRefs = ticket.blockers
+			.map((blockerId) => refs.get(blockerId))
+			.filter((ref): ref is WayfinderRef => ref !== undefined);
+		const isFrontier = ticket.blockers.every(
+			(blockerId) => refs.get(blockerId)?.state === "closed",
+		);
+		const body = buildWayfinderTicketBody(map, ticket, blockerRefs);
+		const desiredLabel = wayfinderTicketLabel(ticket.type);
+		const match = findMatchingWayfinderChildIssue(
+			existingChildIssues,
+			matchedNumbers,
+			ticket,
+		);
+
+		let ref: WayfinderRef;
+		let isNew: boolean;
+
+		if (match) {
+			matchedNumbers.add(match.number);
+			await ctx.octokit.rest.issues.update({
+				body,
+				issue_number: match.number,
+				owner: ctx.owner,
+				repo: ctx.repo,
+				title: ticket.title,
+			});
+			await syncWayfinderTicketLabel(
+				ctx,
+				match.number,
+				match.labels,
+				desiredLabel,
+			);
+			ref = {
+				id: match.id,
+				number: match.number,
+				state: match.state,
+				title: ticket.title,
+				url: match.htmlUrl ?? fallbackIssueUrl(ctx, match.number),
+			};
+			isNew = false;
+		} else {
+			const { data: created } = await ctx.octokit.rest.issues.create({
+				body,
+				labels: [desiredLabel],
+				owner: ctx.owner,
+				repo: ctx.repo,
+				title: ticket.title,
+			});
+			ref = {
+				id: created.id,
+				number: created.number,
+				state: "open",
+				title: ticket.title,
+				url: created.html_url ?? fallbackIssueUrl(ctx, created.number),
+			};
+			isNew = true;
+			await linkSubIssue(ctx, map.number, created.id);
+		}
+
+		for (const blockerRef of blockerRefs) {
+			await linkBlocker(ctx, ref.number, blockerRef.id);
+		}
+
+		refs.set(ticket.id, ref);
+		wired.push({
+			isFrontier,
+			isNew,
+			number: ref.number,
+			ticketId: ticket.id,
+			title: ticket.title,
+			type: ticket.type,
 		});
 	}
 

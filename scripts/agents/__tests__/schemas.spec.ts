@@ -18,6 +18,7 @@ import {
 	SpecSchema,
 	type Ticket,
 	TicketBreakdownSchema,
+	WayfinderOutputSchema,
 } from "../schemas";
 
 const PROMPTS_DIR = join(import.meta.dirname, "..", "prompts");
@@ -343,6 +344,171 @@ describe("TicketBreakdownSchema", () => {
 
 		// Act
 		const result = TicketBreakdownSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(false);
+	});
+});
+
+describe("WayfinderOutputSchema", () => {
+	it("accepts an intermediate breadth-first grilling round", () => {
+		// Arrange
+		const payload = {
+			frontierEmpty: false,
+			roundMarkdown: "❓ **Q1** - **Destination**: What does done look like?",
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(true);
+	});
+
+	it("accepts a complete plan with typed decision tickets", () => {
+		// Arrange
+		const payload = {
+			destination: "A settled publication plan.",
+			frontierEmpty: true,
+			notes: "Use the research skill for facts.",
+			notYetSpecified: ["The final rollout shape."],
+			outOfScope: [],
+			roundMarkdown: "The frontier is empty.",
+			tickets: [
+				{
+					blockers: [],
+					id: "research-api",
+					question: "Which API contract is authoritative?",
+					title: "Establish the authoritative API contract",
+					type: "research",
+				},
+			],
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(true);
+	});
+
+	it("rejects a plan with an unknown ticket type", () => {
+		// Arrange
+		const payload = {
+			destination: "A destination.",
+			frontierEmpty: true,
+			notes: "Notes.",
+			notYetSpecified: ["Fog."],
+			outOfScope: [],
+			roundMarkdown: "Done.",
+			tickets: [
+				{
+					blockers: [],
+					id: "ticket",
+					question: "A question.",
+					title: "A ticket",
+					type: "unknown",
+				},
+			],
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects a plan whose blocker is not declared in the same plan", () => {
+		// Arrange
+		const payload = {
+			destination: "A destination.",
+			frontierEmpty: true,
+			notes: "Notes.",
+			notYetSpecified: ["Fog."],
+			outOfScope: [],
+			roundMarkdown: "Done.",
+			tickets: [
+				{
+					blockers: ["missing"],
+					id: "ticket",
+					question: "A question.",
+					title: "A ticket",
+					type: "task",
+				},
+			],
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects a plan with duplicate decision-ticket ids", () => {
+		// Arrange
+		const payload = {
+			destination: "A destination.",
+			frontierEmpty: true,
+			notes: "Notes.",
+			notYetSpecified: ["Fog."],
+			outOfScope: [],
+			roundMarkdown: "Done.",
+			tickets: [
+				{
+					blockers: [],
+					id: "duplicate",
+					question: "First.",
+					title: "First",
+					type: "task",
+				},
+				{
+					blockers: [],
+					id: "duplicate",
+					question: "Second.",
+					title: "Second",
+					type: "research",
+				},
+			],
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
+
+		// Assert
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects a cyclic decision-ticket graph", () => {
+		// Arrange
+		const payload = {
+			destination: "A destination.",
+			frontierEmpty: true,
+			notes: "Notes.",
+			notYetSpecified: ["Fog."],
+			outOfScope: [],
+			roundMarkdown: "Done.",
+			tickets: [
+				{
+					blockers: ["second"],
+					id: "first",
+					question: "First.",
+					title: "First",
+					type: "grilling",
+				},
+				{
+					blockers: ["first"],
+					id: "second",
+					question: "Second.",
+					title: "Second",
+					type: "prototype",
+				},
+			],
+		};
+
+		// Act
+		const result = WayfinderOutputSchema.safeParse(payload);
 
 		// Assert
 		expect(result.success).toBe(false);

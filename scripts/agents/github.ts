@@ -22,8 +22,10 @@ export const LABELS = {
 	agentInProgress: "agent:in-progress",
 	devNeeded: "dev:needed",
 	grillNeeded: "grill:needed",
+	grillWaiting: "grill:waiting",
 	needsInfo: "needs-info",
 	readyForAgent: "ready-for-agent",
+	researchNeeded: "research:needed",
 	reviewApproved: "review:approved",
 	reviewEscalated: "review:escalated",
 	reviewNeeded: "review:needed",
@@ -34,6 +36,8 @@ export const LABELS = {
 	ticketsNeeded: "tickets:needed",
 	ticketsProposed: "tickets:proposed",
 	ticketsWired: "tickets:wired",
+	wayfinderMap: "wayfinder:map",
+	wayfinderNeeded: "wayfinder:needed",
 } as const;
 
 export const LabelSchema = z.enum(LABELS);
@@ -112,6 +116,17 @@ export function extractLabelNames(
 			(l): l is string | { name?: string } => l !== null && l !== undefined,
 		)
 		.map((l) => (typeof l === "string" ? l : (l.name ?? "")));
+}
+
+/** Claims a ticket with the authenticated workflow identity before any stage mutation. */
+export async function claimIssue(ctx: IssueContext): Promise<void> {
+	const { data: user } = await ctx.octokit.rest.users.getAuthenticated();
+	await ctx.octokit.rest.issues.addAssignees({
+		assignees: [user.login],
+		issue_number: ctx.issueNumber,
+		owner: ctx.owner,
+		repo: ctx.repo,
+	});
 }
 
 /** A typed status-code guard for an Octokit error shape — shared so every "this failure means the mutation already happened" check reads the same status the same way, rather than each call site re-deriving its own `typeof`/`"status" in error` narrowing. */

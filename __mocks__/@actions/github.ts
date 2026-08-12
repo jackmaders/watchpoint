@@ -18,6 +18,7 @@ export const mockOctokit = {
 	),
 	rest: {
 		issues: {
+			addAssignees: vi.fn().mockResolvedValue({}),
 			addBlockedByDependency: vi.fn().mockResolvedValue({}),
 			addLabels: vi.fn().mockResolvedValue({}),
 			addSubIssue: vi.fn().mockResolvedValue({}),
@@ -95,6 +96,11 @@ export const mockOctokit = {
 			}),
 			listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
 			listReviews: vi.fn().mockResolvedValue({ data: [] }),
+		},
+		users: {
+			getAuthenticated: vi.fn().mockResolvedValue({
+				data: { login: "watchpoint-agent" },
+			}),
 		},
 	},
 };

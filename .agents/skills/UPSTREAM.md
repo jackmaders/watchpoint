@@ -23,10 +23,10 @@ Only the skills this pipeline's stages actually invoke — not the full plugin:
 | `tdd` | `skills/engineering/tdd` |
 | `code-review` | `skills/engineering/code-review` |
 | `research` | `skills/engineering/research` |
+| `wayfinder` | `skills/engineering/wayfinder` |
 | `codebase-design` | `skills/engineering/codebase-design` |
 
-`wayfinder` will be added with Ticket 13 (spec §5.2) — do not add it speculatively ahead
-of that ticket.
+`wayfinder` is vendored with the Wayfinder stage (spec §5.2).
 
 ## Gemini CLI workspace trust
 

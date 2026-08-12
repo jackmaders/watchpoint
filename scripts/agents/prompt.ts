@@ -16,9 +16,11 @@ export const AGENT_SKILLS = [
 	"code-review",
 	"grilling",
 	"implement",
+	"research",
 	"tdd",
 	"to-spec",
 	"to-tickets",
+	"wayfinder",
 ] as const;
 
 export type AgentSkill = (typeof AGENT_SKILLS)[number];

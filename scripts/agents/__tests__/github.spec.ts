@@ -2,6 +2,7 @@ import * as github from "@actions/github";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	BOT_COMMENT_MARKER,
+	claimIssue,
 	extractLabelNames,
 	fetchIssueContext,
 	formatGeminiError,
@@ -171,8 +172,10 @@ describe("github helpers", () => {
 				agentInProgress: "agent:in-progress",
 				devNeeded: "dev:needed",
 				grillNeeded: "grill:needed",
+				grillWaiting: "grill:waiting",
 				needsInfo: "needs-info",
 				readyForAgent: "ready-for-agent",
+				researchNeeded: "research:needed",
 				reviewApproved: "review:approved",
 				reviewEscalated: "review:escalated",
 				reviewNeeded: "review:needed",
@@ -183,6 +186,8 @@ describe("github helpers", () => {
 				ticketsNeeded: "tickets:needed",
 				ticketsProposed: "tickets:proposed",
 				ticketsWired: "tickets:wired",
+				wayfinderMap: "wayfinder:map",
+				wayfinderNeeded: "wayfinder:needed",
 			});
 		});
 
@@ -202,6 +207,31 @@ describe("github helpers", () => {
 
 			// Assert
 			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("claimIssue", () => {
+		it("assigns the authenticated agent before a stage performs work", async () => {
+			// Arrange
+			const octokit = github.getOctokit("fake-token");
+			const ctx = {
+				issueNumber: 62,
+				octokit,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			};
+
+			// Act
+			await claimIssue(ctx);
+
+			// Assert
+			expect(octokit.rest.users.getAuthenticated).toHaveBeenCalledOnce();
+			expect(octokit.rest.issues.addAssignees).toHaveBeenCalledWith({
+				assignees: ["watchpoint-agent"],
+				issue_number: 62,
+				owner: "jackmaders",
+				repo: "watchpoint",
+			});
 		});
 	});
 
