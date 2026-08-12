@@ -263,4 +263,52 @@ describe("waitForQualityChecks", () => {
 			}),
 		);
 	});
+
+	it("reports unknown conclusion when all required jobs are still pending", async () => {
+		// Arrange
+		const ctx = {
+			issueNumber: 42,
+			octokit: {
+				rest: {
+					actions: {
+						listJobsForWorkflowRun: vi.fn().mockResolvedValue({
+							data: {
+								jobs: REQUIRED_QUALITY_CHECK_NAMES.map((name) => ({
+									conclusion: null,
+									name,
+									status: "in_progress",
+								})),
+							},
+						}),
+						listWorkflowRunsForRepo: vi.fn().mockResolvedValue({
+							data: {
+								workflow_runs: [
+									{
+										conclusion: null,
+										head_sha: "pushed-sha",
+										id: 81,
+										name: "PR Quality Checks",
+										status: "completed",
+									},
+								],
+							},
+						}),
+					},
+				},
+			},
+			owner: "jackmaders",
+			repo: "watchpoint",
+		} as unknown as IssueContext;
+
+		// Act
+		const result = await waitForQualityChecks(ctx, "pushed-sha", {
+			timeoutMs: 0,
+		});
+
+		// Assert
+		expect(result).toEqual({
+			reason: expect.stringContaining("unknown; missing jobs: none"),
+			status: "failed",
+		});
+	});
 });
