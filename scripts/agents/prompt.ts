@@ -13,6 +13,7 @@ const SKILLS_DIRECTORY = join(
 
 /** Skills the workflow can inject from this repository's vendored copy. */
 export const AGENT_SKILLS = [
+	"code-review",
 	"grilling",
 	"implement",
 	"tdd",

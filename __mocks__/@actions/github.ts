@@ -92,6 +92,7 @@ export const mockOctokit = {
 					},
 				],
 			}),
+			listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
 			listReviews: vi.fn().mockResolvedValue({ data: [] }),
 		},
 	},

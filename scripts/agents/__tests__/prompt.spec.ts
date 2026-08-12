@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { logger } from "../logger";
-import { buildPrompt, substitutePromptArgs } from "../prompt";
+import { AGENT_SKILLS, buildPrompt, substitutePromptArgs } from "../prompt";
 
 vi.mock("../logger");
 
@@ -72,6 +72,23 @@ describe("substitutePromptArgs", () => {
 });
 
 describe("buildPrompt", () => {
+	it("allows the code-review skill to be injected into a review prompt", () => {
+		// Arrange
+		const promptFile = join(
+			import.meta.dirname,
+			"fixtures",
+			"prompts",
+			"prose.md",
+		);
+
+		// Act
+		const prompt = buildPrompt(promptFile, {}, undefined, ["code-review"]);
+
+		// Assert
+		expect(AGENT_SKILLS).toContain("code-review");
+		expect(prompt).toContain("## Standards");
+	});
+
 	it("prepends workflow-selected skill instructions before the stage prompt", () => {
 		// Arrange
 		const promptFile = join(
