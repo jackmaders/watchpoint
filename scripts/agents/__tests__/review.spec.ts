@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
+import * as github from "@actions/github";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExecFn } from "../exec";
 import { RunAgentError } from "../failure";
-import type { IssueContext } from "../github";
+import { type IssueContext, LABELS } from "../github";
 import {
 	buildReviewBody,
 	buildReviewPayload,
@@ -10,11 +11,81 @@ import {
 	getReviewDiff,
 	parseDiff,
 	parseOriginatingIssueNumber,
+	run as reviewRun,
 	runReview,
 	runReviewAxis,
 } from "../review";
 import type { ObjectRunOptions, RunAgentResult } from "../run-agent";
 import { OUTPUTS, type Review } from "../schemas";
+
+vi.mock("@actions/github");
+vi.mock("../logger");
+
+function buildReviewContext(
+	options: {
+		body?: string | null;
+		labels?: string[];
+		reviewComments?: unknown[];
+		issueBody?: string | null;
+		issueComments?: unknown[];
+	} = {},
+): IssueContext {
+	return {
+		issueNumber: 42,
+		octokit: {
+			paginate: vi.fn().mockResolvedValue(options.issueComments ?? []),
+			rest: {
+				issues: {
+					addLabels: vi.fn().mockResolvedValue({}),
+					createComment: vi.fn().mockResolvedValue({}),
+					get: vi.fn().mockResolvedValue({
+						data: { body: options.issueBody ?? "Issue context." },
+					}),
+					removeLabel: vi.fn().mockResolvedValue({}),
+				},
+				pulls: {
+					get: vi.fn().mockResolvedValue({
+						data: {
+							body: options.body ?? "No issue link.",
+							head: { ref: "feature/review" },
+							labels: (options.labels ?? []).map((name) => ({ name })),
+						},
+					}),
+					listReviewComments: vi
+						.fn()
+						.mockResolvedValue({ data: options.reviewComments ?? [] }),
+				},
+			},
+		},
+		owner: "jackmaders",
+		repo: "watchpoint",
+	} as unknown as IssueContext;
+}
+
+function buildReviewExec(
+	calls: Array<{ command: string; args: string[] }>,
+): ExecFn {
+	return async (command, args) => {
+		calls.push({ args, command });
+		if (command === "git" && args[0] === "merge-base") {
+			return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+		}
+		if (command === "git" && args[0] === "diff") {
+			return {
+				exitCode: 0,
+				stderr: "",
+				stdout: [
+					"diff --git a/src/example.ts b/src/example.ts",
+					"--- a/src/example.ts",
+					"+++ b/src/example.ts",
+					"@@ -1,0 +1,1 @@",
+					"+export const answer = 42;",
+				].join("\n"),
+			};
+		}
+		return { exitCode: 0, stderr: "", stdout: "" };
+	};
+}
 
 describe("parseDiff", () => {
 	it("maps right-side context and added lines to their file paths", () => {
@@ -59,6 +130,29 @@ describe("parseDiff", () => {
 
 		// Assert
 		expect(lines).toEqual(new Set(["old.ts:1", "new.ts:1"]));
+	});
+
+	it("ignores no-newline markers and advances over unclassified diff lines", () => {
+		// Arrange
+		const diff = [
+			"diff --git a/removed.ts b/removed.ts",
+			"+++ /dev/null",
+			"@@ malformed hunk header",
+			"+ignored",
+			"diff --git a/kept.ts b/kept.ts",
+			"+++ b/kept.ts",
+			"@@ -1 +7,2 @@",
+			"+added",
+			"\\ No newline at end of file",
+			"~metadata",
+			" context",
+		].join("\n");
+
+		// Act
+		const lines = parseDiff(diff);
+
+		// Assert
+		expect(lines).toEqual(new Set(["kept.ts:7", "kept.ts:9"]));
 	});
 });
 
@@ -115,6 +209,35 @@ describe("getReviewDiff", () => {
 		await expect(result).rejects.toThrow(
 			"git merge-base origin/main HEAD failed",
 		);
+	});
+
+	it("rejects an empty merge-base even when git exits successfully", async () => {
+		// Arrange
+		const exec: ExecFn = async (_command, args) =>
+			args[0] === "merge-base"
+				? { exitCode: 0, stderr: "", stdout: " \n" }
+				: { exitCode: 0, stderr: "", stdout: "" };
+
+		// Act
+		const result = getReviewDiff(exec);
+
+		// Assert
+		await expect(result).rejects.toThrow("empty merge-base");
+	});
+
+	it("uses an unknown-error message when a git command has no stderr", async () => {
+		// Arrange
+		const exec: ExecFn = async () => ({
+			exitCode: 1,
+			stderr: "",
+			stdout: "",
+		});
+
+		// Act
+		const result = getReviewDiff(exec);
+
+		// Assert
+		await expect(result).rejects.toThrow("unknown error");
 	});
 });
 
@@ -273,6 +396,298 @@ describe("runReview", () => {
 		expect(readFileSync(payloadPath as string, "utf-8")).toContain(
 			"1 posted, 1 dropped",
 		);
+	});
+
+	it("marks a first-round changes request for implementation", async () => {
+		// Arrange
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Blocking findings.",
+			verdict: "changes-requested",
+		};
+		const runner = async (): Promise<RunAgentResult<Review>> => ({
+			output,
+			raw: "",
+			sessionId: "session-1",
+			usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+		});
+		const exec: ExecFn = async (_command, args) => {
+			if (args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			if (args[0] === "diff") {
+				return {
+					exitCode: 0,
+					stderr: "",
+					stdout: [
+						"diff --git a/src/example.ts b/src/example.ts",
+						"--- a/src/example.ts",
+						"+++ b/src/example.ts",
+						"@@ -1,0 +1,1 @@",
+						"+export const answer = 42;",
+					].join("\n"),
+				};
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const ctx = {
+			issueNumber: 42,
+			octokit: {
+				rest: {
+					issues: {
+						addLabels: vi.fn().mockResolvedValue({}),
+						createComment: vi.fn().mockResolvedValue({}),
+						removeLabel: vi.fn().mockResolvedValue({}),
+					},
+					pulls: {
+						get: vi.fn().mockResolvedValue({
+							data: {
+								body: "No issue link.",
+								head: { ref: "feature/review" },
+								labels: [],
+							},
+						}),
+						listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
+					},
+				},
+			},
+			owner: "jackmaders",
+			repo: "watchpoint",
+		} as unknown as IssueContext;
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+			issue_number: 42,
+			labels: [LABELS.reviewRound1, LABELS.devNeeded],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+	});
+
+	it("escalates a second-round changes request", async () => {
+		// Arrange
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Still blocking.",
+			verdict: "changes-requested",
+		};
+		const runner = async (): Promise<RunAgentResult<Review>> => ({
+			output,
+			raw: "",
+			sessionId: "session-2",
+			usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+		});
+		const exec: ExecFn = async (_command, args) => {
+			if (args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			if (args[0] === "diff") {
+				return {
+					exitCode: 0,
+					stderr: "",
+					stdout: [
+						"diff --git a/src/example.ts b/src/example.ts",
+						"--- a/src/example.ts",
+						"+++ b/src/example.ts",
+						"@@ -1,0 +1,1 @@",
+						"+export const answer = 42;",
+					].join("\n"),
+				};
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const ctx = {
+			issueNumber: 42,
+			octokit: {
+				rest: {
+					issues: {
+						addLabels: vi.fn().mockResolvedValue({}),
+						createComment: vi.fn().mockResolvedValue({}),
+						removeLabel: vi.fn().mockResolvedValue({}),
+					},
+					pulls: {
+						get: vi.fn().mockResolvedValue({
+							data: {
+								body: "No issue link.",
+								head: { ref: "feature/review" },
+								labels: [{ name: LABELS.reviewRound1 }],
+							},
+						}),
+						listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
+					},
+				},
+			},
+			owner: "jackmaders",
+			repo: "watchpoint",
+		} as unknown as IssueContext;
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+			issue_number: 42,
+			labels: [LABELS.reviewRound2, LABELS.reviewEscalated],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+	});
+
+	it("includes existing threads, issue context, and replies in the review", async () => {
+		// Arrange
+		const runnerCalls: ObjectRunOptions<Review>[] = [];
+		const output: Review = {
+			inlineComments: [],
+			replies: [{ body: "Thread reply", commentId: "comment-1" }],
+			summary: "Reviewed.",
+			verdict: "approved",
+		};
+		const runner = async (
+			options: ObjectRunOptions<Review>,
+		): Promise<RunAgentResult<Review>> => {
+			runnerCalls.push(options);
+			return {
+				output,
+				raw: "",
+				sessionId: "session-3",
+				usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+			};
+		};
+		const ctx = buildReviewContext({
+			body: "Fixes #17",
+			issueComments: [
+				{ body: "User detail.", user: { type: "User" } },
+				{ body: "Bot detail.", user: { type: "Bot" } },
+			],
+			reviewComments: [
+				{
+					body: "Please revisit.",
+					line: 1,
+					path: "src/example.ts",
+					user: { login: "reviewer" },
+				},
+				{ body: null, line: null, path: "README.md", user: null },
+			],
+		});
+		const execCalls: Array<{ command: string; args: string[] }> = [];
+		const exec = buildReviewExec(execCalls);
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls).toHaveLength(2);
+		expect(runnerCalls[0]?.promptArgs.UNRESOLVED_THREADS).toContain(
+			"src/example.ts:1",
+		);
+		expect(runnerCalls[1]?.promptArgs.SPEC_CONTEXT).toContain("Issue context.");
+		expect(execCalls).toContainEqual({
+			args: [
+				"api",
+				"--method",
+				"POST",
+				"repos/{owner}/{repo}/pulls/comments/comment-1/replies",
+				"--field",
+				"body=Thread reply",
+			],
+			command: "gh",
+		});
+	});
+
+	it("continues with fallback context when GitHub context lookups fail", async () => {
+		// Arrange
+		const runnerCalls: ObjectRunOptions<Review>[] = [];
+		const output: Review = {
+			inlineComments: [],
+			replies: [],
+			summary: "Reviewed.",
+			verdict: "approved",
+		};
+		const runner = async (
+			options: ObjectRunOptions<Review>,
+		): Promise<RunAgentResult<Review>> => {
+			runnerCalls.push(options);
+			return {
+				output,
+				raw: "",
+				sessionId: "session-4",
+				usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+			};
+		};
+		const ctx = buildReviewContext({ body: "Closes #17" });
+		vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockRejectedValue(
+			new Error("threads unavailable"),
+		);
+		vi.mocked(ctx.octokit.rest.issues.get).mockRejectedValue(
+			new Error("issue unavailable"),
+		);
+		const exec = buildReviewExec([]);
+
+		// Act
+		await runReview(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls[0]?.promptArgs.UNRESOLVED_THREADS).toBe(
+			"Could not fetch existing review threads.",
+		);
+		expect(runnerCalls[1]?.promptArgs.SPEC_CONTEXT).toBe(
+			"Could not fetch originating issue context.",
+		);
+	});
+});
+
+describe("run", () => {
+	const originalEnv = { ...process.env };
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		process.env = { ...originalEnv };
+	});
+
+	it("escalates a second-round review when wired from the workflow environment", async () => {
+		// Arrange
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.ISSUE_NUMBER = "42";
+		const octokit = github.getOctokit("fake-token");
+		vi.mocked(octokit.rest.pulls.get).mockResolvedValueOnce({
+			data: {
+				body: "No issue link.",
+				head: { ref: "feature/review" },
+				labels: [{ name: LABELS.reviewRound2 }, { name: LABELS.reviewNeeded }],
+			},
+		} as unknown as Awaited<ReturnType<typeof octokit.rest.pulls.get>>);
+
+		// Act
+		await reviewRun();
+
+		// Assert
+		expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
+		expect(octokit.rest.issues.createComment).toHaveBeenCalledWith({
+			body: expect.stringContaining("Review Escalated"),
+			issue_number: 42,
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+		expect(octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+			issue_number: 42,
+			name: LABELS.reviewNeeded,
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+		expect(octokit.rest.issues.addLabels).toHaveBeenCalledWith({
+			issue_number: 42,
+			labels: [LABELS.reviewEscalated],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
 	});
 });
 
