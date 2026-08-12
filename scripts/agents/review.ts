@@ -435,7 +435,9 @@ async function applyReviewState(
 					remove: [LABELS.devNeeded],
 				})
 			: transitionState(labelContext, labels, {
-					add: [LABELS.reviewRound1, LABELS.devNeeded],
+					add: hasPat
+						? [LABELS.reviewRound1, LABELS.devNeeded]
+						: [LABELS.reviewRound1],
 				}));
 		if (!isRound2 && !hasPat) {
 			await postBotComment(

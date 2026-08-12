@@ -16,13 +16,21 @@ PR diff:
 {{DIFF}}
 ```
 
-Review threads, including their comment ids for replies:
+Complete PR feedback context (top-level PR comments, PR review bodies, inline PR review
+comments, including bot comments, fetched with pagination):
 
 {{REVIEW_THREADS}}
 
+The structured output must contain exactly one outcome for every source. Classify every
+source in that context exactly once. Use the
+source-aware id exactly as supplied (`comment:<id>`, `review:<id>`, or `inline:<id>`),
+and choose `fixed`, `invalid`, or `transiently-not-actionable`. Include a useful reason
+and response for every outcome; an invalid finding must explain why it does not apply.
+Address every valid finding even when another finding is invalid or transiently not
+actionable. Do not omit a source, duplicate a source, or invent source ids.
+
 Only address findings that are still relevant. Keep unrelated changes out of this fix
-round. For every finding you resolve, include one reply in the structured output using
-the finding's exact comment id. Do not invent comment ids.
+round.
 
 Do not close the issue. Do not edit labels. Do not create PRs. Do not edit PRs.
 
