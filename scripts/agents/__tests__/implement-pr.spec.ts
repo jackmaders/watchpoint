@@ -5,12 +5,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ExecFn } from "../exec";
 import type { IssueContext } from "../github";
 import { LABELS } from "../github";
-import { runImplementPr } from "../implement-pr";
-import type { ObjectRunOptions, RunAgentResult } from "../run-agent";
+import { run as implementPrRun, runImplementPr } from "../implement-pr";
+import {
+	type ObjectRunOptions,
+	type RunAgentResult,
+	runAgent,
+} from "../run-agent";
 import { type ImplementPr, OUTPUTS } from "../schemas";
 
 vi.mock("@actions/github");
+vi.mock("../exec");
 vi.mock("../logger");
+vi.mock("../run-agent");
 
 const WORKFLOW_FILE = join(
 	import.meta.dirname,
@@ -73,7 +79,8 @@ describe("implement-pr workflow contract", () => {
 		const prohibitions = [
 			"Do not close the issue.",
 			"Do not edit labels.",
-			"Do not create or edit PRs.",
+			"Do not create PRs.",
+			"Do not edit PRs.",
 		];
 
 		// Assert
@@ -188,6 +195,194 @@ describe("runImplementPr", () => {
 				issue_number: 42,
 				labels: [LABELS.reviewNeeded],
 			}),
+		);
+	});
+
+	it("handles a PR without a ticket when no changes or PAT are available", async () => {
+		// Arrange
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: null,
+				head: { ref: "feature/no-ticket" },
+				labels: [{ name: LABELS.devNeeded }],
+			},
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+		vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockResolvedValue({
+			data: [],
+		} as unknown as Awaited<
+			ReturnType<typeof ctx.octokit.rest.pulls.listReviewComments>
+		>);
+
+		const runnerCalls: ObjectRunOptions<ImplementPr>[] = [];
+		const runner = async (
+			options: ObjectRunOptions<ImplementPr>,
+		): Promise<RunAgentResult<ImplementPr>> => {
+			runnerCalls.push(options);
+			return fakeResult({ replies: [], summary: "No changes needed." });
+		};
+		const execCalls: Array<{ command: string; args: string[] }> = [];
+		const exec: ExecFn = async (command, args) => {
+			execCalls.push({ args, command });
+			if (command === "git" && args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+
+		// Act
+		await runImplementPr(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls[0]?.promptArgs).toEqual(
+			expect.objectContaining({
+				ISSUE_NUMBER: "42",
+				REVIEW_THREADS: "No existing review threads.",
+				TICKET: "No originating issue was found.",
+			}),
+		);
+		expect(execCalls).not.toContainEqual({
+			args: ["add", "-A"],
+			command: "git",
+		});
+		expect(ctx.octokit.rest.issues.createComment).toHaveBeenCalledWith(
+			expect.objectContaining({
+				body: expect.stringContaining("AGENT_PAT"),
+			}),
+		);
+	});
+
+	it("formats sparse review comments before sending them to the agent", async () => {
+		// Arrange
+		process.env.AGENT_PAT = "pat-token";
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: "No ticket link.",
+				head: { ref: "feature/sparse-comment" },
+				labels: [],
+			},
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+		vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockResolvedValue({
+			data: [
+				{
+					body: null,
+					id: 9002,
+					line: null,
+					path: "README.md",
+					user: null,
+				},
+			],
+		} as unknown as Awaited<
+			ReturnType<typeof ctx.octokit.rest.pulls.listReviewComments>
+		>);
+		const runnerCalls: ObjectRunOptions<ImplementPr>[] = [];
+		const runner = async (
+			options: ObjectRunOptions<ImplementPr>,
+		): Promise<RunAgentResult<ImplementPr>> => {
+			runnerCalls.push(options);
+			return fakeResult({ replies: [], summary: "Reviewed." });
+		};
+		const exec: ExecFn = async (_command, args) =>
+			args[0] === "merge-base"
+				? { exitCode: 0, stderr: "", stdout: "abc123\n" }
+				: { exitCode: 0, stderr: "", stdout: "" };
+
+		// Act
+		await runImplementPr(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls[0]?.promptArgs.REVIEW_THREADS).toContain(
+			"Comment 9002 at **README.md:?** (unknown):",
+		);
+	});
+
+	it.each([
+		["stderr", "permission denied", "permission denied"],
+		["stdout", "", "remote rejected"],
+		["fallback", "", ""],
+	])(
+		"reports a %s command failure and blocks the stage",
+		async (_label, stderr, stdout) => {
+			// Arrange
+			process.env.AGENT_PAT = "pat-token";
+			const ctx = buildContext();
+			vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+				data: {
+					body: "Closes #17",
+					head: { ref: "agent/issue-17-fix-review" },
+					labels: [],
+				},
+			} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+			vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockResolvedValue({
+				data: [],
+			} as unknown as Awaited<
+				ReturnType<typeof ctx.octokit.rest.pulls.listReviewComments>
+			>);
+			vi.mocked(ctx.octokit.rest.issues.get).mockResolvedValue({
+				data: { body: "The originating ticket." },
+			} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.issues.get>>);
+			const runner = async (): Promise<RunAgentResult<ImplementPr>> =>
+				fakeResult({ replies: [], summary: "Fixed." });
+			const exec: ExecFn = async (command, args) => {
+				if (command === "git" && args[0] === "push") {
+					return { exitCode: 1, stderr, stdout };
+				}
+				if (command === "git" && args[0] === "merge-base") {
+					return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+				}
+				return { exitCode: 0, stderr: "", stdout: "" };
+			};
+
+			// Act
+			const act = runImplementPr(ctx, runner, exec);
+
+			// Assert
+			await expect(act).rejects.toThrow(stdout || stderr || "unknown error");
+			expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({ labels: [LABELS.agentInProgress] }),
+			);
+		},
+	);
+
+	it("wires its workflow environment into the default runner", async () => {
+		// Arrange
+		process.env.GITHUB_TOKEN = "fake-token";
+		process.env.ISSUE_NUMBER = "42";
+		process.env.AGENT_PAT = "pat-token";
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: "Closes #17",
+				head: { ref: "agent/issue-17-fix-review" },
+				labels: [],
+			},
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+		vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockResolvedValue({
+			data: [],
+		} as unknown as Awaited<
+			ReturnType<typeof ctx.octokit.rest.pulls.listReviewComments>
+		>);
+		vi.mocked(ctx.octokit.rest.issues.get).mockResolvedValue({
+			data: { body: "The originating ticket." },
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.issues.get>>);
+		vi.mocked(runAgent).mockResolvedValue(
+			fakeResult({ replies: [], summary: "Fixed." }),
+		);
+		vi.mocked((await import("../exec")).defaultExec).mockImplementation(
+			async (_command, args) =>
+				args[0] === "merge-base"
+					? { exitCode: 0, stderr: "", stdout: "abc123\n" }
+					: { exitCode: 0, stderr: "", stdout: "" },
+		);
+
+		// Act
+		await implementPrRun();
+
+		// Assert
+		expect(github.getOctokit).toHaveBeenCalledWith("fake-token");
+		expect(runAgent).toHaveBeenCalledWith(
+			expect.objectContaining({ skills: ["implement"] }),
 		);
 	});
 });

@@ -24,7 +24,7 @@ Only address findings that are still relevant. Keep unrelated changes out of thi
 round. For every finding you resolve, include one reply in the structured output using
 the finding's exact comment id. Do not invent comment ids.
 
-Do not close the issue. Do not edit labels. Do not create or edit PRs.
+Do not close the issue. Do not edit labels. Do not create PRs. Do not edit PRs.
 
 Wrap your final answer in `<implement-pr>...</implement-pr>`, matching the schema below
 exactly, then signal completion with `<promise>COMPLETE</promise>`.
