@@ -262,6 +262,125 @@ export const TicketBreakdownSchema = z
 export type TicketBreakdown = z.infer<typeof TicketBreakdownSchema>;
 
 // ---------------------------------------------------------------------------
+// wayfinder
+// ---------------------------------------------------------------------------
+
+export const WAYFINDER_TICKET_TYPES = [
+	"research",
+	"prototype",
+	"grilling",
+	"task",
+] as const;
+export const WayfinderTicketTypeSchema = z.enum(WAYFINDER_TICKET_TYPES);
+export type WayfinderTicketType = z.infer<typeof WayfinderTicketTypeSchema>;
+
+export const WayfinderTicketSchema = z.object({
+	blockers: z
+		.array(z.string().min(1).max(64))
+		.max(20)
+		.describe("Ids of decision tickets that must resolve before this one."),
+	id: z
+		.string()
+		.min(1)
+		.max(64)
+		.describe("A run-local key used only to wire decision-ticket blockers."),
+	question: z
+		.string()
+		.min(1)
+		.max(4000)
+		.describe("The one decision or investigation this ticket resolves."),
+	title: z.string().min(1).max(200).describe("The decision ticket's title."),
+	type: WayfinderTicketTypeSchema.describe("The ticket's execution posture."),
+});
+export type WayfinderTicket = z.infer<typeof WayfinderTicketSchema>;
+
+const WayfinderRoundSchema = z.object({
+	frontierEmpty: z.literal(false),
+	roundMarkdown: z
+		.string()
+		.min(1)
+		.max(8000)
+		.describe(
+			"The numbered breadth-first questions to post to the maintainer.",
+		),
+});
+
+export const WayfinderPlanSchema = z
+	.object({
+		destination: z
+			.string()
+			.min(1)
+			.max(1000)
+			.describe("What reaching the end of this map looks like."),
+		frontierEmpty: z.literal(true),
+		notes: z
+			.string()
+			.min(1)
+			.max(4000)
+			.describe("Standing context and skills for future map sessions."),
+		notYetSpecified: z
+			.array(z.string().min(1).max(1000))
+			.max(50)
+			.describe(
+				"In-scope fog that is not yet sharp enough to become a ticket.",
+			),
+		outOfScope: z
+			.array(z.string().min(1).max(1000))
+			.max(50)
+			.describe("Work explicitly ruled beyond this map's destination."),
+		roundMarkdown: z
+			.string()
+			.min(1)
+			.max(8000)
+			.describe("The final charting note, posted before the map summary."),
+		tickets: z
+			.array(WayfinderTicketSchema)
+			.min(1)
+			.max(50)
+			.describe("Decision tickets that are precise enough to create now."),
+	})
+	.superRefine((data, ctx) => {
+		const seenIds = new Set<string>();
+		data.tickets.forEach((ticket, ticketIndex) => {
+			if (seenIds.has(ticket.id)) {
+				ctx.addIssue({
+					code: "custom",
+					message: `Decision ticket id "${ticket.id}" is used more than once.`,
+					path: ["tickets", ticketIndex, "id"],
+				});
+			}
+			seenIds.add(ticket.id);
+		});
+
+		const declaredIds = new Set(data.tickets.map((ticket) => ticket.id));
+		data.tickets.forEach((ticket, ticketIndex) => {
+			ticket.blockers.forEach((blocker, blockerIndex) => {
+				if (declaredIds.has(blocker)) return;
+				ctx.addIssue({
+					code: "custom",
+					message: `Decision ticket "${ticket.id}" blocks on undeclared ticket "${blocker}".`,
+					path: ["tickets", ticketIndex, "blockers", blockerIndex],
+				});
+			});
+		});
+
+		const cycle = findBlockerCycle(data.tickets);
+		if (cycle) {
+			ctx.addIssue({
+				code: "custom",
+				message: `The decision-ticket graph contains a cycle: ${cycle.join(" -> ")}.`,
+				path: ["tickets"],
+			});
+		}
+	});
+
+export const WayfinderOutputSchema = z.discriminatedUnion("frontierEmpty", [
+	WayfinderRoundSchema,
+	WayfinderPlanSchema,
+]);
+export type WayfinderOutput = z.infer<typeof WayfinderOutputSchema>;
+
+// ---------------------------------------------------------------------------
 // implement
 // ---------------------------------------------------------------------------
 
@@ -497,6 +616,11 @@ export const OUTPUTS = {
 	"review-standards": { kind: "object", schema: ReviewSchema, tag: "review" },
 	spec: { kind: "object", schema: SpecSchema, tag: "spec" },
 	tickets: { kind: "object", schema: TicketBreakdownSchema, tag: "tickets" },
+	wayfinder: {
+		kind: "object",
+		schema: WayfinderOutputSchema,
+		tag: "wayfinder",
+	},
 } as const satisfies Record<string, OutputSpec<unknown>>;
 
 export type Stage = keyof typeof OUTPUTS;
