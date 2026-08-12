@@ -1,7 +1,7 @@
 # Spec — Gemini-Driven AI Development Pipeline (v1)
 
 **Status:** Draft for breakdown
-**Supersedes:** `docs/ai-sdlc-lifecycle.md`
+**Supersedes:** the retired AI SDLC lifecycle draft
 **Design rationale:** `docs/ai-agent-pipeline-design.md` (referenced below as *the design doc*)
 
 ---
@@ -339,7 +339,7 @@ These exist to reduce the failure rate rather than merely detect it:
 
 #### One schema, two consumers
 
-`z.toJSONSchema()` (Zod 4, already used by `agent-itemizer.ts`) generates the JSON Schema
+`z.toJSONSchema()` (Zod 4, already used by the ticket-wiring implementation) generates the JSON Schema
 from the Zod object, and the runner interpolates it into the prompt as
 `{{OUTPUT_SCHEMA}}`. **The prompt never restates the schema in prose.** A schema edit
 updates both the validator and the instruction in one commit, which removes the most
@@ -374,7 +374,7 @@ The current code is the anti-pattern: `agent-reviewer.ts` hand-writes
 `ReviewFeedbackItem` and `ReviewDecisionData` interfaces, *and separately* hand-writes a
 Gemini `responseSchema` object literal describing the same shape, *and* the prompt file
 describes it a third time in prose. Three copies with nothing linking them; any two can
-drift silently. `agent-itemizer.ts` already shows the correct pattern
+drift silently. The ticket-wiring implementation already shows the correct pattern
 (`export type Ticket = z.infer<typeof TicketSchema>`) — generalise it.
 
 | Artifact | Derived from | Never |
@@ -505,7 +505,7 @@ it, or grilling rounds feed back in as user input (F7).
   between model output and GitHub mutation is reviewable at a glance.
 - **`scripts/agents/github.ts`** — `agent-shared.ts` moved verbatim: `transitionState`,
   `extractLabelNames`, `removeLabelIfPresent`, `BOT_COMMENT_MARKER`, error comments.
-- **`scripts/agents/wiring.ts`** — `agent-itemizer.ts`'s valuable half, repurposed as a
+- **`scripts/agents/wiring.ts`** — deterministic ticket-wiring logic, repurposed as a
   pure post-processor over `to-tickets` output: `TicketSchema`, `topologicalSortTickets`,
   `getOrCreateMilestone`, `addSubIssue`/`addBlockedBy` GraphQL, and
   `<!-- spec-ticket-key -->` idempotency. **The model never wires dependencies** — the
@@ -629,12 +629,12 @@ Tracer-bullet vertical slices, each demoable on its own.
 | **5** | **Schema registry** | 3 | `schemas.ts` with the `OUTPUTS` registry, every stage schema, the `.superRefine` semantic checks, derived `Stage`/`OutputOf` types, `as const` label and enum sources, and the registry-completeness test. Convert `models.ts` to be keyed by `Stage`. **Demo:** deleting a `models.ts` entry, or a prompt file, fails `bun run check:types` or a unit test — not a workflow run. |
 | **6** | **Grill loop** | 4, 5 | `agent-grill.yml` + `grill.ts` + `grill.md`. Label → questions → `needs-info`; human comment → next round; frontier empty → `spec:needed`. **Demo:** label an issue, answer, get round 2, watch it hand off. |
 | **7** | **Spec publication** | 6 | `agent-spec.yml` + `spec.ts` + `spec.md`. Publishes to the issue body preserving the original proposal, posts seams as a comment, applies `spec:ready` + `ready-for-agent`, chains `tickets:needed`. **Demo:** a grilled issue becomes a spec unattended. |
-| **8** | **Ticket breakdown and wiring** | 7 | `agent-tickets.yml` + `tickets.ts` + `tickets.md`; `wiring.ts` refactored from `agent-itemizer.ts`. Quiz comment → `/approve` → sub-issues + native `blocked_by` + milestone; strips `ready-for-agent` from the parent; labels the frontier `dev:needed`. **Demo:** a spec becomes a wired dependency graph visible in GitHub's UI. |
+| **8** | **Ticket breakdown and wiring** | 7 | `agent-tickets.yml` + `tickets.ts` + `tickets.md` + `wiring.ts`. Quiz comment → `/approve` → sub-issues + native `blocked_by` + milestone; strips `ready-for-agent` from the parent; labels the frontier `dev:needed`. **Demo:** a spec becomes a wired dependency graph visible in GitHub's UI. |
 | **9** | **Implementation agent** | 4, 5 | `agent-implement.yml` + `implement.ts` + `implement.md`. Shape guards, branch, TDD run, `bun run validate`, commit assertion, push, draft PR, chain `review:needed`. **Demo:** label a hand-written ticket → a draft PR with tests appears. |
 | **10** | **Two-axis review** | 9 | `agent-review.yml` + `review.ts` + two prompts. Axes as two separate runs; structured output; inline comments filtered against the diff line map; reported side by side, never merged. **Demo:** a PR receives a Standards and a Spec review. |
-| **11** | **Fix round and the two-round cap** | 10 | `agent-implement-pr.yml` + `implement-pr.ts` + `implement-pr.md`; `review:round-1`/`round-2`/`approved`/`escalated` transitions. **Demo:** review finds an issue → agent fixes it → round 2 approves. |
+| **11** | **Fix round and the two-round cap** | 10 | `agent-implement-pr.yml` + `implement-pr.ts` + `implement-pr.md`; `review:round-1`/`review:round-2`/`review:approved`/`review:escalated` transitions. **Demo:** review finds an issue → agent fixes it → round 2 approves. |
 | **12** | **Frontier advance** | 8, 11 | `agent-frontier.yml` + `frontier.ts`. On human merge: close the ticket, label newly unblocked tickets `dev:needed`, close the parent when empty. **Demo:** merging ticket 1 starts ticket 2 unattended. |
-| **13** | **Final teardown and label migration** | 6, 8, 11, 12 | Delete `agent-planner.{ts,spec.ts}`, `agent-itemizer.{ts,spec.ts}`, their workflows, the three forked skills, `feature-spec-template.md`, `@google/genai`, `docs/ai-sdlc-lifecycle.md`. Migrate hyphenated labels to `{role}:{status}` and delete the old ones. **Demo:** no `@google/genai` in the tree; pipeline still green. |
+| **13** | **Final teardown and label migration** | 6, 8, 11, 12 | Delete `agent-planner.{ts,spec.ts}`, `agent-itemizer.{ts,spec.ts}`, their workflows, the three forked skills, `feature-spec-template.md`, the retired model SDK dependency, and the retired lifecycle draft. Migrate hyphenated labels to `{role}:{status}` and delete the old ones. **Demo:** no retired model SDK references remain in the tree; pipeline still green. |
 | **14** | **Wayfinder (optional)** | 8 | `agent-wayfinder.yml`, `wayfinder:*` labels, `agent-research.yml` for AFK research tickets. **Demo:** a loose idea becomes a decision map. |
 
 Frontier after Ticket 5 splits: **6 → 7 → 8** (planning) and **9 → 10 → 11**

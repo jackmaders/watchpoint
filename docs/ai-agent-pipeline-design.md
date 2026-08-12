@@ -1,17 +1,22 @@
 # Aligning Watchpoint's AI SDLC to Matt Pocock's Skills
 
-A review of the current agent workflows, a reference for how the `mattpocock-skills`
-plugin is intended to be used, a proposed automated pipeline built on top of it, a
-comparison against Sandcastle, and a migration recommendation.
+A historical review of the pre-teardown agent workflows, a reference for how the
+`mattpocock-skills` plugin is intended to be used, a proposed automated pipeline built on
+top of it, a comparison against Sandcastle, and a migration recommendation.
+
+> **Historical note:** This document records the design and rollout plan before Ticket 13
+> completed the final teardown. References to retired workflows, runners, and skill forks
+> below describe that earlier state; the v1 specification and the live `.github/workflows/`
+> and `scripts/agents/` trees are the current implementation references.
 
 **Sources reviewed**
 
 | Source | Location |
 | :--- | :--- |
-| Current agent workflows | `.github/workflows/agent-{planner,itemizer,developer,reviewer}.yml` |
-| Current agent runners | `scripts/agent-{planner,itemizer,developer,reviewer,shared}.ts` |
-| Current custom skills | `.github/skills/{grill-me,to-spec,to-tickets,agent-developer,agent-reviewer}.md` |
-| Current docs | `docs/ai-sdlc-lifecycle.md`, `AGENTS.md`, `docs/architecture/` |
+| Historical agent workflows (pre-Ticket 13) | `.github/workflows/agent-{planner,itemizer,developer,reviewer}.yml` |
+| Historical agent runners (pre-Ticket 13) | `scripts/agent-{planner,itemizer,developer,reviewer,shared}.ts` |
+| Historical custom skills (forks removed in Ticket 13) | `.github/skills/{grill-me,to-spec,to-tickets,agent-developer,agent-reviewer}.md` |
+| Current docs | `docs/specifications/ai-pipeline-v1-spec.md`, `AGENTS.md`, `docs/architecture/` |
 | Plugin | `mattpocock-skills@claude-plugins-official` v1.2.3 (25 skills + `docs/engineering`, `docs/productivity`) |
 | Sandcastle | `mattpocock/sandcastle` @ `e99f832` — `README.md`, `.sandcastle/`, `.github/workflows/agent-*.yml` |
 
@@ -265,7 +270,7 @@ Documented in the plugin's own `docs/engineering/*.md`:
 
 | Gap | Impact on automation |
 | :--- | :--- |
-| `to-tickets` frequently fails to create real GitHub sub-issues (`mattpocock/skills#554`) and writes "Blocked by" as body text instead of a native dependency (`#513`) | **The wiring must be done deterministically in code, not left to the model.** This is exactly what `scripts/agent-itemizer.ts` already does well. |
+| `to-tickets` frequently fails to create real GitHub sub-issues (`mattpocock/skills#554`) and writes "Blocked by" as body text instead of a native dependency (`#513`) | **The wiring must be done deterministically in code, not left to the model.** This is exactly what the historical `scripts/agent-itemizer.ts` did well; the live replacement is `scripts/agents/wiring.ts`. |
 | `implement` never closes the ticket or ticks acceptance criteria | The frontier never visibly advances. Automation must close it. |
 | `implement` runs `code-review` *before* committing, so the diff is often empty | Run `code-review` as a **separate** job against a fixed point, on a pushed branch. |
 | An agent reviewing code it just wrote is biased toward its own solution | Reinforces splitting review into its own job/session. |
@@ -298,12 +303,12 @@ comment string** (`agent-developer.ts:165`). There is no `git checkout -b`, no `
 commit`, no `git push`, no `gh pr create`.
 
 The workflow requests `contents: write` and `pull-requests: write`
-(`agent-developer.yml:11-14`) and never exercises either. `docs/ai-sdlc-lifecycle.md:23`
+(`agent-developer.yml:11-14`) and never exercises either. The retired lifecycle draft
 documents `K["Pull Request Created"]` as a pipeline stage; it does not exist.
 
 Corollary: `extractAndSaveDesignMockup()` writes `docs/designs/<slice>/layout.html` into
 the runner's ephemeral checkout (`agent-developer.ts:100-110`) and nothing ever commits
-it. The Stitch workflow in `docs/ai-sdlc-lifecycle.md:102-116` describes a file that is
+it. The Stitch workflow in the retired lifecycle draft describes a file that is
 deleted when the job ends. The developer skill's instruction *"Ensure this layout file is
 committed to git on your implementation branch"* (`agent-developer.md:174`) is addressed
 to a model that cannot run git.
@@ -392,9 +397,9 @@ and the glossary at `docs/architecture/glossary.md` — neither is where the ski
 `.claude/settings.json` pinning `mattpocock-skills@claude-plugins-official`, so nothing
 guarantees a CI runner gets the same skills you have locally.
 
-### 🟢 F10 — What is genuinely good and should survive
+### 🟢 F10 — What was genuinely good and should inform the replacement
 
-- **`scripts/agent-itemizer.ts` is the best asset in the repo.** Zod-validated ticket
+- **The historical `scripts/agent-itemizer.ts` was the best asset in the repo.** Zod-validated ticket
   schema, `topologicalSortTickets()`, milestone create-or-reuse, GraphQL `addSubIssue`
   and `addBlockedBy` wiring, idempotency via `<!-- spec-ticket-key: … -->` markers. It
   solves precisely the failure the plugin's own docs flag as unfixed (`skills#554`,
@@ -442,7 +447,7 @@ vendors ship one.
 
 | Option | Verdict |
 | :--- | :--- |
-| Keep `@google/genai` + `generateContent` | **No.** Tool-less. Every finding in Part 2 traces back here. |
+| Keep the tool-less model SDK + `generateContent` | **No.** Tool-less. Every finding in Part 2 traces back here. |
 | Sandcastle + `noSandbox()` | **No — for GitHub-hosted runs.** Its unique value is sandbox isolation, worktrees and branch-merge-back parallelism, all of which a GH runner already provides. The two features you *do* want from it (iteration loop, structured output) are ~150 lines. Revisit if the pipeline ever moves to a self-hosted runner, where those features become the whole point. |
 | `anthropic/claude-code-action@v1` | Viable, but Claude-only — it can't carry the Gemini stages. |
 | **Two CLIs behind one thin runner module** | **Recommended.** `claude` and `gemini` are both installed in the workflow; one internal `runAgent()` abstracts the difference. |
@@ -629,7 +634,7 @@ is what keeps the rule from needing a second clause.
 | `grill:needed` | Issue | Human, wayfinder | `agent-grill.yml` | `/grilling` + `/domain-modeling` | One round of numbered questions as a comment; `needs-info` |
 | `research:needed` | Wayfinder ticket | Wayfinder | `agent-research.yml` | `/research` | A cited findings file on a `research/<name>` branch; resolution comment |
 | `spec:needed` | Issue | Human, grill (on frontier empty) | `agent-spec.yml` | `/to-spec` | Spec written to the issue body; `spec:ready` + `ready-for-agent` |
-| `tickets:needed` | Spec issue | Human, spec | `agent-itemizer.yml` | `/to-tickets` → deterministic wiring | Child issues, milestone, `blocked_by` edges; frontier tickets get `dev:needed` |
+| `tickets:needed` | Spec issue | Human, spec | `agent-tickets.yml` | `/to-tickets` → deterministic wiring | Child issues, milestone, `blocked_by` edges; frontier tickets get `dev:needed` |
 | `dev:needed` | Ticket issue | Tickets, frontier | `agent-implement.yml` | `/implement` (drives `/tdd`) | Branch `agent/issue-<n>-<slug>`, commits, draft PR, then applies `review:needed` |
 | `dev:needed` | PR | Review (round 1 findings) | `agent-implement-pr.yml` | `/implement` (address review) | Fix commits on the PR branch, then re-applies `review:needed` |
 | `review:needed` | PR | Dev, human | `agent-review.yml` | `/code-review` | Two-axis review, inline comments, a round label or `review:approved` |
@@ -738,7 +743,7 @@ Match with an anchored regex (`^/implement\b`) at the start of a line, not
 | 3 | `issue_comment: created` | `needs-info` present **and** author is human | `agent-grill.yml` | `/grilling` (next round) | ✅ until frontier empty |
 | 4 | `issues: labeled` | `label == research:needed` | `agent-research.yml` | `/research` | ❌ AFK by design |
 | 5 | `issues: labeled` | `label == spec:needed` | `agent-spec.yml` | `/to-spec` | ⚠️ seam confirmation → posted as a comment, auto-proceeds after N hours or on `/approve` |
-| 6 | `issues: labeled` | `label == tickets:needed` | `agent-itemizer.yml` | `/to-tickets` | ⚠️ breakdown quiz → posted as a comment, `/approve` publishes |
+| 6 | `issues: labeled` | `label == tickets:needed` | `agent-tickets.yml` | `/to-tickets` | ⚠️ breakdown quiz → posted as a comment, `/approve` publishes |
 | 7 | `issues: labeled` | `label == dev:needed`, issue has **no sub-issues** and **no open blockers** | `agent-implement.yml` | `/implement` + `/tdd` | ❌ fully autonomous |
 | 8 | `pull_request_target: labeled` | `label == review:needed` | `agent-review.yml` | `/code-review` | ❌ autonomous, max 2 rounds |
 | 9 | `pull_request_target: labeled` | `label == dev:needed` | `agent-implement-pr.yml` | `/implement` (address review) | ❌ autonomous |
@@ -830,7 +835,7 @@ runAgent({
   promptArgs: { SPEC_ISSUE: issueNumber },
   output: {
     tag: "tickets",
-    schema: TicketBreakdownSchema,   // scripts/agent-itemizer.ts already has this
+    schema: TicketBreakdownSchema,   // scripts/agents/schemas.ts defines this
     maxRetries: 2,
   },
 });
@@ -1118,7 +1123,7 @@ management.**
 
 Concretely:
 
-- Retire the tool-less `@google/genai` harness — but **keep Gemini**, now as the `gemini`
+- Retire the tool-less model SDK harness — but **keep Gemini**, now as the `gemini`
   CLI with real tools and native Agent Skills support. The problem was never the vendor.
 - Vendor the plugin's skills into `.agents/skills/` at a pinned SHA; both CLIs read them.
 - Delete the five forked skills; move their durable content to `CODING_STANDARDS.md`.
@@ -1140,19 +1145,19 @@ Concretely:
 | `scripts/agent-planner.ts` (+ spec) | Gemini harness | `agent-grill.yml` + `agent-spec.yml` |
 | `scripts/agent-developer.ts` (+ spec) | Doesn't implement anything | `agent-implement.yml` |
 | `scripts/agent-reviewer.ts` (+ spec) | Truncated diff, dead state machine | `agent-review.yml` |
-| `@google/genai` dependency | Tool-less SDK — the root cause of F1–F4 | `@google/gemini-cli` + `@anthropic-ai/claude-code`, installed in the workflow |
-| `docs/ai-sdlc-lifecycle.md` | Documents stages that don't exist | This document |
+| Tool-less model SDK dependency | Tool-less SDK — the root cause of F1–F4 | `@google/gemini-cli` + `@anthropic-ai/claude-code`, installed in the workflow |
+| Retired AI SDLC lifecycle draft | Documents stages that don't exist | This document |
 
 Not deleted, and worth saying explicitly: **Gemini stays.** F1–F4 were caused by calling a
 model with no tools, not by which model it was. The `gemini` CLI has tools, runs the same
 Agent Skills, and carries five of the seven stages.
 
-## 5.3 Keep and repurpose
+## 5.3 What survived the teardown
 
-| Keep | Becomes |
+| Historical source | Current location |
 | :--- | :--- |
-| `scripts/agent-itemizer.ts` — `TicketSchema`, `topologicalSortTickets`, `getOrCreateMilestone`, `addSubIssue`/`addBlockedBy`, `<!-- spec-ticket-key -->` idempotency | `scripts/agents/wiring.ts` — a pure post-processor over `/to-tickets`' structured output, plus the frontier-advance query for Stage 7 |
-| `scripts/agent-shared.ts` — `transitionState`, `extractLabelNames`, `removeLabelIfPresent`, `BOT_COMMENT_MARKER` | `scripts/agents/github.ts`, unchanged |
+| Former `scripts/agent-itemizer.ts` — `TicketSchema`, `topologicalSortTickets`, `getOrCreateMilestone`, `addSubIssue`/`addBlockedBy`, `<!-- spec-ticket-key -->` idempotency | `scripts/agents/wiring.ts` — a pure post-processor over `/to-tickets`' structured output, plus the frontier-advance query for Stage 7 |
+| Former `scripts/agent-shared.ts` — `transitionState`, `extractLabelNames`, `removeLabelIfPresent`, `BOT_COMMENT_MARKER` | `scripts/agents/github.ts` |
 | `.github/templates/developer-ticket-template.md` | The `promptArgs` body template for created tickets |
 | `.github/PULL_REQUEST_TEMPLATE/*` | Unchanged — Stage 5 picks one |
 | `bun run validate` | The gate inside the implement prompt |
@@ -1172,9 +1177,9 @@ the *slice* (`src/_pages/watch-points/`) rather than files. You get the FSD stee
 pinning filenames the implementation will rename. Enforce it with `bun run
 check:architecture` where it belongs.
 
-## 5.5 Phasing
+## 5.5 Historical phasing
 
-Each phase leaves the system working.
+Each phase was intended to leave the system working.
 
 | Phase | Work | Result |
 | :--- | :--- | :--- |

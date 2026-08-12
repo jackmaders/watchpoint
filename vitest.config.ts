@@ -15,9 +15,8 @@ export default defineConfig({
 				"src/**/index.server.ts",
 				"src/app/**",
 			],
-			// Scoped to the new agent pipeline, not all of scripts/ — the old
-			// pipeline under scripts/*.ts (agent-itemizer.ts, agent-planner.ts,
-			// agent-shared.ts) is torn down in issue #493, not covered here.
+			// Scoped to the live agent pipeline, not all of scripts/ — legacy
+			// orchestration scripts are not part of the production coverage set.
 			include: ["src/**/*.{ts,tsx}", "scripts/agents/**/*.ts"],
 			provider: "v8",
 			reporter: ["text", "html"],
