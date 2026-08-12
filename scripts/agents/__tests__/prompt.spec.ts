@@ -102,7 +102,9 @@ describe("buildPrompt", () => {
 		const prompt = buildPrompt(promptFile, {}, undefined, ["implement"]);
 
 		// Assert
-		expect(prompt).toContain("## Git safety and branch setup");
+		expect(prompt).toContain(
+			"Implement the work described by the user in the spec or tickets.",
+		);
 		expect(prompt).toContain("Reply with a short, friendly pong");
 	});
 });
