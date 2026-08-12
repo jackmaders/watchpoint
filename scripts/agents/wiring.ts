@@ -75,6 +75,15 @@ export function wayfinderTicketKeyMarker(ticketId: string): string {
 	return `<!-- wayfinder-ticket-key: ${ticketId} -->`;
 }
 
+export function wayfinderMapMarker(mapNumber: number): string {
+	return `<!-- wayfinder-map: ${mapNumber} -->`;
+}
+
+export function extractWayfinderMapNumber(body: string): number | null {
+	const match = body.match(/<!-- wayfinder-map: (\d+) -->/);
+	return match ? Number.parseInt(match[1], 10) : null;
+}
+
 /**
  * Kahn-style DFS topological sort. `TicketBreakdownSchema`'s `superRefine`
  * (schemas.ts) already rejects a cyclic blocker graph before this function
@@ -232,7 +241,7 @@ export function buildWayfinderTicketBody(
 
 [${map.title}](${map.url})
 
-<!-- wayfinder-map: ${map.number} -->
+${wayfinderMapMarker(map.number)}
 ${wayfinderTicketKeyMarker(ticket.id)}
 
 ## Question

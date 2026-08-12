@@ -373,6 +373,7 @@ export const WayfinderPlanSchema = z
 			});
 		}
 	});
+export type WayfinderPlan = z.infer<typeof WayfinderPlanSchema>;
 
 export const WayfinderOutputSchema = z.discriminatedUnion("frontierEmpty", [
 	WayfinderRoundSchema,

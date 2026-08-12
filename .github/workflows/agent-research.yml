@@ -1,0 +1,69 @@
+name: Agent Research
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: agent-mutate-${{ github.event.issue.number }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  research:
+    name: 🔎 Resolve research ticket
+    if: github.event.label.name == 'research:needed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: 💾 Cache Bun store
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📦 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🌐 Install Codex CLI
+        run: bun add -g @openai/codex
+
+      - name: 🔐 Authenticate Codex
+        env:
+          OPENAI_API_KEY: ${{ secrets.AGENT_API_KEY }}
+        run: printf '%s' "$OPENAI_API_KEY" | codex login --with-api-key
+
+      - name: 🔎 Resolve research ticket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          AGENT_CODEX_BYPASS_SANDBOX: "1"
+          AGENT_RUN_TIMEOUT_MS: "720000"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTPUT_DIR: ${{ runner.temp }}
+        run: bun scripts/agents/research.ts
+
+      - name: 🧹 Remove agent:in-progress (backstop)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "agent:in-progress" || true
