@@ -515,7 +515,10 @@ describe("runReview", () => {
 							data: {
 								body: "No issue link.",
 								head: { ref: "feature/review" },
-								labels: [{ name: LABELS.reviewRound1 }],
+								labels: [
+									{ name: LABELS.reviewRound1 },
+									{ name: LABELS.devNeeded },
+								],
 							},
 						}),
 						listReviewComments: vi.fn().mockResolvedValue({ data: [] }),
@@ -533,6 +536,12 @@ describe("runReview", () => {
 		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith({
 			issue_number: 42,
 			labels: [LABELS.reviewRound2, LABELS.reviewEscalated],
+			owner: "jackmaders",
+			repo: "watchpoint",
+		});
+		expect(ctx.octokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+			issue_number: 42,
+			name: LABELS.devNeeded,
 			owner: "jackmaders",
 			repo: "watchpoint",
 		});
