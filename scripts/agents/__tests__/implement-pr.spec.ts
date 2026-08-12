@@ -7,6 +7,7 @@ import type { IssueContext } from "../github";
 import { LABELS } from "../github";
 import {
 	run as implementPrRun,
+	postFeedbackResponses,
 	REQUIRED_QUALITY_CHECK_NAMES,
 	runImplementPr,
 	validateImplementPrOutput,
@@ -181,6 +182,29 @@ describe("validateImplementPrOutput", () => {
 			);
 		},
 	);
+});
+
+describe("postFeedbackResponses", () => {
+	it("rejects a response whose source is absent", async () => {
+		// Arrange
+		const ctx = buildContext();
+		const exec: ExecFn = async () => ({
+			exitCode: 0,
+			stderr: "",
+			stdout: "",
+		});
+
+		// Act
+		const act = postFeedbackResponses(
+			[feedback("inline:missing")],
+			new Map(),
+			ctx,
+			exec,
+		);
+
+		// Assert
+		await expect(act).rejects.toThrow("inline:missing");
+	});
 });
 
 describe("implement-pr workflow contract", () => {

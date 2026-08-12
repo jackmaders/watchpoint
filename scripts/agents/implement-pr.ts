@@ -394,7 +394,7 @@ function responseBody(
 	return `<!-- bot-comment -->\nReplying to [${label} ${source.rawId}](${sourceUrl(ctx, source)}):\n\n${response}`;
 }
 
-async function postFeedbackResponses(
+export async function postFeedbackResponses(
 	feedback: readonly ImplementPrFeedback[],
 	sources: ReadonlyMap<string, FeedbackSource>,
 	ctx: IssueContext,
