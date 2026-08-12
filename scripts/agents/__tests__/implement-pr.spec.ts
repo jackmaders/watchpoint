@@ -1,0 +1,188 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import * as github from "@actions/github";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ExecFn } from "../exec";
+import type { IssueContext } from "../github";
+import { LABELS } from "../github";
+import { runImplementPr } from "../implement-pr";
+import type { ObjectRunOptions, RunAgentResult } from "../run-agent";
+import { type ImplementPr, OUTPUTS } from "../schemas";
+
+vi.mock("@actions/github");
+vi.mock("../logger");
+
+const WORKFLOW_FILE = join(
+	import.meta.dirname,
+	"..",
+	"..",
+	"..",
+	".github",
+	"workflows",
+	"agent-implement-pr.yml",
+);
+const PROMPT_FILE = join(
+	import.meta.dirname,
+	"..",
+	"prompts",
+	"implement-pr.md",
+);
+
+function buildContext(): IssueContext {
+	return {
+		issueNumber: 42,
+		octokit: github.getOctokit("fake-token"),
+		owner: "jackmaders",
+		repo: "watchpoint",
+	};
+}
+
+function fakeResult(output: ImplementPr): RunAgentResult<ImplementPr> {
+	return {
+		output,
+		raw: "",
+		sessionId: "session-1",
+		usage: { inputTokens: 0, outputTokens: 0, requests: 1 },
+	};
+}
+
+describe("implement-pr workflow contract", () => {
+	it("runs on PR dev:needed labels and shares the review concurrency group", () => {
+		// Arrange
+		const workflow = readFileSync(WORKFLOW_FILE, "utf-8");
+
+		// Act
+		const trigger = workflow.includes(
+			"github.event.label.name == 'dev:needed'",
+		);
+
+		// Assert
+		expect(workflow).toContain("pull_request_target:");
+		expect(trigger).toBe(true);
+		expect(workflow).toContain(
+			"group: agent-mutate-pr-${{ github.event.pull_request.number }}",
+		);
+		expect(workflow).not.toContain("gh pr merge");
+	});
+
+	it("gives the fix agent the four standing GitHub prohibitions", () => {
+		// Arrange
+		const prompt = readFileSync(PROMPT_FILE, "utf-8");
+
+		// Act
+		const prohibitions = [
+			"Do not close the issue.",
+			"Do not edit labels.",
+			"Do not create or edit PRs.",
+		];
+
+		// Assert
+		for (const prohibition of prohibitions) {
+			expect(prompt).toContain(prohibition);
+		}
+	});
+});
+
+describe("runImplementPr", () => {
+	afterEach(() => {
+		Reflect.deleteProperty(process.env, "AGENT_PAT");
+		vi.clearAllMocks();
+	});
+
+	it("fixes the checked-out PR, replies to resolved threads, and chains review", async () => {
+		// Arrange
+		process.env.AGENT_PAT = "pat-token";
+		const ctx = buildContext();
+		vi.mocked(ctx.octokit.rest.pulls.get).mockResolvedValue({
+			data: {
+				body: "Closes #17",
+				head: { ref: "agent/issue-17-fix-review" },
+				labels: [{ name: LABELS.devNeeded }],
+			},
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.pulls.get>>);
+		vi.mocked(ctx.octokit.rest.pulls.listReviewComments).mockResolvedValue({
+			data: [
+				{
+					body: "Please validate this input.",
+					id: 9001,
+					line: 12,
+					path: "scripts/agents/input.ts",
+					user: { login: "reviewer" },
+				},
+			],
+		} as unknown as Awaited<
+			ReturnType<typeof ctx.octokit.rest.pulls.listReviewComments>
+		>);
+		vi.mocked(ctx.octokit.rest.issues.get).mockResolvedValue({
+			data: { body: "The originating ticket." },
+		} as unknown as Awaited<ReturnType<typeof ctx.octokit.rest.issues.get>>);
+		vi.mocked(ctx.octokit.paginate).mockResolvedValue([]);
+
+		const runnerCalls: ObjectRunOptions<ImplementPr>[] = [];
+		const runner = async (
+			options: ObjectRunOptions<ImplementPr>,
+		): Promise<RunAgentResult<ImplementPr>> => {
+			runnerCalls.push(options);
+			return fakeResult({
+				replies: [{ body: "Fixed and covered.", commentId: "9001" }],
+				summary: "Fixed the review finding.",
+			});
+		};
+		const execCalls: Array<{ command: string; args: string[] }> = [];
+		const exec: ExecFn = async (command, args) => {
+			execCalls.push({ args, command });
+			if (command === "git" && args[0] === "merge-base") {
+				return { exitCode: 0, stderr: "", stdout: "abc123\n" };
+			}
+			if (command === "git" && args[0] === "diff") {
+				return {
+					exitCode: 0,
+					stderr: "",
+					stdout: "+export const fixed = true;",
+				};
+			}
+			if (command === "git" && args[0] === "status") {
+				return { exitCode: 0, stderr: "", stdout: " M src/fix.ts\n" };
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+
+		// Act
+		await runImplementPr(ctx, runner, exec);
+
+		// Assert
+		expect(runnerCalls).toHaveLength(1);
+		expect(runnerCalls[0]?.output).toBe(OUTPUTS["implement-pr"]);
+		expect(runnerCalls[0]?.skills).toEqual(["implement"]);
+		expect(runnerCalls[0]?.promptArgs).toEqual(
+			expect.objectContaining({
+				BRANCH_NAME: "agent/issue-17-fix-review",
+				DIFF: "+export const fixed = true;",
+				ISSUE_NUMBER: "17",
+				REVIEW_THREADS: expect.stringContaining("9001"),
+				TICKET: expect.stringContaining("The originating ticket."),
+			}),
+		);
+		expect(execCalls).toContainEqual({
+			args: ["push", "origin", "agent/issue-17-fix-review"],
+			command: "git",
+		});
+		expect(execCalls).toContainEqual({
+			args: [
+				"api",
+				"--method",
+				"POST",
+				"repos/{owner}/{repo}/pulls/comments/9001/replies",
+				"--field",
+				"body=Fixed and covered.",
+			],
+			command: "gh",
+		});
+		expect(ctx.octokit.rest.issues.addLabels).toHaveBeenCalledWith(
+			expect.objectContaining({
+				issue_number: 42,
+				labels: [LABELS.reviewNeeded],
+			}),
+		);
+	});
+});
