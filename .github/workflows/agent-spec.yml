@@ -19,10 +19,20 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   spec:
+    needs: [slot]
     name: 📜 Publish spec
     if: github.event.label.name == 'spec:needed'
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 15
 
     steps:

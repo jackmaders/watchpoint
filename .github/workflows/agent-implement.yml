@@ -20,7 +20,13 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   implement:
+    needs: [slot]
     name: 🧑‍💻 Implement ticket
     # `issues: [labeled]` never fires for a pull request — GitHub delivers a
     # separate `pull_request: [labeled]` event for those, which is what
@@ -28,6 +34,10 @@ jobs:
     # guard is needed here beyond the label name itself.
     if: github.event.label.name == 'dev:needed'
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 45
 
     steps:

@@ -21,7 +21,13 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   grill:
+    needs: [slot]
     name: 🔥 Run grill round
     # Two ways in: the trigger label fires the first round, or a human reply
     # while needs-info is present fires the next one. Comments carrying the
@@ -36,6 +42,10 @@ jobs:
        contains(github.event.issue.labels.*.name, 'needs-info') &&
        !contains(github.event.comment.body, '<!-- bot-comment -->'))
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 15
 
     steps:

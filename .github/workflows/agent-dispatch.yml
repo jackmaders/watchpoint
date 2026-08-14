@@ -21,7 +21,13 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   dispatch:
+    needs: [slot]
     name: 🤖 Dispatch agent command
     # Structural gate only (not a command match) — real command matching is
     # an anchored regex in scripts/agents/dispatch.ts, so it stays testable.
@@ -32,6 +38,10 @@ jobs:
       github.event.issue.pull_request == null &&
       !contains(github.event.comment.body, '<!-- bot-comment -->')
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 15
 
     steps:

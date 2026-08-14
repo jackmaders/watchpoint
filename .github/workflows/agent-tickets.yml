@@ -21,7 +21,13 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   tickets:
+    needs: [slot]
     name: 🎫 Propose or wire tickets
     # Two ways in: the trigger label runs the proposal (no issues created
     # yet), or a comment while tickets:proposed is present runs tickets.ts
@@ -38,6 +44,10 @@ jobs:
        contains(github.event.issue.labels.*.name, 'tickets:proposed') &&
        !contains(github.event.comment.body, '<!-- bot-comment -->'))
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 15
 
     steps:
