@@ -7,7 +7,6 @@ import {
 	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import {
@@ -16,6 +15,7 @@ import {
 	runAgent,
 } from "./run-agent";
 import { OUTPUTS, type Seam, type Spec } from "./schemas";
+import { resolvePatContext } from "./shared/chaining";
 import { runStage } from "./stage";
 
 const SPEC_PROMPT_FILE = join(import.meta.dirname, "prompts", "spec.md");
@@ -105,8 +105,8 @@ async function chainToTickets(
 	ctx: IssueContext,
 	currentLabels: IssueLabels,
 ): Promise<string[]> {
-	const patOctokit = resolvePatOctokit();
-	if (!patOctokit) {
+	const { context: chainCtx, hasPat } = resolvePatContext(ctx);
+	if (!hasPat) {
 		await postBotComment(
 			ctx,
 			`🚦 The spec is published, but \`AGENT_PAT\` isn't configured, so I can't chain to the ticket-breakdown stage automatically. Please add the \`${LABELS.ticketsNeeded}\` label yourself to continue.`,
@@ -114,7 +114,6 @@ async function chainToTickets(
 		return extractLabelNames(currentLabels);
 	}
 
-	const chainCtx: IssueContext = { ...ctx, octokit: patOctokit };
 	return transitionState(chainCtx, currentLabels, {
 		add: [LABELS.ticketsNeeded],
 	});

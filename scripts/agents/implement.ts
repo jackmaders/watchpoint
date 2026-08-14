@@ -27,6 +27,7 @@ import {
 	runAgent,
 } from "./run-agent";
 import { buildPullRequestTitle, type Implement, OUTPUTS } from "./schemas";
+import { chainLabel } from "./shared/chaining";
 import { runStage } from "./stage";
 
 const IMPLEMENT_PROMPT_FILE = join(
@@ -208,20 +209,10 @@ async function chainToReview(
 	ctx: IssueContext,
 	prNumber: number,
 ): Promise<void> {
-	const patOctokit = resolvePatOctokit();
-	if (!patOctokit) {
-		await postBotComment(
-			ctx,
-			`🚦 #${prNumber} is open, but \`AGENT_PAT\` isn't configured, so I can't chain to the review stage automatically. Please add the \`${LABELS.reviewNeeded}\` label to #${prNumber} yourself.`,
-		);
-		return;
-	}
-
-	await patOctokit.rest.issues.addLabels({
-		issue_number: prNumber,
-		labels: [LABELS.reviewNeeded],
-		owner: ctx.owner,
-		repo: ctx.repo,
+	await chainLabel(ctx, {
+		fallbackMessage: `🚦 #${prNumber} is open, but \`AGENT_PAT\` isn't configured, so I can't chain to the review stage automatically. Please add the \`${LABELS.reviewNeeded}\` label to #${prNumber} yourself.`,
+		issueNumber: prNumber,
+		label: LABELS.reviewNeeded,
 	});
 }
 

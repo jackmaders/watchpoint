@@ -7,7 +7,6 @@ import {
 	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import {
@@ -16,6 +15,7 @@ import {
 	runAgent,
 } from "./run-agent";
 import { type GrillRound, OUTPUTS } from "./schemas";
+import { resolvePatContext } from "./shared/chaining";
 import { runStage } from "./stage";
 
 const GRILL_PROMPT_FILE = join(import.meta.dirname, "prompts", "grill.md");
@@ -49,8 +49,8 @@ async function chainToSpec(
 	ctx: IssueContext,
 	currentLabels: IssueLabels,
 ): Promise<string[]> {
-	const patOctokit = resolvePatOctokit();
-	if (!patOctokit) {
+	const { context: chainCtx, hasPat } = resolvePatContext(ctx);
+	if (!hasPat) {
 		await postBotComment(
 			ctx,
 			`🚦 The grilling frontier is empty, but \`AGENT_PAT\` isn't configured, so I can't chain to the spec stage automatically. Please add the \`${LABELS.specNeeded}\` label yourself to continue.`,
@@ -58,7 +58,6 @@ async function chainToSpec(
 		return extractLabelNames(currentLabels);
 	}
 
-	const chainCtx: IssueContext = { ...ctx, octokit: patOctokit };
 	return transitionState(chainCtx, currentLabels, {
 		add: [LABELS.specNeeded],
 		remove: [LABELS.needsInfo],
