@@ -49,3 +49,13 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
 > _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+
+## Planning vs. Implementation: Updating CONTEXT.md & ADRs
+
+- **During Planning (`/grilling`, `/wayfinder`, `/to-spec`)**:
+  - Keep existing `CONTEXT.md` and `docs/adr/` in mind.
+  - When new domain terms, entity definitions, or architectural decisions emerge, **do not edit `CONTEXT.md` or `docs/adr/` in git then and there**.
+  - Instead, **document the proposed `CONTEXT.md` terms and ADR details directly inside the issue / specification body** (e.g. under `## Implementation Decisions` or `## Domain & ADR Updates`).
+- **During Implementation (`/implement`)**:
+  - The implementing agent reads the documented domain/ADR updates from the issue, updates `CONTEXT.md`, and writes the new `docs/adr/000X-*.md` file on the feature branch.
+  - The documentation changes are committed to git alongside the code in the pull request.

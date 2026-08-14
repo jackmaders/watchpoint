@@ -199,6 +199,11 @@ Use periodically after merging a large milestone or batch of features to prevent
 
 ## Keeping `CONTEXT.md` & ADRs Synchronized
 
-* **During Grilling / Wayfinding**: Skills edit `CONTEXT.md` and write `docs/adr/000X-*.md` directly in the repository as decisions are resolved.
-* **During Implementation**: The new ADR and `CONTEXT.md` updates are committed to the feature branch alongside the code so they land in `main` together.
-* **Stand-alone Doc PRs**: After large planning sessions, ask the agent: `"Commit the updated domain docs to a branch and open a PR"`.
+* **During Planning (`/grilling`, `/wayfinder`, `/to-spec`)**:
+  * The AI must consult existing `CONTEXT.md` and `docs/adr/` to keep terminology and constraints aligned.
+  * When new domain concepts, entity definitions, or architecture decisions are made, the AI **does not edit git files immediately**.
+  * Instead, it **documents the proposed `CONTEXT.md` terms and ADR details directly inside the GitHub issue / spec body** (e.g. under `## Proposed Domain & ADR Updates`).
+* **During Implementation (`/implement`)**:
+  * The coding agent reads the documented domain updates and ADR details from the issue.
+  * It applies the changes to `CONTEXT.md` and creates the new `docs/adr/000X-*.md` file directly on the feature branch.
+  * Both documentation and implementation code are committed together and land in `main` via the same PR.
