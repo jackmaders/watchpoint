@@ -2,7 +2,7 @@
 
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef } from "react";
-import type { ModuleType } from "@/shared/db";
+import type { InputType, ModuleType } from "@/shared/db";
 
 export interface MultipleChoiceOption {
 	id: string;
@@ -14,6 +14,7 @@ export interface MultipleChoiceScenario {
 	inputConfig: {
 		options: MultipleChoiceOption[];
 	};
+	inputType: InputType;
 	moduleType: ModuleType;
 	promptText: string;
 }
@@ -65,7 +66,7 @@ export function InteractiveOverlayEngine({
 	);
 
 	useEffect(() => {
-		if (!scenario || answered) {
+		if (scenario?.inputType !== "MULTIPLE_CHOICE" || answered) {
 			return;
 		}
 		const activeScenario = scenario;
@@ -88,7 +89,7 @@ export function InteractiveOverlayEngine({
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [answered, scenario, selectOption]);
 
-	if (!scenario) {
+	if (scenario?.inputType !== "MULTIPLE_CHOICE") {
 		return null;
 	}
 
