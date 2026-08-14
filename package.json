@@ -17,7 +17,6 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@actions/github": "^9.1.1",
 		"@biomejs/biome": "^2.5.7",
 		"@cloudflare/workers-types": "^5.20260804.1",
 		"@feature-sliced/steiger-plugin": "^0.7.0",

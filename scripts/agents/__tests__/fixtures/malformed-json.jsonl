@@ -1,3 +1,0 @@
-{"type":"thread.started","thread_id":"sess_retry_001"}
-{"type":"item.completed","item":{"type":"agent_message","text":"<result>{not valid json}</result>\n<promise>COMPLETE</promise>"}}
-{"type":"turn.completed","usage":{"input_tokens":30,"output_tokens":15}}
