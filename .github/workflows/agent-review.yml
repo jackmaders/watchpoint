@@ -67,6 +67,7 @@ jobs:
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           AGENT_PAT: ${{ secrets.AGENT_PAT }}
           AGENT_CODEX_BYPASS_SANDBOX: "1"
+          AGENT_REASONING_EFFORT: "max"
           AGENT_RUN_TIMEOUT_MS: "2400000"
           ISSUE_NUMBER: ${{ github.event.pull_request.number }}
           OUTPUT_DIR: ${{ runner.temp }}

@@ -51,8 +51,8 @@ export const REASONING_EFFORTS = [
 ] as const;
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
-/** High reasoning effort produces dramatic accuracy gains on frontier coding benchmarks (DeepSWE). */
-export const DEFAULT_REASONING_EFFORT: ReasoningEffort = "max";
+/** Default to high reasoning effort for everyday stage execution, with max reserved for adversarial review. */
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = "high";
 
 /** API key environment variable made available to each Codex process. */
 export const API_KEY_ENV_VARS = {
