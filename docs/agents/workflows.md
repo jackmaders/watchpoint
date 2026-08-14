@@ -117,19 +117,19 @@ The skill ecosystem uses GitHub labels to track issue and PR lifecycle state acr
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Dev as Developer / Human
-    participant Planning as Planning Skill (/grill-me, /wayfinder, /to-spec, /to-tickets)
-    participant Tracker as GitHub Issues & GHA (Labels)
-    participant Agent as Coding Agent (/implement)
-    participant Git as Git Repository (CONTEXT.md & docs/adr/)
+    participant Dev as Developer
+    participant Planning as Planning Skills
+    participant Tracker as Issue Tracker & GHA
+    participant Agent as Coding Agent
+    participant Git as Git Repository
 
     Dev->>Planning: 1. Start planning session on issue
     Planning->>Git: Read existing domain terms & ADRs
     Planning->>Tracker: Publish spec / tickets & apply ready-for-agent label
-    Note over Tracker: Label ready-for-agent signals AFK runner / developer
+    Note over Tracker: Label ready-for-agent signals AFK runner or dev
     Tracker->>Agent: 2. Claim unblocked ticket
     Agent->>Tracker: Read spec, acceptance criteria & proposed ADRs
-    Agent->>Git: Write code (TDD), update CONTEXT.md & add docs/adr/000X-*.md
+    Agent->>Git: Write code (TDD), update CONTEXT.md & add ADR
     Agent->>Tracker: Open Pull Request with commits
     Dev->>Tracker: 3. Run /code-review & merge PR
     Tracker->>Tracker: Close issue & advance frontier
