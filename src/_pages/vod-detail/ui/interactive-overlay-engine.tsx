@@ -33,7 +33,7 @@ function isShortcutKey(key: string): key is (typeof SHORTCUT_KEYS)[number] {
 }
 
 function getShortcutLabel(index: number) {
-	return SHORTCUT_KEYS[index] ?? String(index + 1);
+	return SHORTCUT_KEYS[index];
 }
 
 function isInputCapableTarget(target: EventTarget | null) {

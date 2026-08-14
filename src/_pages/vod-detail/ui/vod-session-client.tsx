@@ -34,16 +34,13 @@ export function VodSessionClient({
 
 	const handleAnswer = useCallback(
 		(optionId: string) => {
-			if (!activeScenario || answer) {
+			if (!activeScenario) {
 				return;
 			}
 
 			const selectedOption = activeScenario.inputConfig.options.find(
 				(option) => option.id === optionId,
-			);
-			if (!selectedOption) {
-				return;
-			}
+			) as SessionOption;
 
 			setAnswer(selectedOption);
 			onAnswer?.(
@@ -52,7 +49,7 @@ export function VodSessionClient({
 				selectedOption.isCorrect,
 			);
 		},
-		[activeScenario, answer, onAnswer],
+		[activeScenario, onAnswer],
 	);
 
 	const handleNextScenario = useCallback(() => {
