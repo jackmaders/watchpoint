@@ -6,15 +6,17 @@ This guide defines how skills link together into sequential workflows for differ
 
 ## 1. Universal Starting Point: `/triage`
 
-All work (new issues, bugs, and feature requests) starts with `/triage`.
+All work (new issues, bugs, and feature requests) starts with `/triage`. Triage assigns category labels (`bug`, `enhancement`) and initiates the state machine with `needs-triage`.
 
 ```mermaid
 graph TD
-    A["New Issue"] --> B["/triage"]
+    A["New Issue / PR"] -->|Apply needs-triage| B["/triage"]
     B -->|Large Milestone / Epic| C["Prompt: /wayfinder"]
     B -->|Medium / Small Feature| D["Prompt: /grill-me"]
     B -->|Defect / Regression| E["Prompt: /diagnosing-bugs"]
     B -->|Trivial Bug Fix| F["Prompt: /to-spec"]
+    B -->|Blocked on Reporter| G["Apply needs-info"]
+    B -->|Non-actionable / Duplicate| H["Apply wontfix & Close"]
 ```
 
 ---
@@ -25,18 +27,18 @@ graph TD
 
 ```mermaid
 graph LR
-    A["/triage"] --> B["/wayfinder"]
+    A["/triage (needs-triage)"] --> B["/wayfinder (wayfinder:map)"]
     B --> C["/to-spec"]
-    C --> D["/to-tickets"]
+    C --> D["/to-tickets (ready-for-agent)"]
     D --> E["/implement"]
     E --> F["/code-review"]
 ```
 
 1. **Triage**: Run `/triage` on the epic issue. Agent prompts: *"This is a milestone with significant fog. Run `/wayfinder`."*
-2. **Wayfinding**: Run `/wayfinder` to build the Map issue and work unblocked decision tickets.
-3. **Specification**: When all fog is resolved on the Map, the agent prompts: *"Map destination reached. Run `/to-spec` for each feature."*
-4. **Ticket Slicing**: Run `/to-tickets` on each specification to produce dependency-wired issues (`ready-for-agent`).
-5. **Implementation**: Run `/implement` on each unblocked child ticket.
+2. **Wayfinding**: Run `/wayfinder` to create the map issue (labeled `wayfinder:map`) and create child decision tickets labeled by type (`wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, `wayfinder:task`). AFK research tickets run via `/research` subagents; HITL decision tickets are resolved with the user.
+3. **Specification**: When all fog is resolved on the map, the agent prompts: *"Map destination reached. Run `/to-spec` for each feature."*
+4. **Ticket Slicing**: Run `/to-tickets` on each specification to produce dependency-wired issues labeled `ready-for-agent`.
+5. **Implementation**: Run `/implement` on each unblocked child ticket labeled `ready-for-agent`.
 6. **Review**: Run `/code-review` on opened PRs.
 
 ---
@@ -45,9 +47,9 @@ graph LR
 
 ```mermaid
 graph LR
-    A["/triage"] --> B["/grill-me"]
+    A["/triage [enhancement, needs-triage]"] --> B["/grill-me"]
     B --> C["/to-spec"]
-    C --> D["/to-tickets"]
+    C --> D["/to-tickets [ready-for-agent]"]
     D --> E["/implement"]
     E --> F["/code-review"]
 ```
@@ -65,15 +67,15 @@ graph LR
 
 ```mermaid
 graph LR
-    A["/triage"] --> B["/grill-me"]
-    B --> C["/to-spec"]
+    A["/triage [enhancement, needs-triage]"] --> B["/grill-me"]
+    B --> C["/to-spec [ready-for-agent]"]
     C --> D["/implement"]
     D --> E["/code-review"]
 ```
 
 1. **Triage**: Run `/triage` to classify as `[enhancement, needs-triage]`. Agent prompts: *"Run `/grill-me` for a quick round."*
 2. **Grilling**: Run 1 quick round of `/grill-me`. Once answered, the agent prompts: *"Run `/to-spec`."*
-3. **Specification**: Run `/to-spec` to record the compact specification directly on the issue. Agent prompts: *"Spec ready. Run `/implement`."*
+3. **Specification**: Run `/to-spec` to record the compact specification directly on the issue and apply the `ready-for-agent` label. Agent prompts: *"Spec ready. Run `/implement`."*
 4. **Implementation**: Run `/implement` to create branch, write tests first with TDD, and open a PR.
 5. **Review**: Run `/code-review` on the PR.
 
@@ -83,19 +85,19 @@ graph LR
 
 ```mermaid
 graph TD
-    A["/triage"] --> B{Complexity}
+    A["/triage [bug, needs-triage]"] --> B{Complexity}
     B -->|Non-Trivial / Flaky / Regression| C["/diagnosing-bugs"]
-    B -->|Trivial / Obvious Fix| D["/to-spec"]
+    B -->|Trivial / Obvious Fix| D["/to-spec [ready-for-agent]"]
     C --> D
     D --> E["/implement"]
     E --> F["/code-review"]
 ```
 
-1. **Triage**: Run `/triage` to verify the bug against local code and tag `[bug]`.
+1. **Triage**: Run `/triage` to verify the bug against local code and tag `[bug, needs-triage]`.
    - **For complex / flaky / performance bugs**: The agent prompts: *"Run `/diagnosing-bugs` to build a tight feedback loop and find root cause."*
    - **For obvious bugs**: The agent prompts: *"Root cause clear. Run `/to-spec` to define the test seam."*
 2. **Diagnosis (if needed)**: Run `/diagnosing-bugs` to build the red feedback loop, isolate minimal repro, and identify the root cause. Agent prompts: *"Diagnosis confirmed. Run `/to-spec`."*
-3. **Specification**: Run `/to-spec` to lock down the test seam and regression criteria. Agent prompts: *"Run `/implement`."*
+3. **Specification**: Run `/to-spec` to lock down the test seam and regression criteria, applying the `ready-for-agent` label. Agent prompts: *"Run `/implement`."*
 4. **Implementation**: Run `/implement` to write the failing test, apply fix, confirm green, and open PR.
 5. **Review**: Run `/code-review` on the PR.
 
@@ -117,7 +119,46 @@ graph LR
 
 ---
 
-## 3. Domain Model & ADR Synchronization Rule
+## 3. State Tracking Labels & GHA Automation
+
+The skill ecosystem uses GitHub labels to track issue and PR lifecycle state across manual sessions and GitHub Actions (GHA) automation. See [triage-labels.md](triage-labels.md) for the canonical repository mappings.
+
+### Canonical Label Taxonomy
+
+| Category / Role | Label Name | Purpose & Workflow Trigger |
+| --- | --- | --- |
+| **Category** | `bug` | Identifies defects, crashes, or regressions. |
+| **Category** | `enhancement` | Identifies new features, improvements, or refactors. |
+| **Triage State** | `needs-triage` | Entry point for newly filed issues and external PRs awaiting evaluation. |
+| **Triage State** | `needs-info` | Issue blocked waiting on reporter/author feedback. |
+| **Execution State** | `ready-for-agent` | Specification/acceptance criteria complete. Triggers AFK automated agent workflows in GHA or indicates an unblocked task ready for `/implement`. |
+| **Execution State** | `ready-for-human` | Requires human judgment, external dashboard access, secrets, or manual UI signoff. |
+| **Resolution** | `wontfix` | Closed as out of scope, invalid, or already implemented. |
+| **Wayfinding** | `wayfinder:map` | Index issue representing a multi-ticket milestone map. |
+| **Wayfinding** | `wayfinder:research` | AFK research ticket executed via parallel `/research` subagents. |
+| **Wayfinding** | `wayfinder:prototype` | HITL prototyping ticket exploring UX or technical design spikes. |
+| **Wayfinding** | `wayfinder:grilling` | HITL conversational alignment ticket for architectural trade-offs. |
+| **Wayfinding** | `wayfinder:task` | Prerequisite task unblocking decisions (HITL or AFK). |
+
+### Lifecycle State Transitions in GHA
+
+```mermaid
+stateDiagram-v2
+    [*] --> needs_triage: Issue / PR Created
+    needs_triage --> needs_info: Waiting for Reporter
+    needs_info --> needs_triage: Reporter Replies
+    needs_triage --> ready_for_agent: /to-spec or /to-tickets Complete
+    needs_triage --> ready_for_human: Requires Human Action
+    needs_triage --> wontfix: Rejected or Already Implemented
+    ready_for_agent --> InProgress: AFK Agent / GHA Claims Issue
+    InProgress --> PR_Opened: /implement Complete
+    PR_Opened --> [*]: /code-review Passed & PR Merged
+    wontfix --> [*]: Issue Closed
+```
+
+---
+
+## 4. Domain Model & ADR Synchronization Rule
 
 ```mermaid
 sequenceDiagram
