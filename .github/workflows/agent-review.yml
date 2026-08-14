@@ -15,6 +15,11 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.pull_request.number }}
+
   handoff-untrusted:
     name: 🧑‍⚖️ Escalate untrusted PR
     if: >
@@ -39,6 +44,7 @@ jobs:
           🚦 This PR is from an untrusted author, so automated PR mutation is disabled. A human must review it.'
 
   review:
+    needs: [slot]
     name: 🔍 Review Pull Request
     if: >
       github.event.label.name == 'review:needed' &&
@@ -46,6 +52,10 @@ jobs:
        github.event.pull_request.author_association == 'MEMBER' ||
        github.event.pull_request.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 45
 
     steps:

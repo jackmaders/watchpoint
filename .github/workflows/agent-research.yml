@@ -14,10 +14,20 @@ concurrency:
   queue: max
 
 jobs:
+  slot:
+    uses: ./.github/workflows/_agent-global-slot.yml
+    with:
+      number: ${{ github.event.issue.number }}
+
   research:
+    needs: [slot]
     name: 🔎 Resolve research ticket
     if: github.event.label.name == 'research:needed'
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ needs.slot.outputs.group }}
+      cancel-in-progress: false
+      queue: max
     timeout-minutes: 45
 
     steps:
