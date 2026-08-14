@@ -39,38 +39,10 @@ jobs:
           # full history to compute `git rev-list --count` against it.
           fetch-depth: 0
 
-      - name: ⚡ Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 🤖 Setup Codex
+        uses: ./.github/actions/setup-codex
         with:
-          bun-version-file: ".bun-version"
-
-      - name: 💾 Cache Bun store
-        uses: actions/cache@v5
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: 📦 Install Dependencies
-        run: bun install --frozen-lockfile
-
-      - name: 🌐 Install Codex CLI
-        run: bun add -g @openai/codex
-
-      - name: 🔐 Authenticate Codex
-        env:
-          OPENAI_API_KEY: ${{ secrets.AGENT_API_KEY }}
-        run: printf '%s' "$OPENAI_API_KEY" | codex login --with-api-key
-
-      - name: 🔧 Configure git identity
-        # The agent commits and pushes GREEN checkpoints on its own branch
-        # (scripts/agents/prompts/implement.md); a workflow-run commit needs
-        # a configured identity or `git commit` fails before implement.ts can
-        # measure anything.
-        run: |
-          git config --global user.name "watchpoint-agent[bot]"
-          git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"
+          agent-api-key: ${{ secrets.AGENT_API_KEY }}
 
       - name: 🧑‍💻 Implement ticket
         env:
