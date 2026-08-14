@@ -20,7 +20,7 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 3. Dedicated Tooling, Not Ad-Hoc Scripts
 - For any service with an MCP server or a dedicated CLI available, use that MCP server or CLI — never a hand-rolled bash/curl or Python script against the raw API.
 - Examples: `github-mcp-server` or the `gh` CLI for GitHub; the `sentry` MCP server or `sentry-cli` for error tracking.
-- Where a topic doc names a specific tool for a workflow (e.g. `docs/agents/issue-tracker.md` calls for the `gh` CLI on issue/PR operations), follow that doc — it is the more specific source and wins over the general rule above.
+- For GitHub issue and PR operations, always use the dedicated `gh` CLI tool rather than raw API scripts.
 - For local filesystem actions — reading, editing, creating, removing, or moving files — prefer the coding agent's own built-in file tools (e.g. Read/Edit/Write/Glob/Grep) over an equivalent terminal command or script (`cat`, `sed`, `rm`, `mv`, `find`, etc.). Fall back to a terminal command only when no built-in tool covers the action.
 
 ### 4. Immutable Auto-Generated Database Migrations
@@ -34,9 +34,8 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 6. Skip the `twinkl-core` Plugin Skills
 - Do not load or follow `twinkl-core` plugin skills (or their triggers, e.g. `git`,
   `actions`, `typescript`, `php`, `review`, `terraform`, `aws`, `jira`, `confluence`,
-  `grafana`) in this repo. This repo's own `AGENTS.md`, `CODING_STANDARDS.md`, and
-  `docs/agents/*.md` are the authoritative conventions here and already cover what those
-  skills would otherwise enforce (e.g. commit format/signing, issue-tracker tooling).
+  `grafana`) in this repo. This repo's own `AGENTS.md` and `CODING_STANDARDS.md` are the
+  authoritative conventions here and already cover what those skills would otherwise enforce.
 
 ### 7. Model Selection Awareness
 Claude Code has no automated way to detect a model/task mismatch or switch models mid-session — the agent must flag it verbally and the user must act on it via `/model`. When a request's characteristics clearly fall outside the current model's intended use per the guidance below, say so plainly in one sentence at the start of the response (e.g. "This looks like an Opus-tier task — you should consider swapping the model to Opus with `/model opus` before I continue"), then proceed with the current model unless told otherwise. Phrase this as a recommendation for the user to act on, never as an offer for the agent to perform the switch itself. Do not interrupt trivial requests with this — only flag on a clear mismatch signal.
@@ -61,25 +60,17 @@ Claude Code has no automated way to detect a model/task mismatch or switch model
 
 This is guidance for the assistant's own judgment, not a hard rule — when in doubt, say nothing and proceed at the current model.
 
-## Agent skills
+## Agent skills & conventions
 
 ### Coding standards
-
 Before writing or reviewing code — architecture (FSD, `app/` barrels, feature naming), testing (structure, speed, coverage), and mocking rules all live in one place. See `CODING_STANDARDS.md`.
 
 ### Issue tracker
-
-Before creating, reading, commenting on, labelling, or triaging a GitHub issue or PR, see `docs/agents/issue-tracker.md` for the conventions and tool to use.
-
-### Triage labels
-
-The plugin's plain default label names, used literally. See `docs/agents/triage-labels.md`.
+Use the GitHub `gh` CLI for creating, viewing, commenting on, labelling, and closing GitHub issues and PRs (`gh issue create`, `gh issue view`, `gh pr create`, etc.).
 
 ### Domain docs
-
-Before exploring the codebase or naming a domain concept, see `docs/agents/domain.md` for the glossary and ADRs to read first.
+Before exploring the codebase or naming a domain concept, see `CONTEXT.md` at the repo root and architectural decision records under `docs/adr/`.
 
 ### AI Development Pipeline
-
 Skills, automated workflows, and agent execution are managed externally by `@overseer/cli` (`jackmaders/overseer`). Consuming repositories remain clean of runner engine scripts and vendored skills.
 
