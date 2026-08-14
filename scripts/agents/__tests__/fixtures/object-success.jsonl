@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"sess_obj_001"}
-{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":"{\"name\":\"to-spec\"}"}}
-{"type":"item.completed","item":{"type":"agent_message","text":"<result>{\"ok\":true}</result>\n<promise>COMPLETE</promise>\nAnything else?"}}
-{"type":"turn.completed","usage":{"input_tokens":40,"output_tokens":20}}

@@ -79,13 +79,7 @@ The plugin's plain default label names, used literally. See `docs/agents/triage-
 
 Before exploring the codebase or naming a domain concept, see `docs/agents/domain.md` for the glossary and ADRs to read first.
 
-### Skill vendoring
+### AI Development Pipeline
 
-Skills are vendored, not installed at job time — see `.agents/skills/UPSTREAM.md` for the
-pinned upstream SHA and the list of vendored skills. `.claude/skills` is a symlink to
-`.agents/skills` so interactive Claude Code sessions read the same copy.
+Skills, automated workflows, and agent execution are managed externally by `@overseer/cli` (`jackmaders/overseer`). Consuming repositories remain clean of runner engine scripts and vendored skills.
 
-**Resolution / drift-check contract:** if `.claude/skills` does not resolve as a symlink
-on your installed Claude Code version, copy `.agents/skills/` into `.claude/skills`
-instead of symlinking, and add a CI step that diffs the two directories so the copies
-can't silently drift apart.

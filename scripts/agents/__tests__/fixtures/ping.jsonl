@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"sess_ping_001"}
-{"type":"item.started","item":{"type":"function_call","name":"activate_skill","arguments":"{\"name\":\"grilling\"}"}}
-{"type":"item.completed","item":{"type":"agent_message","text":"🏓 pong — I'm online and ready."}}
-{"type":"turn.completed","usage":{"input_tokens":18,"output_tokens":11}}
