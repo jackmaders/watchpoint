@@ -2,14 +2,10 @@ import { join } from "node:path";
 import { runIfMain } from "./entrypoint";
 import { defaultExec, type ExecFn } from "./exec";
 import {
-	fetchIssueContext,
 	formatGeminiError,
 	type IssueContext,
 	issueContextFromEnv,
 	LABELS,
-	postBotComment,
-	resolvePatOctokit,
-	transitionState,
 } from "./github";
 import { getReviewDiff, parseOriginatingIssueNumber } from "./review";
 import {
@@ -17,8 +13,16 @@ import {
 	type RunAgentResult,
 	runAgent,
 } from "./run-agent";
-import { type ImplementPr, type ImplementPrFeedback, OUTPUTS } from "./schemas";
+import { type ImplementPr, OUTPUTS } from "./schemas";
+import {
+	chainLabel,
+	escalateToHuman,
+	fetchReviewFeedback,
+	postFeedbackResponses,
+} from "./shared";
 import { runStage } from "./stage";
+
+export { postFeedbackResponses } from "./shared";
 
 const IMPLEMENT_PR_PROMPT_FILE = join(
 	import.meta.dirname,
@@ -236,91 +240,6 @@ export async function waitForQualityChecks(
 	}
 }
 
-type FeedbackSourceKind = "comment" | "inline" | "review";
-
-interface FeedbackSource {
-	kind: FeedbackSourceKind;
-	rawId: string;
-	replyTargetId: string;
-}
-
-interface ReviewFeedbackContext {
-	conversation: string;
-	sources: Map<string, FeedbackSource>;
-}
-
-/** Fetches every PR feedback surface and keeps the source needed for a safe reply. */
-async function fetchReviewFeedback(
-	ctx: IssueContext,
-): Promise<ReviewFeedbackContext> {
-	const request = {
-		owner: ctx.owner,
-		pull_number: ctx.issueNumber,
-		repo: ctx.repo,
-	};
-	const [comments, reviews, inlineComments] = await Promise.all([
-		ctx.octokit.paginate(ctx.octokit.rest.issues.listComments, {
-			issue_number: ctx.issueNumber,
-			owner: ctx.owner,
-			repo: ctx.repo,
-		}),
-		ctx.octokit.paginate(ctx.octokit.rest.pulls.listReviews, request),
-		ctx.octokit.paginate(ctx.octokit.rest.pulls.listReviewComments, request),
-	]);
-
-	const sources = new Map<string, FeedbackSource>();
-	const sections = [
-		"Top-level PR comments:",
-		comments.length === 0
-			? "No top-level PR comments."
-			: comments
-					.map((comment) => {
-						const sourceId = `comment:${comment.id}`;
-						sources.set(sourceId, {
-							kind: "comment",
-							rawId: String(comment.id),
-							replyTargetId: String(comment.id),
-						});
-						return `- [${sourceId}] @${comment.user?.login ?? "unknown"}: ${comment.body ?? ""}`;
-					})
-					.join("\n"),
-		"PR review bodies:",
-		reviews.length === 0
-			? "No PR review bodies."
-			: reviews
-					.map((review) => {
-						const sourceId = `review:${review.id}`;
-						sources.set(sourceId, {
-							kind: "review",
-							rawId: String(review.id),
-							replyTargetId: String(review.id),
-						});
-						return `- [${sourceId}] @${review.user?.login ?? "unknown"} (${review.state ?? "unknown"}): ${review.body ?? ""}`;
-					})
-					.join("\n"),
-		"Inline PR review comments:",
-		inlineComments.length === 0
-			? "No inline PR review comments."
-			: inlineComments
-					.map((comment) => {
-						const sourceId = `inline:${comment.id}`;
-						sources.set(sourceId, {
-							kind: "inline",
-							rawId: String(comment.id),
-							replyTargetId: String(comment.in_reply_to_id ?? comment.id),
-						});
-						return `- [${sourceId}] @${comment.user?.login ?? "unknown"} at **${comment.path ?? "?"}:${comment.line ?? "?"}**: ${comment.body ?? ""}`;
-					})
-					.join("\n"),
-	];
-
-	return {
-		conversation:
-			sources.size === 0 ? "No existing PR feedback." : sections.join("\n\n"),
-		sources,
-	};
-}
-
 async function fetchTicketContext(
 	ctx: IssueContext,
 	prBody: string | null,
@@ -331,6 +250,7 @@ async function fetchTicketContext(
 		return { conversation: "No originating issue was found.", issueNumber };
 	}
 
+	const { fetchIssueContext } = await import("./github");
 	const { conversation } = await fetchIssueContext({ ...ctx, issueNumber });
 	return { conversation, issueNumber };
 }
@@ -369,89 +289,10 @@ async function commitAndPushFixes(
 	return sha;
 }
 
-function sourceUrl(ctx: IssueContext, source: FeedbackSource): string {
-	const pullUrl = `https://github.com/${ctx.owner}/${ctx.repo}/pull/${ctx.issueNumber}`;
-	const fragment =
-		source.kind === "comment"
-			? `issuecomment-${source.rawId}`
-			: source.kind === "review"
-				? `pullrequestreview-${source.rawId}`
-				: `discussion_r${source.rawId}`;
-	return `${pullUrl}#${fragment}`;
-}
-
-function responseBody(
-	ctx: IssueContext,
-	source: FeedbackSource,
-	response: string,
-): string {
-	const label =
-		source.kind === "inline"
-			? "inline review comment"
-			: source.kind === "review"
-				? "PR review"
-				: "PR comment";
-	return `<!-- bot-comment -->\nReplying to [${label} ${source.rawId}](${sourceUrl(ctx, source)}):\n\n${response}`;
-}
-
-export async function postFeedbackResponses(
-	feedback: readonly ImplementPrFeedback[],
-	sources: ReadonlyMap<string, FeedbackSource>,
-	ctx: IssueContext,
-	exec: ExecFn,
-): Promise<void> {
-	for (const item of feedback) {
-		const source = sources.get(item.sourceId);
-		if (!source) {
-			throw new Error(
-				`Cannot reply to unknown feedback source id: ${item.sourceId}.`,
-			);
-		}
-		const endpoint =
-			source.kind === "inline"
-				? `repos/{owner}/{repo}/pulls/comments/${source.replyTargetId}/replies`
-				: `repos/{owner}/{repo}/issues/${ctx.issueNumber}/comments`;
-		const args = [
-			"api",
-			"--method",
-			"POST",
-			endpoint,
-			"--field",
-			`body=${responseBody(ctx, source, item.response)}`,
-		];
-		const result = await exec("gh", args);
-		assertCommandSucceeded("gh", args, result);
-	}
-}
-
-async function escalateToHuman(
-	ctx: IssueContext,
-	labels: string[],
-	reason: string,
-): Promise<string[]> {
-	const nextLabels = await transitionState(ctx, labels, {
-		add: [LABELS.reviewEscalated],
-		remove: [LABELS.devNeeded, LABELS.reviewNeeded],
-	});
-	await postBotComment(ctx, `⚠️ **Human review required:** ${reason}`);
-	return nextLabels;
-}
-
 async function chainToReview(ctx: IssueContext): Promise<void> {
-	const patOctokit = resolvePatOctokit();
-	if (!patOctokit) {
-		await postBotComment(
-			ctx,
-			`🚦 Fixes are pushed, but \`AGENT_PAT\` isn't configured, so I can't chain to the review stage automatically. Please add the \`${LABELS.reviewNeeded}\` label to #${ctx.issueNumber} yourself.`,
-		);
-		return;
-	}
-
-	await patOctokit.rest.issues.addLabels({
-		issue_number: ctx.issueNumber,
-		labels: [LABELS.reviewNeeded],
-		owner: ctx.owner,
-		repo: ctx.repo,
+	await chainLabel(ctx, {
+		fallbackMessage: `🚦 Fixes are pushed, but \`AGENT_PAT\` isn't configured, so I can't chain to the review stage automatically. Please add the \`${LABELS.reviewNeeded}\` label to #${ctx.issueNumber} yourself.`,
+		label: LABELS.reviewNeeded,
 	});
 }
 
@@ -470,10 +311,7 @@ export async function runImplementPr(
 	await runStage(
 		ctx,
 		pullRequest.labels,
-		{
-			removeOnEntry: [LABELS.devNeeded],
-			stageName: "Implement PR",
-		},
+		{ removeOnEntry: [LABELS.devNeeded], stageName: "Implement PR" },
 		async (labels) => {
 			const [{ diff }, feedbackContext, ticket] = await Promise.all([
 				getReviewDiff(exec),
@@ -494,9 +332,8 @@ export async function runImplementPr(
 				skills: ["implement"],
 			});
 
-			const validation = validateImplementPrOutput(result.output, [
-				...feedbackContext.sources.keys(),
-			]);
+			const sourceIds = Array.from(feedbackContext.sources.keys());
+			const validation = validateImplementPrOutput(result.output, sourceIds);
 			if (!validation.valid) {
 				return escalateToHuman(
 					ctx,
@@ -505,7 +342,7 @@ export async function runImplementPr(
 				);
 			}
 
-			const pushedSha = await commitAndPushFixes(exec, pullRequest.head.ref);
+			const sha = await commitAndPushFixes(exec, pullRequest.head.ref);
 			await postFeedbackResponses(
 				result.output.feedback,
 				feedbackContext.sources,
@@ -524,9 +361,9 @@ export async function runImplementPr(
 				);
 			}
 
-			const qualityChecks = await waitForQualityChecks(ctx, pushedSha);
-			if (qualityChecks.status !== "passed") {
-				return escalateToHuman(ctx, labels, qualityChecks.reason);
+			const qualityResult = await waitForQualityChecks(ctx, sha);
+			if (qualityResult.status !== "passed") {
+				return escalateToHuman(ctx, labels, qualityResult.reason);
 			}
 
 			await chainToReview(ctx);

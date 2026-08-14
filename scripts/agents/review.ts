@@ -10,7 +10,6 @@ import {
 	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import { logger } from "./logger";
@@ -25,6 +24,11 @@ import {
 	OUTPUTS,
 	type Review,
 } from "./schemas";
+import {
+	fetchReviewThreads,
+	postReviewReplies,
+	resolvePatContext,
+} from "./shared";
 import { runStage } from "./stage";
 
 const REVIEW_STANDARDS_PROMPT_FILE = join(
@@ -53,17 +57,6 @@ type ReviewRunner = (
 interface DiffState {
 	path: string;
 	rightLine: number;
-}
-
-function reviewLabelContext(ctx: IssueContext): {
-	context: IssueContext;
-	hasPat: boolean;
-} {
-	const patOctokit = resolvePatOctokit();
-	return {
-		context: patOctokit ? { ...ctx, octokit: patOctokit } : ctx,
-		hasPat: patOctokit !== null,
-	};
 }
 
 function updateDiffHeader(line: string, state: DiffState): boolean {
@@ -233,27 +226,6 @@ export function buildReviewPayload(
 	};
 }
 
-async function fetchReviewThreads(ctx: IssueContext): Promise<string> {
-	try {
-		const { data: comments } = await ctx.octokit.rest.pulls.listReviewComments({
-			owner: ctx.owner,
-			pull_number: ctx.issueNumber,
-			repo: ctx.repo,
-		});
-
-		if (comments.length === 0) return "No existing review threads.";
-		return comments
-			.map(
-				(comment) =>
-					`- **${comment.path}:${comment.line ?? "?"}** (${comment.user?.login ?? "unknown"}): ${comment.body ?? ""}`,
-			)
-			.join("\n");
-	} catch (error) {
-		logger.warn("Failed to fetch review threads:", error);
-		return "Could not fetch existing review threads.";
-	}
-}
-
 async function fetchSpecContext(
 	ctx: IssueContext,
 	prBody: string | null,
@@ -290,24 +262,6 @@ async function postReview(
 	];
 	const result = await exec("gh", args);
 	assertCommandSucceeded("gh", args, result);
-}
-
-async function postReviewReplies(
-	replies: readonly Review["replies"][number][],
-	exec: ExecFn,
-): Promise<void> {
-	for (const reply of replies) {
-		const args = [
-			"api",
-			"--method",
-			"POST",
-			`repos/{owner}/{repo}/pulls/comments/${reply.commentId}/replies`,
-			"--field",
-			`body=${reply.body}`,
-		];
-		const result = await exec("gh", args);
-		assertCommandSucceeded("gh", args, result);
-	}
 }
 
 /** Commits and pushes any improvements made by the review agents as one slice. */
@@ -426,7 +380,7 @@ async function applyReviewState(
 	event: ReviewPayload["event"],
 	exec: ExecFn,
 ): Promise<string[]> {
-	const { context: labelContext, hasPat } = reviewLabelContext(ctx);
+	const { context: labelContext, hasPat } = resolvePatContext(ctx);
 
 	if (event === "REQUEST_CHANGES") {
 		const nextLabels = await (isRound2
@@ -473,7 +427,7 @@ export async function runReview(
 			ctx,
 			"⚠️ **Review Escalated:** This pull request has failed review in both round 1 and round 2. Escalating to human review.",
 		);
-		const { context: labelContext } = reviewLabelContext(ctx);
+		const { context: labelContext } = resolvePatContext(ctx);
 		await transitionState(labelContext, pullRequest.labels, {
 			add: [LABELS.reviewEscalated],
 			remove: [LABELS.reviewNeeded, LABELS.devNeeded],

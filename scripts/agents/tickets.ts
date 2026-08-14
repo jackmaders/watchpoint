@@ -7,7 +7,6 @@ import {
 	issueContextFromEnv,
 	LABELS,
 	postBotComment,
-	resolvePatOctokit,
 	transitionState,
 } from "./github";
 import {
@@ -20,6 +19,7 @@ import {
 	type TicketBreakdown,
 	TicketBreakdownSchema,
 } from "./schemas";
+import { chainLabels } from "./shared/chaining";
 import { runStage } from "./stage";
 import { type WiredTicket, wireTickets } from "./wiring";
 
@@ -151,24 +151,11 @@ async function labelFrontierAsDevNeeded(
 	wired: readonly WiredTicket[],
 ): Promise<void> {
 	const frontier = wired.filter((ticket) => ticket.isFrontier);
-	const patOctokit = resolvePatOctokit();
-	if (!patOctokit) {
-		await postBotComment(
-			ctx,
-			`🚦 Tickets are wired, but \`AGENT_PAT\` isn't configured, so I can't label the frontier automatically. Please add \`${LABELS.devNeeded}\` yourself to: ${frontier.map((ticket) => `#${ticket.number}`).join(", ")}.`,
-		);
-		return;
-	}
-
-	const patCtx: IssueContext = { ...ctx, octokit: patOctokit };
-	for (const ticket of frontier) {
-		await patCtx.octokit.rest.issues.addLabels({
-			issue_number: ticket.number,
-			labels: [LABELS.devNeeded],
-			owner: patCtx.owner,
-			repo: patCtx.repo,
-		});
-	}
+	await chainLabels(ctx, {
+		fallbackMessage: `🚦 Tickets are wired, but \`AGENT_PAT\` isn't configured, so I can't label the frontier automatically. Please add \`${LABELS.devNeeded}\` yourself to: ${frontier.map((ticket) => `#${ticket.number}`).join(", ")}.`,
+		issueNumbers: frontier.map((ticket) => ticket.number),
+		label: LABELS.devNeeded,
+	});
 }
 
 /**
