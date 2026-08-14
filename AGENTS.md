@@ -31,4 +31,22 @@ This repository enforces strict technical, architectural, and quality standards 
 
 Before writing or reviewing code — architecture (Feature-Sliced Design, `app/` barrels, feature naming), testing (structure, speed, coverage), and mocking rules all live in one place. See `CODING_STANDARDS.md`.
 
+---
 
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues via `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical 5-role triage vocabulary. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
+
+### Workflows & Playbooks
+
+Planning flows for Milestones, Features, Bugs, and Architecture reviews. See `docs/agents/workflows.md`.
