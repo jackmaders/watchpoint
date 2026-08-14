@@ -51,10 +51,8 @@ function getReadyNamespace(): YouTubeNamespace | undefined {
 		: undefined;
 }
 
-function resetFailedLoad(promise: Promise<YouTubeNamespace>) {
-	if (loadPromise === promise) {
-		loadPromise = undefined;
-	}
+function resetFailedLoad() {
+	loadPromise = undefined;
 }
 
 export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
@@ -106,13 +104,10 @@ export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
 		document.head.appendChild(script);
 	}
 
-	script.addEventListener("load", resolveIfReady, { once: true });
-	script.addEventListener(
-		"error",
-		() => rejectLoad(new Error("The YouTube IFrame API failed to load.")),
-		{ once: true },
-	);
+	script.onload = resolveIfReady;
+	script.onerror = () =>
+		rejectLoad(new Error("The YouTube IFrame API failed to load."));
 
-	promise.catch(() => resetFailedLoad(promise));
+	promise.catch(resetFailedLoad);
 	return promise;
 }

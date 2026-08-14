@@ -46,6 +46,8 @@ export function useYouTubePlayer({
 		let active = true;
 		let player: YouTubePlayer | undefined;
 		let hasNotifiedReady = false;
+		const isActiveGeneration = () =>
+			active && generationRef.current === generation;
 
 		setIsReady(false);
 		setDuration(0);
@@ -53,8 +55,7 @@ export function useYouTubePlayer({
 
 		const handleReady = (event: YouTubePlayerEvent) => {
 			if (
-				!active ||
-				generationRef.current !== generation ||
+				!isActiveGeneration() ||
 				(player && event.target !== player) ||
 				hasNotifiedReady
 			) {
@@ -70,29 +71,36 @@ export function useYouTubePlayer({
 			setIsReady(true);
 			onReadyRef.current?.(readyDuration);
 		};
+		const createPlayer = (
+			youtube: Awaited<ReturnType<typeof loadYouTubeIframeApi>>,
+			container: HTMLDivElement,
+		) => {
+			const createdPlayer = new youtube.Player(container, {
+				events: { onReady: handleReady },
+				playerVars: {
+					autoplay: autoplay ? 1 : 0,
+					controls: 0,
+				},
+				videoId,
+			});
+			player = createdPlayer;
+			return createdPlayer;
+		};
+		const isStaleContainer = (container: HTMLDivElement) =>
+			generationRef.current !== generation ||
+			resolvedContainerRef.current !== container;
 
 		void loadYouTubeIframeApi()
 			.then((youtube) => {
-				const container = resolvedContainerRef.current;
-				if (!active || generationRef.current !== generation || !container) {
+				const container = isActiveGeneration()
+					? resolvedContainerRef.current
+					: null;
+				if (!container) {
 					return;
 				}
 
-				const createdPlayer = new youtube.Player(container, {
-					events: { onReady: handleReady },
-					playerVars: {
-						autoplay: autoplay ? 1 : 0,
-						controls: 0,
-					},
-					videoId,
-				});
-				player = createdPlayer;
-
-				if (
-					!active ||
-					generationRef.current !== generation ||
-					resolvedContainerRef.current !== container
-				) {
+				const createdPlayer = createPlayer(youtube, container);
+				if (isStaleContainer(container)) {
 					createdPlayer.destroy();
 					return;
 				}

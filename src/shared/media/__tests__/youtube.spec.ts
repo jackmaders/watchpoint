@@ -31,6 +31,7 @@ describe("loadYouTubeIframeApi", () => {
 		// Act
 		const firstLoad = loadYouTubeIframeApi();
 		const secondLoad = loadYouTubeIframeApi();
+		window.onYouTubeIframeAPIReady?.();
 		setYouTubeNamespace(namespace);
 		window.onYouTubeIframeAPIReady?.();
 		const [firstNamespace, secondNamespace] = await Promise.all([
@@ -92,7 +93,28 @@ describe("loadYouTubeIframeApi", () => {
 		} as unknown as YouTubeNamespace;
 		const existingScript = document.createElement("script");
 		existingScript.src = "https://www.youtube.com/iframe_api";
-		vi.spyOn(document.head, "querySelector").mockReturnValue(existingScript);
+		vi.spyOn(document, "querySelector").mockReturnValue(existingScript);
+		const { loadYouTubeIframeApi } = await import("../youtube");
+
+		// Act
+		const load = loadYouTubeIframeApi();
+		setYouTubeNamespace(namespace);
+		existingScript.onload?.(new Event("load"));
+		const loadedNamespace = await load;
+
+		// Assert
+		expect(existingScript.src).toBe("https://www.youtube.com/iframe_api");
+		expect(loadedNamespace).toBe(namespace);
+	});
+
+	it("calls a pre-existing API-ready handler before resolving its own load", async () => {
+		// Arrange
+		const namespace = {
+			Player: vi.fn(),
+		} as unknown as YouTubeNamespace;
+		const previousReadyHandler = vi.fn();
+		window.onYouTubeIframeAPIReady = previousReadyHandler;
+		const appendScript = vi.mocked(document.head.appendChild);
 		const { loadYouTubeIframeApi } = await import("../youtube");
 
 		// Act
@@ -102,7 +124,24 @@ describe("loadYouTubeIframeApi", () => {
 		const loadedNamespace = await load;
 
 		// Assert
-		expect(existingScript.src).toBe("https://www.youtube.com/iframe_api");
+		expect(previousReadyHandler).toHaveBeenCalledTimes(1);
+		expect(appendScript).toHaveBeenCalledTimes(1);
 		expect(loadedNamespace).toBe(namespace);
+	});
+
+	it("rejects a failed script load and clears the pending singleton", async () => {
+		// Arrange
+		const appendScript = vi.mocked(document.head.appendChild);
+		const { loadYouTubeIframeApi } = await import("../youtube");
+
+		// Act
+		const load = loadYouTubeIframeApi();
+		const [script] = appendScript.mock.calls[0] as [HTMLScriptElement];
+		script.onerror?.(new Event("error"));
+
+		// Assert
+		await expect(load).rejects.toThrow(
+			"The YouTube IFrame API failed to load.",
+		);
 	});
 });

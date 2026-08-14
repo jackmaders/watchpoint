@@ -15,12 +15,16 @@ export interface YouTubeMock {
 	players: MockYouTubePlayer[];
 }
 
-export function createYouTubeMock(duration = 142): YouTubeMock {
+export function createYouTubeMock(
+	duration = 142,
+	onCreate?: () => void,
+): YouTubeMock {
 	const players: MockYouTubePlayer[] = [];
 	function PlayerConstructor(
 		_element: HTMLElement,
 		options: YouTubePlayerOptions,
 	): MockYouTubePlayer {
+		onCreate?.();
 		const player = {
 			destroy: vi.fn(),
 			getCurrentTime: vi.fn(() => 0),
