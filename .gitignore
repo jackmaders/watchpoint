@@ -45,10 +45,7 @@ dev.db
 *.tsbuildinfo
 next-env.d.ts
 
-# claude code local-only state (but not .claude/skills, which is committed)
-.claude/settings.local.json
-.claude/worktrees/
-
-# AI SDLC local-only state
+# Agent local-only state
+.claude/
 .tmp-agent-output/
 .agent
