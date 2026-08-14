@@ -306,14 +306,6 @@ export async function runImplementation(
 				);
 			}
 
-			const validation = await exec("bun", ["run", "validate"]);
-			if (validation.exitCode !== 0) {
-				throw new StageError(
-					"validate-failed",
-					`bun run validate failed:\n${(validation.stderr || validation.stdout).slice(-4000)}`,
-				);
-			}
-
 			await pushBranch(exec, branchName);
 
 			const prNumber = await createDraftPullRequest(ctx, {

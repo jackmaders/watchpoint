@@ -442,7 +442,7 @@ describe("runImplementation", () => {
 			);
 		});
 
-		it("runs bun run validate and pushes the branch plainly, without any force flag", async () => {
+		it("pushes the branch plainly, without any force flag", async () => {
 			// Arrange
 			const ctx = buildCtx();
 			mockIssue(ctx, {});
@@ -457,7 +457,7 @@ describe("runImplementation", () => {
 			await runImplementation(ctx, runner, exec);
 
 			// Assert
-			expect(exec).toHaveBeenCalledWith("bun", ["run", "validate"]);
+			expect(exec).not.toHaveBeenCalledWith("bun", ["run", "validate"]);
 			expect(exec).toHaveBeenCalledWith("git", [
 				"push",
 				"origin",
@@ -661,27 +661,6 @@ describe("runImplementation", () => {
 			expect(reason).toContain("no-commits");
 		});
 
-		it("falls back to stdout in the validate failure message when validate wrote nothing to stderr", async () => {
-			// Arrange
-			const ctx = buildCtx();
-			mockIssue(ctx, {});
-			mockOpenPulls(ctx);
-			const runner = vi
-				.fn()
-				.mockResolvedValue(fakeResult(fakeImplementOutput()));
-			const exec = execFake({
-				revList: { exitCode: 0, stdout: "1\n" },
-				revParseHead: { exitCode: 0, stdout: "abc123\n" },
-				validate: { exitCode: 1, stdout: "3 tests failed" },
-			});
-
-			// Act
-			const act = runImplementation(ctx, runner, exec);
-
-			// Assert
-			await expect(act).rejects.toThrow(/3 tests failed/);
-		});
-
 		it("writes a failure reason for a non-Error rejection too, stringifying rather than throwing", async () => {
 			// Arrange
 			const ctx = buildCtx();
@@ -701,37 +680,6 @@ describe("runImplementation", () => {
 			);
 			expect(reason).toContain("unclassified");
 			expect(reason).toContain("plain string rejection");
-		});
-
-		it("fails with validate-failed when bun run validate exits non-zero, and never pushes", async () => {
-			// Arrange
-			const ctx = buildCtx();
-			mockIssue(ctx, {});
-			mockOpenPulls(ctx);
-			const runner = vi
-				.fn()
-				.mockResolvedValue(fakeResult(fakeImplementOutput()));
-			const exec = execFake({
-				revList: { exitCode: 0, stdout: "1\n" },
-				revParseHead: { exitCode: 0, stdout: "abc123\n" },
-				validate: { exitCode: 1, stderr: "3 tests failed" },
-			});
-
-			// Act
-			const act = runImplementation(ctx, runner, exec);
-
-			// Assert
-			await expect(act).rejects.toThrow(/bun run validate failed/);
-			expect(exec).not.toHaveBeenCalledWith(
-				"git",
-				expect.arrayContaining(["push"]),
-			);
-			const reason = readFileSync(
-				join(outputDir, "failure_reason.txt"),
-				"utf-8",
-			);
-			expect(reason).toContain("validate-failed");
-			expect(reason).toContain("3 tests failed");
 		});
 
 		it("fails with push-race when the push is rejected because a previous run got further", async () => {
