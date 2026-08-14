@@ -34,17 +34,15 @@ export function VodSessionClient({
 
 	const handleAnswer = useCallback(
 		(optionId: string) => {
-			if (!activeScenario) {
-				return;
-			}
+			const currentScenario = activeScenario as SessionScenario;
 
-			const selectedOption = activeScenario.inputConfig.options.find(
+			const selectedOption = currentScenario.inputConfig.options.find(
 				(option) => option.id === optionId,
 			) as SessionOption;
 
 			setAnswer(selectedOption);
 			onAnswer?.(
-				activeScenario.id,
+				currentScenario.id,
 				selectedOption.id,
 				selectedOption.isCorrect,
 			);
