@@ -5,6 +5,13 @@ import type {
 	YouTubePlayerOptions,
 } from "../youtube";
 
+export function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
+	Object.defineProperty(window, "YT", {
+		configurable: true,
+		value: namespace,
+	});
+}
+
 export interface MockYouTubePlayer extends YouTubePlayer {
 	options: YouTubePlayerOptions;
 	triggerReady(): void;

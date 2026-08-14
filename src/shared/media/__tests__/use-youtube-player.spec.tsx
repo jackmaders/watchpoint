@@ -1,17 +1,8 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { StrictMode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubeMock } from "../__mocks__/youtube";
-import { useYouTubePlayer } from "../use-youtube-player";
-import type { YouTubeNamespace } from "../youtube";
-
-function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
-	Object.defineProperty(window, "YT", {
-		configurable: true,
-		value: namespace,
-	});
-}
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
 
 function createContainerWrapper(
 	containerRef: { current: HTMLDivElement | null },
@@ -24,6 +15,10 @@ function createContainerWrapper(
 }
 
 describe("useYouTubePlayer", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	afterEach(() => {
 		vi.restoreAllMocks();
 		setYouTubeNamespace(undefined);
@@ -31,6 +26,7 @@ describe("useYouTubePlayer", () => {
 
 	it("creates a configured player and reports readiness with its duration", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock(142);
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
@@ -78,6 +74,7 @@ describe("useYouTubePlayer", () => {
 
 	it("does not create a player without a mounted container", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 
@@ -98,6 +95,7 @@ describe("useYouTubePlayer", () => {
 
 	it("normalizes unsafe media values when the player becomes ready", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 		const containerRef: { current: HTMLDivElement | null } = { current: null };
@@ -125,6 +123,7 @@ describe("useYouTubePlayer", () => {
 
 	it("destroys a player whose container became stale during construction", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const containerRef: { current: HTMLDivElement | null } = { current: null };
 		const onReady = vi.fn();
 		const youtube = createYouTubeMock(142, () => {
@@ -160,6 +159,7 @@ describe("useYouTubePlayer", () => {
 
 	it("destroys the old player and ignores its late ready callback when the VOD changes", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
@@ -200,6 +200,7 @@ describe("useYouTubePlayer", () => {
 
 	it("cleans up its owned player through a StrictMode mount cycle", async () => {
 		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
@@ -224,5 +225,54 @@ describe("useYouTubePlayer", () => {
 		expect(youtube.players).toHaveLength(1);
 		expect(player.destroy).toHaveBeenCalledTimes(1);
 		expect(onReady).not.toHaveBeenCalled();
+	});
+
+	it("waits for a conditionally mounted container after the API is ready", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		let latestState: ReturnType<typeof useYouTubePlayer> | undefined;
+		function ConditionalPlayer({ show }: { show: boolean }) {
+			const state = useYouTubePlayer({ videoId: "late-container" });
+			latestState = state;
+			return show ? <div ref={state.containerRef} /> : null;
+		}
+		const view = render(<ConditionalPlayer show={false} />);
+
+		// Act
+		view.rerender(<ConditionalPlayer show />);
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Assert
+		expect(youtube.players).toHaveLength(1);
+		expect(latestState?.isReady).toBe(true);
+		expect(latestState?.containerRef.current).toBeInstanceOf(HTMLDivElement);
+	});
+
+	it("forwards its mounted container to a supplied ref", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock();
+		setYouTubeNamespace(youtube.namespace);
+		const suppliedRef: { current: HTMLDivElement | null } = { current: null };
+		function SuppliedRefPlayer() {
+			const state = useYouTubePlayer({
+				containerRef: suppliedRef,
+				videoId: "supplied-ref",
+			});
+			return <div ref={state.containerRef} />;
+		}
+
+		// Act
+		render(<SuppliedRefPlayer />);
+
+		// Assert
+		expect(suppliedRef.current).toBeInstanceOf(HTMLDivElement);
 	});
 });

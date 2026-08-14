@@ -1,17 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubeMock } from "../__mocks__/youtube";
-import type { YouTubeNamespace } from "../youtube";
-
-function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
-	Object.defineProperty(window, "YT", {
-		configurable: true,
-		value: namespace,
-	});
-}
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
 
 describe("useYouTubePlayer loader failure boundary", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	afterEach(() => {
 		vi.restoreAllMocks();
 		setYouTubeNamespace(undefined);

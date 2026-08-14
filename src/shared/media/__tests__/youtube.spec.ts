@@ -1,12 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setYouTubeNamespace } from "../__mocks__/youtube";
 import type { YouTubeNamespace } from "../youtube";
-
-function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
-	Object.defineProperty(window, "YT", {
-		configurable: true,
-		value: namespace,
-	});
-}
 
 describe("loadYouTubeIframeApi", () => {
 	beforeEach(() => {

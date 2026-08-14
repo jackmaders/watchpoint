@@ -82,13 +82,10 @@ export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
 			resolveLoad(namespace);
 		}
 	};
-	const handleApiReady = () => {
-		resolveIfReady();
-	};
 	const previousReadyHandler = window.onYouTubeIframeAPIReady;
 	window.onYouTubeIframeAPIReady = () => {
 		previousReadyHandler?.();
-		handleApiReady();
+		resolveIfReady();
 	};
 
 	const existingScript = document.querySelector<HTMLScriptElement>(
