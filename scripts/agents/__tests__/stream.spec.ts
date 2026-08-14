@@ -495,7 +495,7 @@ describe("Codex process execution", () => {
 		}
 	});
 
-	it("builds Codex commands for the supported OpenAI execution path with default max reasoning effort", () => {
+	it("builds Codex commands for the supported OpenAI execution path with default high reasoning effort", () => {
 		// Arrange
 		// Act
 		const freshArgs = buildCodexArgs(modelConfig);
@@ -508,7 +508,7 @@ describe("Codex process execution", () => {
 			"-m",
 			"gpt-5.6-luna",
 			"-c",
-			'model_reasoning_effort="max"',
+			'model_reasoning_effort="high"',
 			"-",
 		]);
 		expect(resumedArgs).toEqual([
@@ -518,7 +518,7 @@ describe("Codex process execution", () => {
 			"-m",
 			"gpt-5.6-luna",
 			"-c",
-			'model_reasoning_effort="max"',
+			'model_reasoning_effort="high"',
 			"thread_1",
 			"-",
 		]);
@@ -527,7 +527,7 @@ describe("Codex process execution", () => {
 	it("supports custom reasoning effort in buildCodexArgs", () => {
 		// Arrange
 		// Act
-		const args = buildCodexArgs(modelConfig, undefined, false, "high");
+		const args = buildCodexArgs(modelConfig, undefined, false, "max");
 
 		// Assert
 		expect(args).toEqual([
@@ -536,7 +536,7 @@ describe("Codex process execution", () => {
 			"-m",
 			"gpt-5.6-luna",
 			"-c",
-			'model_reasoning_effort="high"',
+			'model_reasoning_effort="max"',
 			"-",
 		]);
 	});
@@ -553,7 +553,7 @@ describe("Codex process execution", () => {
 			"-m",
 			"gpt-5.6-luna",
 			"-c",
-			'model_reasoning_effort="max"',
+			'model_reasoning_effort="high"',
 			"--dangerously-bypass-approvals-and-sandbox",
 			"-",
 		]);
@@ -589,7 +589,7 @@ describe("Codex process execution", () => {
 				"-m",
 				"gpt-5.6-luna",
 				"-c",
-				'model_reasoning_effort="max"',
+				'model_reasoning_effort="high"',
 				"--dangerously-bypass-approvals-and-sandbox",
 				"-",
 			],
@@ -627,7 +627,7 @@ describe("Codex process execution", () => {
 			"-m",
 			"gpt-5.6-luna",
 			"-c",
-			'model_reasoning_effort="max"',
+			'model_reasoning_effort="high"',
 			"-",
 		]);
 		expect(write).toHaveBeenCalledWith("prompt\n");

@@ -250,7 +250,7 @@ describe("provider API key resolution", () => {
 	});
 
 	describe("reasoning effort", () => {
-		it("defaults to max reasoning effort", () => {
+		it("defaults to high reasoning effort", () => {
 			// Arrange
 			vi.stubEnv("AGENT_REASONING_EFFORT", "");
 			vi.stubEnv("REASONING_EFFORT", "");
@@ -259,7 +259,7 @@ describe("provider API key resolution", () => {
 			const effort = resolveReasoningEffort();
 
 			// Assert
-			expect(effort).toBe("max");
+			expect(effort).toBe("high");
 		});
 
 		it("resolves valid reasoning effort from environment override", () => {
@@ -273,7 +273,7 @@ describe("provider API key resolution", () => {
 			expect(effort).toBe("xhigh");
 		});
 
-		it("falls back to default max effort on invalid environment value", () => {
+		it("falls back to default high effort on invalid environment value", () => {
 			// Arrange
 			vi.stubEnv("AGENT_REASONING_EFFORT", "ultra");
 
@@ -281,7 +281,7 @@ describe("provider API key resolution", () => {
 			const effort = resolveReasoningEffort();
 
 			// Assert
-			expect(effort).toBe("max");
+			expect(effort).toBe("high");
 		});
 	});
 });
