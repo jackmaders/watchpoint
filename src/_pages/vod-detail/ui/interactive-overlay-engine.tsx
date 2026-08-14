@@ -26,6 +26,7 @@ interface InteractiveOverlayEngineProps {
 }
 
 const SHORTCUT_KEYS = ["1", "2", "3", "4"] as const;
+const NUMPAD_KEY_LOCATION = 3;
 
 function isShortcutKey(key: string): key is (typeof SHORTCUT_KEYS)[number] {
 	return SHORTCUT_KEYS.includes(key as (typeof SHORTCUT_KEYS)[number]);
@@ -72,7 +73,11 @@ export function InteractiveOverlayEngine({
 		const activeScenario = scenario;
 
 		function handleKeyDown(event: KeyboardEvent) {
-			if (isInputCapableTarget(event.target) || !isShortcutKey(event.key)) {
+			if (
+				event.location === NUMPAD_KEY_LOCATION ||
+				isInputCapableTarget(event.target) ||
+				!isShortcutKey(event.key)
+			) {
 				return;
 			}
 

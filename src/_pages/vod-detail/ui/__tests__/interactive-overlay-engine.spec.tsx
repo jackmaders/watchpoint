@@ -96,6 +96,20 @@ describe("InteractiveOverlayEngine", () => {
 		expect(onAnswer).not.toHaveBeenCalled();
 	});
 
+	it("ignores numpad number events", () => {
+		// Arrange
+		const onAnswer = vi.fn();
+		render(
+			<InteractiveOverlayEngine onAnswer={onAnswer} scenario={scenario} />,
+		);
+
+		// Act
+		fireEvent.keyDown(window, { key: "1", location: 3 });
+
+		// Assert
+		expect(onAnswer).not.toHaveBeenCalled();
+	});
+
 	it.each(["1", "x", "Enter"])(
 		"leaves the answer state unchanged for non-shortcut key %s",
 		(key) => {
