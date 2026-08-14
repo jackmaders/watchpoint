@@ -100,6 +100,7 @@ describe("runAgent", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.stubEnv("OPENAI_API_KEY", "test-key");
+		vi.stubEnv("AGENT_CODEX_BYPASS_SANDBOX", "");
 	});
 
 	afterEach(() => {
