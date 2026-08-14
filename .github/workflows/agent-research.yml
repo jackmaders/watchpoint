@@ -18,7 +18,7 @@ jobs:
     name: 🔎 Resolve research ticket
     if: github.event.label.name == 'research:needed'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: 🛒 Checkout
@@ -35,7 +35,7 @@ jobs:
           AGENT_MODEL: ${{ vars.AGENT_MODEL || 'gpt-5.6-luna' }}
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           AGENT_CODEX_BYPASS_SANDBOX: "1"
-          AGENT_RUN_TIMEOUT_MS: "720000"
+          AGENT_RUN_TIMEOUT_MS: "2400000"
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           OUTPUT_DIR: ${{ runner.temp }}
         run: bun scripts/agents/research.ts

@@ -1,4 +1,10 @@
-import { CODEX_CLI, type ModelConfig } from "./models";
+import {
+	CODEX_CLI,
+	DEFAULT_REASONING_EFFORT,
+	type ModelConfig,
+	type ReasoningEffort,
+	resolveReasoningEffort,
+} from "./models";
 
 /**
  * Everything between the Codex subprocess and a normalised list of events:
@@ -272,6 +278,7 @@ export function buildCodexArgs(
 	modelConfig: ModelConfig,
 	resumeSessionId?: string,
 	bypassSandbox = false,
+	reasoningEffort: ReasoningEffort = DEFAULT_REASONING_EFFORT,
 ): string[] {
 	const resume = resumeSessionId ? ["resume"] : [];
 	const session = resumeSessionId ? [resumeSessionId] : [];
@@ -281,6 +288,8 @@ export function buildCodexArgs(
 		"--json",
 		"-m",
 		modelConfig.model,
+		"-c",
+		`model_reasoning_effort="${reasoningEffort}"`,
 		...(bypassSandbox ? ["--dangerously-bypass-approvals-and-sandbox"] : []),
 		...session,
 		"-",
@@ -304,10 +313,12 @@ export async function runProcess(
 	timeoutMs = DEFAULT_PROCESS_TIMEOUT_MS,
 	environment?: Record<string, string | undefined>,
 ): Promise<ProcessResult> {
+	const reasoningEffort = resolveReasoningEffort(environment);
 	const args = buildCodexArgs(
 		modelConfig,
 		resumeSessionId,
 		environment?.[CODEX_BYPASS_SANDBOX_ENV] === "1",
+		reasoningEffort,
 	);
 	const child = environment
 		? spawn(CODEX_CLI, args, { env: environment })

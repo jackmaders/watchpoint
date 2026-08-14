@@ -42,6 +42,18 @@ export type ModelConfig = {
 export const FALLBACK_MODEL: ModelForProvider<"openai"> = "gpt-5.6-luna";
 export const FALLBACK_PROVIDER: Provider = "openai";
 
+export const REASONING_EFFORTS = [
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+	"max",
+] as const;
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
+/** High reasoning effort produces dramatic accuracy gains on frontier coding benchmarks (DeepSWE). */
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = "max";
+
 /** API key environment variable made available to each Codex process. */
 export const API_KEY_ENV_VARS = {
 	openai: "OPENAI_API_KEY",
@@ -180,4 +192,18 @@ export const getApiKey = resolveApiKey;
 export function missingApiKeyMessage(provider: Provider): string {
 	const primary = getApiKeyEnvVar(provider);
 	return `Missing API key for provider "${provider}". Set ${primary}, ${GLOBAL_API_KEY_ENV_VARS[0]}, or ${GLOBAL_API_KEY_ENV_VARS[1]}.`;
+}
+
+/** Resolve reasoning effort from environment or return DEFAULT_REASONING_EFFORT ("max"). */
+export function resolveReasoningEffort(
+	environment: Environment = process.env,
+): ReasoningEffort {
+	const value = firstConfigured(environment, [
+		"AGENT_REASONING_EFFORT",
+		"REASONING_EFFORT",
+	]);
+	if (value && REASONING_EFFORTS.includes(value as ReasoningEffort)) {
+		return value as ReasoningEffort;
+	}
+	return DEFAULT_REASONING_EFFORT;
 }

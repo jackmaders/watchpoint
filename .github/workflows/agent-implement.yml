@@ -28,7 +28,7 @@ jobs:
     # guard is needed here beyond the label name itself.
     if: github.event.label.name == 'dev:needed'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: 🛒 Checkout
@@ -51,7 +51,7 @@ jobs:
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           # GitHub-hosted runners are already isolated; avoid Codex's nested bwrap sandbox.
           AGENT_CODEX_BYPASS_SANDBOX: "1"
-          AGENT_RUN_TIMEOUT_MS: "1620000"
+          AGENT_RUN_TIMEOUT_MS: "2400000"
           # `AGENT_PAT` is what lets implement.ts open the draft PR itself,
           # and then label it review:needed — both mutations need it, for two
           # different reasons. Opened with the default GITHUB_TOKEN above, a
