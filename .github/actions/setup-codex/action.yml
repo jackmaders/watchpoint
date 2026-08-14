@@ -1,0 +1,27 @@
+name: "Setup Codex"
+description: "Sets up Bun, installs and authenticates Codex CLI, and configures bot git identity"
+
+inputs:
+  agent-api-key:
+    description: "API key for Codex CLI authentication"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: ⚡ Setup Bun
+      uses: ./.github/actions/setup-bun
+
+    - name: 🌐 Install Codex CLI
+      shell: bash
+      run: bun add -g @openai/codex
+
+    - name: 🔐 Authenticate Codex
+      shell: bash
+      run: printf '%s' "${{ inputs.agent-api-key }}" | codex login --with-api-key
+
+    - name: 🔧 Configure git identity
+      shell: bash
+      run: |
+        git config --global user.name "watchpoint-agent[bot]"
+        git config --global user.email "watchpoint-agent[bot]@users.noreply.github.com"
