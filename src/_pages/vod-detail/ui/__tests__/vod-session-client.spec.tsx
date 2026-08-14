@@ -71,6 +71,17 @@ describe("VodSessionClient", () => {
 		expect(onAnswer).toHaveBeenCalledWith("scenario-1", "option-a", true);
 	});
 
+	it("shows FAIL for an incorrect Scenario answer", () => {
+		// Arrange
+		render(<VodSessionClient scenarios={scenarios} />);
+
+		// Act
+		fireEvent.click(screen.getByRole("button", { name: /push main/i }));
+
+		// Assert
+		expect(screen.getByText("FAIL")).toBeDefined();
+	});
+
 	it("reports when the Session Manifest has no active Scenarios", () => {
 		// Arrange
 		const onAnswer = vi.fn();
