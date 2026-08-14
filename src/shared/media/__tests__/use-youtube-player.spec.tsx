@@ -126,6 +126,7 @@ describe("useYouTubePlayer", () => {
 	it("destroys a player whose container became stale during construction", async () => {
 		// Arrange
 		const containerRef: { current: HTMLDivElement | null } = { current: null };
+		const onReady = vi.fn();
 		const youtube = createYouTubeMock(142, () => {
 			containerRef.current = document.createElement("div");
 		});
@@ -133,8 +134,13 @@ describe("useYouTubePlayer", () => {
 		const wrapper = createContainerWrapper(containerRef);
 
 		// Act
-		const { result } = renderHook(
-			() => useYouTubePlayer({ containerRef, videoId: "stale-container" }),
+		const { result, unmount } = renderHook(
+			() =>
+				useYouTubePlayer({
+					containerRef,
+					onReady,
+					videoId: "stale-container",
+				}),
 			{ wrapper },
 		);
 		await act(async () => {
@@ -142,11 +148,14 @@ describe("useYouTubePlayer", () => {
 			await Promise.resolve();
 		});
 		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		unmount();
 
 		// Assert
 		expect(player.destroy).toHaveBeenCalledTimes(1);
 		expect(result.current.isReady).toBe(false);
 		expect(result.current.duration).toBe(0);
+		expect(onReady).not.toHaveBeenCalled();
 	});
 
 	it("destroys the old player and ignores its late ready callback when the VOD changes", async () => {

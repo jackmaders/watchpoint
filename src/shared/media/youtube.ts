@@ -4,9 +4,6 @@ export interface YouTubePlayer {
 	destroy(): void;
 	getDuration(): number;
 	getCurrentTime(): number;
-	playVideo(): void;
-	pauseVideo(): void;
-	seekTo(seconds: number, allowSeekAhead: boolean): void;
 }
 
 export interface YouTubePlayerEvent {
@@ -56,6 +53,10 @@ function resetFailedLoad() {
 }
 
 export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
+	if (loadPromise) {
+		return loadPromise;
+	}
+
 	const existingNamespace = getReadyNamespace();
 	if (existingNamespace) {
 		return Promise.resolve(existingNamespace);
@@ -65,10 +66,6 @@ export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
 		return Promise.reject(
 			new Error("The YouTube IFrame API can only load in a browser."),
 		);
-	}
-
-	if (loadPromise) {
-		return loadPromise;
 	}
 
 	let resolveLoad: (namespace: YouTubeNamespace) => void;

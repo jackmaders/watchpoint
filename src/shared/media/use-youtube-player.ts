@@ -101,7 +101,9 @@ export function useYouTubePlayer({
 
 				const createdPlayer = createPlayer(youtube, container);
 				if (isStaleContainer(container)) {
+					active = false;
 					createdPlayer.destroy();
+					player = undefined;
 					return;
 				}
 
@@ -114,9 +116,7 @@ export function useYouTubePlayer({
 			generationRef.current += 1;
 			if (player) {
 				player.destroy();
-				if (ownedPlayerRef.current === player) {
-					ownedPlayerRef.current = null;
-				}
+				ownedPlayerRef.current = null;
 			}
 		};
 	}, [autoplay, resolvedContainerRef, videoId]);

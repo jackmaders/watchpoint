@@ -30,9 +30,6 @@ export function createYouTubeMock(
 			getCurrentTime: vi.fn(() => 0),
 			getDuration: vi.fn(() => duration),
 			options,
-			pauseVideo: vi.fn(),
-			playVideo: vi.fn(),
-			seekTo: vi.fn(),
 			triggerReady: () => {
 				options.events?.onReady?.({ target: player });
 			},

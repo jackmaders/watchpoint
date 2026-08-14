@@ -30,9 +30,10 @@ describe("loadYouTubeIframeApi", () => {
 
 		// Act
 		const firstLoad = loadYouTubeIframeApi();
-		const secondLoad = loadYouTubeIframeApi();
 		window.onYouTubeIframeAPIReady?.();
 		setYouTubeNamespace(namespace);
+		const secondLoad = loadYouTubeIframeApi();
+		window.onYouTubeIframeAPIReady?.();
 		window.onYouTubeIframeAPIReady?.();
 		const [firstNamespace, secondNamespace] = await Promise.all([
 			firstLoad,
