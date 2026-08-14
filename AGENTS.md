@@ -37,16 +37,16 @@ Before writing or reviewing code — architecture (Feature-Sliced Design, `app/`
 
 ### Issue tracker
 
-GitHub Issues via `gh` CLI. See `docs/agents/issue-tracker.md`.
+When managing GitHub issues, PRs, or wayfinder dependencies via `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Canonical 5-role triage vocabulary. See `docs/agents/triage-labels.md`.
+Canonical 5-role triage vocabulary and tracker mappings. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context layout (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
+When referencing domain vocabulary or recording ADRs (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
 
 ### Workflows & Playbooks
 
-Planning flows for Milestones, Features, Bugs, and Architecture reviews. See `docs/agents/workflows.md`.
+Skill sequences and state tracking for Milestones, Features, and Bugs. See `docs/agents/workflows.md`.
