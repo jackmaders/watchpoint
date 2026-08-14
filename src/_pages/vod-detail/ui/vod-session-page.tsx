@@ -2,6 +2,35 @@ import { connection } from "next/server";
 import { getVodManifest } from "@/shared/db";
 import { type SessionScenario, VodSessionClient } from "./vod-session-client";
 
+type VodManifest = NonNullable<Awaited<ReturnType<typeof getVodManifest>>>;
+
+interface ManifestOption {
+	id: string;
+	is_correct: boolean;
+	text: string;
+}
+
+function toSessionScenarios(
+	scenarios: VodManifest["scenarios"],
+): SessionScenario[] {
+	return scenarios.map((scenario) => {
+		const inputConfig = scenario.inputConfig as {
+			options: ManifestOption[];
+		};
+
+		return {
+			...scenario,
+			inputConfig: {
+				options: inputConfig.options.map((option) => ({
+					id: option.id,
+					isCorrect: option.is_correct,
+					text: option.text,
+				})),
+			},
+		};
+	});
+}
+
 interface VodSessionPageProps {
 	params: Promise<{ id: string }>;
 	searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -48,9 +77,7 @@ export async function VodSessionPage({
 					</p>
 					<h1 className="text-3xl font-bold">{manifest.title}</h1>
 				</header>
-				<VodSessionClient
-					scenarios={manifest.scenarios as unknown as SessionScenario[]}
-				/>
+				<VodSessionClient scenarios={toSessionScenarios(manifest.scenarios)} />
 			</div>
 		</main>
 	);

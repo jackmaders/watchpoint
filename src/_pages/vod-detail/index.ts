@@ -1,6 +1,7 @@
 export { handleGetVodManifest } from "./api/manifest";
 export {
 	InteractiveOverlayEngine,
+	type InteractiveOverlayEngineProps,
 	type MultipleChoiceOption,
 	type MultipleChoiceScenario,
 } from "./ui/interactive-overlay-engine";

@@ -19,7 +19,7 @@ export interface MultipleChoiceScenario {
 	promptText: string;
 }
 
-interface InteractiveOverlayEngineProps {
+export interface InteractiveOverlayEngineProps {
 	onAnswer: (optionId: string) => void;
 	scenario: MultipleChoiceScenario | null;
 	answered?: boolean;
@@ -32,11 +32,15 @@ function isShortcutKey(key: string): key is (typeof SHORTCUT_KEYS)[number] {
 	return SHORTCUT_KEYS.includes(key as (typeof SHORTCUT_KEYS)[number]);
 }
 
+function getShortcutLabel(index: number) {
+	return SHORTCUT_KEYS[index] ?? String(index + 1);
+}
+
 function isInputCapableTarget(target: EventTarget | null) {
 	return (
 		target instanceof Element &&
 		target.closest(
-			"input, textarea, select, [contenteditable='true'], [contenteditable=''], [role='textbox'], [role='combobox']",
+			"input, textarea, select, [contenteditable='true'], [contenteditable=''], [contenteditable='plaintext-only'], [role='textbox'], [role='combobox']",
 		) !== null
 	);
 }
@@ -110,7 +114,7 @@ export function InteractiveOverlayEngine({
 			<fieldset className="grid gap-3">
 				<legend className="sr-only">Scenario choices</legend>
 				{scenario.inputConfig.options.map((option, index) => {
-					const shortcut = String(index + 1);
+					const shortcut = getShortcutLabel(index);
 					const shortcutId = `${scenario.id}-${option.id}-shortcut`;
 
 					return (

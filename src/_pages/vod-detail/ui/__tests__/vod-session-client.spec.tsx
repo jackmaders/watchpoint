@@ -49,14 +49,26 @@ describe("VodSessionClient", () => {
 	it("advances to the next Scenario after the answer is reviewed", () => {
 		// Arrange
 		render(<VodSessionClient scenarios={scenarios} />);
-		fireEvent.click(screen.getByRole("button", { name: /take high ground/i }));
 
 		// Act
+		fireEvent.click(screen.getByRole("button", { name: /take high ground/i }));
 		fireEvent.click(screen.getByRole("button", { name: /next scenario/i }));
 
 		// Assert
 		expect(screen.getByText("What is the next action?")).toBeDefined();
 		expect(screen.queryByText("PASS")).toBeNull();
+	});
+
+	it("reports the selected Scenario answer through the shared callback", () => {
+		// Arrange
+		const onAnswer = vi.fn();
+		render(<VodSessionClient onAnswer={onAnswer} scenarios={scenarios} />);
+
+		// Act
+		fireEvent.keyDown(window, { key: "1" });
+
+		// Assert
+		expect(onAnswer).toHaveBeenCalledWith("scenario-1", "option-a", true);
 	});
 
 	it("reports when the Session Manifest has no active Scenarios", () => {

@@ -132,31 +132,37 @@ describe("InteractiveOverlayEngine", () => {
 		},
 	);
 
-	it.each(["input", "textarea", "select", "[contenteditable]"])(
-		"keeps number keys in an input-capable %s control",
-		(control) => {
-			// Arrange
-			const onAnswer = vi.fn();
-			render(
-				<>
-					<InteractiveOverlayEngine onAnswer={onAnswer} scenario={scenario} />
-					{control === "input" && <input data-testid="entry" />}
-					{control === "textarea" && <textarea data-testid="entry" />}
-					{control === "select" && <select data-testid="entry" />}
-					{control === "[contenteditable]" && (
-						<div contentEditable data-testid="entry" />
-					)}
-				</>,
-			);
-			const entry = screen.getByTestId("entry");
+	it.each([
+		"input",
+		"textarea",
+		"select",
+		"[contenteditable]",
+		"[contenteditable=plaintext-only]",
+	])("keeps number keys in an input-capable %s control", (control) => {
+		// Arrange
+		const onAnswer = vi.fn();
+		render(
+			<>
+				<InteractiveOverlayEngine onAnswer={onAnswer} scenario={scenario} />
+				{control === "input" && <input data-testid="entry" />}
+				{control === "textarea" && <textarea data-testid="entry" />}
+				{control === "select" && <select data-testid="entry" />}
+				{control === "[contenteditable]" && (
+					<div contentEditable data-testid="entry" />
+				)}
+				{control === "[contenteditable=plaintext-only]" && (
+					<div contentEditable="plaintext-only" data-testid="entry" />
+				)}
+			</>,
+		);
+		const entry = screen.getByTestId("entry");
 
-			// Act
-			fireEvent.keyDown(entry, { key: "1" });
+		// Act
+		fireEvent.keyDown(entry, { key: "1" });
 
-			// Assert
-			expect(onAnswer).not.toHaveBeenCalled();
-		},
-	);
+		// Assert
+		expect(onAnswer).not.toHaveBeenCalled();
+	});
 
 	it("ignores keyboard input when there is no active or answered Scenario", () => {
 		// Arrange
