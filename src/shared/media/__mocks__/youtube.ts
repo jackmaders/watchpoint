@@ -17,25 +17,28 @@ export interface YouTubeMock {
 
 export function createYouTubeMock(duration = 142): YouTubeMock {
 	const players: MockYouTubePlayer[] = [];
-	const Player = vi.fn(
-		(_element: HTMLElement, options: YouTubePlayerOptions) => {
-			const player = {
-				destroy: vi.fn(),
-				getCurrentTime: vi.fn(() => 0),
-				getDuration: vi.fn(() => duration),
-				options,
-				pauseVideo: vi.fn(),
-				playVideo: vi.fn(),
-				seekTo: vi.fn(),
-				triggerReady: () => {
-					options.events?.onReady?.({ target: player });
-				},
-			} as MockYouTubePlayer;
+	function PlayerConstructor(
+		_element: HTMLElement,
+		options: YouTubePlayerOptions,
+	): MockYouTubePlayer {
+		const player = {
+			destroy: vi.fn(),
+			getCurrentTime: vi.fn(() => 0),
+			getDuration: vi.fn(() => duration),
+			options,
+			pauseVideo: vi.fn(),
+			playVideo: vi.fn(),
+			seekTo: vi.fn(),
+			triggerReady: () => {
+				options.events?.onReady?.({ target: player });
+			},
+		} as MockYouTubePlayer;
 
-			players.push(player);
-			return player;
-		},
-	);
+		players.push(player);
+		return player;
+	}
+
+	const Player = vi.fn(PlayerConstructor);
 
 	return {
 		namespace: { Player: Player as unknown as YouTubeNamespace["Player"] },
