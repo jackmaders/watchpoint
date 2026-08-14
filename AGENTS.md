@@ -37,26 +37,22 @@ This repository enforces strict technical, architectural, and quality standards 
   `grafana`) in this repo. This repo's own `AGENTS.md` and `CODING_STANDARDS.md` are the
   authoritative conventions here and already cover what those skills would otherwise enforce.
 
-### 7. Model Selection Awareness
-Claude Code has no automated way to detect a model/task mismatch or switch models mid-session — the agent must flag it verbally and the user must act on it via `/model`. When a request's characteristics clearly fall outside the current model's intended use per the guidance below, say so plainly in one sentence at the start of the response (e.g. "This looks like an Opus-tier task — you should consider swapping the model to Opus with `/model opus` before I continue"), then proceed with the current model unless told otherwise. Phrase this as a recommendation for the user to act on, never as an offer for the agent to perform the switch itself. Do not interrupt trivial requests with this — only flag on a clear mismatch signal.
+### 7. Model Tier Awareness
+AI agents have no automated way to detect a model/task mismatch or switch models mid-session — the agent must flag it verbally and the user must act on it via their CLI/IDE model switcher (e.g. `/model`). When a request's characteristics clearly fall outside the current model's intended use per the guidance below, say so plainly in one sentence at the start of the response (e.g. "This looks like a high-reasoning frontier task — you should consider swapping to a frontier-tier model before I continue"), then proceed with the current model unless told otherwise. Phrase this as a recommendation for the user to act on, never as an offer for the agent to perform the switch itself. Do not interrupt trivial requests with this — only flag on a clear mismatch signal.
 
-**If the currently active model is high-thinking/high-tier (Opus, Fable) and the request matches that model's "should not be used for" list below, raise the cheaper-model suggestion immediately, before doing any extended thinking or deep processing on the request itself** — the whole point is to avoid burning expensive thinking tokens on a task that didn't need them. Flag it first, then only proceed at the current model if the user says to continue as-is.
+**If the currently active model is high-thinking/high-tier and the request matches that tier's "should not be used for" list below, raise the cheaper-model suggestion immediately, before doing any extended thinking or deep processing on the request itself** — the whole point is to avoid burning expensive thinking tokens on a task that didn't need them. Flag it first, then only proceed at the current model if the user says to continue as-is.
 
-#### Claude Opus 5
+#### Frontier / High-Reasoning Tier (e.g. Opus / High-Effort Reasoning)
 - **Use for:** complex agentic coding, large multi-file refactors, ambiguous architecture/design decisions with real tradeoffs, thorough or security-sensitive code review, long-horizon multi-step autonomous tasks, debugging that spans multiple systems/services.
-- **Do not use for:** simple mechanical edits (rename, formatting, boilerplate), classification/extraction/lookup tasks, repetitive bulk changes across many similar files, quick one-off scripts — flag these toward Sonnet or Haiku before thinking.
+- **Do not use for:** simple mechanical edits (rename, formatting, boilerplate), classification/extraction/lookup tasks, repetitive bulk changes across many similar files, quick one-off scripts — flag these toward balanced or lightweight tiers before thinking.
 
-#### Claude Sonnet 5 (project default)
-- **Use for:** everyday coding, general assistant work, most agentic tool-use tasks, moderate-complexity features and bug fixes — the right default for the large majority of requests in this repo. This includes full agentic work end-to-end (not just small edits) when the work is well-defined — specifically, tickets produced by this team's atomic high-quality ticket process are scoped and unambiguous enough for Sonnet to execute in full.
-- **Do not use for:** the hardest, highest-stakes reasoning or the largest cross-codebase migrations (escalate to Opus); high-volume trivial classification/extraction/bulk-edit work where Haiku would do just as well for less cost; work that has not been through the atomic ticket process and still has areas of genuine ambiguity or unresolved design decisions — escalate those to Opus instead.
+#### Balanced / Default Tier (e.g. Sonnet / Standard Coding) (project default)
+- **Use for:** everyday coding, general assistant work, most agentic tool-use tasks, moderate-complexity features and bug fixes — the right default for the large majority of requests in this repo. This includes full agentic work end-to-end (not just small edits) when the work is well-defined — specifically, tickets produced by this team's atomic high-quality ticket process are scoped and unambiguous enough to execute in full.
+- **Do not use for:** the hardest, highest-stakes reasoning or the largest cross-codebase migrations (escalate to Frontier Tier); high-volume trivial classification/extraction/bulk-edit work where a lightweight tier would do just as well for less cost; work that has not been through the atomic ticket process and still has areas of genuine ambiguity or unresolved design decisions — escalate those to Frontier Tier instead.
 
-#### Claude Haiku 4.5
+#### Lightweight / Fast Tier (e.g. Haiku / Flash)
 - **Use for:** simple, high-volume, latency-sensitive tasks — classification, extraction, quick lookups, mechanical edits, and subagent workers doing bulk reading/searching under a coordinator.
-- **Do not use for:** anything requiring nuanced judgment, architecture or design decisions, security-sensitive review, or ambiguous/underspecified requirements — flag these up to Sonnet or Opus.
-
-#### Claude Fable 5
-- **Use for:** only the hardest reasoning and longest-horizon agentic problems, and only when the user has explicitly asked for it by name — it is not the default "upgrade Opus" path and is priced above Opus-tier.
-- **Do not use for:** everyday work, or anything Opus/Sonnet already handles well. If Fable 5 is active for a request that doesn't need it, flag that a cheaper model would suffice before doing any thinking.
+- **Do not use for:** anything requiring nuanced judgment, architecture or design decisions, security-sensitive review, or ambiguous/underspecified requirements — flag these up to Balanced or Frontier tiers.
 
 This is guidance for the assistant's own judgment, not a hard rule — when in doubt, say nothing and proceed at the current model.
 
