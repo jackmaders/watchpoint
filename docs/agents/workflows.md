@@ -112,28 +112,8 @@ The skill ecosystem uses GitHub labels to track issue and PR lifecycle state acr
 
 ---
 
-## 4. Master Domain Model, ADR & Code Sync Diagram
+## 4. Domain Model & ADR Synchronization Rule
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Dev as Developer
-    participant Planning as Planning Skills
-    participant Tracker as Issue Tracker & GHA
-    participant Agent as Coding Agent
-    participant Git as Git Repository
-
-    Dev->>Planning: 1. Start planning session on issue
-    Planning->>Git: Read existing domain terms & ADRs
-    Planning->>Tracker: Publish spec / tickets & apply ready-for-agent label
-    Note over Tracker: Label ready-for-agent signals AFK runner or dev
-    Tracker->>Agent: 2. Claim unblocked ticket
-    Agent->>Tracker: Read spec, acceptance criteria & proposed ADRs
-    Agent->>Git: Write code (TDD), update CONTEXT.md & add ADR
-    Agent->>Tracker: Open Pull Request with commits
-    Dev->>Tracker: 3. Run /code-review & merge PR
-    Tracker->>Tracker: Close issue & advance frontier
-```
-
-- **During Planning (`/grilling`, `/wayfinder`, `/to-spec`)**: Do not edit git files directly. Document proposed `CONTEXT.md` terms and ADR details inside the GitHub issue under `## Proposed Domain & ADR Updates`.
-- **During Implementation (`/implement`)**: The implementing agent reads the documented updates from the issue, updates `CONTEXT.md`, and creates the new `docs/adr/000X-*.md` file directly on the feature branch.
+- **During Planning (`/grilling`, `/wayfinder`, `/to-spec`)**: Do not edit git files directly. Document proposed domain terms and ADR details inside the GitHub issue body under `## Proposed Domain & ADR Updates`.
+- **When a PR is Created (`/implement`)**: The implementing agent reads the proposed updates from the issue, updates [CONTEXT.md](file:///home/jackw/projects/watchpoint/CONTEXT.md), and creates the new `docs/adr/000X-*.md` file directly on the feature branch. All code, domain vocabulary, and ADR files are committed together in the Pull Request.
+- **When a PR is Merged**: Merging the PR updates `main` with both the implementation and its architectural documentation simultaneously, ensuring the domain model and ADR log never drift from the codebase.
