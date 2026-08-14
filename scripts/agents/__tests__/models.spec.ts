@@ -13,6 +13,7 @@ import {
 	PROVIDERS,
 	resolveApiKey,
 	resolveModelConfig,
+	resolveReasoningEffort,
 	validateModelConfig,
 } from "../models";
 
@@ -246,5 +247,41 @@ describe("provider API key resolution", () => {
 
 		// Assert
 		expect(act).toThrow(/Invalid provider.*mistral/);
+	});
+
+	describe("reasoning effort", () => {
+		it("defaults to max reasoning effort", () => {
+			// Arrange
+			vi.stubEnv("AGENT_REASONING_EFFORT", "");
+			vi.stubEnv("REASONING_EFFORT", "");
+
+			// Act
+			const effort = resolveReasoningEffort();
+
+			// Assert
+			expect(effort).toBe("max");
+		});
+
+		it("resolves valid reasoning effort from environment override", () => {
+			// Arrange
+			vi.stubEnv("AGENT_REASONING_EFFORT", "xhigh");
+
+			// Act
+			const effort = resolveReasoningEffort();
+
+			// Assert
+			expect(effort).toBe("xhigh");
+		});
+
+		it("falls back to default max effort on invalid environment value", () => {
+			// Arrange
+			vi.stubEnv("AGENT_REASONING_EFFORT", "ultra");
+
+			// Act
+			const effort = resolveReasoningEffort();
+
+			// Assert
+			expect(effort).toBe("max");
+		});
 	});
 });

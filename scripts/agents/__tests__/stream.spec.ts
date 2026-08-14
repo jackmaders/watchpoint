@@ -495,21 +495,48 @@ describe("Codex process execution", () => {
 		}
 	});
 
-	it("builds Codex commands for the supported OpenAI execution path", () => {
+	it("builds Codex commands for the supported OpenAI execution path with default max reasoning effort", () => {
 		// Arrange
 		// Act
 		const freshArgs = buildCodexArgs(modelConfig);
 		const resumedArgs = buildCodexArgs(modelConfig, "thread_1");
 
 		// Assert
-		expect(freshArgs).toEqual(["exec", "--json", "-m", "gpt-5.6-luna", "-"]);
+		expect(freshArgs).toEqual([
+			"exec",
+			"--json",
+			"-m",
+			"gpt-5.6-luna",
+			"-c",
+			'model_reasoning_effort="max"',
+			"-",
+		]);
 		expect(resumedArgs).toEqual([
 			"exec",
 			"resume",
 			"--json",
 			"-m",
 			"gpt-5.6-luna",
+			"-c",
+			'model_reasoning_effort="max"',
 			"thread_1",
+			"-",
+		]);
+	});
+
+	it("supports custom reasoning effort in buildCodexArgs", () => {
+		// Arrange
+		// Act
+		const args = buildCodexArgs(modelConfig, undefined, false, "high");
+
+		// Assert
+		expect(args).toEqual([
+			"exec",
+			"--json",
+			"-m",
+			"gpt-5.6-luna",
+			"-c",
+			'model_reasoning_effort="high"',
 			"-",
 		]);
 	});
@@ -525,6 +552,8 @@ describe("Codex process execution", () => {
 			"--json",
 			"-m",
 			"gpt-5.6-luna",
+			"-c",
+			'model_reasoning_effort="max"',
 			"--dangerously-bypass-approvals-and-sandbox",
 			"-",
 		]);
@@ -559,6 +588,8 @@ describe("Codex process execution", () => {
 				"--json",
 				"-m",
 				"gpt-5.6-luna",
+				"-c",
+				'model_reasoning_effort="max"',
 				"--dangerously-bypass-approvals-and-sandbox",
 				"-",
 			],
@@ -595,6 +626,8 @@ describe("Codex process execution", () => {
 			"--json",
 			"-m",
 			"gpt-5.6-luna",
+			"-c",
+			'model_reasoning_effort="max"',
 			"-",
 		]);
 		expect(write).toHaveBeenCalledWith("prompt\n");

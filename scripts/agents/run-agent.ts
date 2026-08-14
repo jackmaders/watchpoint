@@ -233,12 +233,17 @@ async function runAttempts<T>(request: RunRequest<T>): Promise<Attempts<T>> {
 		const attemptsRemaining = request.maxRetries - attempt + 1;
 		const remainingMs = deadline - Date.now();
 		const resumeSessionId = attempt === 0 ? undefined : transcript.sessionId;
+		const retryBufferMs = (attemptsRemaining - 1) * 60_000;
+		const attemptTimeoutMs = Math.max(
+			1,
+			attemptsRemaining > 1 ? remainingMs - retryBufferMs : remainingMs,
+		);
 		const result = await runProcess(
 			request.spawn,
 			request.model,
 			prompt,
 			resumeSessionId,
-			Math.max(1, Math.ceil(remainingMs / attemptsRemaining)),
+			attemptTimeoutMs,
 			request.environment,
 		);
 		transcript = record(transcript, result);

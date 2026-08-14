@@ -141,7 +141,16 @@ describe("runAgent", () => {
 
 			// Assert
 			expect(bunSpawn).toHaveBeenCalledWith(
-				["codex", "exec", "--json", "-m", "gpt-5.6-luna", "-"],
+				[
+					"codex",
+					"exec",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_reasoning_effort="max"',
+					"-",
+				],
 				{
 					env: expect.objectContaining({ OPENAI_API_KEY: "test-key" }),
 					stderr: "pipe",
@@ -172,7 +181,15 @@ describe("runAgent", () => {
 		// Assert
 		expect(spawn).toHaveBeenCalledWith(
 			"codex",
-			["exec", "--json", "-m", "gpt-5.6-terra", "-"],
+			[
+				"exec",
+				"--json",
+				"-m",
+				"gpt-5.6-terra",
+				"-c",
+				'model_reasoning_effort="max"',
+				"-",
+			],
 			expect.objectContaining({ env: expect.any(Object) }),
 		);
 	});
@@ -265,7 +282,15 @@ describe("runAgent", () => {
 			// Assert
 			expect(spawn).toHaveBeenCalledWith(
 				"codex",
-				["exec", "--json", "-m", "gpt-5.6-luna", "-"],
+				[
+					"exec",
+					"--json",
+					"-m",
+					"gpt-5.6-luna",
+					"-c",
+					'model_reasoning_effort="max"',
+					"-",
+				],
 				expect.objectContaining({ env: expect.any(Object) }),
 			);
 			expect(write).toHaveBeenCalledWith(
@@ -442,11 +467,35 @@ describe("runAgent", () => {
 					"--json",
 					"-m",
 					"gpt-5.6-luna",
+					"-c",
+					'model_reasoning_effort="max"',
 					"sess_retry_001",
 					"-",
 				],
 				expect.objectContaining({ env: expect.any(Object) }),
 			);
+		});
+
+		it("allocates the majority of the deadline to the initial attempt reserving 60s per remaining retry", async () => {
+			// Arrange
+			const spawn = spawnSequence(
+				readFixture("malformed-json.jsonl"),
+				readFixture("retry-success.jsonl"),
+			);
+
+			// Act
+			await runAgent({
+				maxRetries: 2,
+				model: PING,
+				output: objectOutput(),
+				promptArgs: { TASK: "the ticket" },
+				promptFile: fixturePath("prompts", "object.md"),
+				spawn,
+				timeoutMs: 300_000,
+			});
+
+			// Assert
+			expect(spawn).toHaveBeenCalledTimes(2);
 		});
 
 		it("sends only the validation error as the retry prompt, not the original prompt", async () => {
