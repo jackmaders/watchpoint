@@ -1,209 +1,217 @@
-# Engineering Playbook & Workflows
+# Engineering Workflows & Playbooks
 
-A practical guide for planning, refining, diagnosing, and implementing work across different scopes using the engineering skills and issue tracking workflow.
-
----
-
-## Universal Entry Point: `/triage`
-
-**Every new issue (milestone, feature, or bug) begins at `/triage`.**
-
-When `/triage` runs, it inspects the request against the codebase and domain documentation to assign:
-1. **1 Category label**: 🐛 `bug` or ✨ `enhancement`
-2. **1 State label**: 🔴 `needs-triage`, 🟡 `needs-info`, 🤖 `ready-for-agent`, 👤 `ready-for-human`, or ⛔ `wontfix`
-
-### What Documents Does `/triage` Read?
-
-Before recommending an action or label, `/triage` automatically consults:
-1. **`docs/agents/issue-tracker.md`** — Tracker conventions (GitHub `gh` CLI commands, PR triage settings).
-2. **`docs/agents/triage-labels.md`** — The label dictionary mapping canonical roles to tracker labels.
-3. **`CONTEXT.md` (via `docs/agents/domain.md`)** — Ubiquitous language, domain entities, and glossary definitions.
-4. **`docs/adr/`** — Architectural Decision Records, ensuring the proposed request does not contradict past architectural choices.
-5. **`.out-of-scope/*.md`** (if present) — Knowledge base of previously rejected or ruled-out proposals.
-6. **The Issue/PR Body & Comments** — Prior triage notes, reporter conversation, and history.
+Procedural playbooks for planning, refining, diagnosing, and executing changes across the repository.
 
 ---
 
-## 1. Planning a Large Milestone (High Ambiguity / Epic)
+## Universal Entry Point: Triage
 
-Use when an effort is too large for a single agent session and contains unknown APIs, unmade decisions, or architectural "fog of war."
+Every issue or external request enters through `/triage` before any specification or coding begins.
 
-```
-                     /triage (Categorise & Route)
-                                 │
-                                 ▼
-                    /wayfinder (Create Map Issue)
-                                 │
-                                 ▼
-             Resolve Decision Tickets on the Frontier
-     (🔬 /research, 🎨 /prototype, 🔥 /grilling, ⚙️ /task)
-                                 │
-            (Lock decisions into CONTEXT.md & docs/adr/)
-                                 │
-                                 ▼
-       Map Destination Reached (All decisions locked in Map)
-                                 │
-                                 ▼
-            /to-spec (Generate Mid-Sized Feature Specs)
-                                 │
-                                 ▼
-           /to-tickets (Slice into ready-for-agent Issues)
-                                 │
-                                 ▼
-                    /implement (via /tdd)
+```mermaid
+graph TD
+    New[New / Unlabeled Issue] --> Triage["/triage"]
+    Triage -->|Evaluate against Context & ADRs| Classify{Classification}
+    Classify -->|Broken defect| Bug[Category: bug]
+    Classify -->|New capability| Feat[Category: enhancement]
+    Classify -->|Needs maintainer evaluation| S1[State: needs-triage]
+    Classify -->|Awaiting human answers| S2[State: needs-info]
+    Classify -->|Fully specified| S3[State: ready-for-agent]
+    Classify -->|Requires human judgment| S4[State: ready-for-human]
+    Classify -->|Rejected / Out of scope| S5[State: wontfix]
 ```
 
-### Steps:
-1. **Triage the Epic**: Run `/triage` to classify as `[enhancement, ready-for-human]`.
-2. **Initialize the Map**: Ask the agent: `"/wayfinder chart a map for [milestone goal]"`.
-3. **Work the Frontier**: The agent identifies open, unblocked decision tickets. Work them one at a time:
-   - For research tickets: The agent runs `/research` subagents against docs.
-   - For prototype tickets: Build throwaway components to validate UX.
-   - For grilling tickets: Answer technical interview questions.
-4. **Lock in Decisions**: As decisions settle, the agent records terms in `CONTEXT.md` and generates ADRs in `docs/adr/`.
-5. **Graduate to Specs**: Once all tickets on the Map close, ask the agent to run `/to-spec` on the settled architecture to produce formal feature specifications.
-6. **Break Down & Build**: Run `/to-tickets` on each spec and build with `/implement`.
+### Pre-Triage Reference Documents
+
+The triage agent must consult the following sources in order before applying roles:
+1. `docs/agents/issue-tracker.md` — Issue tracker CLI operations and external PR triage scope.
+2. `docs/agents/triage-labels.md` — Canonical category and state role mappings.
+3. `CONTEXT.md` (via `docs/agents/domain.md`) — Ubiquitous language, entity glossary, and system boundaries.
+4. `docs/adr/` — Architecture Decision Records; do not propose changes that contradict active ADRs without explicit flagging.
+5. `.out-of-scope/*.md` (if present) — Previously rejected proposals.
 
 ---
 
-## 2. Planning & Building a Medium Feature (Multi-Ticket)
+## 1. Large Milestone Workflow (High Ambiguity / Epics)
 
-Use for well-understood, multi-component features that span multiple layers (e.g. database schema + server action + UI component).
+Use when work exceeds a single context window and contains unknown dependencies, unselected libraries, or architectural fog of war.
 
-```
-                 /triage (Categorise as enhancement)
-                                 │
-                                 ▼
-                             /grill-me 
-             (Settles edge cases & updates CONTEXT.md / ADRs)
-                                 │
-                                 ▼
-                             /to-spec 
-             (Writes formal spec & testing seams to issue body)
-                                 │
-                                 ▼
-                           /to-tickets 
-             (Creates dependency-wired child tickets: ready-for-agent)
-                                 │
-                                 ▼
-                           /implement 
-             (Builds each ticket with /tdd + /code-review)
+```mermaid
+graph TD
+    A["1. /triage: Classify Epic"] --> B["2. /wayfinder: Initialize Map Issue"]
+    B --> C["3. Work the Frontier: Resolve Unblocked Decision Tickets"]
+    C --> D{Ticket Type}
+    D -->|Research| D1["/research subagent -> findings branch"]
+    D -->|Prototype| D2["/prototype -> rough interactive artifact"]
+    D -->|Grilling| D3["/grilling + /domain-modeling -> resolve trade-offs"]
+    D -->|Task| D4["Execute blocking setup / credentials"]
+    D1 & D2 & D3 & D4 --> E["Record Decision in Map Index & Advance Frontier"]
+    E --> F{Remaining Fog?}
+    F -->|Yes| C
+    F -->|No: Destination Reached| G["4. /to-spec: Generate Feature Specifications"]
+    G --> H["5. /to-tickets: Decompose into Tracer-Bullet Tickets"]
+    H --> I["6. /implement: TDD Implementation per Ticket"]
 ```
 
-### Steps:
-1. **Triage**: Run `/triage` to inspect existing code and verify it's not already implemented.
-2. **Grill Requirements**: Tell the agent: `"Grill me on #[issue-number]"`. Answer the 3–5 targeted questions.
-3. **Draft the Spec**: Tell the agent: `"Turn the conversation into a spec with /to-spec"`.
-4. **Create Slices**: Tell the agent: `"Break down the spec with /to-tickets"`.
-5. **Build**: Tell the agent: `"Implement #[child-ticket-number] using TDD"`.
-6. **Review**: Automated `/code-review` verifies standards and spec criteria before merging.
+### Execution Steps
+1. **Initialize Map**: Run `/wayfinder` to define the Destination and sketch the in-scope fog into `Not yet specified`.
+2. **Work the Frontier**: Identify open, unblocked child tickets (`Blocked by` resolved). Work one ticket per session:
+   - `research` (AFK): Dispatch `/research` subagents against documentation and APIs.
+   - `prototype` (HITL): Construct throwaway UI/logic to resolve behavioral ambiguity.
+   - `grilling` (HITL): Run interactive technical interview to resolve design trade-offs.
+   - `task` (HITL/AFK): Complete blocking infrastructure setup.
+3. **Advance Frontier**: Post resolution comment, close the ticket, and append the gist to `Decisions so far`.
+4. **Handoff to Specs**: When no fog remains, run `/to-spec` on the settled architecture to produce mid-sized feature specs.
+5. **Decompose & Implement**: Run `/to-tickets` on each spec and build sequentially with `/implement`.
+
+### Completion Criterion
+The Map issue is closed with zero open child tickets, all decisions indexed in `Decisions so far`, and corresponding feature specs generated.
 
 ---
 
-## 3. Planning & Building a Small Feature (Single Session)
+## 2. Medium Feature Workflow (Multi-Ticket Slices)
 
-Use for compact, focused features (e.g. a keyboard shortcut, an isolated button, a small UI drawer).
+Use for well-scoped capabilities requiring multiple modules or layers (e.g. database migration + server action + UI component).
 
-```
-   /triage (Categorise as enhancement)
-          │
-          ▼
-      /grill-me (1 quick round of 2-3 questions)
-          │
-          ▼
-      /to-spec (Writes concise spec directly on issue)
-          │
-          ▼
-      /implement (Creates branch, writes tests first, opens PR)
-          │
-          ▼
-      /code-review & Merge
+```mermaid
+graph TD
+    A["1. /triage: Verify & Tag [enhancement, needs-triage]"] --> B["2. /grill-me: Resolve Seams & Edge Cases"]
+    B --> C["3. /to-spec: Synthesize Specification onto Issue Body"]
+    C --> D["4. /to-tickets: Create Dependency-Wired Sub-Issues"]
+    D --> E["5. /implement: Build Tickets in Dependency Order via /tdd"]
+    E --> F["6. /code-review: Two-Axis Review & Merge"]
 ```
 
-### Steps:
-1. Run `/triage` on the issue.
-2. Run a fast grilling round: `"Grill me on #[issue-number]"`.
-3. Generate spec: `"Run /to-spec on #[issue-number]"`.
-4. Implement directly: `"Implement #[issue-number] using /tdd and open a PR"`.
+### Execution Steps
+1. **Triage**: Check codebase for existing implementations or active ADR constraints.
+2. **Grill**: Run `/grill-me` (or `/grill-with-docs`) for 1–2 rounds to settle edge cases, data structures, and test seams.
+3. **Spec**: Run `/to-spec` to generate problem statement, user stories, implementation decisions, test seams, and out-of-scope boundaries directly onto the issue body.
+4. **Ticket Slicing**: Run `/to-tickets` to publish child issues with native dependency links (`Blocked by: #...`) labeled `ready-for-agent`.
+5. **Implement**: Execute each unblocked ticket with `/implement` (TDD loop + standards validation).
+6. **Review**: Run `/code-review` on opened PRs to verify standards and acceptance criteria.
+
+### Completion Criterion
+All child tickets closed, each backed by a merged PR passing full test suite and two-axis review.
 
 ---
 
-## 4. Triaging, Diagnosing & Fixing a Bug
+## 3. Small Feature Workflow (Single Session)
 
-Use for defects, broken flows, runtime exceptions, or performance regressions.
+Use for compact, isolated enhancements (e.g. keyboard shortcut, button variant, standalone utility).
 
-```
-   Reported Defect
-          │
-          ▼
-       /triage (Verify claim, check redundancy, tag [bug])
-          │
-          ▼
-   Is it obvious or hard/flaky?
-     ├── OBVIOUS ───────────────────────────────┐
-     │                                          │
-     ▼                                          ▼
-   /to-spec (Define test seam)           /diagnosing-bugs
-     │                                  (6-Phase Discipline)
-     │                                    1. Build tight feedback loop
-     │                                    2. Reproduce & minimise
-     │                                    3. 3-5 Ranked hypotheses
-     │                                    4. Targeted instrumentation
-     │                                    5. Failing test ➔ Fix ➔ Green
-     │                                    6. Cleanup & post-mortem
-     │                                          │
-     └──────────────────┬───────────────────────┘
-                        ▼
-                   /implement (via /tdd)
-                        │
-                        ▼
-                   /code-review & Merge
+```mermaid
+graph TD
+    A["1. /triage: Tag [enhancement, needs-triage]"] --> B["2. /grill-me: 1 Round of 2-3 Questions"]
+    B --> C["3. /to-spec: Concise Spec on Issue Body"]
+    C --> D["4. /implement: Branch, TDD, and Open PR"]
+    D --> E["5. /code-review: Verify & Merge"]
 ```
 
-### The `/diagnosing-bugs` Discipline for Non-Trivial Bugs:
-1. **Phase 1 — Build a Feedback Loop**: Create a fast, deterministic, agent-runnable command that goes RED on this specific symptom (e.g. unit test, curl script, Playwright test).
-2. **Phase 2 — Reproduce & Minimise**: Strip all non-load-bearing inputs/config until only the minimal reproduction remains.
-3. **Phase 3 — Hypothesise**: Formulate 3–5 falsifiable hypotheses (*"If X is the cause, changing Y will make it disappear"*).
-4. **Phase 4 — Instrument**: Insert targeted debug logs prefixed with `[DEBUG-xxxx]` (or use breakpoints). Change one variable at a time.
-5. **Phase 5 — Fix & Regression Test**: Turn the minimised repro into a permanent regression test at the correct seam, apply the fix, and confirm GREEN.
-6. **Phase 6 — Cleanup & Post-Mortem**: Remove all `[DEBUG-xxxx]` logs, document root cause in PR commit message, and hand off any architectural lessons to `/improve-codebase-architecture`.
+### Execution Steps
+1. **Triage**: Confirm feature boundary and absence of redundancy.
+2. **Grill**: Run 1 quick round of `/grill-me` to lock down inputs, outputs, and failure states.
+3. **Spec**: Run `/to-spec` directly on the issue.
+4. **Implement**: Run `/implement` to branch, write failing test, satisfy implementation, and open PR.
+5. **Review**: Verify with `/code-review`.
+
+### Completion Criterion
+A single merged PR satisfying all spec acceptance criteria with sub-50ms unit tests.
 
 ---
 
-## 5. Post-Milestone Architectural Health Check
+## 4. Bug Triage, Diagnosis & Fix Workflow
 
-Use periodically after merging a large milestone or batch of features to prevent technical debt and shallow module accumulation.
+Use for runtime exceptions, broken interaction seams, data corruption, or performance regressions.
 
+```mermaid
+graph TD
+    A["1. /triage: Reproduce & Tag [bug]"] --> B{Defect Complexity}
+    B -->|Obvious / Trivial| C["/to-spec: Define Test Seam & Fix Criteria"]
+    B -->|Hard / Flaky / Regression| D["/diagnosing-bugs: 6-Phase Discipline"]
+    D --> D1["Phase 1: Build Tight Red Feedback Loop"]
+    D1 --> D2["Phase 2: Reproduce & Minimise"]
+    D2 --> D3["Phase 3: 3-5 Ranked Falsifiable Hypotheses"]
+    D3 --> D4["Phase 4: Targeted [DEBUG-xxxx] Instrumentation"]
+    D4 --> D5["Phase 5: Failing Test at Correct Seam -> Fix -> Green"]
+    D5 --> D6["Phase 6: Cleanup Logs & Record Post-Mortem"]
+    C & D6 --> E["/implement: Execute Fix via /tdd"]
+    E --> F["/code-review: Verify & Merge"]
 ```
-   Milestone Merged
-          │
-          ▼
-   /improve-codebase-architecture
-          │
-          ▼
-   Visual HTML Report (Mermaid Before/After diagrams opened in browser)
-          │
-          ▼
-   Select Refactor Candidate
-          │
-          ▼
-   /grill-me ➔ /implement (Surgical cleanup PR)
-```
 
-### Steps:
-1. Trigger review: `"/improve-codebase-architecture"`.
-2. Review the generated HTML report in your browser to inspect before/after module structures and test seams.
-3. Select a high-impact candidate to refine and execute cleanly with `/implement`.
+### The 6-Phase `/diagnosing-bugs` Discipline
+
+1. **Phase 1 — Build a Feedback Loop**:
+   - Construct one fast, deterministic, agent-runnable command (test runner, curl script, Playwright scenario) that drives the bug code path and asserts on the exact user symptom.
+   - Do NOT inspect code to form theories before this command exists.
+2. **Phase 2 — Reproduce & Minimise**:
+   - Run the loop and confirm RED on the exact symptom described.
+   - Cut non-load-bearing inputs, configuration, and callers one by one until only essential trigger elements remain.
+3. **Phase 3 — Hypothesise**:
+   - Produce 3–5 falsifiable hypotheses in format: *"If X is the cause, changing Y will make the bug disappear / changing Z will make it worse."*
+   - Rank by likelihood before testing.
+4. **Phase 4 — Instrument**:
+   - Insert targeted probes mapping to specific hypotheses.
+   - Tag all debug statements with a unique prefix (e.g. `[DEBUG-4f1a]`) to guarantee complete removal.
+5. **Phase 5 — Fix & Regression Test**:
+   - Convert the minimal repro into a permanent test at the highest correct public seam.
+   - Apply fix, observe GREEN loop, and re-run against original un-minimised repro.
+6. **Phase 6 — Cleanup & Post-Mortem**:
+   - Strip all `[DEBUG-xxxx]` instrumentation.
+   - Document verified root cause in PR commit message.
+   - If missing seams or tight coupling caused the bug, hand off findings to `/improve-codebase-architecture`.
+
+### Completion Criterion
+The feedback loop passes GREEN, the permanent regression test passes, all temporary instrumentation is purged, and root cause is documented in commit history.
 
 ---
 
-## Keeping `CONTEXT.md` & ADRs Synchronized
+## 5. Architectural Health Check Workflow
 
-* **During Planning (`/grilling`, `/wayfinder`, `/to-spec`)**:
-  * The AI must consult existing `CONTEXT.md` and `docs/adr/` to keep terminology and constraints aligned.
-  * When new domain concepts, entity definitions, or architecture decisions are made, the AI **does not edit git files immediately**.
-  * Instead, it **documents the proposed `CONTEXT.md` terms and ADR details directly inside the GitHub issue / spec body** (e.g. under `## Proposed Domain & ADR Updates`).
-* **During Implementation (`/implement`)**:
-  * The coding agent reads the documented domain updates and ADR details from the issue.
-  * It applies the changes to `CONTEXT.md` and creates the new `docs/adr/000X-*.md` file directly on the feature branch.
-  * Both documentation and implementation code are committed together and land in `main` via the same PR.
+Use periodically after landing major milestones to detect shallow modules, coupling friction, or testing seam drift.
+
+```mermaid
+graph TD
+    A["1. /improve-codebase-architecture"] --> B["2. Scan Git Hotspots & Shallow Modules"]
+    B --> C["3. Generate HTML Report with Mermaid Before/After Diagrams"]
+    C --> D["4. Select Candidate Refactor"]
+    D --> E["5. /grilling: Shape Deep Module & Interface"]
+    E --> F["6. /implement: Refactor Seam & Consolidate Tests"]
+```
+
+### Execution Steps
+1. **Trigger Scan**: Run `/improve-codebase-architecture` across recent git commit hot spots.
+2. **Inspect Report**: Open the generated visual report (`/tmp/architecture-review-<timestamp>.html`) to examine side-by-side Before/After architectural structures and testability ratings.
+3. **Select Candidate**: Pick a candidate marked `Strong` or `Worth exploring`.
+4. **Refactor**: Run `/grilling` to lock the new deep module interface, then execute via `/implement`.
+
+### Completion Criterion
+The refactored module passes the deletion test (concentrates complexity behind a simple interface) with simplified, isolated tests.
+
+---
+
+## Domain Model & ADR Synchronization Rules
+
+```mermaid
+sequenceDiagram
+    participant P as Planning Phase (/grilling, /wayfinder, /to-spec)
+    participant I as Issue / Spec on GitHub
+    participant C as Coding Agent (/implement)
+    participant G as Git Repository (CONTEXT.md & docs/adr/)
+
+    P->>G: Read CONTEXT.md & docs/adr/ (Consult active vocabulary)
+    Note over P: Discover new domain terms & decisions
+    P->>I: Write proposed terms & ADR text inside Issue Body
+    Note over P,G: Do NOT write git files during planning
+    C->>I: Read specification & proposed domain updates
+    C->>G: Update CONTEXT.md & create docs/adr/000X-*.md on feature branch
+    C->>G: Commit code + documentation updates together in PR
+```
+
+1. **Planning Phase**:
+   - Read `CONTEXT.md` and `docs/adr/` to respect existing architecture.
+   - When new domain terms or architectural decisions emerge, **do not edit git files immediately**.
+   - Record the proposed `CONTEXT.md` definitions and ADR text directly in the GitHub Issue body under `## Proposed Domain & ADR Updates`.
+2. **Implementation Phase**:
+   - The `/implement` agent reads the domain and ADR text from the issue.
+   - The agent updates `CONTEXT.md` and writes the new `docs/adr/000X-*.md` file directly on the working branch.
+   - Documentation and code land together in `main` via the pull request.
