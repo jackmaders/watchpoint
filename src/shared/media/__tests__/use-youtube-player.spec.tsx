@@ -1,18 +1,7 @@
 import { act, render, renderHook } from "@testing-library/react";
-import type { PropsWithChildren } from "react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
-
-function createContainerWrapper(
-	containerRef: { current: HTMLDivElement | null },
-	useStrict = false,
-) {
-	return function ContainerWrapper({ children }: PropsWithChildren) {
-		const content = <div ref={containerRef}>{children}</div>;
-		return useStrict ? <StrictMode>{content}</StrictMode> : content;
-	};
-}
 
 describe("useYouTubePlayer", () => {
 	beforeEach(() => {
@@ -26,27 +15,26 @@ describe("useYouTubePlayer", () => {
 		delete window.onYouTubeIframeAPIReady;
 	});
 
-	it("initializes as unready and transitions to ready when the player fires onReady", async () => {
+	it("initializes as unready and transitions to ready when the container mounts and player fires onReady", async () => {
 		// Arrange
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock(142);
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = createContainerWrapper(containerRef);
+		const container = document.createElement("div");
 
 		// Act
-		const { result } = renderHook(
-			() =>
-				useYouTubePlayer({
-					autoplay: true,
-					containerRef,
-					onReady,
-					videoId: "dQw4w9WgXcQ",
-				}),
-			{ wrapper },
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				autoplay: true,
+				onReady,
+				videoId: "dQw4w9WgXcQ",
+			}),
 		);
 		const initialState = { ...result.current };
+		act(() => {
+			result.current.containerRef(container);
+		});
 		await act(async () => {
 			await Promise.resolve();
 			await Promise.resolve();
@@ -100,14 +88,15 @@ describe("useYouTubePlayer", () => {
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = createContainerWrapper(containerRef);
+		const container = document.createElement("div");
 
 		// Act
-		const { result } = renderHook(
-			() => useYouTubePlayer({ containerRef, videoId: "dQw4w9WgXcQ" }),
-			{ wrapper },
+		const { result } = renderHook(() =>
+			useYouTubePlayer({ videoId: "dQw4w9WgXcQ" }),
 		);
+		act(() => {
+			result.current.containerRef(container);
+		});
 		await act(async () => {
 			await Promise.resolve();
 			await Promise.resolve();
@@ -123,55 +112,21 @@ describe("useYouTubePlayer", () => {
 		expect(result.current.currentTime).toBe(0);
 	});
 
-	it("destroys a player whose container became stale during construction", async () => {
-		// Arrange
-		const { useYouTubePlayer } = await import("../use-youtube-player");
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const onReady = vi.fn();
-		const youtube = createYouTubeMock(142, () => {
-			containerRef.current = document.createElement("div");
-		});
-		setYouTubeNamespace(youtube.namespace);
-		const wrapper = createContainerWrapper(containerRef);
-
-		// Act
-		const { result, unmount } = renderHook(
-			() =>
-				useYouTubePlayer({
-					containerRef,
-					onReady,
-					videoId: "stale-container",
-				}),
-			{ wrapper },
-		);
-		await act(async () => {
-			await Promise.resolve();
-			await Promise.resolve();
-		});
-		const player = youtube.players[0];
-		act(() => player.triggerReady());
-		unmount();
-
-		// Assert
-		expect(player.destroy).toHaveBeenCalledTimes(1);
-		expect(result.current.isReady).toBe(false);
-		expect(result.current.duration).toBe(0);
-		expect(onReady).not.toHaveBeenCalled();
-	});
-
 	it("destroys the old player and ignores its late ready callback when the VOD changes", async () => {
 		// Arrange
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = createContainerWrapper(containerRef);
+		const container = document.createElement("div");
 		const { result, rerender } = renderHook(
 			({ videoId }: { videoId: string }) =>
-				useYouTubePlayer({ containerRef, onReady, videoId }),
-			{ initialProps: { videoId: "first-video" }, wrapper },
+				useYouTubePlayer({ onReady, videoId }),
+			{ initialProps: { videoId: "first-video" } },
 		);
+		act(() => {
+			result.current.containerRef(container);
+		});
 		await act(async () => {
 			await Promise.resolve();
 			await Promise.resolve();
@@ -200,21 +155,21 @@ describe("useYouTubePlayer", () => {
 		expect(onReady).toHaveBeenCalledWith(20);
 	});
 
-	it("cleans up its owned player through a StrictMode mount cycle", async () => {
+	it("cleans up its owned player when unmounted or container is detached", async () => {
 		// Arrange
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
 		const onReady = vi.fn();
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = createContainerWrapper(containerRef, true);
+		const container = document.createElement("div");
 
 		// Act
-		const { unmount } = renderHook(
-			() =>
-				useYouTubePlayer({ containerRef, onReady, videoId: "strict-video" }),
-			{ wrapper },
+		const { result, unmount } = renderHook(() =>
+			useYouTubePlayer({ onReady, videoId: "strict-video" }),
 		);
+		act(() => {
+			result.current.containerRef(container);
+		});
 		await act(async () => {
 			await Promise.resolve();
 			await Promise.resolve();
@@ -229,7 +184,7 @@ describe("useYouTubePlayer", () => {
 		expect(onReady).not.toHaveBeenCalled();
 	});
 
-	it("waits for a conditionally mounted container after the API is ready", async () => {
+	it("waits for a conditionally mounted container in a component", async () => {
 		// Arrange
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock(142);
@@ -254,27 +209,32 @@ describe("useYouTubePlayer", () => {
 		// Assert
 		expect(youtube.players).toHaveLength(1);
 		expect(latestState?.isReady).toBe(true);
-		expect(latestState?.containerRef.current).toBeInstanceOf(HTMLDivElement);
 	});
 
-	it("forwards its mounted container to a supplied ref", async () => {
+	it("cleans up player when rendered in StrictMode", async () => {
 		// Arrange
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
 		setYouTubeNamespace(youtube.namespace);
-		const suppliedRef: { current: HTMLDivElement | null } = { current: null };
-		function SuppliedRefPlayer() {
-			const state = useYouTubePlayer({
-				containerRef: suppliedRef,
-				videoId: "supplied-ref",
-			});
-			return <div ref={state.containerRef} />;
+		function StrictPlayer() {
+			const state = useYouTubePlayer({ videoId: "strict-tree" });
+			return (
+				<StrictMode>
+					<div ref={state.containerRef} />
+				</StrictMode>
+			);
 		}
 
 		// Act
-		render(<SuppliedRefPlayer />);
+		const { unmount } = render(<StrictPlayer />);
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		unmount();
 
 		// Assert
-		expect(suppliedRef.current).toBeInstanceOf(HTMLDivElement);
+		expect(player.destroy).toHaveBeenCalled();
 	});
 });

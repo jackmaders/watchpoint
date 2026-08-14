@@ -1,5 +1,4 @@
 import { act, renderHook } from "@testing-library/react";
-import type { PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
 
@@ -20,16 +19,15 @@ describe("useYouTubePlayer loader failure boundary", () => {
 		vi.spyOn(document.head, "appendChild").mockImplementation((node) => node);
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = ({ children }: PropsWithChildren) => (
-			<div ref={containerRef}>{children}</div>
-		);
+		const container = document.createElement("div");
 
 		// Act
-		const { result } = renderHook(
-			() => useYouTubePlayer({ containerRef, videoId: "failed-video" }),
-			{ wrapper },
+		const { result } = renderHook(() =>
+			useYouTubePlayer({ videoId: "failed-video" }),
 		);
+		act(() => {
+			result.current.containerRef(container);
+		});
 		const [script] = vi.mocked(document.head.appendChild).mock.calls[0] as [
 			HTMLScriptElement,
 		];
@@ -50,14 +48,13 @@ describe("useYouTubePlayer loader failure boundary", () => {
 		vi.spyOn(document.head, "appendChild").mockImplementation((node) => node);
 		const { useYouTubePlayer } = await import("../use-youtube-player");
 		const youtube = createYouTubeMock();
-		const containerRef: { current: HTMLDivElement | null } = { current: null };
-		const wrapper = ({ children }: PropsWithChildren) => (
-			<div ref={containerRef}>{children}</div>
+		const container = document.createElement("div");
+		const { result, unmount } = renderHook(() =>
+			useYouTubePlayer({ videoId: "late-video" }),
 		);
-		const { unmount } = renderHook(
-			() => useYouTubePlayer({ containerRef, videoId: "late-video" }),
-			{ wrapper },
-		);
+		act(() => {
+			result.current.containerRef(container);
+		});
 		const [script] = vi.mocked(document.head.appendChild).mock.calls[0] as [
 			HTMLScriptElement,
 		];
