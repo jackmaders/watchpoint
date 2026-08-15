@@ -1,3 +1,5 @@
+import { PlaybackStatus } from "./types";
+
 const YOUTUBE_IFRAME_API_URL = "https://www.youtube.com/iframe_api";
 
 export const YouTubePlayerState = {
@@ -11,6 +13,25 @@ export const YouTubePlayerState = {
 
 export type YouTubePlayerState =
 	(typeof YouTubePlayerState)[keyof typeof YouTubePlayerState];
+
+export function toPlaybackStatus(rawState: number): PlaybackStatus {
+	switch (rawState) {
+		case YouTubePlayerState.UNSTARTED:
+			return PlaybackStatus.UNSTARTED;
+		case YouTubePlayerState.ENDED:
+			return PlaybackStatus.ENDED;
+		case YouTubePlayerState.PLAYING:
+			return PlaybackStatus.PLAYING;
+		case YouTubePlayerState.PAUSED:
+			return PlaybackStatus.PAUSED;
+		case YouTubePlayerState.BUFFERING:
+			return PlaybackStatus.BUFFERING;
+		case YouTubePlayerState.CUED:
+			return PlaybackStatus.CUED;
+		default:
+			return PlaybackStatus.UNSTARTED;
+	}
+}
 
 export interface YouTubePlayer {
 	destroy(): void;
@@ -125,4 +146,49 @@ export function loadYouTubeIframeApi(): Promise<YouTubeNamespace> {
 
 	promise.catch(resetFailedLoad);
 	return promise;
+}
+
+export interface CreatePlayerOptions {
+	autoplay: boolean;
+	container: HTMLDivElement;
+	handleReady: (event: YouTubePlayerEvent) => void;
+	handleStateChange: (event: YouTubePlayerStateChangeEvent) => void;
+	videoId: string;
+	youtube: YouTubeNamespace;
+}
+
+export function createYouTubePlayerInstance({
+	autoplay,
+	container,
+	handleReady,
+	handleStateChange,
+	videoId,
+	youtube,
+}: CreatePlayerOptions): YouTubePlayer {
+	return new youtube.Player(container, {
+		events: {
+			onReady: handleReady,
+			onStateChange: handleStateChange,
+		},
+		playerVars: {
+			autoplay: autoplay ? 1 : 0,
+			controls: 0,
+		},
+		videoId,
+	});
+}
+
+export function loadAndMountPlayer(
+	options: Omit<CreatePlayerOptions, "youtube">,
+	isActiveGeneration: () => boolean,
+	onCreated: (player: YouTubePlayer) => void,
+) {
+	void loadYouTubeIframeApi()
+		.then((youtube) => {
+			if (!isActiveGeneration()) {
+				return;
+			}
+			onCreated(createYouTubePlayerInstance({ ...options, youtube }));
+		})
+		.catch(() => undefined);
 }

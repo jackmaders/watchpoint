@@ -1,39 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createTimePoller, safeMediaValue } from "./time-poller";
 import {
-	loadYouTubeIframeApi,
+	PlaybackStatus,
+	type VodContainerRef,
+	type VodPlayerOptions,
+	type VodPlayerResult,
+} from "./types";
+import { bindVisibilitySync } from "./visibility-sync";
+import {
+	loadAndMountPlayer,
+	toPlaybackStatus,
 	type YouTubePlayer,
 	type YouTubePlayerEvent,
 	YouTubePlayerState,
 	type YouTubePlayerStateChangeEvent,
-} from "./youtube";
+} from "./youtube-adapter";
 
-export type YouTubeContainerRef = (node: HTMLDivElement | null) => void;
-
-export interface UseYouTubePlayerOptions {
-	autoplay?: boolean;
-	onReady?: (duration: number) => void;
-	onStateChange?: (state: YouTubePlayerState) => void;
-	onTimeUpdate?: (currentTime: number) => void;
-	videoId: string;
+function clampSeekSeconds(seconds: number, duration: number): number {
+	if (!Number.isFinite(seconds) || seconds < 0) {
+		return 0;
+	}
+	if (duration > 0 && seconds > duration) {
+		return duration;
+	}
+	return seconds;
 }
 
-export interface UseYouTubePlayerResult {
-	containerRef: YouTubeContainerRef;
-	currentTime: number;
-	duration: number;
-	isReady: boolean;
-	pause: () => void;
-	play: () => void;
-	playerState: YouTubePlayerState | null;
-	replay: () => void;
-	seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
-}
-
-function safeMediaValue(value: number): number {
-	return Number.isFinite(value) && value >= 0 ? value : 0;
-}
-
-function usePlayerControls(activePlayerRef: { current: YouTubePlayer | null }) {
+function usePlayerControls(
+	activePlayerRef: React.RefObject<YouTubePlayer | null>,
+	durationRef: React.RefObject<number>,
+) {
 	const play = useCallback(() => {
 		activePlayerRef.current?.playVideo();
 	}, [activePlayerRef]);
@@ -44,9 +40,13 @@ function usePlayerControls(activePlayerRef: { current: YouTubePlayer | null }) {
 
 	const seekTo = useCallback(
 		(seconds: number, allowSeekAhead = true) => {
-			activePlayerRef.current?.seekTo(seconds, allowSeekAhead);
+			if (!activePlayerRef.current) {
+				return;
+			}
+			const clamped = clampSeekSeconds(seconds, durationRef.current);
+			activePlayerRef.current.seekTo(clamped, allowSeekAhead);
 		},
-		[activePlayerRef],
+		[activePlayerRef, durationRef],
 	);
 
 	const replay = useCallback(() => {
@@ -60,104 +60,8 @@ function usePlayerControls(activePlayerRef: { current: YouTubePlayer | null }) {
 	return { pause, play, replay, seekTo };
 }
 
-interface CreatePlayerOptions {
-	autoplay: boolean;
-	container: HTMLDivElement;
-	handleReady: (event: YouTubePlayerEvent) => void;
-	handleStateChange: (event: YouTubePlayerStateChangeEvent) => void;
-	videoId: string;
-	youtube: Awaited<ReturnType<typeof loadYouTubeIframeApi>>;
-}
-
-function createPlayerInstance({
-	autoplay,
-	container,
-	handleReady,
-	handleStateChange,
-	videoId,
-	youtube,
-}: CreatePlayerOptions): YouTubePlayer {
-	return new youtube.Player(container, {
-		events: {
-			onReady: handleReady,
-			onStateChange: handleStateChange,
-		},
-		playerVars: {
-			autoplay: autoplay ? 1 : 0,
-			controls: 0,
-		},
-		videoId,
-	});
-}
-
-interface UseYouTubePlayerStateOptions {
-	autoplay: boolean;
+interface UseVodPlayerStateOptions extends VodPlayerOptions {
 	container: HTMLDivElement | null;
-	onReady?: (duration: number) => void;
-	onStateChange?: (state: YouTubePlayerState) => void;
-	onTimeUpdate?: (currentTime: number) => void;
-	videoId: string;
-}
-
-interface TimePollerContext {
-	getCurrentPlayer: () => YouTubePlayer | undefined;
-	isActiveGeneration: () => boolean;
-	onTimeUpdate: (time: number) => void;
-	setCurrentTime: (time: number) => void;
-}
-
-function createTimePoller({
-	getCurrentPlayer,
-	isActiveGeneration,
-	onTimeUpdate,
-	setCurrentTime,
-}: TimePollerContext) {
-	let animationFrameId: number | undefined;
-
-	const stopPolling = () => {
-		if (animationFrameId !== undefined) {
-			window.cancelAnimationFrame(animationFrameId);
-			animationFrameId = undefined;
-		}
-	};
-
-	const sampleTime = () => {
-		const player = getCurrentPlayer();
-		if (!isActiveGeneration() || !player) {
-			return;
-		}
-		const sampled = safeMediaValue(player.getCurrentTime());
-		setCurrentTime(sampled);
-		onTimeUpdate(sampled);
-		animationFrameId = window.requestAnimationFrame(sampleTime);
-	};
-
-	const startPolling = () => {
-		stopPolling();
-		sampleTime();
-	};
-
-	return { startPolling, stopPolling };
-}
-
-function bindVisibilitySync(
-	getCurrentPlayer: () => YouTubePlayer | undefined,
-	isActiveGeneration: () => boolean,
-) {
-	const handleVisibilityChange = () => {
-		const player = getCurrentPlayer();
-		if (!isActiveGeneration() || !player) {
-			return;
-		}
-		if (document.visibilityState === "hidden" || document.hidden) {
-			player.pauseVideo();
-		}
-	};
-
-	document.addEventListener("visibilitychange", handleVisibilityChange);
-	return () => {
-		document.removeEventListener("visibilitychange", handleVisibilityChange);
-	};
 }
 
 interface PlayerEventHandlersContext {
@@ -166,13 +70,13 @@ interface PlayerEventHandlersContext {
 	isActiveGeneration: () => boolean;
 	markReadyNotified: () => void;
 	onReady?: (duration: number) => void;
-	onStateChange?: (state: YouTubePlayerState) => void;
+	onStatusChange?: (status: PlaybackStatus) => void;
 	poller: ReturnType<typeof createTimePoller>;
 	setActivePlayer: (player: YouTubePlayer) => void;
 	setCurrentTime: (time: number) => void;
 	setDuration: (duration: number) => void;
 	setIsReady: (isReady: boolean) => void;
-	setPlayerState: (state: YouTubePlayerState) => void;
+	setStatus: (status: PlaybackStatus) => void;
 }
 
 function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
@@ -202,77 +106,65 @@ function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
 			return;
 		}
 
-		ctx.setPlayerState(event.data);
+		const status = toPlaybackStatus(event.data);
+		ctx.setStatus(status);
 		if (event.data === YouTubePlayerState.PLAYING) {
 			ctx.poller.startPolling();
 		} else {
 			ctx.poller.stopPolling();
 		}
-		ctx.onStateChange?.(event.data);
+		ctx.onStatusChange?.(status);
 	};
 
 	return { handleReady, handleStateChange };
 }
 
-interface PlayerLifecycleParams extends UseYouTubePlayerStateOptions {
+interface PlayerLifecycleParams extends UseVodPlayerStateOptions {
 	activePlayerRef: React.RefObject<YouTubePlayer | null>;
+	durationRef: React.RefObject<number>;
 	generationRef: React.RefObject<number>;
 	setCurrentTime: (time: number) => void;
 	setDuration: (duration: number) => void;
 	setIsReady: (isReady: boolean) => void;
-	setPlayerState: (state: YouTubePlayerState | null) => void;
+	setStatus: (status: PlaybackStatus) => void;
 }
 
 function resetPlayerState({
 	setCurrentTime,
 	setDuration,
 	setIsReady,
-	setPlayerState,
+	setStatus,
 }: Pick<
 	PlayerLifecycleParams,
-	"setCurrentTime" | "setDuration" | "setIsReady" | "setPlayerState"
+	"setCurrentTime" | "setDuration" | "setIsReady" | "setStatus"
 >) {
 	setIsReady(false);
 	setDuration(0);
 	setCurrentTime(0);
-	setPlayerState(null);
-}
-
-function loadAndMountPlayer(
-	options: Omit<CreatePlayerOptions, "youtube">,
-	isActiveGeneration: () => boolean,
-	onCreated: (player: YouTubePlayer) => void,
-) {
-	void loadYouTubeIframeApi()
-		.then((youtube) => {
-			if (!isActiveGeneration()) {
-				return;
-			}
-			onCreated(createPlayerInstance({ ...options, youtube }));
-		})
-		.catch(() => undefined);
+	setStatus(PlaybackStatus.UNSTARTED);
 }
 
 function usePlayerLifecycle({
 	activePlayerRef,
-	autoplay,
+	autoplay = false,
 	container,
+	durationRef,
 	generationRef,
 	onReady,
-	onStateChange,
+	onStatusChange,
 	onTimeUpdate,
 	setCurrentTime,
 	setDuration,
 	setIsReady,
-	setPlayerState,
+	setStatus,
 	videoId,
 }: PlayerLifecycleParams) {
 	const onReadyRef = useRef(onReady);
-	const onStateChangeRef = useRef(onStateChange);
+	const onStatusChangeRef = useRef(onStatusChange);
 	const onTimeUpdateRef = useRef(onTimeUpdate);
 
 	onReadyRef.current = onReady;
-	onStateChangeRef.current = onStateChange;
+	onStatusChangeRef.current = onStatusChange;
 	onTimeUpdateRef.current = onTimeUpdate;
 
 	useEffect(() => {
@@ -303,23 +195,29 @@ function usePlayerLifecycle({
 				hasNotifiedReady = true;
 			},
 			onReady: (d) => onReadyRef.current?.(d),
-			onStateChange: (s) => onStateChangeRef.current?.(s),
+			onStatusChange: (s) => onStatusChangeRef.current?.(s),
 			poller,
 			setActivePlayer: (p) => {
 				player = p;
 				activePlayerRef.current = p;
 			},
 			setCurrentTime,
-			setDuration,
+			setDuration: (d) => {
+				durationRef.current = d;
+				setDuration(d);
+			},
 			setIsReady,
-			setPlayerState,
+			setStatus,
 		});
 
 		resetPlayerState({
 			setCurrentTime,
-			setDuration,
+			setDuration: (d) => {
+				durationRef.current = d;
+				setDuration(d);
+			},
 			setIsReady,
-			setPlayerState,
+			setStatus,
 		});
 		activePlayerRef.current = null;
 
@@ -351,21 +249,23 @@ function usePlayerLifecycle({
 		activePlayerRef,
 		autoplay,
 		container,
+		durationRef,
 		generationRef,
 		setCurrentTime,
 		setDuration,
 		setIsReady,
-		setPlayerState,
+		setStatus,
 		videoId,
 	]);
 }
 
-function useYouTubePlayerState(options: UseYouTubePlayerStateOptions) {
+function useVodPlayerState(options: UseVodPlayerStateOptions) {
 	const activePlayerRef = useRef<YouTubePlayer | null>(null);
+	const durationRef = useRef(0);
 	const generationRef = useRef(0);
 	const [isReady, setIsReady] = useState(false);
-	const [playerState, setPlayerState] = useState<YouTubePlayerState | null>(
-		null,
+	const [status, setStatus] = useState<PlaybackStatus>(
+		PlaybackStatus.UNSTARTED,
 	);
 	const [duration, setDuration] = useState(0);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -373,44 +273,49 @@ function useYouTubePlayerState(options: UseYouTubePlayerStateOptions) {
 	usePlayerLifecycle({
 		...options,
 		activePlayerRef,
+		durationRef,
 		generationRef,
 		setCurrentTime,
 		setDuration,
 		setIsReady,
-		setPlayerState,
+		setStatus,
 	});
 
 	return {
 		activePlayerRef,
 		currentTime,
 		duration,
+		durationRef,
 		isReady,
-		playerState,
+		status,
 	};
 }
 
-export function useYouTubePlayer({
+export function useVodPlayer({
 	autoplay = false,
 	onReady,
-	onStateChange,
+	onStatusChange,
 	onTimeUpdate,
 	videoId,
-}: UseYouTubePlayerOptions): UseYouTubePlayerResult {
+}: VodPlayerOptions): VodPlayerResult {
 	const [container, setContainer] = useState<HTMLDivElement | null>(null);
-	const containerRef = useCallback((node: HTMLDivElement | null) => {
-		setContainer(node);
-	}, []);
+	const containerRef: VodContainerRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			setContainer(node);
+		},
+		[],
+	);
 
-	const state = useYouTubePlayerState({
+	const state = useVodPlayerState({
 		autoplay,
 		container,
 		onReady,
-		onStateChange,
+		onStatusChange,
 		onTimeUpdate,
 		videoId,
 	});
 
-	const controls = usePlayerControls(state.activePlayerRef);
+	const controls = usePlayerControls(state.activePlayerRef, state.durationRef);
 
 	return {
 		containerRef,
@@ -419,8 +324,8 @@ export function useYouTubePlayer({
 		isReady: state.isReady,
 		pause: controls.pause,
 		play: controls.play,
-		playerState: state.playerState,
 		replay: controls.replay,
 		seekTo: controls.seekTo,
+		status: state.status,
 	};
 }

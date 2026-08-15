@@ -1,8 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
+import { PlaybackStatus } from "../types";
 
-describe("useYouTubePlayer loader failure boundary", () => {
+describe("useVodPlayer loader failure boundary", () => {
 	beforeEach(() => {
 		vi.resetModules();
 	});
@@ -17,13 +18,13 @@ describe("useYouTubePlayer loader failure boundary", () => {
 	it("remains safely unready when the API script fails", async () => {
 		// Arrange
 		vi.spyOn(document.head, "appendChild").mockImplementation((node) => node);
-		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { useVodPlayer } = await import("../use-vod-player");
 		const youtube = createYouTubeMock();
 		const container = document.createElement("div");
 
 		// Act
 		const { result } = renderHook(() =>
-			useYouTubePlayer({ videoId: "failed-video" }),
+			useVodPlayer({ videoId: "failed-video" }),
 		);
 		act(() => {
 			result.current.containerRef(container);
@@ -41,16 +42,17 @@ describe("useYouTubePlayer loader failure boundary", () => {
 		expect(youtube.players).toHaveLength(0);
 		expect(result.current.isReady).toBe(false);
 		expect(result.current.duration).toBe(0);
+		expect(result.current.status).toBe(PlaybackStatus.UNSTARTED);
 	});
 
 	it("ignores API readiness that arrives after unmount", async () => {
 		// Arrange
 		vi.spyOn(document.head, "appendChild").mockImplementation((node) => node);
-		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { useVodPlayer } = await import("../use-vod-player");
 		const youtube = createYouTubeMock();
 		const container = document.createElement("div");
 		const { result, unmount } = renderHook(() =>
-			useYouTubePlayer({ videoId: "late-video" }),
+			useVodPlayer({ videoId: "late-video" }),
 		);
 		act(() => {
 			result.current.containerRef(container);
