@@ -85,3 +85,4 @@ This document defines the core domain terminology used across product discussion
 
 * **Tab Visibility Sync**  
   An automated event listener that pauses video playback whenever the user switches browser tabs, preventing missed scenario triggers.
+
