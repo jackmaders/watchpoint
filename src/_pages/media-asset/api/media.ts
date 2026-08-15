@@ -3,6 +3,14 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 const CACHE_CONTROL_VALUE =
 	"public, max-age=31536000, s-maxage=31536000, immutable";
 
+const MIME_TYPES: Record<string, string> = {
+	jpeg: "image/jpeg",
+	jpg: "image/jpeg",
+	png: "image/png",
+	svg: "image/svg+xml",
+	webp: "image/webp",
+};
+
 function resolveContentType(key: string): string {
 	const lastDotIndex = key.lastIndexOf(".");
 	if (lastDotIndex === -1) {
@@ -10,19 +18,7 @@ function resolveContentType(key: string): string {
 	}
 
 	const ext = key.slice(lastDotIndex + 1).toLowerCase();
-	switch (ext) {
-		case "webp":
-			return "image/webp";
-		case "png":
-			return "image/png";
-		case "jpg":
-		case "jpeg":
-			return "image/jpeg";
-		case "svg":
-			return "image/svg+xml";
-		default:
-			return "application/octet-stream";
-	}
+	return MIME_TYPES[ext] ?? "application/octet-stream";
 }
 
 function decodeSegment(rawSegment: unknown): string | null {
