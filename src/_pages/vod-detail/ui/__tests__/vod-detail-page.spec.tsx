@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getVodById } from "@/shared/db";
-import { VodDetailPage } from "./vod-detail-page";
+import { VodDetailPage } from "../vod-detail-page";
 
 vi.mock("next/server");
 vi.mock("@/shared/db");
@@ -50,35 +50,64 @@ describe("VodDetailPage", () => {
 				timestampSeconds: 150,
 			},
 		],
-		title: "GM Ana VOD - King's Row",
+		title: "Grandmaster Ana VOD - King's Row",
 		youtubeVideoId: "dQw4w9WgXcQ",
 	};
 
-	it("renders VOD detail header with map name, rank tier, duration, and title", async () => {
+	it("renders VOD detail header with map name, rank tier, hero badge, duration, and title", async () => {
+		// Arrange
 		vi.mocked(getVodById).mockResolvedValueOnce(
 			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
 		);
 
+		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
 		});
 		render(ui);
 
-		expect(screen.getByText("GM Ana VOD - King's Row")).toBeDefined();
+		// Assert
+		expect(screen.getByText("Grandmaster Ana VOD - King's Row")).toBeDefined();
 		expect(screen.getByText("King's Row")).toBeDefined();
 		expect(screen.getByText("Grandmaster")).toBeDefined();
+		expect(screen.getByText("Hero: Ana")).toBeDefined();
+		expect(screen.getByText("Duration: 18m 00s")).toBeDefined();
+		expect(screen.getByText("Total Scenarios: 5")).toBeDefined();
+	});
+
+	it("renders without hero badge when title has no matching hero", async () => {
+		// Arrange
+		const vodWithoutHero = {
+			...mockVod,
+			title: "Overwatch Ranked Match",
+		};
+		vi.mocked(getVodById).mockResolvedValueOnce(
+			vodWithoutHero as unknown as Awaited<ReturnType<typeof getVodById>>,
+		);
+
+		// Act
+		const ui = await VodDetailPage({
+			params: Promise.resolve({ id: "vod_1" }),
+		});
+		render(ui);
+
+		// Assert
+		expect(screen.queryByText(/Hero:/)).toBeNull();
 	});
 
 	it("renders module filter controls for all 5 modules (STRATEGY, TACTICS, ULTIMATE, COOLDOWN, SPATIAL)", async () => {
+		// Arrange
 		vi.mocked(getVodById).mockResolvedValueOnce(
 			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
 		);
 
+		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
 		});
 		render(ui);
 
+		// Assert
 		expect(screen.getByTestId("module-filter-STRATEGY")).toBeDefined();
 		expect(screen.getByTestId("module-filter-TACTICS")).toBeDefined();
 		expect(screen.getByTestId("module-filter-ULTIMATE")).toBeDefined();
@@ -87,10 +116,12 @@ describe("VodDetailPage", () => {
 	});
 
 	it("allows toggling module filters off and on and updates scenario count and start link href", async () => {
+		// Arrange
 		vi.mocked(getVodById).mockResolvedValueOnce(
 			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
 		);
 
+		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
 		});
@@ -99,30 +130,35 @@ describe("VodDetailPage", () => {
 		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
 		const startLink = screen.getByRole("link", { name: /start training/i });
 
+		// Assert
 		expect(startLink.getAttribute("href")).toContain(
 			"modules=STRATEGY%2CTACTICS%2CULTIMATE%2CCOOLDOWN%2CSPATIAL",
 		);
 
-		// Toggle STRATEGY off
+		// Act - Toggle STRATEGY off
 		await act(async () => {
 			fireEvent.click(strategyBtn);
 		});
 
+		// Assert
 		expect(startLink.getAttribute("href")).not.toContain("STRATEGY");
 
-		// Toggle STRATEGY back on
+		// Act - Toggle STRATEGY back on
 		await act(async () => {
 			fireEvent.click(strategyBtn);
 		});
 
+		// Assert
 		expect(startLink.getAttribute("href")).toContain("STRATEGY");
 	});
 
 	it("handles deselecting all modules showing warning and disabling start link", async () => {
+		// Arrange
 		vi.mocked(getVodById).mockResolvedValueOnce(
 			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
 		);
 
+		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
 		});
@@ -143,13 +179,15 @@ describe("VodDetailPage", () => {
 			});
 		}
 
+		// Assert
 		expect(screen.getByText("1 module selected")).toBeDefined();
 
-		// Toggle remaining 5th module off
+		// Act - Toggle remaining 5th module off
 		await act(async () => {
 			fireEvent.click(screen.getByTestId("module-filter-SPATIAL"));
 		});
 
+		// Assert
 		expect(
 			screen.getByText(/select at least one module to start training/i),
 		).toBeDefined();
@@ -159,15 +197,18 @@ describe("VodDetailPage", () => {
 	});
 
 	it("renders VOD Not Found UI when vod is not found", async () => {
+		// Arrange
 		vi.mocked(getVodById).mockResolvedValueOnce(
 			undefined as unknown as Awaited<ReturnType<typeof getVodById>>,
 		);
 
+		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "non_existent" }),
 		});
 		render(ui);
 
+		// Assert
 		expect(screen.getByText("VOD Not Found")).toBeDefined();
 	});
 });

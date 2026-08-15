@@ -6,11 +6,26 @@ export {
 	type RecordAttemptResult,
 } from "./model/attempt";
 export {
+	buildSessionUrl,
+	calculateModuleCounts,
+	extractHeroFromTitle,
+	serializeModulesParam,
+} from "./model/module-filter";
+export {
+	MODULE_DEFINITIONS,
+	MODULE_MAP,
+	type ModuleDefinition,
+} from "./model/modules";
+export {
 	calculateSessionSummary,
 	type ModuleSummaryReport,
 	type SessionAttempt,
 	type SessionSummaryReport,
 } from "./model/summary";
+export {
+	ModuleFilterPills,
+	type ModuleFilterPillsProps,
+} from "./ui/module-filter-pills";
 export {
 	type ScenarioData,
 	type ScenarioInputConfig,

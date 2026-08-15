@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getVodById } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import { extractHeroFromTitle } from "../model/module-filter";
 import { VodDetailClient } from "./vod-detail-client";
 
 export async function VodDetailPage({
@@ -36,6 +37,8 @@ export async function VodDetailPage({
 		);
 	}
 
+	const hero = extractHeroFromTitle(vod.title);
+
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">
 			<div className="max-w-5xl mx-auto space-y-8">
@@ -49,13 +52,18 @@ export async function VodDetailPage({
 
 					<header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
 						<div className="space-y-2">
-							<div className="flex items-center gap-2">
+							<div className="flex items-center gap-2 flex-wrap">
 								<span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
 									{vod.mapName}
 								</span>
 								<span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
 									{vod.rankTier}
 								</span>
+								{hero && (
+									<span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+										Hero: {hero}
+									</span>
+								)}
 							</div>
 							<h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
 								{vod.title}
