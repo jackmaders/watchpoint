@@ -3,6 +3,7 @@ import type {
 	YouTubeNamespace,
 	YouTubePlayer,
 	YouTubePlayerOptions,
+	YouTubePlayerState,
 } from "../youtube";
 
 export function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
@@ -15,6 +16,7 @@ export function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
 export interface MockYouTubePlayer extends YouTubePlayer {
 	options: YouTubePlayerOptions;
 	triggerReady(): void;
+	triggerStateChange(state: YouTubePlayerState): void;
 }
 
 export interface YouTubeMock {
@@ -37,8 +39,14 @@ export function createYouTubeMock(
 			getCurrentTime: vi.fn(() => 0),
 			getDuration: vi.fn(() => duration),
 			options,
+			pauseVideo: vi.fn(),
+			playVideo: vi.fn(),
+			seekTo: vi.fn(),
 			triggerReady: () => {
 				options.events?.onReady?.({ target: player });
+			},
+			triggerStateChange: (state: YouTubePlayerState) => {
+				options.events?.onStateChange?.({ data: state, target: player });
 			},
 		} as MockYouTubePlayer;
 

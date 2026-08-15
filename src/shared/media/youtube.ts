@@ -1,18 +1,39 @@
 const YOUTUBE_IFRAME_API_URL = "https://www.youtube.com/iframe_api";
 
+export const YouTubePlayerState = {
+	BUFFERING: 3,
+	CUED: 5,
+	ENDED: 0,
+	PAUSED: 2,
+	PLAYING: 1,
+	UNSTARTED: -1,
+} as const;
+
+export type YouTubePlayerState =
+	(typeof YouTubePlayerState)[keyof typeof YouTubePlayerState];
+
 export interface YouTubePlayer {
 	destroy(): void;
-	getDuration(): number;
 	getCurrentTime(): number;
+	getDuration(): number;
+	pauseVideo(): void;
+	playVideo(): void;
+	seekTo(seconds: number, allowSeekAhead?: boolean): void;
 }
 
 export interface YouTubePlayerEvent {
 	target: YouTubePlayer;
 }
 
+export interface YouTubePlayerStateChangeEvent {
+	data: YouTubePlayerState;
+	target: YouTubePlayer;
+}
+
 export interface YouTubePlayerOptions {
 	events?: {
 		onReady?: (event: YouTubePlayerEvent) => void;
+		onStateChange?: (event: YouTubePlayerStateChangeEvent) => void;
 	};
 	playerVars?: {
 		autoplay?: 0 | 1;

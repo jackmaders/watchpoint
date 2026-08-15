@@ -9,5 +9,6 @@ export type {
 	YouTubePlayer,
 	YouTubePlayerEvent,
 	YouTubePlayerOptions,
+	YouTubePlayerStateChangeEvent,
 } from "./youtube";
-export { loadYouTubeIframeApi } from "./youtube";
+export { loadYouTubeIframeApi, YouTubePlayerState } from "./youtube";
