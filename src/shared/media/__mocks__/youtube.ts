@@ -61,3 +61,55 @@ export function createYouTubeMock(
 		players,
 	};
 }
+
+export class MockFrameController {
+	private nextId = 1;
+	private callbacks = new Map<number, FrameRequestCallback>();
+
+	readonly requestAnimationFrame = vi.fn(
+		(callback: FrameRequestCallback): number => {
+			const id = this.nextId++;
+			this.callbacks.set(id, callback);
+			return id;
+		},
+	);
+
+	readonly cancelAnimationFrame = vi.fn((id: number): void => {
+		this.callbacks.delete(id);
+	});
+
+	get pendingCount(): number {
+		return this.callbacks.size;
+	}
+
+	flush(time = 1000): void {
+		const pending = Array.from(this.callbacks.entries());
+		this.callbacks.clear();
+		for (const [, callback] of pending) {
+			callback(time);
+		}
+	}
+}
+
+export function installMockFrames(): MockFrameController {
+	const controller = new MockFrameController();
+	vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+		controller.requestAnimationFrame,
+	);
+	vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
+		controller.cancelAnimationFrame,
+	);
+	return controller;
+}
+
+export function setDocumentVisibility(state: DocumentVisibilityState): void {
+	Object.defineProperty(document, "visibilityState", {
+		configurable: true,
+		value: state,
+	});
+	Object.defineProperty(document, "hidden", {
+		configurable: true,
+		value: state === "hidden",
+	});
+	document.dispatchEvent(new Event("visibilitychange"));
+}
