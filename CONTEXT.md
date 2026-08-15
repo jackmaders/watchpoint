@@ -59,8 +59,17 @@ This document defines the core domain terminology used across product discussion
 * **Pause Interceptor**  
   The mechanism that halts YouTube video playback when `currentTime >= scenario.timestamp_seconds` and transfers control to the Interactive Overlay Engine.
 
+* **Scenario Overlay**  
+  The interactive decision overlay component that renders when video playback pauses at a curated scenario timestamp across all 5 learning module types.
+
+* **Tactical Drawer**  
+  The desktop responsive drawer layout presentation of the Scenario Overlay, docking alongside the video player on large viewports.
+
+* **Scenario Countdown Timer**  
+  A visual countdown timer active during timed scenario modules (with Tactics defaulting to 3000ms, and other modules/scenarios configurable). If the countdown reaches zero before an answer is submitted, the scenario records an automatic FAIL (Timeout).
+
 * **Tactics Countdown Timer**  
-  A 3-second visual countdown active strictly during Tactics modules. If the countdown reaches zero before an answer is submitted, the scenario records an automatic FAIL (Timeout).
+  The canonical 3-second instance of the Scenario Countdown Timer active strictly during Tactics modules.
 
 * **Polymorphic Input Payload (`input_config`)**  
   A flexible JSON document structure embedded within each scenario record that specifies the input mechanism (`MULTIPLE_CHOICE`, `PERCENT_SLIDER`, `MAP_PIN_2D`) and validation constraints without hardcoding database schema structures.
