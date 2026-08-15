@@ -31,7 +31,19 @@ const createMockQueryFn = () => {
 	return fn;
 };
 
+const createMockInsertFn = () => {
+	const returningFn = vi.fn().mockResolvedValue([{ id: "mock_attempt_id" }]);
+	const valuesFn = vi.fn((_val: unknown) => ({
+		returning: returningFn,
+	}));
+	const insertFn = vi.fn((_table: unknown) => ({
+		values: valuesFn,
+	}));
+	return insertFn;
+};
+
 const db = {
+	insert: createMockInsertFn(),
 	query: {
 		attemptRecords: {
 			findFirst: createMockQueryFn(),

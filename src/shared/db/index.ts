@@ -9,4 +9,4 @@ export {
 	getVodById,
 	getVodManifest,
 } from "./repositories/vods";
-export type { ModuleType } from "./schema";
+export { attemptRecords, type ModuleType } from "./schema";
