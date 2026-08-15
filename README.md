@@ -47,11 +47,29 @@ src/
 | `bun run check:all` | Run all Biome checks |
 | `bun run check:architecture` | Run Steiger FSD architecture linter |
 | `bun run fix:all` | Auto-fix Biome formatting and lint issues |
+| `bun run sandcastle` | Run autonomous coding agents in isolated Docker sandboxes |
 | `bun run test:unit` | Run Vitest unit tests |
 | `bun run test:coverage` | Run Vitest unit tests with 100% coverage check |
 | `bun run test:e2e` | Run Playwright E2E tests |
 | `bun run prisma:validate` | Validate Prisma schema |
 | `bun run validate` | Run complete pipeline (`types`, `all`, `architecture`, `coverage`) |
+
+---
+
+## Autonomous Agent Orchestration (Sandcastle)
+
+Run autonomous coding agents (`agy`, `gemini`, `codex`, `claude`) in container-isolated Docker sandboxes with host credential forwarding and self-healing verification:
+
+```bash
+# Run a task from a GitHub issue
+bun run sandcastle --issue 152
+
+# Run an ad-hoc task with iterative verification
+bun run sandcastle --prompt "Refactor timeline seeking logic"
+
+# Local-only dry-run without creating PRs
+bun run sandcastle --prompt "Fix button alignment" --dry-run
+```
 
 ---
 

@@ -86,19 +86,3 @@ This document defines the core domain terminology used across product discussion
 * **Tab Visibility Sync**  
   An automated event listener that pauses video playback whenever the user switches browser tabs, preventing missed scenario triggers.
 
----
-
-## 4. Autonomous Agent & Sandbox Infrastructure
-
-* **Sandcastle Orchestrator**  
-  The container-isolated runtime supervisor and CLI (`bun run sandcastle`) that executes coding agents on git worktrees, runs quality checks, and handles PR lifecycle management.
-
-* **Agent Runner**  
-  An abstraction representing a specific autonomous coding tool CLI (`antigravity` / `agy`, `gemini`, `codex`, `claude`) executing inside a sandbox container.
-
-* **Worktree Sandbox**  
-  An isolated Git worktree bind-mounted into a Docker container where an autonomous agent operates without touching the host developer's active working tree.
-
-* **Self-Healing Loop**  
-  The automated feedback cycle that executes `bun run check:all` and `bun run test:unit`, capturing error outputs and directing the agent to resolve failures across up to N retry iterations.
-
