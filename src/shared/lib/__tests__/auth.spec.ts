@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../db/client/client");
+vi.mock("../../db/client/client");
 vi.mock("next/headers");
 
 import {
@@ -10,26 +10,35 @@ import {
 	getAuth,
 	getAuthConfig,
 	getCurrentUser,
-} from "./auth";
+} from "../auth";
 
 describe("auth", () => {
 	it("initializes better-auth instance correctly", async () => {
+		// Arrange & Act
 		const auth = await getAuth();
+
+		// Assert
 		expect(auth).toBeDefined();
 		expect(auth.handler).toBeInstanceOf(Function);
 	});
 
 	it("resolves config with defaults when environment variables are missing or empty", () => {
-		const configUndefined = getAuthConfig({});
+		// Arrange
+		const emptyEnv = {};
+		const blankEnv = {
+			BETTER_AUTH_SECRET: "",
+			BETTER_AUTH_URL: "",
+		};
+
+		// Act
+		const configUndefined = getAuthConfig(emptyEnv);
+		const configEmpty = getAuthConfig(blankEnv);
+
+		// Assert
 		expect(configUndefined.baseURL).toBe("http://localhost:3000");
 		expect(configUndefined.secret).toBe(
 			"development-secret-key-at-least-32-chars-long",
 		);
-
-		const configEmpty = getAuthConfig({
-			BETTER_AUTH_SECRET: "",
-			BETTER_AUTH_URL: "",
-		});
 		expect(configEmpty.baseURL).toBe("http://localhost:3000");
 		expect(configEmpty.secret).toBe(
 			"development-secret-key-at-least-32-chars-long",
@@ -52,17 +61,21 @@ describe("auth", () => {
 	});
 
 	it("defines deterministic guest user constant details", () => {
-		// Arrange & Act
+		// Arrange
+		const expectedId = "usr_guest_demo";
+		const expectedUser = {
+			email: "guest@watchpoint.gg",
+			id: "usr_guest_demo",
+			name: "Guest Cadet",
+		};
+
+		// Act
 		const id = GUEST_USER_ID;
 		const user = GUEST_USER;
 
 		// Assert
-		expect(id).toBe("usr_guest_demo");
-		expect(user).toEqual({
-			email: "guest@watchpoint.gg",
-			id: "usr_guest_demo",
-			name: "Guest Cadet",
-		});
+		expect(id).toBe(expectedId);
+		expect(user).toEqual(expectedUser);
 	});
 
 	it("resolves authenticated user ID when session exists", async () => {
