@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveAuthMounts } from "../auth-mounts";
 
 describe("resolveAuthMounts", () => {
-	it("mounts gemini auth directory and agy binary when present", () => {
+	it("mounts gemini auth directory and detects agy binary in home directory when present", () => {
 		// Arrange
 		const homeDir = "/home/testuser";
 		const env = {
@@ -20,7 +20,6 @@ describe("resolveAuthMounts", () => {
 
 		// Act
 		const result = resolveAuthMounts({
-			agyPath: "/home/testuser/.local/bin/agy",
 			env,
 			existsSync,
 			homeDir,
@@ -48,6 +47,29 @@ describe("resolveAuthMounts", () => {
 		expect(result.env.OPENAI_API_KEY).toBe("openai-secret-456");
 		expect(result.env.GITHUB_TOKEN).toBe("gh-token-789");
 		expect(result.env.HOME).toBe("/home/agent");
+	});
+
+	it("uses custom agyPath when explicitly provided and valid", () => {
+		// Arrange
+		const homeDir = "/home/testuser";
+		const customAgy = "/opt/custom/agy";
+		const existsSync = (path: string) => path === customAgy;
+
+		// Act
+		const result = resolveAuthMounts({
+			agyPath: customAgy,
+			existsSync,
+			homeDir,
+		});
+
+		// Assert
+		expect(result.mounts).toEqual([
+			{
+				hostPath: "/opt/custom/agy",
+				readonly: true,
+				sandboxPath: "/home/agent/.local/bin/agy",
+			},
+		]);
 	});
 
 	it("detects system agy at /usr/local/bin/agy when not in home directory", () => {
@@ -110,5 +132,17 @@ describe("resolveAuthMounts", () => {
 		expect(result.env.ANTHROPIC_API_KEY).toBe("anthropic-key-abc");
 		expect(result.env.GH_TOKEN).toBe("github-token-def");
 		expect(result.mounts).toHaveLength(1);
+	});
+
+	it("executes resolveAuthMounts with default environment parameters", () => {
+		// Arrange
+		const options = {};
+
+		// Act
+		const result = resolveAuthMounts(options);
+
+		// Assert
+		expect(result.env.HOME).toBe("/home/agent");
+		expect(Array.isArray(result.mounts)).toBe(true);
 	});
 });
