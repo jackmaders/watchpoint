@@ -3,6 +3,7 @@ export * from "./auth-mounts";
 export * from "./cli-args";
 export * from "./exec-helpers";
 export * from "./git-manager";
+export * from "./github";
 export * from "./orchestrator";
 export * from "./self-healing";
 export * from "./types";
