@@ -42,6 +42,26 @@ describe("module-filter helpers", () => {
 			expect(hero).toBe("Reinhardt");
 		});
 
+		it("extracts recent heroes like D.Mon, Hazard, Juno, and Venture", () => {
+			// Arrange
+			const titleDMon = "Top 500 D.Mon VOD - Busan";
+			const titleHazard = "Top 500 Hazard Tank Guide";
+			const titleJuno = "GM Juno Support Gameplay";
+			const titleVenture = "Venture DPS Rollouts - Dorado";
+
+			// Act
+			const heroDMon = extractHeroFromTitle(titleDMon);
+			const heroHazard = extractHeroFromTitle(titleHazard);
+			const heroJuno = extractHeroFromTitle(titleJuno);
+			const heroVenture = extractHeroFromTitle(titleVenture);
+
+			// Assert
+			expect(heroDMon).toBe("D.Mon");
+			expect(heroHazard).toBe("Hazard");
+			expect(heroJuno).toBe("Juno");
+			expect(heroVenture).toBe("Venture");
+		});
+
 		it("handles lowercase hero name in title", () => {
 			// Arrange
 			const title = "gm ana vod";
