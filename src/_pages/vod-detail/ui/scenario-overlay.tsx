@@ -47,28 +47,7 @@ export interface ScenarioOverlayProps {
 	totalMs?: number;
 }
 
-const MODULE_STYLES: Record<ModuleType, { badge: string; label: string }> = {
-	COOLDOWN: {
-		badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-		label: "Cooldown Tracking",
-	},
-	SPATIAL: {
-		badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-		label: "Spatial Awareness",
-	},
-	STRATEGY: {
-		badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-		label: "Strategy",
-	},
-	TACTICS: {
-		badge: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-		label: "Tactics",
-	},
-	ULTIMATE: {
-		badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-		label: "Ultimate Tracking",
-	},
-};
+import { MODULE_MAP } from "../model/modules";
 
 interface ScenarioTimerGaugeProps {
 	remainingMs: number;
@@ -206,11 +185,7 @@ function ScenarioFeedbackPanel({
 }: ScenarioFeedbackPanelProps) {
 	const isPass = state.status === "answered" && state.isCorrect;
 	const label =
-		state.status === "timedOut"
-			? "TIME EXPIRED"
-			: isPass
-				? "CORRECT"
-				: "INCORRECT";
+		state.status === "timedOut" ? "TIME EXPIRED" : isPass ? "PASS" : "FAIL";
 
 	return (
 		<div
@@ -252,7 +227,7 @@ export function ScenarioOverlay({
 	totalMs,
 }: ScenarioOverlayProps) {
 	const promptId = useId();
-	const moduleInfo = MODULE_STYLES[scenario.moduleType];
+	const moduleInfo = MODULE_MAP[scenario.moduleType];
 	const isUnanswered = state.status === "unanswered";
 
 	const hasValidTimer =

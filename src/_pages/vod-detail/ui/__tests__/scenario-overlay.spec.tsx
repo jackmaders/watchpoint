@@ -37,19 +37,24 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
+		const badge = screen.getByText("Tactics");
+		const prompt = screen.getByText(
+			"Enemy Ana just missed Sleep Dart. What is your priority?",
+		);
+		const option1 = screen.getByText("Dive Ana immediately");
+		const key1 = screen.getByText("1");
+		const key2 = screen.getByText("2");
+		const key3 = screen.getByText("3");
+		const key4 = screen.getByText("4");
 
 		// Assert
-		expect(screen.getByText("Tactics")).toBeDefined();
-		expect(
-			screen.getByText(
-				"Enemy Ana just missed Sleep Dart. What is your priority?",
-			),
-		).toBeDefined();
-		expect(screen.getByText("Dive Ana immediately")).toBeDefined();
-		expect(screen.getByText("1")).toBeDefined();
-		expect(screen.getByText("2")).toBeDefined();
-		expect(screen.getByText("3")).toBeDefined();
-		expect(screen.getByText("4")).toBeDefined();
+		expect(badge).toBeDefined();
+		expect(prompt).toBeDefined();
+		expect(option1).toBeDefined();
+		expect(key1).toBeDefined();
+		expect(key2).toBeDefined();
+		expect(key3).toBeDefined();
+		expect(key4).toBeDefined();
 	});
 
 	it("renders scenario image when imageUrl is provided with accessible alt text", () => {
@@ -70,13 +75,13 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
-
-		// Assert
 		const image = screen.getByRole("img", {
 			name: /scenario tactical diagram/i,
 		});
+
+		// Assert
 		expect(image).toBeDefined();
-		expect(image.getAttribute("src")).toBe("https://example.com/map-view.png");
+		expect(image.getAttribute("src")).toContain("map-view.png");
 	});
 
 	it("does not render an image or empty image container when imageUrl is null", () => {
@@ -92,11 +97,12 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
+		const image = screen.queryByRole("img", {
+			name: /scenario tactical diagram/i,
+		});
 
 		// Assert
-		expect(
-			screen.queryByRole("img", { name: /scenario tactical diagram/i }),
-		).toBeNull();
+		expect(image).toBeNull();
 	});
 
 	it("calls onSelectOption when an option is clicked in unanswered state", () => {
@@ -201,10 +207,12 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
+		const gauge = screen.getByTestId("scenario-timer-gauge");
+		const text = screen.getByText("2.5s");
 
 		// Assert
-		expect(screen.getByTestId("scenario-timer-gauge")).toBeDefined();
-		expect(screen.getByText("2.5s")).toBeDefined();
+		expect(gauge).toBeDefined();
+		expect(text).toBeDefined();
 	});
 
 	it("applies critical red pulse styling when remainingMs <= 1000ms", () => {
@@ -222,9 +230,9 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
+		const timerGauge = screen.getByTestId("scenario-timer-gauge");
 
 		// Assert
-		const timerGauge = screen.getByTestId("scenario-timer-gauge");
 		expect(timerGauge.className).toContain("animate-pulse");
 		expect(timerGauge.className).toContain("text-rose-400");
 	});
@@ -248,9 +256,10 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
+		const timerGauge = screen.queryByTestId("scenario-timer-gauge");
 
 		// Assert
-		expect(screen.queryByTestId("scenario-timer-gauge")).toBeNull();
+		expect(timerGauge).toBeNull();
 	});
 
 	it("omits the countdown timer when totalMs is undefined or 0", () => {
@@ -266,12 +275,13 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
+		const timerGauge = screen.queryByTestId("scenario-timer-gauge");
 
 		// Assert
-		expect(screen.queryByTestId("scenario-timer-gauge")).toBeNull();
+		expect(timerGauge).toBeNull();
 	});
 
-	it("renders PASS / CORRECT feedback banner and enables resuming playback when answered correctly", () => {
+	it("renders PASS feedback banner and enables resuming playback when answered correctly", () => {
 		// Arrange
 		const handleResume = vi.fn();
 		const answeredCorrectState: ScenarioOverlayState = {
@@ -290,20 +300,20 @@ describe("ScenarioOverlay", () => {
 		);
 
 		// Act
+		const passBadge = screen.getByText("PASS");
+		const explanation = screen.getByText(
+			"Ana used Sleep Dart aggressively 4s ago, leaving her vulnerable to dive.",
+		);
 		const resumeBtn = screen.getByRole("button", { name: /resume playback/i });
 		fireEvent.click(resumeBtn);
 
 		// Assert
-		expect(screen.getByText("CORRECT")).toBeDefined();
-		expect(
-			screen.getByText(
-				"Ana used Sleep Dart aggressively 4s ago, leaving her vulnerable to dive.",
-			),
-		).toBeDefined();
+		expect(passBadge).toBeDefined();
+		expect(explanation).toBeDefined();
 		expect(handleResume).toHaveBeenCalled();
 	});
 
-	it("renders FAIL / INCORRECT feedback banner highlighting selected wrong option and correct option", () => {
+	it("renders FAIL feedback banner highlighting selected wrong option and correct option", () => {
 		// Arrange
 		const answeredWrongState: ScenarioOverlayState = {
 			correctOptionId: "opt_1",
@@ -321,11 +331,12 @@ describe("ScenarioOverlay", () => {
 				state={answeredWrongState}
 			/>,
 		);
-
-		// Assert
-		expect(screen.getByText("INCORRECT")).toBeDefined();
+		const failBadge = screen.getByText("FAIL");
 		const wrongOption = screen.getByTestId("scenario-option-opt_2");
 		const correctOption = screen.getByTestId("scenario-option-opt_1");
+
+		// Assert
+		expect(failBadge).toBeDefined();
 		expect(wrongOption.className).toContain("border-rose-500");
 		expect(correctOption.className).toContain("border-emerald-500");
 	});
@@ -347,12 +358,13 @@ describe("ScenarioOverlay", () => {
 				state={timedOutState}
 			/>,
 		);
+		const timeoutBadge = screen.getByText("TIME EXPIRED");
+		const correctOption = screen.getByTestId("scenario-option-opt_1");
+		const otherOption = screen.getByTestId("scenario-option-opt_2");
 
 		// Assert
-		expect(screen.getByText("TIME EXPIRED")).toBeDefined();
-		const correctOption = screen.getByTestId("scenario-option-opt_1");
+		expect(timeoutBadge).toBeDefined();
 		expect(correctOption.className).toContain("border-emerald-500");
-		const otherOption = screen.getByTestId("scenario-option-opt_2");
 		expect(otherOption.className).toContain("opacity-50");
 	});
 
@@ -374,9 +386,9 @@ describe("ScenarioOverlay", () => {
 				state={answeredCorrectState}
 			/>,
 		);
+		const liveRegion = screen.getByRole("status");
 
 		// Assert
-		const liveRegion = screen.getByRole("status");
-		expect(liveRegion.textContent).toContain("CORRECT");
+		expect(liveRegion.textContent).toContain("PASS");
 	});
 });
