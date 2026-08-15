@@ -144,8 +144,11 @@ describe("exec-helpers", () => {
 				stdout: "",
 			});
 
-			// Act & Assert
-			await expect(fetchGithubIssue(999, runner)).rejects.toThrow(
+			// Act
+			const action = fetchGithubIssue(999, runner);
+
+			// Assert
+			await expect(action).rejects.toThrow(
 				"Failed to fetch issue #999: Issue not found",
 			);
 		});
@@ -191,17 +194,20 @@ describe("exec-helpers", () => {
 				stdout: "",
 			});
 
-			// Act & Assert
-			await expect(
-				createGithubPr(
-					{
-						body: "body",
-						branch: "feat/branch",
-						title: "feat: test",
-					},
-					runner,
-				),
-			).rejects.toThrow("Failed to push branch feat/branch: Permission denied");
+			// Act
+			const action = createGithubPr(
+				{
+					body: "body",
+					branch: "feat/branch",
+					title: "feat: test",
+				},
+				runner,
+			);
+
+			// Assert
+			await expect(action).rejects.toThrow(
+				"Failed to push branch feat/branch: Permission denied",
+			);
 		});
 
 		it("throws error when gh pr create fails", async () => {
@@ -219,17 +225,20 @@ describe("exec-helpers", () => {
 					stdout: "",
 				});
 
-			// Act & Assert
-			await expect(
-				createGithubPr(
-					{
-						body: "body",
-						branch: "feat/branch",
-						title: "feat: test",
-					},
-					runner,
-				),
-			).rejects.toThrow("Failed to create PR: GraphQL error");
+			// Act
+			const action = createGithubPr(
+				{
+					body: "body",
+					branch: "feat/branch",
+					title: "feat: test",
+				},
+				runner,
+			);
+
+			// Assert
+			await expect(action).rejects.toThrow(
+				"Failed to create PR: GraphQL error",
+			);
 		});
 	});
 

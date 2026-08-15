@@ -69,8 +69,11 @@ describe("parseCliArgs", () => {
 		// Arrange
 		const argv = ["--prompt", "test", "--agent", "unsupported-agent"];
 
-		// Act & Assert
-		expect(() => parseCliArgs(argv)).toThrow(
+		// Act
+		const action = () => parseCliArgs(argv);
+
+		// Assert
+		expect(action).toThrow(
 			"Unsupported agent: unsupported-agent. Expected one of: agy, gemini, codex, claude",
 		);
 	});
@@ -157,8 +160,11 @@ describe("parseCliArgs", () => {
 		// Arrange
 		const argv = ["--agent", "agy"];
 
-		// Act & Assert
-		expect(() => parseCliArgs(argv)).toThrow(
+		// Act
+		const action = () => parseCliArgs(argv);
+
+		// Assert
+		expect(action).toThrow(
 			"Must provide either --issue <number> or --prompt <text>",
 		);
 	});
@@ -167,8 +173,11 @@ describe("parseCliArgs", () => {
 		// Arrange
 		const argv = ["--issue", "abc"];
 
-		// Act & Assert
-		expect(() => parseCliArgs(argv)).toThrow(
+		// Act
+		const action = () => parseCliArgs(argv);
+
+		// Assert
+		expect(action).toThrow(
 			"Invalid issue number: abc. Must be a positive integer.",
 		);
 	});

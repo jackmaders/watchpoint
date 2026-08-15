@@ -3,15 +3,35 @@ import {
 	buildPrPayload,
 	formatCommitMessage,
 	generateBranchName,
+	inferCommitType,
 } from "../git-manager";
 
 describe("git-manager", () => {
+	describe("inferCommitType", () => {
+		it("infers various commit types correctly", () => {
+			// Arrange
+			const choreText = "chore: bump deps";
+			const refactorText = "Refactor components";
+
+			// Act
+			const choreType = inferCommitType(choreText);
+			const refactorType = inferCommitType(refactorText);
+
+			// Assert
+			expect(choreType).toBe("chore");
+			expect(refactorType).toBe("refactor");
+		});
+	});
+
 	describe("generateBranchName", () => {
 		it("uses custom branch if provided", () => {
-			// Arrange & Act
-			const branch = generateBranchName({
+			// Arrange
+			const options = {
 				customBranch: "feat/my-custom-branch",
-			});
+			};
+
+			// Act
+			const branch = generateBranchName(options);
 
 			// Assert
 			expect(branch).toBe("feat/my-custom-branch");
@@ -84,8 +104,11 @@ describe("git-manager", () => {
 		});
 
 		it("handles fallback if no inputs given", () => {
-			// Arrange & Act
-			const branch = generateBranchName({});
+			// Arrange
+			const emptyOptions = {};
+
+			// Act
+			const branch = generateBranchName(emptyOptions);
 
 			// Assert
 			expect(branch.startsWith("feat/agent-task-")).toBe(true);
@@ -93,18 +116,27 @@ describe("git-manager", () => {
 	});
 
 	describe("formatCommitMessage", () => {
-		it("preserves valid conventional commit message from title", () => {
+		it("preserves and normalizes valid conventional commit message from title with and without scope", () => {
 			// Arrange
-			const title =
+			const titleWithEmoji =
 				"feat(sandbox): 🏰 orchestrate autonomous coding agents with Sandcastle";
+			const titleWithoutEmoji =
+				"refactor(media): extract video timestamp helper";
+			const titleWithoutScope = "feat: add user profile view";
 
 			// Act
-			const msg = formatCommitMessage({ title });
+			const msgWithEmoji = formatCommitMessage({ title: titleWithEmoji });
+			const msgWithoutEmoji = formatCommitMessage({ title: titleWithoutEmoji });
+			const msgWithoutScope = formatCommitMessage({ title: titleWithoutScope });
 
 			// Assert
-			expect(msg).toBe(
-				"feat(sandbox): 🏰 orchestrate autonomous coding agents with Sandcastle",
+			expect(msgWithEmoji).toBe(
+				"feat(sandbox): ✨ orchestrate autonomous coding agents with Sandcastle",
 			);
+			expect(msgWithoutEmoji).toBe(
+				"refactor(media): ♻️ extract video timestamp helper",
+			);
+			expect(msgWithoutScope).toBe("feat(core): ✨ add user profile view");
 		});
 
 		it("formats conventional commit message from plain issue title with and without issue number", () => {

@@ -1,5 +1,22 @@
 import type { IssueDetails } from "./types";
 
+export type CommitType =
+	| "feat"
+	| "fix"
+	| "refactor"
+	| "test"
+	| "docs"
+	| "chore";
+
+const TYPE_EMOJIS: Record<CommitType, string> = {
+	chore: "🔧",
+	docs: "📝",
+	feat: "✨",
+	fix: "🐛",
+	refactor: "♻️",
+	test: "🧪",
+};
+
 function slugify(text: string): string {
 	return text
 		.toLowerCase()
@@ -9,7 +26,7 @@ function slugify(text: string): string {
 		.replace(/^-+|-+$/g, "");
 }
 
-function inferType(text: string): string {
+export function inferCommitType(text: string): CommitType {
 	const lower = text.toLowerCase();
 	if (lower.startsWith("fix") || lower.includes("bug")) {
 		return "fix";
@@ -22,6 +39,9 @@ function inferType(text: string): string {
 	}
 	if (lower.startsWith("docs")) {
 		return "docs";
+	}
+	if (lower.startsWith("chore")) {
+		return "chore";
 	}
 	return "feat";
 }
@@ -50,14 +70,14 @@ export function generateBranchName(options: {
 			const slug = slugify(desc);
 			return `${type}/issue-${options.issue.number}-${slug}`;
 		}
-		const inferred = inferType(options.issue.title);
+		const inferred = inferCommitType(options.issue.title);
 		const rawSlug = slugify(options.issue.title);
 		const cleanSlug = stripLeadingVerb(rawSlug, inferred);
 		return `${inferred}/issue-${options.issue.number}-${cleanSlug}`;
 	}
 
 	if (options.prompt) {
-		const inferred = inferType(options.prompt);
+		const inferred = inferCommitType(options.prompt);
 		const rawSlug = slugify(options.prompt);
 		const cleanSlug = stripLeadingVerb(rawSlug, inferred);
 		return `${inferred}/${cleanSlug}`;
@@ -72,19 +92,25 @@ export function formatCommitMessage(options: {
 	issueNumber?: number;
 }): string {
 	if (options.title) {
-		const conventionalPattern = /^\w+(\([^)]+\))?:\s*.+$/;
-		if (conventionalPattern.test(options.title)) {
-			return options.title;
+		const match = options.title.match(
+			/^(\w+)(?:\(([^)]+)\))?:\s*(?:[^\p{L}\p{N}\s]+\s*)?(.+)$/u,
+		);
+		if (match) {
+			const type = inferCommitType(match[1]);
+			const scope = match[2] || "core";
+			const desc = match[3].trim();
+			const emoji = TYPE_EMOJIS[type];
+			return `${type}(${scope}): ${emoji} ${desc}`;
 		}
-		const inferred = inferType(options.title);
-		const emoji = inferred === "fix" ? "🐛" : "✨";
+		const inferred = inferCommitType(options.title);
+		const emoji = TYPE_EMOJIS[inferred];
 		const issueSuffix = options.issueNumber ? ` (#${options.issueNumber})` : "";
 		return `${inferred}(core): ${emoji} ${options.title.toLowerCase()}${issueSuffix}`;
 	}
 
 	const prompt = options.prompt || "automated changes";
-	const inferred = inferType(prompt);
-	const emoji = inferred === "fix" ? "🐛" : "✨";
+	const inferred = inferCommitType(prompt);
+	const emoji = TYPE_EMOJIS[inferred];
 	return `${inferred}(core): ${emoji} ${prompt.toLowerCase()}`;
 }
 
@@ -102,8 +128,10 @@ export function buildPrPayload(options: {
 	}
 
 	const prompt = options.prompt || "Autonomous task execution";
+	const inferred = inferCommitType(prompt);
+	const emoji = TYPE_EMOJIS[inferred];
 	return {
 		body: `## Summary\n\nAutomated execution for task: "${prompt}" via Sandcastle Autonomous Agent.\n\n### Execution Details\n- **Target Branch**: \`${options.branch}\`\n- **Self-healing attempts**: ${options.attempts}\n- **Verification**: \`bun run check:all\` and \`bun run test:unit\` passed.\n`,
-		title: `feat(core): ✨ ${prompt}`,
+		title: `${inferred}(core): ${emoji} ${prompt}`,
 	};
 }
