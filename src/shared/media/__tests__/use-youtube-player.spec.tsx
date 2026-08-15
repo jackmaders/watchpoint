@@ -237,4 +237,193 @@ describe("useYouTubePlayer", () => {
 		// Assert
 		expect(player.destroy).toHaveBeenCalled();
 	});
+
+	it("safely ignores control commands before a player exists or becomes ready", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock();
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+
+		// Act
+		const { result } = renderHook(() =>
+			useYouTubePlayer({ videoId: "pre-ready-video" }),
+		);
+		result.current.play();
+		result.current.pause();
+		result.current.seekTo(10, false);
+		result.current.replay();
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		result.current.play();
+		result.current.pause();
+		result.current.seekTo(20, true);
+		result.current.replay();
+
+		// Assert
+		expect(player.playVideo).not.toHaveBeenCalled();
+		expect(player.pauseVideo).not.toHaveBeenCalled();
+		expect(player.seekTo).not.toHaveBeenCalled();
+	});
+
+	it("delegates play, pause, and seekTo with expected arguments once ready", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({ videoId: "ready-video" }),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Act
+		result.current.play();
+		result.current.pause();
+		result.current.seekTo(15);
+		result.current.seekTo(30, false);
+
+		// Assert
+		expect(player.playVideo).toHaveBeenCalledTimes(1);
+		expect(player.pauseVideo).toHaveBeenCalledTimes(1);
+		expect(player.seekTo).toHaveBeenNthCalledWith(1, 15, true);
+		expect(player.seekTo).toHaveBeenNthCalledWith(2, 30, false);
+	});
+
+	it("executes replay as seek-to-zero followed by play in exact sequence", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({ videoId: "replay-video" }),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		const callOrder: string[] = [];
+		vi.mocked(player.seekTo).mockImplementation(() => {
+			callOrder.push("seekTo(0, true)");
+		});
+		vi.mocked(player.playVideo).mockImplementation(() => {
+			callOrder.push("playVideo()");
+		});
+
+		// Act
+		result.current.replay();
+
+		// Assert
+		expect(callOrder).toEqual(["seekTo(0, true)", "playVideo()"]);
+		expect(player.seekTo).toHaveBeenCalledWith(0, true);
+		expect(player.playVideo).toHaveBeenCalledTimes(1);
+	});
+
+	it("tracks playerState transitions and forwards onStateChange callbacks", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onStateChange = vi.fn();
+		const container = document.createElement("div");
+
+		// Act
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				onStateChange,
+				videoId: "state-video",
+			}),
+		);
+		const initialState = result.current.playerState;
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+		const playingState = result.current.playerState;
+		act(() => player.triggerStateChange(YouTubePlayerState.PAUSED));
+		const pausedState = result.current.playerState;
+
+		// Assert
+		expect(initialState).toBeNull();
+		expect(playingState).toBe(1);
+		expect(pausedState).toBe(2);
+		expect(onStateChange).toHaveBeenCalledTimes(2);
+		expect(onStateChange).toHaveBeenNthCalledWith(1, 1);
+		expect(onStateChange).toHaveBeenNthCalledWith(2, 2);
+	});
+
+	it("resets playerState on VOD change and routes commands and events to the active player only", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onStateChange = vi.fn();
+		const container = document.createElement("div");
+		const { result, rerender } = renderHook(
+			({ videoId }: { videoId: string }) =>
+				useYouTubePlayer({ onStateChange, videoId }),
+			{ initialProps: { videoId: "vod-alpha" } },
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const firstPlayer = youtube.players[0];
+		act(() => firstPlayer.triggerReady());
+		act(() => firstPlayer.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		rerender({ videoId: "vod-beta" });
+		const resetState = result.current.playerState;
+		act(() => firstPlayer.triggerStateChange(YouTubePlayerState.PAUSED));
+		result.current.play();
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const secondPlayer = youtube.players[1];
+		act(() => secondPlayer.triggerReady());
+		act(() => secondPlayer.triggerStateChange(YouTubePlayerState.PLAYING));
+		result.current.play();
+
+		// Assert
+		expect(resetState).toBeNull();
+		expect(firstPlayer.playVideo).not.toHaveBeenCalled();
+		expect(secondPlayer.playVideo).toHaveBeenCalledTimes(1);
+		expect(result.current.playerState).toBe(1);
+		expect(onStateChange).toHaveBeenCalledTimes(2);
+		expect(onStateChange).toHaveBeenNthCalledWith(1, 1);
+		expect(onStateChange).toHaveBeenNthCalledWith(2, 1);
+	});
 });

@@ -3,6 +3,8 @@ import {
 	loadYouTubeIframeApi,
 	type YouTubePlayer,
 	type YouTubePlayerEvent,
+	type YouTubePlayerState,
+	type YouTubePlayerStateChangeEvent,
 } from "./youtube";
 
 export type YouTubeContainerRef = (node: HTMLDivElement | null) => void;
@@ -10,6 +12,7 @@ export type YouTubeContainerRef = (node: HTMLDivElement | null) => void;
 export interface UseYouTubePlayerOptions {
 	autoplay?: boolean;
 	onReady?: (duration: number) => void;
+	onStateChange?: (state: YouTubePlayerState) => void;
 	videoId: string;
 }
 
@@ -18,29 +21,102 @@ export interface UseYouTubePlayerResult {
 	currentTime: number;
 	duration: number;
 	isReady: boolean;
+	pause: () => void;
+	play: () => void;
+	playerState: YouTubePlayerState | null;
+	replay: () => void;
+	seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
 }
 
 function safeMediaValue(value: number): number {
 	return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
-export function useYouTubePlayer({
-	autoplay = false,
-	onReady,
+function usePlayerControls(activePlayerRef: { current: YouTubePlayer | null }) {
+	const play = useCallback(() => {
+		activePlayerRef.current?.playVideo();
+	}, [activePlayerRef]);
+
+	const pause = useCallback(() => {
+		activePlayerRef.current?.pauseVideo();
+	}, [activePlayerRef]);
+
+	const seekTo = useCallback(
+		(seconds: number, allowSeekAhead = true) => {
+			activePlayerRef.current?.seekTo(seconds, allowSeekAhead);
+		},
+		[activePlayerRef],
+	);
+
+	const replay = useCallback(() => {
+		if (!activePlayerRef.current) {
+			return;
+		}
+		activePlayerRef.current.seekTo(0, true);
+		activePlayerRef.current.playVideo();
+	}, [activePlayerRef]);
+
+	return { pause, play, replay, seekTo };
+}
+
+interface CreatePlayerOptions {
+	autoplay: boolean;
+	container: HTMLDivElement;
+	handleReady: (event: YouTubePlayerEvent) => void;
+	handleStateChange: (event: YouTubePlayerStateChangeEvent) => void;
+	videoId: string;
+	youtube: Awaited<ReturnType<typeof loadYouTubeIframeApi>>;
+}
+
+function createPlayerInstance({
+	autoplay,
+	container,
+	handleReady,
+	handleStateChange,
 	videoId,
-}: UseYouTubePlayerOptions): UseYouTubePlayerResult {
-	const [container, setContainer] = useState<HTMLDivElement | null>(null);
+	youtube,
+}: CreatePlayerOptions): YouTubePlayer {
+	return new youtube.Player(container, {
+		events: {
+			onReady: handleReady,
+			onStateChange: handleStateChange,
+		},
+		playerVars: {
+			autoplay: autoplay ? 1 : 0,
+			controls: 0,
+		},
+		videoId,
+	});
+}
+
+interface UseYouTubePlayerStateOptions {
+	autoplay: boolean;
+	container: HTMLDivElement | null;
+	onReady?: (duration: number) => void;
+	onStateChange?: (state: YouTubePlayerState) => void;
+	videoId: string;
+}
+
+function useYouTubePlayerState({
+	autoplay,
+	container,
+	onReady,
+	onStateChange,
+	videoId,
+}: UseYouTubePlayerStateOptions) {
 	const onReadyRef = useRef(onReady);
+	const onStateChangeRef = useRef(onStateChange);
+	const activePlayerRef = useRef<YouTubePlayer | null>(null);
 	const generationRef = useRef(0);
 	const [isReady, setIsReady] = useState(false);
+	const [playerState, setPlayerState] = useState<YouTubePlayerState | null>(
+		null,
+	);
 	const [duration, setDuration] = useState(0);
 	const [currentTime, setCurrentTime] = useState(0);
 
 	onReadyRef.current = onReady;
-
-	const containerRef = useCallback((node: HTMLDivElement | null) => {
-		setContainer(node);
-	}, []);
+	onStateChangeRef.current = onStateChange;
 
 	useEffect(() => {
 		const generation = generationRef.current + 1;
@@ -54,11 +130,14 @@ export function useYouTubePlayer({
 		setIsReady(false);
 		setDuration(0);
 		setCurrentTime(0);
+		setPlayerState(null);
+		activePlayerRef.current = null;
 
 		if (!container) {
 			return () => {
 				active = false;
 				generationRef.current += 1;
+				activePlayerRef.current = null;
 			};
 		}
 
@@ -72,6 +151,7 @@ export function useYouTubePlayer({
 			}
 
 			player = event.target;
+			activePlayerRef.current = player;
 			hasNotifiedReady = true;
 			const readyDuration = safeMediaValue(player.getDuration());
 			const readyCurrentTime = safeMediaValue(player.getCurrentTime());
@@ -81,27 +161,36 @@ export function useYouTubePlayer({
 			onReadyRef.current?.(readyDuration);
 		};
 
+		const handleStateChange = (event: YouTubePlayerStateChangeEvent) => {
+			if (!isActiveGeneration() || (player && event.target !== player)) {
+				return;
+			}
+
+			setPlayerState(event.data);
+			onStateChangeRef.current?.(event.data);
+		};
+
 		void loadYouTubeIframeApi()
 			.then((youtube) => {
 				if (!isActiveGeneration()) {
 					return;
 				}
 
-				const createdPlayer = new youtube.Player(container, {
-					events: { onReady: handleReady },
-					playerVars: {
-						autoplay: autoplay ? 1 : 0,
-						controls: 0,
-					},
+				player = createPlayerInstance({
+					autoplay,
+					container,
+					handleReady,
+					handleStateChange,
 					videoId,
+					youtube,
 				});
-				player = createdPlayer;
 			})
 			.catch(() => undefined);
 
 		return () => {
 			active = false;
 			generationRef.current += 1;
+			activePlayerRef.current = null;
 			if (player) {
 				player.destroy();
 			}
@@ -109,9 +198,44 @@ export function useYouTubePlayer({
 	}, [autoplay, container, videoId]);
 
 	return {
-		containerRef,
+		activePlayerRef,
 		currentTime,
 		duration,
 		isReady,
+		playerState,
+	};
+}
+
+export function useYouTubePlayer({
+	autoplay = false,
+	onReady,
+	onStateChange,
+	videoId,
+}: UseYouTubePlayerOptions): UseYouTubePlayerResult {
+	const [container, setContainer] = useState<HTMLDivElement | null>(null);
+	const containerRef = useCallback((node: HTMLDivElement | null) => {
+		setContainer(node);
+	}, []);
+
+	const state = useYouTubePlayerState({
+		autoplay,
+		container,
+		onReady,
+		onStateChange,
+		videoId,
+	});
+
+	const controls = usePlayerControls(state.activePlayerRef);
+
+	return {
+		containerRef,
+		currentTime: state.currentTime,
+		duration: state.duration,
+		isReady: state.isReady,
+		pause: controls.pause,
+		play: controls.play,
+		playerState: state.playerState,
+		replay: controls.replay,
+		seekTo: controls.seekTo,
 	};
 }
