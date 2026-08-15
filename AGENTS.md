@@ -25,6 +25,11 @@ This repository enforces strict technical, architectural, and quality standards 
 - Auto-generated database migration scripts inside `drizzle/` (or `prisma/migrations/`) MUST NOT be edited, altered, or manually modified under any circumstances.
 - Need a schema change reflected? Run the database migration CLI to generate a new migration instead of hand-editing an existing one.
 
+### 4. Package Manager & Script Discipline
+- Always use `bun` as the project's package manager and runner.
+- Always execute tasks using the scripts defined in `package.json` (e.g. `bun run test:unit`, `bun run test:coverage`, `bun run validate`, `bun run check:all`, `bun run check:types`, `bun run fix:all`, `bun run build`).
+- Never use `pnpm`, `npm`, `yarn`, or unscripted test commands directly.
+
 ---
 
 ## Coding Standards
