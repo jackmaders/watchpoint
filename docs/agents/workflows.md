@@ -60,7 +60,7 @@ graph LR
 ### Milestone Workflow (High Ambiguity / Epic)
 1. **Triage**: Run `/triage` on the epic issue. Agent prompts: *"This is a milestone with significant fog. Run `/wayfinder`."*
 2. **Wayfinding**: Run `/wayfinder` to create the map issue (`wayfinder:map`) and child decision tickets (`wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, `wayfinder:task`). AFK research tickets run via `/research` subagents; HITL decision tickets resolve with the user.
-3. **Feature Decomposition**: When fog is cleared, run `/to-features` on the completed map to break down the initiative into sequenced, dependency-linked feature issues.
+3. **Feature Decomposition**: When fog is cleared, run `/to-features` on the completed map to break down into feature issues.
 4. **Specification**: Run `/to-spec` (and optional `/grill-me`) for each feature.
 5. **Ticket Slicing**: Run `/to-tickets` to generate sub-issues labeled `ready-for-agent`.
 6. **Implementation**: Run `/implement` on unblocked tickets in dependency order.
