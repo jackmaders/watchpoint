@@ -11,8 +11,9 @@ This repository enforces strict technical, architectural, and quality standards 
 - **Scripts First**: Prefer defined `package.json` scripts (`bun run test:unit`, `bun run check:all`, `bun run validate`) over raw tool invocations.
 
 ### 2. Conventional Commits & Branches
-- **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
+- **Branch from Latest Main**: Always sync `main` (`git checkout main && git pull origin main`) and branch from latest `main` before starting new work. Never branch off unmerged feature branches unless managing a stacked PR.
 - **Branch Names**: Format branch names strictly as `<type>/<kebab-case-description>` (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`).
+- **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
 
 ### 3. Dedicated Tooling, Not Ad-Hoc Scripts
 - For services with dedicated tooling, use that CLI/MCP server (e.g. `gh` for GitHub, `sentry-cli` for error tracking) — never raw HTTP scripts or ad-hoc curls.
