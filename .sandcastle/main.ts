@@ -1,4 +1,4 @@
-import { orchestrateSandcastle, parseCliArgs } from "../src/shared/sandcastle";
+import { orchestrateSandcastle, parseCliArgs } from "./index";
 
 const args = parseCliArgs(process.argv.slice(2));
 

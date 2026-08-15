@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { orchestrateSandcastle, parseCliArgs } from "../src/shared/sandcastle";
+import { orchestrateSandcastle, parseCliArgs } from "../.sandcastle";
 
 async function main() {
 	try {

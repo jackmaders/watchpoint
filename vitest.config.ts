@@ -10,13 +10,16 @@ export default defineConfig({
 			exclude: [
 				"**/__mocks__/**",
 				"src/**/*.{spec,test}.{ts,tsx}",
+				".sandcastle/**/*.{spec,test}.{ts,tsx}",
 				"src/**/index.ts",
 				"src/**/index.client.ts",
 				"src/**/index.server.ts",
+				".sandcastle/index.ts",
+				".sandcastle/main.ts",
 				"src/app/**",
 				"src/_pages/prototype-*/**",
 			],
-			include: ["src/**/*.{ts,tsx}"],
+			include: ["src/**/*.{ts,tsx}", ".sandcastle/**/*.{ts,tsx}"],
 			provider: "v8",
 			reporter: ["text", "html"],
 			thresholds: {
