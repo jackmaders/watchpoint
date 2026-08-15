@@ -1,7 +1,12 @@
 import { act, render, renderHook } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createYouTubeMock, setYouTubeNamespace } from "../__mocks__/youtube";
+import {
+	createYouTubeMock,
+	installMockFrames,
+	setDocumentVisibility,
+	setYouTubeNamespace,
+} from "../__mocks__/youtube";
 
 describe("useYouTubePlayer", () => {
 	beforeEach(() => {
@@ -425,5 +430,336 @@ describe("useYouTubePlayer", () => {
 		expect(onStateChange).toHaveBeenCalledTimes(2);
 		expect(onStateChange).toHaveBeenNthCalledWith(1, 1);
 		expect(onStateChange).toHaveBeenNthCalledWith(2, 1);
+	});
+
+	it("starts requestAnimationFrame sampling on PLAYING state and publishes currentTime and onTimeUpdate", async () => {
+		// Arrange
+		const frames = installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onTimeUpdate = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				onTimeUpdate,
+				videoId: "time-sync-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Act
+		vi.mocked(player.getCurrentTime).mockReturnValue(1.25);
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+		const initialSampleTime = result.current.currentTime;
+		vi.mocked(player.getCurrentTime).mockReturnValue(2.5);
+		act(() => frames.flush());
+		const secondSampleTime = result.current.currentTime;
+
+		// Assert
+		expect(frames.requestAnimationFrame).toHaveBeenCalled();
+		expect(initialSampleTime).toBe(1.25);
+		expect(secondSampleTime).toBe(2.5);
+		expect(onTimeUpdate).toHaveBeenCalledTimes(2);
+		expect(onTimeUpdate).toHaveBeenNthCalledWith(1, 1.25);
+		expect(onTimeUpdate).toHaveBeenNthCalledWith(2, 2.5);
+	});
+
+	it("stops requestAnimationFrame polling on non-playing states and preserves the last paused time", async () => {
+		// Arrange
+		const frames = installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onTimeUpdate = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				onTimeUpdate,
+				videoId: "pause-preserve-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		vi.mocked(player.getCurrentTime).mockReturnValue(12.34);
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		vi.mocked(player.getCurrentTime).mockClear();
+		act(() => player.triggerStateChange(YouTubePlayerState.PAUSED));
+		const pausedTime = result.current.currentTime;
+		act(() => frames.flush());
+
+		// Assert
+		expect(frames.cancelAnimationFrame).toHaveBeenCalled();
+		expect(pausedTime).toBe(12.34);
+		expect(result.current.currentTime).toBe(12.34);
+		expect(player.getCurrentTime).not.toHaveBeenCalled();
+	});
+
+	it("stops requestAnimationFrame polling when player enters ENDED state", async () => {
+		// Arrange
+		const frames = installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onTimeUpdate = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				onTimeUpdate,
+				videoId: "ended-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		vi.mocked(player.getCurrentTime).mockReturnValue(142);
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		vi.mocked(player.getCurrentTime).mockClear();
+		act(() => player.triggerStateChange(YouTubePlayerState.ENDED));
+		const endedTime = result.current.currentTime;
+		act(() => frames.flush());
+
+		// Assert
+		expect(frames.cancelAnimationFrame).toHaveBeenCalled();
+		expect(endedTime).toBe(142);
+		expect(result.current.currentTime).toBe(142);
+		expect(player.getCurrentTime).not.toHaveBeenCalled();
+	});
+
+	it("pauses player on document visibility hidden without resuming when returning to visible", async () => {
+		// Arrange
+		installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				videoId: "visibility-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		act(() => setDocumentVisibility("hidden"));
+		const pauseCallsAfterHidden = vi.mocked(player.pauseVideo).mock.calls
+			.length;
+		act(() => setDocumentVisibility("visible"));
+		const playCallsAfterVisible = vi.mocked(player.playVideo).mock.calls.length;
+
+		// Assert
+		expect(pauseCallsAfterHidden).toBe(1);
+		expect(playCallsAfterVisible).toBe(0);
+	});
+
+	it("cancels pending animation frames and removes visibility listener on unmount", async () => {
+		// Arrange
+		const frames = installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result, unmount } = renderHook(() =>
+			useYouTubePlayer({
+				videoId: "cleanup-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		unmount();
+		act(() => setDocumentVisibility("hidden"));
+		act(() => frames.flush());
+
+		// Assert
+		expect(frames.cancelAnimationFrame).toHaveBeenCalled();
+		expect(player.destroy).toHaveBeenCalledTimes(1);
+		expect(player.pauseVideo).not.toHaveBeenCalled();
+	});
+
+	it("normalizes non-finite or negative currentTime samples during active playback frames", async () => {
+		// Arrange
+		const frames = installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onTimeUpdate = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				onTimeUpdate,
+				videoId: "unsafe-frame-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Act
+		vi.mocked(player.getCurrentTime).mockReturnValue(Number.NaN);
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+		const nanTime = result.current.currentTime;
+		vi.mocked(player.getCurrentTime).mockReturnValue(-5);
+		act(() => frames.flush());
+		const negativeTime = result.current.currentTime;
+
+		// Assert
+		expect(nanTime).toBe(0);
+		expect(negativeTime).toBe(0);
+		expect(onTimeUpdate).toHaveBeenNthCalledWith(1, 0);
+		expect(onTimeUpdate).toHaveBeenNthCalledWith(2, 0);
+	});
+
+	it("ignores scheduled animation frames after generation becomes inactive", async () => {
+		// Arrange
+		let lingeringCallback: FrameRequestCallback | undefined;
+		vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+			lingeringCallback = cb;
+			return 999;
+		});
+		vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
+			() => undefined,
+		);
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onTimeUpdate = vi.fn();
+		const container = document.createElement("div");
+		const { result, rerender } = renderHook(
+			({ videoId }: { videoId: string }) =>
+				useYouTubePlayer({ onTimeUpdate, videoId }),
+			{ initialProps: { videoId: "gen-1" } },
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		rerender({ videoId: "gen-2" });
+		vi.mocked(player.getCurrentTime).mockClear();
+		act(() => {
+			lingeringCallback?.(1000);
+		});
+
+		// Assert
+		expect(player.getCurrentTime).not.toHaveBeenCalled();
+	});
+
+	it("safely ignores visibility changes before a player instance is created", async () => {
+		// Arrange
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+
+		// Act
+		renderHook(() => useYouTubePlayer({ videoId: "no-player-visibility" }));
+		act(() => setDocumentVisibility("hidden"));
+
+		// Assert
+		expect(youtube.players).toHaveLength(0);
+	});
+
+	it("pauses player when document.hidden is true", async () => {
+		// Arrange
+		installMockFrames();
+		const { useYouTubePlayer } = await import("../use-youtube-player");
+		const { YouTubePlayerState } = await import("../youtube");
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useYouTubePlayer({
+				videoId: "doc-hidden-video",
+			}),
+		);
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(YouTubePlayerState.PLAYING));
+
+		// Act
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			value: "visible",
+		});
+		Object.defineProperty(document, "hidden", {
+			configurable: true,
+			value: true,
+		});
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Assert
+		expect(player.pauseVideo).toHaveBeenCalledTimes(1);
 	});
 });
