@@ -6,52 +6,27 @@ This repository enforces strict technical, architectural, and quality standards 
 
 ## Core System Rules
 
-### 1. Conventional Commits & Branches
-- **Commit Messages**: Format commit messages strictly as:
-  `<type>(<scope>): <emoji> <description>`
-  (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`).
-  Commits in this repo are not signed. Do not attempt GPG/SSH commit signing, and do not treat an unsigned commit as something to fix.
-- **Branch Names**: Format branch names strictly as:
-  `<type>/<kebab-case-description>`
-  (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`, `docs/architecture-overview`).
+### 1. Runtime & Package Scripts
+- **Package Manager**: Use `bun` exclusively for package management and task execution (`bun run <script>`, `bun add <pkg>`). Do not use `npm`, `pnpm`, or `yarn`.
+- **Scripts First**: Prefer defined `package.json` scripts (`bun run test:unit`, `bun run check:all`, `bun run validate`) over raw tool invocations.
 
-### 2. Dedicated Tooling, Not Ad-Hoc Scripts
-- For any service with an MCP server or a dedicated CLI available, use that MCP server or CLI — never a hand-rolled bash/curl or Python script against the raw API.
-  - Examples: `github-mcp-server` or the `gh` CLI for GitHub; the `sentry` MCP server or `sentry-cli` for error tracking.
-- For GitHub issue and PR operations, always use the dedicated `gh` CLI tool rather than raw API scripts.
-- For local filesystem actions — reading, editing, creating, removing, or moving files — prefer the coding agent's own built-in file tools (e.g. Read/Edit/Write/Glob/Grep) over an equivalent terminal command or script (`cat`, `sed`, `rm`, `mv`, `find`, etc.). Fall back to a terminal command only when no built-in tool covers the action.
+### 2. Conventional Commits & Branches
+- **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
+- **Branch Names**: Format branch names strictly as `<type>/<kebab-case-description>` (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`).
 
-### 3. Immutable Auto-Generated Database Migrations
-- Auto-generated database migration scripts inside `drizzle/` (or `prisma/migrations/`) MUST NOT be edited, altered, or manually modified under any circumstances.
-- Need a schema change reflected? Run the database migration CLI to generate a new migration instead of hand-editing an existing one.
+### 3. Dedicated Tooling, Not Ad-Hoc Scripts
+- For services with dedicated tooling, use that CLI/MCP server (e.g. `gh` for GitHub, `sentry-cli` for error tracking) — never raw HTTP scripts or ad-hoc curls.
+- For local filesystem operations, prefer built-in agent file tools (`view_file`, `replace_file_content`, `write_to_file`, `grep_search`, `list_dir`) over shell commands (`cat`, `sed`, `grep`, `find`).
 
-### 4. Package Manager & Script Discipline
-- Always use `bun` as the project's package manager and runner.
-- Always execute tasks using the scripts defined in `package.json` (e.g. `bun run test:unit`, `bun run test:coverage`, `bun run validate`, `bun run check:all`, `bun run check:types`, `bun run fix:all`, `bun run build`).
-- Never use `pnpm`, `npm`, `yarn`, or unscripted test commands directly.
+### 4. Immutable Auto-Generated Database Migrations
+- Auto-generated database migration scripts inside `drizzle/` MUST NOT be manually edited. Generate new migrations via `bun run db:generate`.
 
 ---
 
-## Coding Standards
+## Disclosed Documentation & Pointers
 
-Before writing or reviewing code — architecture (Feature-Sliced Design, `app/` barrels, feature naming), testing (structure, speed, coverage), and mocking rules all live in one place. See `CODING_STANDARDS.md`.
-
----
-
-## Agent skills
-
-### Issue tracker
-
-When managing GitHub issues, PRs, or wayfinder dependencies via `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Canonical 5-role triage vocabulary and tracker mappings. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-When referencing domain vocabulary or recording ADRs (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
-
-### Workflows & Playbooks
-
-Skill sequences and state tracking for Milestones, Features, and Bugs. See `docs/agents/workflows.md`.
+- **Coding Standards**: Architecture (Feature-Sliced Design, `app/` barrels, feature naming), testing (AAA structure, <50ms speed, 100% coverage), and mock isolation rules live in `CODING_STANDARDS.md`.
+- **Domain Modeling & ADRs**: Domain glossary and ADR sync discipline live in `CONTEXT.md` and `docs/agents/domain.md`.
+- **Issue Tracker & Wayfinding**: Conventions for `gh` CLI issue management and Wayfinder maps live in `docs/agents/issue-tracker.md`.
+- **Triage & State Labels**: Canonical 5-role triage vocabulary and GHA automation triggers live in `docs/agents/triage-labels.md`.
+- **Workflows & Playbooks**: Step sequences and stage transitions for Milestones, Features, and Bugs live in `docs/agents/workflows.md`.
