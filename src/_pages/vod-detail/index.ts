@@ -1,4 +1,10 @@
 export { handleGetVodManifest } from "./api/manifest";
+export { recordAttemptAction } from "./api/record-attempt";
+export {
+	type RecordAttemptInput,
+	RecordAttemptInputSchema,
+	type RecordAttemptResult,
+} from "./model/attempt";
 export {
 	type ScenarioData,
 	type ScenarioInputConfig,

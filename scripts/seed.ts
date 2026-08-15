@@ -126,6 +126,14 @@ async function main() {
 		await db.delete(schema.attemptRecords);
 		await db.delete(schema.scenarios);
 		await db.delete(schema.vods);
+		await db.delete(schema.users);
+
+		await db.insert(schema.users).values({
+			email: "guest@watchpoint.gg",
+			emailVerified: false,
+			id: "usr_guest_demo",
+			name: "Guest Cadet",
+		});
 
 		const [vod] = await db
 			.insert(schema.vods)
