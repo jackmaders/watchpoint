@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import type { getVodById, ModuleType } from "@/shared/db";
 import { buildSessionUrl, calculateModuleCounts } from "../model/module-filter";
@@ -79,6 +79,7 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 								: "bg-slate-800 text-slate-500 cursor-not-allowed pointer-events-none"
 						}`}
 						href={startHref}
+						to={startHref}
 					>
 						Start Training Session
 					</Link>

@@ -1,6 +1,4 @@
-"use server";
-
-import { attemptRecords, getDb } from "@/shared/db";
+import { attemptRecords, type DbContext, getDb } from "@/shared/db";
 import { GUEST_USER_ID, getCurrentUser } from "@/shared/lib/auth";
 import {
 	type RecordAttemptInput,
@@ -10,6 +8,7 @@ import {
 
 export async function recordAttemptAction(
 	input: RecordAttemptInput,
+	context?: DbContext,
 ): Promise<RecordAttemptResult> {
 	const parsed = RecordAttemptInputSchema.safeParse(input);
 	if (!parsed.success) {
@@ -20,10 +19,10 @@ export async function recordAttemptAction(
 	}
 
 	try {
-		const currentUser = await getCurrentUser();
+		const currentUser = await getCurrentUser(undefined, context);
 		const userId = currentUser?.id ?? GUEST_USER_ID;
 
-		const db = await getDb();
+		const db = await getDb(context);
 		const [inserted] = await db
 			.insert(attemptRecords)
 			.values({

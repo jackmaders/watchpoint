@@ -1,4 +1,4 @@
-export { getDb } from "./client/client";
+export { type DbContext, getDb } from "./client/client";
 export type {
 	GetVodByIdOptions,
 	GetVodManifestOptions,
@@ -9,4 +9,9 @@ export {
 	getVodById,
 	getVodManifest,
 } from "./repositories/vods";
-export { attemptRecords, type ModuleType } from "./schema";
+export {
+	attemptRecords,
+	type JsonPrimitive,
+	type JsonValue,
+	type ModuleType,
+} from "./schema";

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { connection } from "next/server";
+import { Link } from "@tanstack/react-router";
 import { getVodById } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
 import { extractHeroFromTitle } from "../model/module-filter";
@@ -7,13 +6,14 @@ import { VodDetailClient } from "./vod-detail-client";
 
 export async function VodDetailPage({
 	params,
+	vod: initialVod,
 }: {
-	params: Promise<{ id: string }>;
+	params: Promise<{ id: string }> | { id: string };
+	vod?: Awaited<ReturnType<typeof getVodById>>;
 }) {
-	await connection();
-	const { id } = await params;
-
-	const vod = await getVodById(id);
+	const resolvedParams = await params;
+	const vod =
+		initialVod !== undefined ? initialVod : await getVodById(resolvedParams.id);
 
 	if (!vod) {
 		return (
@@ -28,7 +28,7 @@ export async function VodDetailPage({
 					</p>
 					<Link
 						className="inline-block mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-lg transition-colors"
-						href="/vods"
+						to="/vods"
 					>
 						Back to VOD Catalog
 					</Link>
@@ -45,7 +45,7 @@ export async function VodDetailPage({
 				<div className="space-y-4">
 					<Link
 						className="inline-flex items-center text-xs font-semibold text-slate-400 hover:text-indigo-400 transition-colors"
-						href="/vods"
+						to="/vods"
 					>
 						← Back to VOD Catalog
 					</Link>

@@ -1,33 +1,35 @@
-# Next.js App Router Production Project Template
+# Watchpoint Interactive Decision Engine
 
-A production-ready Next.js App Router project template scaffolded using **Bun**, **Feature-Sliced Design (FSD)**, **Biome**, **Steiger**, **Vitest**, **Prisma v7**, **Better Auth**, **Tailwind CSS v4**, **Shadcn UI**, **TanStack React Form**, **Zod**, and **Playwright**.
+An interactive Overwatch 2 VOD decision training platform built with **TanStack Start**, **TanStack Query**, **Cloudflare Workers**, **Bun**, **Feature-Sliced Design (FSD)**, **Biome**, **Steiger**, **Vitest**, **Drizzle ORM**, **Better Auth**, **Tailwind CSS v4**, **TanStack React Form**, **Zod**, and **Playwright**.
 
 ---
 
 ## Technical Stack
 
 - **Runtime & Package Manager**: [Bun](https://bun.sh)
-- **Framework & Edge Deployment**: [Next.js (App Router)](https://nextjs.org) + [React 19](https://react.dev) deployed to [Cloudflare Workers](https://workers.cloudflare.com) via [@opennextjs/cloudflare](https://opennext.js.org/cloudflare)
+- **Framework & Edge Deployment**: [TanStack Start](https://tanstack.com/start) + [React 19](https://react.dev) deployed natively to [Cloudflare Workers](https://workers.cloudflare.com) via Vite & Nitro
+- **Data Fetching & State**: [TanStack Query](https://tanstack.com/query) with `createServerFn` server functions
 - **Architecture**: [Feature-Sliced Design (FSD v2.1)](https://feature-sliced.design) verified via [Steiger](https://github.com/feature-sliced/steiger)
-- **Linting & Formatting**: [Biome](https://biomejs.dev) with custom GritQL automocking plugin
-- **Database, Storage & Auth**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) + [Prisma v7](https://prisma.io) (`@prisma/adapter-d1`), [Cloudflare R2](https://developers.cloudflare.com/r2/) & [Better Auth](https://better-auth.com)
-- **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Shadcn UI](https://ui.shadcn.com)
+- **Linting & Formatting**: [Biome](https://biomejs.dev) with custom GritQL automocking and AAA plugins
+- **Database, Storage & Auth**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) + [Drizzle ORM](https://orm.drizzle.team), [Cloudflare R2](https://developers.cloudflare.com/r2/) & [Better Auth](https://better-auth.com)
+- **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Radix UI](https://www.radix-ui.com)
 - **Form Handling & Validation**: [TanStack React Form](https://tanstack.com/form) & [Zod](https://zod.dev)
-- **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold) & [Playwright](https://playwright.dev) (E2E)
-- **Automated AI SDLC**: [Gemini-Driven AI Development Pipeline](docs/specifications/ai-pipeline-v1-spec.md)
+- **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold, <50ms tests) & [Playwright](https://playwright.dev) (E2E)
+- **Automated AI SDLC**: [Sandcastle Autonomous Agent Runner](docs/adr/0005-sandcastle-agent-orchestration.md)
 
 ---
 
 ## Directory Structure (Feature-Sliced Design)
 
 ```text
+app/            → TanStack Router route tree, SSR/client entrypoints & lightweight adapters
 src/
-├── app/        → App initialization, global styles, root layout & routes
-├── pages/      → Route-level composition and page-owned logic
+├── _app/       → Global styles and application-level configuration
+├── _pages/     → Route-level composition and page-owned logic
 ├── widgets/    → Large composite UI blocks reused across pages
 ├── features/   → Reusable user interactions (e.g. user-form)
 ├── entities/   → Reusable business domain models
-└── shared/     → Infrastructure, UI kit (button), utils, auth, API client
+└── shared/     → Infrastructure, UI kit, db client, utils, auth, media player
 ```
 
 ---
@@ -36,11 +38,11 @@ src/
 
 | Command | Description |
 | --- | --- |
-| `bun run dev` | Start Next.js development server |
-| `bun run preview` | Build and preview application locally in Cloudflare `workerd` runtime |
-| `bun run deploy` | Build and deploy application to Cloudflare Workers |
+| `bun run dev` | Start Vite development server (`http://localhost:3000`) |
+| `bun run build` | Build TanStack Start client and worker server bundle |
+| `bun run preview` | Preview production build locally |
+| `bun run deploy` | Deploy application to Cloudflare Workers |
 | `bun run cf-typegen` | Generate TypeScript types for Cloudflare bindings (`CloudflareEnv`) |
-| `bun run build` | Build Next.js application |
 | `bun run check:types` | Run TypeScript type checking (`tsc --noEmit`) |
 | `bun run check:lint` | Run Biome lint checks |
 | `bun run check:format` | Run Biome formatting checks |
@@ -51,8 +53,7 @@ src/
 | `bun run test:unit` | Run Vitest unit tests |
 | `bun run test:coverage` | Run Vitest unit tests with 100% coverage check |
 | `bun run test:e2e` | Run Playwright E2E tests |
-| `bun run prisma:validate` | Validate Prisma schema |
-| `bun run validate` | Run complete pipeline (`types`, `all`, `architecture`, `coverage`) |
+| `bun run validate` | Run complete quality gate (`types`, `all`, `architecture`, `coverage`, `build`) |
 
 ---
 
@@ -79,8 +80,9 @@ bun run sandcastle --prompt "Fix button alignment" --dry-run
 # 1. Install dependencies
 bun install
 
-# 2. Generate Prisma Client
-bun run prisma generate
+# 2. Run local D1 migrations and seed database
+bun run db:migrate:local
+bun run db:seed
 
 # 3. Validate complete pipeline
 bun run validate

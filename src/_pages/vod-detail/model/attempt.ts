@@ -1,7 +1,9 @@
 import { z } from "zod";
+import type { JsonValue } from "@/shared/db";
 
 export const RecordAttemptInputSchema = z.object({
-	inputValue: z.unknown().optional(),
+	idempotencyKey: z.string().optional(),
+	inputValue: z.custom<Record<string, JsonValue>>().optional(),
 	isCorrect: z.boolean(),
 	responseTimeMs: z.number().int().nonnegative(),
 	scenarioId: z.string().uuid(),

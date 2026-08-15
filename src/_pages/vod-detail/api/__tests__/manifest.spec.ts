@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getVodManifest } from "@/shared/db";
 import { handleGetVodManifest, parseModulesParam } from "../manifest";
@@ -40,7 +39,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			mockManifest as unknown as Awaited<ReturnType<typeof getVodManifest>>,
 		);
 
-		const req = new NextRequest("http://localhost/api/vods/vod_1/manifest");
+		const req = new Request("http://localhost/api/vods/vod_1/manifest");
 
 		// Act
 		const res = await handleGetVodManifest(req, {
@@ -89,7 +88,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			mockManifest as unknown as Awaited<ReturnType<typeof getVodManifest>>,
 		);
 
-		const req = new NextRequest(
+		const req = new Request(
 			"http://localhost/api/vods/vod_1/manifest?modules=STRATEGY,TACTICS",
 		);
 
@@ -109,9 +108,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		// Arrange
 		vi.mocked(getVodManifest).mockResolvedValueOnce(null);
 
-		const req = new NextRequest(
-			"http://localhost/api/vods/non_existent/manifest",
-		);
+		const req = new Request("http://localhost/api/vods/non_existent/manifest");
 
 		// Act
 		const res = await handleGetVodManifest(req, {

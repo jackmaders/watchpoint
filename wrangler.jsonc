@@ -2,7 +2,7 @@
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"assets": {
 		"binding": "ASSETS",
-		"directory": ".open-next/assets"
+		"directory": "dist/client"
 	},
 	"compatibility_date": "2026-08-07",
 	"compatibility_flags": ["nodejs_compat"],
@@ -15,7 +15,7 @@
 			"migrations_pattern": "drizzle/*.sql"
 		}
 	],
-	"main": ".open-next/worker.js",
+	"main": "dist/server/server.js",
 	"name": "watchpoint",
 	"observability": {
 		"enabled": true

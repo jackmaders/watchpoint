@@ -33,9 +33,11 @@ export default defineConfig({
 		exclude: [
 			"e2e/**",
 			"node_modules/**",
+			".output/**",
+			".nitro/**",
+			".vinxi/**",
 			".next/**",
 			".wrangler/**",
-			".open-next/**",
 			".claude/**",
 			"dist/**",
 			"generated/**",

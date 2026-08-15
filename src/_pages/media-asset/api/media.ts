@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { R2Bucket, R2ObjectBody } from "@cloudflare/workers-types";
 
 const CACHE_CONTROL_VALUE =
 	"public, max-age=31536000, s-maxage=31536000, immutable";
@@ -64,9 +64,63 @@ function parseObjectKey(rawKey: string[] | string | undefined): string | null {
 	return decodedSegments.join("/");
 }
 
+export type MediaContext =
+	| {
+			MEDIA?: R2Bucket;
+			cloudflare?: {
+				env?: {
+					MEDIA?: R2Bucket;
+				};
+			};
+			env?: {
+				MEDIA?: R2Bucket;
+			};
+			params?:
+				| Promise<{ key?: string[] | string }>
+				| { key?: string[] | string };
+	  }
+	| Record<string, unknown>;
+
+export async function getMediaBucket(
+	context?: MediaContext,
+): Promise<R2Bucket> {
+	const globalEnv = globalThis as unknown as {
+		MEDIA?: R2Bucket;
+		__env__?: { MEDIA?: R2Bucket };
+	};
+
+	let media: R2Bucket | undefined =
+		(context as { env?: { MEDIA?: R2Bucket } })?.env?.MEDIA ??
+		(context as { MEDIA?: R2Bucket })?.MEDIA ??
+		(context as { cloudflare?: { env?: { MEDIA?: R2Bucket } } })?.cloudflare
+			?.env?.MEDIA ??
+		globalEnv.MEDIA ??
+		globalEnv.__env__?.MEDIA;
+
+	if (!media) {
+		try {
+			const { getPlatformProxy } = await import("wrangler");
+			const proxy = await getPlatformProxy<{ MEDIA: R2Bucket }>();
+			media = proxy.env.MEDIA;
+		} catch {
+			// ignore fallback error
+		}
+	}
+
+	if (!media) {
+		throw new Error("Cloudflare R2 binding (MEDIA) not found");
+	}
+
+	return media;
+}
+
 export async function handleGetMedia(
 	request: Request,
-	context: { params: Promise<{ key?: string[] | string }> },
+	context: {
+		[key: string]: unknown;
+		env?: { MEDIA?: R2Bucket };
+		params?: Promise<{ key?: string[] | string }> | { key?: string[] | string };
+	},
 ): Promise<Response> {
 	const params = await context?.params;
 	const objectKey = parseObjectKey(params?.key);
@@ -75,8 +129,14 @@ export async function handleGetMedia(
 		return new Response("Bad Request", { status: 400 });
 	}
 
-	const { env } = await getCloudflareContext({ async: true });
-	const object = await env.MEDIA.get(objectKey, {
+	let mediaBucket: R2Bucket;
+	try {
+		mediaBucket = await getMediaBucket(context);
+	} catch {
+		return new Response("Internal Server Error", { status: 500 });
+	}
+
+	const object = await mediaBucket.get(objectKey, {
 		onlyIf: request.headers,
 	});
 
@@ -85,16 +145,22 @@ export async function handleGetMedia(
 	}
 
 	const headers = new Headers();
-	if (typeof object.writeHttpMetadata === "function") {
-		object.writeHttpMetadata(headers);
+	const r2Obj = object as unknown as {
+		httpEtag?: string;
+		writeHttpMetadata?: (headers: Headers) => void;
+	};
+
+	if (typeof r2Obj.writeHttpMetadata === "function") {
+		r2Obj.writeHttpMetadata(headers);
 	}
-	if (object.httpEtag) {
-		headers.set("ETag", object.httpEtag);
+	if (r2Obj.httpEtag) {
+		headers.set("ETag", r2Obj.httpEtag);
 	}
 	headers.set("Cache-Control", CACHE_CONTROL_VALUE);
 
+	const objectBody = (object as R2ObjectBody).body;
 	const hasBody =
-		"body" in object && object.body !== null && object.body !== undefined;
+		"body" in object && objectBody !== null && objectBody !== undefined;
 
 	if (!hasBody) {
 		return new Response(null, {
@@ -107,7 +173,7 @@ export async function handleGetMedia(
 		headers.set("Content-Type", resolveContentType(objectKey));
 	}
 
-	return new Response(object.body as BodyInit, {
+	return new Response(objectBody as unknown as BodyInit, {
 		headers,
 		status: 200,
 	});

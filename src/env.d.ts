@@ -1,13 +1,16 @@
-import type { PrismaClient } from "../generated/prisma/client";
+/// <reference types="vite/client" />
+
+declare module "*?url" {
+	const src: string;
+	export default src;
+}
 
 declare global {
-	var prisma: PrismaClient | undefined;
-
 	namespace NodeJS {
 		interface ProcessEnv {
-			BETTER_AUTH_SECRET: string;
-			BETTER_AUTH_URL: string;
-			NODE_ENV: "development" | "production" | "test";
+			BETTER_AUTH_SECRET?: string;
+			BETTER_AUTH_URL?: string;
+			NODE_ENV?: "development" | "production" | "test";
 		}
 	}
 }

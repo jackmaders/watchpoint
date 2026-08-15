@@ -15,6 +15,9 @@
 
 # build and output
 /.next/
+/.output/
+/.nitro/
+/.vinxi/
 /out/
 /dist
 /build

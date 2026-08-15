@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { headers } from "next/headers";
-import { getDb } from "../db/client/client";
+import { type DbContext, getDb } from "../db/client/client";
 import * as schema from "../db/schema";
 
 export const GUEST_USER_ID = "usr_guest_demo";
@@ -44,21 +43,43 @@ function createAuthInstance(
 type AuthInstance = ReturnType<typeof createAuthInstance>;
 let authInstance: AuthInstance | undefined;
 
-export async function getAuth(): Promise<AuthInstance> {
+export async function getAuth(context?: DbContext): Promise<AuthInstance> {
 	if (authInstance) return authInstance;
-	const db = await getDb();
+	const db = await getDb(context);
 	const config = getAuthConfig();
 
 	authInstance = createAuthInstance(db, config);
 	return authInstance;
 }
 
-export async function getCurrentUser(): Promise<{ id: string } | null> {
+export async function getCurrentUser(
+	reqHeaders?: Headers | Record<string, string> | null,
+	context?: DbContext,
+): Promise<{ id: string } | null> {
 	try {
-		const auth = await getAuth();
-		const reqHeaders = await headers();
+		const auth = await getAuth(context);
+		let headers: Headers | undefined;
+		if (reqHeaders instanceof Headers) {
+			headers = reqHeaders;
+		} else if (reqHeaders) {
+			headers = new Headers(reqHeaders);
+		} else {
+			try {
+				const { getRequestHeaders } = await import(
+					"@tanstack/react-start/server"
+				);
+				headers = getRequestHeaders();
+			} catch {
+				// not in server request context
+			}
+		}
+
+		if (!headers) {
+			return null;
+		}
+
 		const session = await auth.api.getSession({
-			headers: reqHeaders,
+			headers,
 		});
 		if (session?.user?.id) {
 			return { id: session.user.id };

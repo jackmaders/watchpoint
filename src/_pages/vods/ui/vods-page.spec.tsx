@@ -3,19 +3,22 @@ import { describe, expect, it, vi } from "vitest";
 import { getPublishedVods } from "@/shared/db";
 import { formatDuration, VodsPage } from "./vods-page";
 
-vi.mock("next/server");
 vi.mock("@/shared/db");
+vi.mock("@tanstack/react-router");
 
 describe("VodsPage catalog component", () => {
 	it("renders empty state message when no VODs are provided", async () => {
+		// Arrange & Act
 		render(await VodsPage());
 
+		// Assert
 		expect(
 			screen.getByText(/no training vods currently available/i),
 		).toBeDefined();
 	});
 
 	it("renders VOD cards with map name, rank tier, duration, and Start Training action", async () => {
+		// Arrange
 		vi.mocked(getPublishedVods).mockResolvedValueOnce([
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
@@ -35,8 +38,11 @@ describe("VodsPage catalog component", () => {
 				youtubeVideoId: "dQw4w9WgXcQ",
 			},
 		]);
+
+		// Act
 		render(await VodsPage());
 
+		// Assert
 		expect(
 			screen.getByText("GM Ana VOD — King's Row Defense & Attack"),
 		).toBeDefined();
@@ -51,6 +57,7 @@ describe("VodsPage catalog component", () => {
 	});
 
 	it("formats duration correctly when under 1 minute or with remaining seconds", async () => {
+		// Arrange
 		vi.mocked(getPublishedVods).mockResolvedValueOnce([
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
@@ -64,13 +71,17 @@ describe("VodsPage catalog component", () => {
 				youtubeVideoId: "abc12345",
 			},
 		]);
+
+		// Act
 		render(await VodsPage());
 
+		// Assert
 		expect(screen.getByText(/0m 45s/)).toBeDefined();
 	});
 
 	describe("formatDuration helper", () => {
 		it("handles negative, fractional, and NaN duration inputs safely", () => {
+			// Arrange & Act & Assert
 			expect(formatDuration(-10)).toBe("0m 00s");
 			expect(formatDuration(NaN)).toBe("0m 00s");
 			expect(formatDuration(125.7)).toBe("2m 05s");
