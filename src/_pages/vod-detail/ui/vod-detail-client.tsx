@@ -1,64 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { getVodById, ModuleType } from "@/shared/db";
+import { buildSessionUrl, calculateModuleCounts } from "../model/module-filter";
+import { MODULE_DEFINITIONS } from "../model/modules";
+import { ModuleFilterPills } from "./module-filter-pills";
 
 export interface VodDetailClientProps {
 	vod: NonNullable<Awaited<ReturnType<typeof getVodById>>>;
-}
-
-import { MODULE_DEFINITIONS, type ModuleDefinition } from "../model/modules";
-
-interface ModuleFilterCardProps {
-	isActive: boolean;
-	module: ModuleDefinition;
-	onToggle: (key: ModuleType) => void;
-}
-
-function ModuleFilterCard({
-	isActive,
-	module,
-	onToggle,
-}: ModuleFilterCardProps) {
-	const handleClick = useCallback(() => {
-		onToggle(module.key);
-	}, [module.key, onToggle]);
-
-	return (
-		<button
-			className={`flex flex-col justify-between p-5 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-				isActive
-					? "bg-slate-900 border-indigo-500/60 shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500/40"
-					: "bg-slate-950/40 border-slate-800/60 opacity-60 hover:opacity-100 hover:border-slate-700"
-			}`}
-			data-testid={`module-filter-${module.key}`}
-			onClick={handleClick}
-			type="button"
-		>
-			<div className="space-y-2">
-				<div className="flex items-center justify-between">
-					<span
-						className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${module.color}`}
-					>
-						{module.label}
-					</span>
-					<span
-						className={`text-xs font-semibold px-2 py-0.5 rounded ${
-							isActive
-								? "bg-emerald-500/20 text-emerald-300"
-								: "bg-slate-800 text-slate-400"
-						}`}
-					>
-						{isActive ? "ACTIVE" : "OFF"}
-					</span>
-				</div>
-				<p className="text-xs text-slate-400 leading-relaxed pt-1">
-					{module.description}
-				</p>
-			</div>
-		</button>
-	);
 }
 
 export function VodDetailClient({ vod }: VodDetailClientProps) {
@@ -66,25 +16,20 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 		MODULE_DEFINITIONS.map((def) => def.key),
 	);
 
-	const toggleModule = useCallback((moduleKey: ModuleType) => {
-		setActiveModules((prev) =>
-			prev.includes(moduleKey)
-				? prev.filter((m) => m !== moduleKey)
-				: [...prev, moduleKey],
-		);
-	}, []);
+	const availableCounts = useMemo(
+		() => calculateModuleCounts(vod.scenarios),
+		[vod.scenarios],
+	);
 
 	const matchingScenarioCount = useMemo(() => {
 		const activeSet = new Set(activeModules);
 		return vod.scenarios.filter((sc) => activeSet.has(sc.moduleType)).length;
 	}, [vod.scenarios, activeModules]);
 
-	const startHref = useMemo(() => {
-		if (activeModules.length === 0) return "#";
-		const params = new URLSearchParams();
-		params.set("modules", activeModules.join(","));
-		return `/vods/${vod.id}/session?${params.toString()}`;
-	}, [vod.id, activeModules]);
+	const startHref = useMemo(
+		() => buildSessionUrl(vod.id, activeModules),
+		[vod.id, activeModules],
+	);
 
 	return (
 		<div className="space-y-8">
@@ -113,29 +58,18 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{MODULE_DEFINITIONS.map((module) => (
-						<ModuleFilterCard
-							isActive={activeModules.includes(module.key)}
-							key={module.key}
-							module={module}
-							onToggle={toggleModule}
-						/>
-					))}
-				</div>
+				<ModuleFilterPills
+					availableCounts={availableCounts}
+					onChange={setActiveModules}
+					selectedModules={activeModules}
+				/>
 
 				<div className="pt-4 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-4">
 					<div className="text-xs text-slate-400">
-						{activeModules.length === 0 ? (
-							<span className="text-amber-400 font-medium">
-								⚠️ Select at least one module to start training
-							</span>
-						) : (
-							<span>
-								{activeModules.length} module
-								{activeModules.length > 1 ? "s" : ""} selected
-							</span>
-						)}
+						<span>
+							{activeModules.length} module
+							{activeModules.length !== 1 ? "s" : ""} selected
+						</span>
 					</div>
 
 					<Link
