@@ -1,6 +1,6 @@
 import type { ModuleType } from "@/shared/db";
 
-const OVERWATCH_HEROES = [
+export const OVERWATCH_HEROES = [
 	"Ana",
 	"Ashe",
 	"Baptiste",
@@ -44,9 +44,11 @@ const OVERWATCH_HEROES = [
 	"Wrecking Ball",
 	"Zarya",
 	"Zenyatta",
-];
+] as const;
 
-export function extractHeroFromTitle(title: string): string | null {
+export type OverwatchHero = (typeof OVERWATCH_HEROES)[number];
+
+export function extractHeroFromTitle(title: string): OverwatchHero | null {
 	for (const hero of OVERWATCH_HEROES) {
 		const escapedHero = hero.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const regex = new RegExp(`\\b${escapedHero}\\b`, "i");

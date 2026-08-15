@@ -50,7 +50,29 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		// Assert
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body).toEqual(JSON.parse(JSON.stringify(mockManifest)));
+		expect(body).toEqual({
+			createdAt: "2026-08-06T10:00:00.000Z",
+			durationSeconds: 1080,
+			id: "vod_1",
+			isPublished: true,
+			mapName: "King's Row",
+			rankTier: "Grandmaster",
+			scenarios: [
+				{
+					explanationText: "Test exp",
+					id: "sc_1",
+					inputConfig: {},
+					inputType: "MULTIPLE_CHOICE",
+					moduleType: "STRATEGY",
+					promptText: "Test prompt",
+					timeLimitSeconds: null,
+					timestampSeconds: 30,
+					vodId: "vod_1",
+				},
+			],
+			title: "GM Ana VOD",
+			youtubeVideoId: "dQw4w9WgXcQ",
+		});
 		expect(getVodManifest).toHaveBeenCalledWith("vod_1", {
 			modules: undefined,
 		});

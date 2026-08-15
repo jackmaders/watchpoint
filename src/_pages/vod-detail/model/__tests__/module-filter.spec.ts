@@ -9,26 +9,59 @@ import {
 
 describe("module-filter helpers", () => {
 	describe("extractHeroFromTitle", () => {
-		it("extracts known Overwatch hero names from title string", () => {
+		it("extracts Ana from standard title string", () => {
 			// Arrange
-			const title1 = "Grandmaster Ana VOD — King's Row Defense & Attack";
-			const title2 = "Top 500 Tracer Gameplay - Oasis";
-			const title3 = "Diamond Reinhardt Guide - Eichenwalde";
+			const title = "Grandmaster Ana VOD — King's Row Defense & Attack";
 
-			// Act & Assert
-			expect(extractHeroFromTitle(title1)).toBe("Ana");
-			expect(extractHeroFromTitle(title2)).toBe("Tracer");
-			expect(extractHeroFromTitle(title3)).toBe("Reinhardt");
+			// Act
+			const hero = extractHeroFromTitle(title);
+
+			// Assert
+			expect(hero).toBe("Ana");
 		});
 
-		it("handles case insensitivity and boundary matches", () => {
+		it("extracts Tracer from gameplay title string", () => {
 			// Arrange
-			const title1 = "gm ana vod";
-			const title2 = "WIDOWMAKER Masterclass";
+			const title = "Top 500 Tracer Gameplay - Oasis";
 
-			// Act & Assert
-			expect(extractHeroFromTitle(title1)).toBe("Ana");
-			expect(extractHeroFromTitle(title2)).toBe("Widowmaker");
+			// Act
+			const hero = extractHeroFromTitle(title);
+
+			// Assert
+			expect(hero).toBe("Tracer");
+		});
+
+		it("extracts Reinhardt from guide title string", () => {
+			// Arrange
+			const title = "Diamond Reinhardt Guide - Eichenwalde";
+
+			// Act
+			const hero = extractHeroFromTitle(title);
+
+			// Assert
+			expect(hero).toBe("Reinhardt");
+		});
+
+		it("handles lowercase hero name in title", () => {
+			// Arrange
+			const title = "gm ana vod";
+
+			// Act
+			const hero = extractHeroFromTitle(title);
+
+			// Assert
+			expect(hero).toBe("Ana");
+		});
+
+		it("handles uppercase hero name in title", () => {
+			// Arrange
+			const title = "WIDOWMAKER Masterclass";
+
+			// Act
+			const hero = extractHeroFromTitle(title);
+
+			// Assert
+			expect(hero).toBe("Widowmaker");
 		});
 
 		it("returns null when no hero name is present in title", () => {
