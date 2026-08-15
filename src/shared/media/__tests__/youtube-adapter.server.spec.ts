@@ -2,10 +2,10 @@
 
 import { describe, expect, it } from "vitest";
 
-describe("YouTube loader server boundary", () => {
+describe("YouTube adapter server boundary", () => {
 	it("can be imported and reports that loading requires a browser", async () => {
 		// Arrange
-		const { loadYouTubeIframeApi } = await import("../youtube");
+		const { loadYouTubeIframeApi } = await import("../youtube-adapter");
 
 		// Act
 		const load = loadYouTubeIframeApi();

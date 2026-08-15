@@ -1,14 +1,7 @@
 export type {
-	UseYouTubePlayerOptions,
-	UseYouTubePlayerResult,
-	YouTubeContainerRef,
-} from "./use-youtube-player";
-export { useYouTubePlayer } from "./use-youtube-player";
-export type {
-	YouTubeNamespace,
-	YouTubePlayer,
-	YouTubePlayerEvent,
-	YouTubePlayerOptions,
-	YouTubePlayerStateChangeEvent,
-} from "./youtube";
-export { loadYouTubeIframeApi, YouTubePlayerState } from "./youtube";
+	VodContainerRef,
+	VodPlayerOptions,
+	VodPlayerResult,
+} from "./types";
+export { PlaybackStatus } from "./types";
+export { useVodPlayer } from "./use-vod-player";
