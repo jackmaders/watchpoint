@@ -28,6 +28,14 @@ export {
 	type SessionSummaryReport,
 } from "./model/summary";
 export {
+	type ManifestVod,
+	type ScenarioItem,
+	type SessionPlayerState,
+	type UseSessionPlayerOptions,
+	type UseSessionPlayerResult,
+	useSessionPlayer,
+} from "./model/use-session-player";
+export {
 	ModuleFilterPills,
 	type ModuleFilterPillsProps,
 } from "./ui/module-filter-pills";
@@ -39,6 +47,11 @@ export {
 	type ScenarioOverlayProps,
 	type ScenarioOverlayState,
 } from "./ui/scenario-overlay";
+export {
+	SessionPlayerClient,
+	type SessionPlayerClientProps,
+} from "./ui/session-player-client";
+export { SessionPlayerPage } from "./ui/session-player-page";
 export {
 	SessionSummaryPanel,
 	type SessionSummaryPanelProps,

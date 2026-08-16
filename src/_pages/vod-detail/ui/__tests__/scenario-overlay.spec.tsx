@@ -391,4 +391,27 @@ describe("ScenarioOverlay", () => {
 		// Assert
 		expect(liveRegion.textContent).toContain("PASS");
 	});
+
+	it("renders replay context button when unanswered and calls onReplayContext on click", () => {
+		// Arrange
+		const handleReplayContext = vi.fn();
+		const state: ScenarioOverlayState = { status: "unanswered" };
+
+		// Act
+		render(
+			<ScenarioOverlay
+				onReplayContext={handleReplayContext}
+				onResume={vi.fn()}
+				onSelectOption={vi.fn()}
+				scenario={baseScenario}
+				state={state}
+			/>,
+		);
+		const replayBtn = screen.getByTestId("replay-context-button");
+		fireEvent.click(replayBtn);
+
+		// Assert
+		expect(replayBtn).toBeDefined();
+		expect(handleReplayContext).toHaveBeenCalledTimes(1);
+	});
 });
