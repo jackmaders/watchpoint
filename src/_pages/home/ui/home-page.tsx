@@ -1,12 +1,10 @@
-import Link from "next/link";
-import { connection } from "next/server";
+import { Link } from "@tanstack/react-router";
+import type { PublishedVodItem } from "@/shared/db";
 import { getPublishedVods } from "@/shared/db";
 import { UserForm } from "./user-form";
 
-export async function HomePage() {
-	await connection();
-
-	const vods = await getPublishedVods();
+export async function HomePage(props?: { vods?: PublishedVodItem[] }) {
+	const vods = props?.vods ?? (await getPublishedVods());
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-8 sm:p-24 bg-slate-950 text-slate-50">
@@ -28,7 +26,7 @@ export async function HomePage() {
 						</h2>
 						<Link
 							className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-							href="/vods"
+							to="/vods"
 						>
 							View Full Catalog &rarr;
 						</Link>
@@ -64,7 +62,8 @@ export async function HomePage() {
 										<span>{vod.scenarios.length} Scenarios</span>
 										<Link
 											className="text-indigo-400 hover:underline font-semibold"
-											href={`/vods/${vod.id}`}
+											params={{ id: vod.id }}
+											to="/vods/$id"
 										>
 											Start Training
 										</Link>

@@ -1,15 +1,13 @@
-import Link from "next/link";
-import { connection } from "next/server";
-import { getPublishedVods, type PublishedVodItem } from "@/shared/db";
+import { Link } from "@tanstack/react-router";
+import type { PublishedVodItem } from "@/shared/db";
+import { getPublishedVods } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
 
 export type VodItem = PublishedVodItem;
 export { formatDuration };
 
-export async function VodsPage() {
-	await connection();
-
-	const vods = await getPublishedVods();
+export async function VodsPage(props?: { vods?: PublishedVodItem[] }) {
+	const vods = props?.vods ?? (await getPublishedVods());
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">
@@ -66,7 +64,8 @@ export async function VodsPage() {
 								<div className="mt-6">
 									<Link
 										className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-500 active:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20"
-										href={`/vods/${vod.id}`}
+										params={{ id: vod.id }}
+										to="/vods/$id"
 									>
 										Start Training
 									</Link>

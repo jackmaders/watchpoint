@@ -1,5 +1,5 @@
 import { desc } from "drizzle-orm";
-import { getDb } from "../client/client";
+import { type DbContext, getDb } from "../client/client";
 import { type ModuleType, vods } from "../schema";
 
 export interface GetVodByIdOptions {
@@ -10,8 +10,8 @@ export type PublishedVodItem = Awaited<
 	ReturnType<typeof getPublishedVods>
 >[number];
 
-export async function getPublishedVods() {
-	const db = await getDb();
+export async function getPublishedVods(context?: DbContext) {
+	const db = await getDb(context);
 
 	return db.query.vods.findMany({
 		orderBy: [desc(vods.createdAt)],
@@ -29,8 +29,9 @@ export async function getPublishedVods() {
 export async function getVodById(
 	id: string,
 	options: GetVodByIdOptions = { publishedOnly: true },
+	context?: DbContext,
 ) {
-	const db = await getDb();
+	const db = await getDb(context);
 	const { publishedOnly = true } = options;
 
 	return db.query.vods.findFirst({
@@ -53,8 +54,9 @@ export interface GetVodManifestOptions {
 export async function getVodManifest(
 	id: string,
 	options: GetVodManifestOptions = {},
+	context?: DbContext,
 ) {
-	const db = await getDb();
+	const db = await getDb(context);
 	const { modules, publishedOnly = true } = options;
 
 	const vod = await db.query.vods.findFirst({

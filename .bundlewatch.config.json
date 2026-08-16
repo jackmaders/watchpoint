@@ -3,7 +3,7 @@
 		{
 			"maxPercentIncrease": 5,
 			"maxSize": "10MB",
-			"path": ".open-next/server-functions/default/handler.mjs"
+			"path": "dist/server/server.js"
 		}
 	]
 }

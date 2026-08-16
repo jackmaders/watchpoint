@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getVodById } from "@/shared/db";
 import { VodDetailPage } from "../vod-detail-page";
 
-vi.mock("next/server");
 vi.mock("@/shared/db");
+vi.mock("@tanstack/react-router");
 
 describe("VodDetailPage", () => {
 	beforeEach(() => {
@@ -227,5 +227,17 @@ describe("VodDetailPage", () => {
 
 		// Assert
 		expect(screen.getByText("VOD Not Found")).toBeDefined();
+	});
+
+	it("renders directly with passed vod prop", async () => {
+		// Arrange & Act
+		const ui = await VodDetailPage({
+			params: { id: "vod_1" },
+			vod: mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		});
+		render(ui);
+
+		// Assert
+		expect(screen.getByText("Grandmaster Ana VOD - King's Row")).toBeDefined();
 	});
 });

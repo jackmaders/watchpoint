@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useId } from "react";
 import type { ModuleType } from "@/shared/db";
+import { MODULE_MAP } from "../model/modules";
 
 export interface ScenarioOption {
 	id: string;
@@ -46,8 +46,6 @@ export interface ScenarioOverlayProps {
 	state: ScenarioOverlayState;
 	totalMs?: number;
 }
-
-import { MODULE_MAP } from "../model/modules";
 
 interface ScenarioTimerGaugeProps {
 	remainingMs: number;
@@ -286,12 +284,11 @@ export function ScenarioOverlay({
 
 				{scenario.imageUrl ? (
 					<div className="rounded-xl overflow-hidden border border-slate-800 shadow-md">
-						<Image
+						<img
 							alt="Scenario tactical diagram"
 							className="w-full h-auto object-cover max-h-48"
 							height={200}
 							src={scenario.imageUrl}
-							unoptimized
 							width={400}
 						/>
 					</div>

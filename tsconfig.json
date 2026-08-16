@@ -12,24 +12,12 @@
 		"paths": {
 			"@/*": ["./src/*"]
 		},
-		"plugins": [
-			{
-				"name": "next"
-			}
-		],
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"target": "ES2017",
+		"target": "ES2022",
 		"types": ["@cloudflare/workers-types", "@types/bun", "@types/node"]
 	},
-	"exclude": ["node_modules"],
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts",
-		".next/dev/types/**/*.ts",
-		"**/*.mts"
-	]
+	"exclude": ["node_modules", "dist", ".output"],
+	"include": ["**/*.ts", "**/*.tsx", "**/*.mts"]
 }

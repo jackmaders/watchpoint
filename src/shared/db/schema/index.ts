@@ -1,6 +1,12 @@
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue =
+	| JsonPrimitive
+	| { [key: string]: JsonValue }
+	| JsonValue[];
+
 export const users = sqliteTable("user", {
 	createdAt: integer("createdAt", { mode: "timestamp" })
 		.notNull()
@@ -129,7 +135,9 @@ export const scenarios = sqliteTable("scenario", {
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	imageUrl: text("image_url"),
-	inputConfig: text("input_config", { mode: "json" }).notNull(),
+	inputConfig: text("input_config", { mode: "json" })
+		.$type<Record<string, JsonValue>>()
+		.notNull(),
 	inputType: text("input_type", { enum: inputTypeEnum }).notNull(),
 	moduleType: text("module_type", { enum: moduleTypeEnum }).notNull(),
 	promptText: text("prompt_text").notNull(),
@@ -155,7 +163,9 @@ export const attemptRecords = sqliteTable("attempt_record", {
 	id: text("id")
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	inputValue: text("input_value", { mode: "json" }),
+	inputValue: text("input_value", { mode: "json" }).$type<
+		Record<string, JsonValue>
+	>(),
 	isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
 	responseTimeMs: integer("response_time_ms").notNull(),
 	scenarioId: text("scenario_id")

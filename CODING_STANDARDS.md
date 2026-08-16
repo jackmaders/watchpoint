@@ -20,15 +20,26 @@ Developer and Reviewer agent skills deleted in #50 — the parts that describe h
 Features extracted into `src/features/` are named `{action}-{entity}` (verb-noun): `create-user`,
 `submit-feedback`. A feature's name describes what it does, not just what it's about.
 
-## Next.js routing directory (`app/`) — barrel-only
+## Routing directory (`app/routes/`) — thin adapters
 
-Every file under `app/` MUST be a simple barrel re-export:
+Every route file under `app/routes/` MUST be a simple parameter-binding adapter:
 
-```ts
-export { HomePage as default } from "@/_pages/home";
+```tsx
+export const Route = createFileRoute("/")({
+	component: HomeRoute,
+	loader: async () => {
+		const vods = await getPublishedVods();
+		return { vods };
+	},
+});
+
+function HomeRoute() {
+	const { vods } = Route.useLoaderData();
+	return <HomePage vods={vods} />;
+}
 ```
 
-No inline business logic, data fetching, or UI rendering in `app/`. All page logic lives
+No inline business logic or UI rendering in `app/routes/`. All page logic and presentation lives
 in the FSD `src/_pages/` layer.
 
 ## Test file location

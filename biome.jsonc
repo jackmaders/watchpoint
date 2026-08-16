@@ -22,9 +22,13 @@
 			"**",
 			"!node_modules",
 			"!.next",
+			"!.output",
+			"!.nitro",
+			"!.vinxi",
 			"!dist",
 			"!build",
 			"!cloudflare-env.d.ts",
+			"!app/routeTree.gen.ts",
 			"!**/*.grit"
 		]
 	},
@@ -33,7 +37,6 @@
 	},
 	"linter": {
 		"domains": {
-			"next": "all",
 			"playwright": "all",
 			"react": "all",
 			"test": "all"
@@ -75,6 +78,16 @@
 				"rules": {
 					"complexity": {
 						"noExcessiveLinesPerFunction": { "level": "off" }
+					}
+				}
+			}
+		},
+		{
+			"includes": ["app/routes/**", "app/routeTree.gen.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
 					}
 				}
 			}

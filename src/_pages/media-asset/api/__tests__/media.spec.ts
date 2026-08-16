@@ -1,12 +1,20 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { handleGetMedia } from "../media";
+import { getMediaBucket, handleGetMedia } from "../media";
 
-vi.mock("@opennextjs/cloudflare");
+vi.mock("wrangler");
+
+interface GlobalMediaMock {
+	MEDIA?: unknown;
+	__env__?: { MEDIA?: unknown };
+}
+
+const mockMediaGlobals = globalThis as unknown as GlobalMediaMock;
 
 describe("GET /api/media/[...key] handler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		delete mockMediaGlobals.MEDIA;
+		delete mockMediaGlobals.__env__;
 	});
 
 	it.each([
@@ -63,18 +71,33 @@ describe("GET /api/media/[...key] handler", () => {
 		expect(response.status).toBe(400);
 	});
 
+	it("returns 500 when media bucket cannot be resolved", async () => {
+		// Arrange
+		const { getPlatformProxy } = await import("wrangler");
+		vi.mocked(getPlatformProxy).mockRejectedValueOnce(
+			new Error("No proxy available"),
+		);
+		const request = new Request("http://localhost/api/media/test.png");
+
+		// Act
+		const response = await handleGetMedia(request, {
+			params: Promise.resolve({ key: "test.png" }),
+		});
+
+		// Assert
+		expect(response.status).toBe(500);
+	});
+
 	it("returns 404 Not Found when R2 object does not exist", async () => {
 		// Arrange
 		const mockGet = vi.fn().mockResolvedValueOnce(null);
-		vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-			env: { MEDIA: { get: mockGet } },
-		} as never);
 		const request = new Request(
 			"http://localhost/api/media/scenarios/kings-row.webp",
 		);
 
 		// Act
 		const response = await handleGetMedia(request, {
+			env: { MEDIA: { get: mockGet } as never },
 			params: Promise.resolve({ key: ["scenarios", "kings-row.webp"] }),
 		});
 
@@ -101,15 +124,13 @@ describe("GET /api/media/[...key] handler", () => {
 			}),
 		};
 		const mockGet = vi.fn().mockResolvedValueOnce(mockObject);
-		vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-			env: { MEDIA: { get: mockGet } },
-		} as never);
 		const request = new Request(
 			"http://localhost/api/media/scenarios/kings-row.webp",
 		);
 
 		// Act
 		const response = await handleGetMedia(request, {
+			env: { MEDIA: { get: mockGet } as never },
 			params: Promise.resolve({ key: ["scenarios", "kings-row.webp"] }),
 		});
 		const text = await response.text();
@@ -137,13 +158,11 @@ describe("GET /api/media/[...key] handler", () => {
 			body: stream,
 		};
 		const mockGet = vi.fn().mockResolvedValueOnce(mockObject);
-		vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-			env: { MEDIA: { get: mockGet } },
-		} as never);
 		const request = new Request("http://localhost/api/media/overview.png");
 
 		// Act
 		const response = await handleGetMedia(request, {
+			env: { MEDIA: { get: mockGet } as never },
 			params: Promise.resolve({ key: "overview.png" }),
 		});
 		const text = await response.text();
@@ -181,15 +200,13 @@ describe("GET /api/media/[...key] handler", () => {
 				writeHttpMetadata: vi.fn(),
 			};
 			const mockGet = vi.fn().mockResolvedValueOnce(mockObject);
-			vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-				env: { MEDIA: { get: mockGet } },
-			} as never);
 			const request = new Request(
 				`http://localhost/api/media/${key.join("/")}`,
 			);
 
 			// Act
 			const response = await handleGetMedia(request, {
+				env: { MEDIA: { get: mockGet } as never },
 				params: Promise.resolve({ key }),
 			});
 
@@ -206,9 +223,6 @@ describe("GET /api/media/[...key] handler", () => {
 			writeHttpMetadata: vi.fn(),
 		};
 		const mockGet = vi.fn().mockResolvedValueOnce(mockObjectWithoutBody);
-		vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-			env: { MEDIA: { get: mockGet } },
-		} as never);
 		const request = new Request(
 			"http://localhost/api/media/scenarios/kings-row.webp",
 			{
@@ -220,6 +234,7 @@ describe("GET /api/media/[...key] handler", () => {
 
 		// Act
 		const response = await handleGetMedia(request, {
+			env: { MEDIA: { get: mockGet } as never },
 			params: Promise.resolve({ key: ["scenarios", "kings-row.webp"] }),
 		});
 		const text = await response.text();
@@ -237,20 +252,53 @@ describe("GET /api/media/[...key] handler", () => {
 		// Arrange
 		const mockObjectWithoutBody = {};
 		const mockGet = vi.fn().mockResolvedValueOnce(mockObjectWithoutBody);
-		vi.mocked(getCloudflareContext).mockResolvedValueOnce({
-			env: { MEDIA: { get: mockGet } },
-		} as never);
 		const request = new Request(
 			"http://localhost/api/media/scenarios/kings-row.webp",
 		);
 
 		// Act
 		const response = await handleGetMedia(request, {
+			env: { MEDIA: { get: mockGet } as never },
 			params: Promise.resolve({ key: ["scenarios", "kings-row.webp"] }),
 		});
 
 		// Assert
 		expect(response.status).toBe(304);
 		expect(response.headers.get("ETag")).toBeNull();
+	});
+
+	describe("getMediaBucket", () => {
+		it("resolves MEDIA bucket from context.MEDIA, cloudflare context, and globals", async () => {
+			// Arrange
+			const mockBucket = { get: vi.fn() } as never;
+
+			// Act & Assert
+			const b1 = await getMediaBucket({ MEDIA: mockBucket });
+			const b2 = await getMediaBucket({
+				cloudflare: { env: { MEDIA: mockBucket } },
+			});
+			mockMediaGlobals.MEDIA = mockBucket;
+			const b3 = await getMediaBucket();
+
+			expect(b1).toBe(mockBucket);
+			expect(b2).toBe(mockBucket);
+			expect(b3).toBe(mockBucket);
+		});
+
+		it("resolves MEDIA bucket from wrangler getPlatformProxy fallback", async () => {
+			// Arrange
+			const mockBucket = { get: vi.fn() } as never;
+			const { getPlatformProxy } = await import("wrangler");
+			vi.mocked(getPlatformProxy).mockResolvedValueOnce({
+				dispose: vi.fn(),
+				env: { MEDIA: mockBucket },
+			} as never);
+
+			// Act
+			const bucket = await getMediaBucket();
+
+			// Assert
+			expect(bucket).toBe(mockBucket);
+		});
 	});
 });
