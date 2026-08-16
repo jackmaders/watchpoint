@@ -2,18 +2,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PlaybackStatus } from "@/shared/media";
 import {
 	createYouTubeMock,
 	installMockFrames,
-	PlaybackStatus,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "@/shared/media";
+} from "../../../../shared/media/__mocks__/youtube";
 import * as serverFns from "../../api/server-fns";
+import {
+	initialSessionPlayerSession,
+	sessionPlayerReducer,
+} from "../session-player-state";
 import {
 	findCorrectOptionId,
 	isSelectedOptionCorrect,
 	resolveNewStatusState,
+	toScenarioOverlayData,
 	useSessionPlayer,
 } from "../use-session-player";
 
@@ -152,22 +157,17 @@ describe("useSessionPlayer", () => {
 		expect(result.current.activeScenarios).toHaveLength(3);
 	});
 
-	it("filters scenarios based on activeModuleKeys and sorts by timestampSeconds", () => {
+	it("uses the manifest scenario set and sorts scenarios by timestampSeconds", () => {
 		// Arrange
 		const unsortedManifest = {
 			...mockManifest,
-			scenarios: [
-				mockManifest.scenarios[2],
-				mockManifest.scenarios[0],
-				mockManifest.scenarios[1],
-			],
+			scenarios: [mockManifest.scenarios[2], mockManifest.scenarios[0]],
 		};
 
 		// Act
 		const { result } = renderHook(
 			() =>
 				useSessionPlayer({
-					activeModuleKeys: ["ULTIMATE", "STRATEGY"],
 					initialManifest: unsortedManifest,
 					vodId: "vod_gm_ana",
 				}),
@@ -272,6 +272,55 @@ describe("useSessionPlayer", () => {
 		expect(result.current.attempts).toHaveLength(1);
 		expect(result.current.attempts[0].isCorrect).toBe(true);
 		expect(result.current.attempts[0].moduleType).toBe("STRATEGY");
+	});
+
+	it("does not resume playback from FEEDBACK through the outer play action", async () => {
+		// Arrange
+		const frameController = installMockFrames();
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: mockManifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+		player.getCurrentTime = vi.fn(() => 30.0);
+		act(() => {
+			frameController.flush();
+		});
+		act(() => {
+			result.current.selectOption("opt_1a");
+		});
+		const playCallCount = vi.mocked(player.playVideo).mock.calls.length;
+
+		// Act
+		act(() => {
+			result.current.play();
+		});
+
+		// Assert
+		expect(result.current.state).toBe("FEEDBACK");
+		expect(result.current.currentScenario?.id).toBe("sc_1");
+		expect(result.current.overlayState?.status).toBe("answered");
+		expect(player.playVideo).toHaveBeenCalledTimes(playCallCount);
 	});
 
 	it("records incorrect attempt when user selects wrong option", async () => {
@@ -426,13 +475,16 @@ describe("useSessionPlayer", () => {
 		const youtube = createYouTubeMock(600);
 		setYouTubeNamespace(youtube.namespace);
 		const container = document.createElement("div");
+		const tacticsManifest = {
+			...mockManifest,
+			scenarios: [mockManifest.scenarios[1]],
+		};
 
 		const { result } = renderHook(
 			() =>
 				useSessionPlayer({
-					activeModuleKeys: ["TACTICS"],
 					autoplay: true,
-					initialManifest: mockManifest,
+					initialManifest: tacticsManifest,
 					vodId: "vod_gm_ana",
 				}),
 			{ wrapper: createWrapper() },
@@ -503,7 +555,6 @@ describe("useSessionPlayer", () => {
 		const { result } = renderHook(
 			() =>
 				useSessionPlayer({
-					activeModuleKeys: ["TACTICS"],
 					autoplay: true,
 					initialManifest: customLimitManifest,
 					vodId: "vod_gm_ana",
@@ -728,7 +779,7 @@ describe("useSessionPlayer", () => {
 		expect(result.current.currentScenario).toBeNull();
 	});
 
-	it("safely ignores selectOption, resumePlayback, and replayContext when not in correct state", () => {
+	it("safely ignores player actions when not in the correct state", () => {
 		// Arrange
 		const { result } = renderHook(
 			() =>
@@ -741,6 +792,7 @@ describe("useSessionPlayer", () => {
 
 		// Act
 		act(() => {
+			result.current.pause();
 			result.current.selectOption("opt_1a");
 			result.current.resumePlayback();
 			result.current.replayContext();
@@ -795,9 +847,92 @@ describe("useSessionPlayer", () => {
 		expect(getScenarioOptions({ options: "not-an-array" })).toEqual([]);
 		expect(
 			getScenarioOptions({
-				options: [{ id: "opt_1", text: "Option 1" }],
+				options: [
+					{ id: "opt_1", label: "A", text: "Option 1" },
+					{ id: "missing-text" },
+					null,
+				],
 			}),
-		).toEqual([{ id: "opt_1", text: "Option 1" }]);
+		).toEqual([{ id: "opt_1", label: "A", text: "Option 1" }]);
+		expect(
+			toScenarioOverlayData({
+				...mockManifest.scenarios[0],
+				inputConfig: { options: "not-an-array" },
+			})?.inputConfig.options,
+		).toEqual([]);
+	});
+
+	it("ignores feedback actions when no scenario answer is pending", () => {
+		// Arrange
+		const attempt = {
+			isCorrect: true,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 100,
+			scenarioId: "sc_1",
+		};
+
+		// Act
+		const nextSession = sessionPlayerReducer(initialSessionPlayerSession, {
+			attempt,
+			overlayState: {
+				correctOptionId: "opt_1",
+				isCorrect: true,
+				selectedOptionId: "opt_1",
+				status: "answered",
+			},
+			type: "ANSWER_RECORDED",
+		});
+
+		// Assert
+		expect(nextSession).toBe(initialSessionPlayerSession);
+	});
+
+	it("keeps reducer events inert outside their legal states", () => {
+		// Arrange
+		const readySession = sessionPlayerReducer(initialSessionPlayerSession, {
+			autoplay: true,
+			type: "PLAYER_READY",
+		});
+		const pausedSession = sessionPlayerReducer(readySession, {
+			type: "PAUSE_REQUESTED",
+		});
+		const activeSession = sessionPlayerReducer(
+			sessionPlayerReducer(pausedSession, { type: "PLAY_REQUESTED" }),
+			{ totalMs: 1000, type: "SCENARIO_TRIGGERED" },
+		);
+		const replayedSession = sessionPlayerReducer(activeSession, {
+			type: "REPLAY_CONTEXT",
+		});
+
+		// Act
+		const ignoredReady = sessionPlayerReducer(readySession, {
+			autoplay: false,
+			type: "PLAYER_READY",
+		});
+		const inertSession = sessionPlayerReducer(
+			sessionPlayerReducer(
+				sessionPlayerReducer(
+					sessionPlayerReducer(initialSessionPlayerSession, {
+						type: "PAUSE_REQUESTED",
+					}),
+					{ type: "PLAY_REQUESTED" },
+				),
+				{ totalMs: 1000, type: "SCENARIO_TRIGGERED" },
+			),
+			{ type: "REPLAY_CONTEXT" },
+		);
+		const resumedSession = sessionPlayerReducer(replayedSession, {
+			type: "RESUME_PLAYBACK",
+		});
+
+		// Assert
+		expect(readySession.state).toBe("PLAYING");
+		expect(ignoredReady).toBe(readySession);
+		expect(pausedSession.state).toBe("PAUSED_USER");
+		expect(activeSession.state).toBe("SCENARIO_ACTIVE");
+		expect(inertSession).toBe(initialSessionPlayerSession);
+		expect(replayedSession.state).toBe("PLAYING");
+		expect(resumedSession).toBe(replayedSession);
 	});
 
 	it("ignores unhandled status transitions gracefully", () => {

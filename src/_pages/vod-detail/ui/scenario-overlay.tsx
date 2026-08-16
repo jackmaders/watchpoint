@@ -2,41 +2,11 @@
 
 import { useCallback, useEffect, useId } from "react";
 import { MODULE_MAP } from "@/entities/scenario";
-import type { ModuleType } from "@/shared/db";
-
-export interface ScenarioOption {
-	id: string;
-	label?: string;
-	text: string;
-}
-
-export interface ScenarioInputConfig {
-	options: ScenarioOption[];
-}
-
-export interface ScenarioData {
-	explanationText: string;
-	id: string;
-	imageUrl?: string | null;
-	inputConfig: ScenarioInputConfig;
-	moduleType: ModuleType;
-	promptText: string;
-	timeLimitSeconds?: number | null;
-}
-
-export type ScenarioOverlayState =
-	| { status: "unanswered" }
-	| {
-			correctOptionId: string;
-			isCorrect: boolean;
-			selectedOptionId: string;
-			status: "answered";
-	  }
-	| {
-			correctOptionId: string;
-			isCorrect: false;
-			status: "timedOut";
-	  };
+import type {
+	ScenarioData,
+	ScenarioOption,
+	ScenarioOverlayState,
+} from "../model/session-contract";
 
 export interface ScenarioOverlayProps {
 	onReplayContext?: () => void;

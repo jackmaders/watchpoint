@@ -8,7 +8,7 @@ import {
 	installMockFrames,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "@/shared/media";
+} from "../../../../shared/media/__mocks__/youtube";
 import * as serverFns from "../../api/server-fns";
 import { SessionPlayerPage } from "../session-player-page";
 
@@ -143,6 +143,7 @@ describe("SessionPlayerPage", () => {
 		// Assert overlay is rendered
 		expect(screen.getByText("Where should Ana position?")).toBeDefined();
 		expect(screen.getByText("Highground Balcony")).toBeDefined();
+		expect(screen.queryByTestId("play-pause-button")).toBeNull();
 
 		// Act: select option
 		act(() => {
@@ -152,6 +153,7 @@ describe("SessionPlayerPage", () => {
 		// Assert feedback is rendered
 		expect(screen.getByText("PASS")).toBeDefined();
 		expect(screen.getByText("Highground is optimal position.")).toBeDefined();
+		expect(screen.queryByTestId("play-pause-button")).toBeNull();
 
 		// Act: resume playback
 		act(() => {
@@ -213,7 +215,9 @@ describe("SessionPlayerPage", () => {
 
 		// Assert
 		expect(screen.getByText("Grandmaster Ana VOD — King's Row")).toBeDefined();
-		expect(db.getSessionManifest).toHaveBeenCalledWith("vod_gm_ana");
+		expect(db.getSessionManifest).toHaveBeenCalledWith("vod_gm_ana", {
+			modules: "STRATEGY",
+		});
 	});
 
 	it("renders title without hero tag when no hero is in title", async () => {

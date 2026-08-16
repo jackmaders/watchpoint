@@ -6,7 +6,7 @@ import {
 	createYouTubeMock,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "@/shared/media";
+} from "../../../../shared/media/__mocks__/youtube";
 import { SessionPlayerClient } from "../session-player-client";
 
 vi.mock("@tanstack/react-router");
@@ -66,7 +66,7 @@ describe("SessionPlayerClient", () => {
 		setYouTubeNamespace(youtube.namespace);
 
 		// Act
-		renderWithClient(<SessionPlayerClient modulesParam={null} vod={mockVod} />);
+		renderWithClient(<SessionPlayerClient vod={mockVod} />);
 		await act(async () => {
 			await Promise.resolve();
 		});
@@ -98,9 +98,7 @@ describe("SessionPlayerClient", () => {
 		};
 
 		// Act
-		renderWithClient(
-			<SessionPlayerClient modulesParam="STRATEGY" vod={activeVod} />,
-		);
+		renderWithClient(<SessionPlayerClient vod={activeVod} />);
 		await act(async () => {
 			await Promise.resolve();
 		});

@@ -18,7 +18,9 @@ export async function SessionPlayerPage({
 	const resolvedSearch = await searchParams;
 	let vod = initialVod;
 	if (vod === undefined) {
-		vod = await getSessionManifest(resolvedParams.id);
+		vod = await getSessionManifest(resolvedParams.id, {
+			modules: resolvedSearch?.modules,
+		});
 	}
 
 	if (!vod) {
@@ -43,11 +45,9 @@ export async function SessionPlayerPage({
 		);
 	}
 
-	const modules = resolvedSearch ? resolvedSearch.modules : undefined;
-
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8">
-			<SessionPlayerClient modulesParam={modules} vod={vod} />
+			<SessionPlayerClient vod={vod} />
 		</main>
 	);
 }

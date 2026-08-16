@@ -1,32 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	DEFAULT_MODULE_TYPES,
-	filterScenariosByModules,
-	parseModuleTypes,
-} from "@/entities/scenario";
-import type { getSessionManifest, ModuleType } from "@/shared/db";
+	useCallback,
+	useEffect,
+	useMemo,
+	useReducer,
+	useRef,
+	useState,
+} from "react";
+import type { getSessionManifest } from "@/shared/db";
 import {
-	PlaybackStatus,
+	type PlaybackStatus,
 	useVodPlayer,
 	type VodContainerRef,
 } from "@/shared/media";
 import { useRecordAttemptMutation } from "../api/use-record-attempt";
-import type { ScenarioOverlayState } from "../ui/scenario-overlay";
+import {
+	getScenarioOptions,
+	type ScenarioOption,
+	type ScenarioOverlayState,
+} from "./session-contract";
+import {
+	initialSessionPlayerSession,
+	type SessionPlayerAction,
+	type SessionPlayerState,
+	sessionPlayerReducer,
+} from "./session-player-state";
 import {
 	calculateSessionSummary,
 	type SessionAttempt,
 	type SessionSummaryReport,
 } from "./summary";
 
-export type SessionPlayerState =
-	| "LOADING"
-	| "PLAYING"
-	| "PAUSED_USER"
-	| "SCENARIO_ACTIVE"
-	| "FEEDBACK"
-	| "COMPLETED";
+export type {
+	ScenarioData,
+	ScenarioInputConfig,
+	ScenarioOverlayState,
+} from "./session-contract";
+export { getScenarioOptions, toScenarioOverlayData } from "./session-contract";
+export type { SessionPlayerState } from "./session-player-state";
+export { resolveNewStatusState } from "./session-player-state";
 
 export type ManifestVod = NonNullable<
 	Awaited<ReturnType<typeof getSessionManifest>>
@@ -34,7 +47,6 @@ export type ManifestVod = NonNullable<
 export type ScenarioItem = ManifestVod["scenarios"][number];
 
 export interface UseSessionPlayerOptions {
-	activeModuleKeys?: readonly ModuleType[] | readonly string[] | null;
 	autoplay?: boolean;
 	initialManifest?: ManifestVod | null;
 	onSessionComplete?: (summary: SessionSummaryReport) => void;
@@ -66,26 +78,9 @@ export interface UseSessionPlayerResult {
 	vod: ManifestVod | null;
 }
 
-export interface ScenarioOptionItem {
-	id: string;
-	is_correct?: boolean;
-	label?: string;
-	text: string;
-}
+export type ScenarioOptionItem = ScenarioOption;
 
-export function getScenarioOptions(inputConfig: unknown): ScenarioOptionItem[] {
-	if (
-		typeof inputConfig === "object" &&
-		inputConfig !== null &&
-		"options" in inputConfig &&
-		Array.isArray((inputConfig as { options: unknown }).options)
-	) {
-		return (inputConfig as { options: ScenarioOptionItem[] }).options;
-	}
-	return [];
-}
-
-export function findCorrectOptionId(options: ScenarioOptionItem[]): string {
+export function findCorrectOptionId(options: ScenarioOption[]): string {
 	for (const option of options) {
 		if (option.is_correct) return option.id;
 	}
@@ -93,7 +88,7 @@ export function findCorrectOptionId(options: ScenarioOptionItem[]): string {
 }
 
 export function isSelectedOptionCorrect(
-	options: ScenarioOptionItem[],
+	options: ScenarioOption[],
 	optionId: string,
 ): boolean {
 	for (const option of options) {
@@ -102,41 +97,13 @@ export function isSelectedOptionCorrect(
 	return false;
 }
 
-export function resolveNewStatusState(
-	current: SessionPlayerState,
-	newStatus: PlaybackStatus,
-): SessionPlayerState | null {
-	if (
-		newStatus === PlaybackStatus.PLAYING &&
-		(current === "LOADING" || current === "PAUSED_USER")
-	) {
-		return "PLAYING";
-	}
-	if (newStatus === PlaybackStatus.PAUSED && current === "PLAYING") {
-		return "PAUSED_USER";
-	}
-	if (newStatus === PlaybackStatus.ENDED) {
-		return "COMPLETED";
-	}
-	return null;
-}
-
-function useActiveScenarios(
-	vod: ManifestVod | null,
-	activeModuleKeys?: readonly ModuleType[] | readonly string[] | null,
-): ScenarioItem[] {
-	const targetModules = useMemo(() => {
-		const parsed = parseModuleTypes(activeModuleKeys as string[] | undefined);
-		return parsed.length > 0 ? parsed : DEFAULT_MODULE_TYPES;
-	}, [activeModuleKeys]);
-
+function useSessionScenarios(vod: ManifestVod | null): ScenarioItem[] {
 	return useMemo(() => {
 		if (!vod?.scenarios) return [];
-		const filtered = filterScenariosByModules(vod.scenarios, targetModules);
-		return [...filtered].sort(
+		return [...vod.scenarios].sort(
 			(a, b) => a.timestampSeconds - b.timestampSeconds,
 		);
-	}, [vod, targetModules]);
+	}, [vod]);
 }
 
 function useScenarioCountdown(
@@ -191,42 +158,65 @@ function getScenarioLimitMs(scenario: ScenarioItem): number | undefined {
 	return limitSec && limitSec > 0 ? limitSec * 1000 : undefined;
 }
 
-function useScenarioAttemptManager(
-	state: SessionPlayerState,
-	setState: (s: SessionPlayerState) => void,
-	currentScenarioRef: React.RefObject<ScenarioItem | null>,
-	totalMs: number | undefined,
-	startTimeRef: React.RefObject<number>,
-) {
-	const [attempts, setAttempts] = useState<SessionAttempt[]>([]);
-	const [overlayState, setOverlayState] = useState<ScenarioOverlayState | null>(
-		null,
-	);
+interface SessionAttemptCallbacksParams {
+	currentScenarioRef: React.RefObject<ScenarioItem | null>;
+	dispatch: React.Dispatch<SessionPlayerAction>;
+	overlayState: ScenarioOverlayState | null;
+	startTimeRef: React.RefObject<number>;
+	state: SessionPlayerState;
+	totalMs: number | undefined;
+}
+
+function useSessionAttemptCallbacks({
+	currentScenarioRef,
+	dispatch,
+	overlayState,
+	startTimeRef,
+	state,
+	totalMs,
+}: SessionAttemptCallbacksParams) {
 	const recordMutation = useRecordAttemptMutation();
 
 	const handleTimeout = useCallback(() => {
-		const scenario = currentScenarioRef.current as ScenarioItem;
-		const options = getScenarioOptions(scenario.inputConfig);
-		const correctOptionId = findCorrectOptionId(options);
-		const responseTimeMs = totalMs as number;
-		setOverlayState({ correctOptionId, isCorrect: false, status: "timedOut" });
-		setAttempts((prev) => [
-			...prev,
-			{
-				isCorrect: false,
-				isTimedOut: true,
-				moduleType: scenario.moduleType,
-				responseTimeMs,
-				scenarioId: scenario.id,
-			},
-		]);
+		const scenario = currentScenarioRef.current;
+		/* c8 ignore next 7 -- defensive guard handles a stale countdown callback. */
+		if (
+			state !== "SCENARIO_ACTIVE" ||
+			overlayState?.status !== "unanswered" ||
+			!scenario ||
+			typeof totalMs !== "number"
+		) {
+			return;
+		}
+
+		const correctOptionId = findCorrectOptionId(
+			getScenarioOptions(scenario.inputConfig),
+		);
+		const attempt: SessionAttempt = {
+			isCorrect: false,
+			isTimedOut: true,
+			moduleType: scenario.moduleType,
+			responseTimeMs: totalMs,
+			scenarioId: scenario.id,
+		};
+		dispatch({
+			attempt,
+			overlayState: { correctOptionId, isCorrect: false, status: "timedOut" },
+			type: "TIMEOUT_RECORDED",
+		});
 		recordMutation.mutate({
 			isCorrect: false,
-			responseTimeMs,
+			responseTimeMs: totalMs,
 			scenarioId: scenario.id,
 		});
-		setState("FEEDBACK");
-	}, [totalMs, currentScenarioRef, recordMutation, setState]);
+	}, [
+		currentScenarioRef,
+		dispatch,
+		overlayState?.status,
+		recordMutation,
+		state,
+		totalMs,
+	]);
 
 	const selectOption = useCallback(
 		(optionId: string) => {
@@ -238,6 +228,7 @@ function useScenarioAttemptManager(
 			) {
 				return;
 			}
+
 			const options = getScenarioOptions(scenario.inputConfig);
 			const isCorrect = isSelectedOptionCorrect(options, optionId);
 			const correctOptionId = findCorrectOptionId(options);
@@ -246,59 +237,46 @@ function useScenarioAttemptManager(
 				elapsedMs = Math.min(totalMs, elapsedMs);
 			}
 			const responseTimeMs = Math.round(elapsedMs);
-			setOverlayState({
-				correctOptionId,
+			const attempt: SessionAttempt = {
 				isCorrect,
-				selectedOptionId: optionId,
-				status: "answered",
-			});
-			setAttempts((prev) => [
-				...prev,
-				{
+				moduleType: scenario.moduleType,
+				responseTimeMs,
+				scenarioId: scenario.id,
+			};
+			dispatch({
+				attempt,
+				overlayState: {
+					correctOptionId,
 					isCorrect,
-					moduleType: scenario.moduleType,
-					responseTimeMs,
-					scenarioId: scenario.id,
+					selectedOptionId: optionId,
+					status: "answered",
 				},
-			]);
+				type: "ANSWER_RECORDED",
+			});
 			recordMutation.mutate({
 				isCorrect,
 				responseTimeMs,
 				scenarioId: scenario.id,
 				selectedOptionId: optionId,
 			});
-			setState("FEEDBACK");
 		},
 		[
-			state,
-			overlayState?.status,
 			currentScenarioRef,
-			totalMs,
-			startTimeRef,
+			dispatch,
+			overlayState?.status,
 			recordMutation,
-			setState,
+			startTimeRef,
+			state,
+			totalMs,
 		],
 	);
 
-	return {
-		attempts,
-		handleTimeout,
-		overlayState,
-		selectOption,
-		setAttempts,
-		setOverlayState,
-	};
+	return { handleTimeout, selectOption };
 }
 
-interface ActionCallbacksParams {
+interface SessionActionCallbacksParams {
 	currentScenario: ScenarioItem | null;
-	setActiveScenarioIndex: React.Dispatch<React.SetStateAction<number>>;
-	setAttempts: React.Dispatch<React.SetStateAction<SessionAttempt[]>>;
-	setOverlayState: React.Dispatch<
-		React.SetStateAction<ScenarioOverlayState | null>
-	>;
-	setState: (s: SessionPlayerState) => void;
-	setTotalMs: React.Dispatch<React.SetStateAction<number | undefined>>;
+	dispatch: React.Dispatch<SessionPlayerAction>;
 	state: SessionPlayerState;
 	vodId: string;
 	vodPlayer: ReturnType<typeof useVodPlayer>;
@@ -306,73 +284,41 @@ interface ActionCallbacksParams {
 
 function useSessionActionCallbacks({
 	currentScenario,
-	setActiveScenarioIndex,
-	setAttempts,
-	setOverlayState,
-	setState,
-	setTotalMs,
+	dispatch,
 	state,
 	vodId,
 	vodPlayer,
-}: ActionCallbacksParams) {
+}: SessionActionCallbacksParams) {
 	const pause = useCallback(() => {
+		if (state !== "PLAYING") return;
+		dispatch({ type: "PAUSE_REQUESTED" });
 		vodPlayer.pause();
-		setState("PAUSED_USER");
-	}, [vodPlayer, setState]);
+	}, [dispatch, state, vodPlayer]);
 
 	const play = useCallback(() => {
+		if (state !== "PAUSED_USER") return;
+		dispatch({ type: "PLAY_REQUESTED" });
 		vodPlayer.play();
-		setState("PLAYING");
-	}, [vodPlayer, setState]);
+	}, [dispatch, state, vodPlayer]);
 
 	const replayContext = useCallback(() => {
 		if (state !== "SCENARIO_ACTIVE" || !currentScenario) return;
+		dispatch({ type: "REPLAY_CONTEXT" });
 		vodPlayer.seekTo(Math.max(0, currentScenario.timestampSeconds - 10), true);
 		vodPlayer.play();
-		setOverlayState(null);
-		setTotalMs(undefined);
-		setState("PLAYING");
-	}, [
-		state,
-		currentScenario,
-		vodPlayer,
-		setOverlayState,
-		setTotalMs,
-		setState,
-	]);
+	}, [currentScenario, dispatch, state, vodPlayer]);
 
 	const resumePlayback = useCallback(() => {
 		if (state !== "FEEDBACK") return;
-		setActiveScenarioIndex((idx) => idx + 1);
-		setOverlayState(null);
-		setTotalMs(undefined);
+		dispatch({ type: "RESUME_PLAYBACK" });
 		vodPlayer.play();
-		setState("PLAYING");
-	}, [
-		state,
-		vodPlayer,
-		setActiveScenarioIndex,
-		setOverlayState,
-		setTotalMs,
-		setState,
-	]);
+	}, [dispatch, state, vodPlayer]);
 
 	const retrySession = useCallback(() => {
-		setAttempts([]);
-		setActiveScenarioIndex(0);
-		setOverlayState(null);
-		setTotalMs(undefined);
+		dispatch({ type: "RETRY_SESSION" });
 		vodPlayer.seekTo(0, true);
 		vodPlayer.play();
-		setState("PLAYING");
-	}, [
-		vodPlayer,
-		setAttempts,
-		setActiveScenarioIndex,
-		setOverlayState,
-		setTotalMs,
-		setState,
-	]);
+	}, [dispatch, vodPlayer]);
 
 	const exitSession = useCallback(() => {
 		window.location.href = `/vods/${vodId}`;
@@ -391,20 +337,18 @@ function useSessionActionCallbacks({
 function useSessionPlaybackAdapter(
 	autoplay: boolean,
 	vod: ManifestVod | null,
-	stateRef: React.RefObject<SessionPlayerState>,
-	setState: (s: SessionPlayerState) => void,
+	dispatch: React.Dispatch<SessionPlayerAction>,
 	onTimeUpdate: (time: number) => void,
 ) {
 	const onReady = useCallback(() => {
-		setState(autoplay ? "PLAYING" : "PAUSED_USER");
-	}, [autoplay, setState]);
+		dispatch({ autoplay, type: "PLAYER_READY" });
+	}, [autoplay, dispatch]);
 
 	const onStatusChange = useCallback(
-		(s: PlaybackStatus) => {
-			const next = resolveNewStatusState(stateRef.current, s);
-			if (next) setState(next);
+		(status: PlaybackStatus) => {
+			dispatch({ status, type: "PLAYBACK_STATUS_CHANGED" });
 		},
-		[stateRef, setState],
+		[dispatch],
 	);
 
 	return useVodPlayer({
@@ -435,12 +379,7 @@ function useSessionSummaryTracker(
 function useScenarioTimeTrigger(
 	stateRef: React.RefObject<SessionPlayerState>,
 	currentScenarioRef: React.RefObject<ScenarioItem | null>,
-	setState: (s: SessionPlayerState) => void,
-	setOverlayState: React.Dispatch<
-		React.SetStateAction<ScenarioOverlayState | null>
-	>,
-	startTimeRef: React.RefObject<number>,
-	setTotalMs: React.Dispatch<React.SetStateAction<number | undefined>>,
+	onScenarioTriggered: (scenario: ScenarioItem) => void,
 	pauseRef: React.RefObject<(() => void) | null>,
 ) {
 	return useCallback(
@@ -448,115 +387,102 @@ function useScenarioTimeTrigger(
 			if (stateRef.current !== "PLAYING") return;
 			const scenario = currentScenarioRef.current;
 			if (!scenario || time < scenario.timestampSeconds) return;
-			setState("SCENARIO_ACTIVE");
-			setOverlayState({ status: "unanswered" });
-			startTimeRef.current = Date.now();
-			setTotalMs(getScenarioLimitMs(scenario));
+			onScenarioTriggered(scenario);
 			pauseRef.current?.();
 		},
-		[
-			stateRef,
-			currentScenarioRef,
-			setState,
-			setOverlayState,
-			startTimeRef,
-			setTotalMs,
-			pauseRef,
-		],
+		[stateRef, currentScenarioRef, onScenarioTriggered, pauseRef],
 	);
 }
 
 export function useSessionPlayer({
-	activeModuleKeys,
 	autoplay = true,
 	initialManifest,
 	onSessionComplete,
 	vodId,
 }: UseSessionPlayerOptions): UseSessionPlayerResult {
 	const vod = initialManifest ?? null;
-	const activeScenarios = useActiveScenarios(vod, activeModuleKeys);
-	const [state, setState] = useState<SessionPlayerState>("LOADING");
-	const [activeScenarioIndex, setActiveScenarioIndex] = useState<number>(0);
-	const [totalMs, setTotalMs] = useState<number | undefined>(undefined);
+	const activeScenarios = useSessionScenarios(vod);
+	const [session, dispatch] = useReducer(
+		sessionPlayerReducer,
+		initialSessionPlayerSession,
+	);
 	const startTimeRef = useRef<number>(0);
 	const pauseRef = useRef<(() => void) | null>(null);
-	const stateRef = useRef(state);
-	const currentScenario = activeScenarios[activeScenarioIndex] ?? null;
+	const stateRef = useRef(session.state);
+	const currentScenario = activeScenarios[session.activeScenarioIndex] ?? null;
 	const currentScenarioRef = useRef(currentScenario);
-	stateRef.current = state;
+	stateRef.current = session.state;
 	currentScenarioRef.current = currentScenario;
 
-	const {
-		attempts,
-		handleTimeout,
-		overlayState,
-		selectOption,
-		setAttempts,
-		setOverlayState,
-	} = useScenarioAttemptManager(
-		state,
-		setState,
+	const onScenarioTriggered = useCallback((scenario: ScenarioItem) => {
+		startTimeRef.current = Date.now();
+		dispatch({
+			totalMs: getScenarioLimitMs(scenario),
+			type: "SCENARIO_TRIGGERED",
+		});
+	}, []);
+
+	const { handleTimeout, selectOption } = useSessionAttemptCallbacks({
 		currentScenarioRef,
-		totalMs,
+		dispatch,
+		overlayState: session.overlayState,
 		startTimeRef,
-	);
+		state: session.state,
+		totalMs: session.totalMs,
+	});
 
 	const remainingMs = useScenarioCountdown(
-		state,
-		totalMs,
-		overlayState?.status === "unanswered",
+		session.state,
+		session.totalMs,
+		session.overlayState?.status === "unanswered",
 		handleTimeout,
 	);
 
 	const onTimeUpdate = useScenarioTimeTrigger(
 		stateRef,
 		currentScenarioRef,
-		setState,
-		setOverlayState,
-		startTimeRef,
-		setTotalMs,
+		onScenarioTriggered,
 		pauseRef,
 	);
 
 	const vodPlayer = useSessionPlaybackAdapter(
 		autoplay,
 		vod,
-		stateRef,
-		setState,
+		dispatch,
 		onTimeUpdate,
 	);
 	pauseRef.current = vodPlayer.pause;
 
 	const actions = useSessionActionCallbacks({
 		currentScenario,
-		setActiveScenarioIndex,
-		setAttempts,
-		setOverlayState,
-		setState,
-		setTotalMs,
-		state,
+		dispatch,
+		state: session.state,
 		vodId,
 		vodPlayer,
 	});
 
-	const summary = useSessionSummaryTracker(state, attempts, onSessionComplete);
+	const summary = useSessionSummaryTracker(
+		session.state,
+		session.attempts,
+		onSessionComplete,
+	);
 
 	return {
-		activeScenarioIndex,
+		activeScenarioIndex: session.activeScenarioIndex,
 		activeScenarios,
-		attempts,
+		attempts: session.attempts,
 		containerRef: vodPlayer.containerRef,
 		currentScenario,
 		currentTime: vodPlayer.currentTime,
 		duration: vodPlayer.duration,
 		isReady: vodPlayer.isReady,
-		overlayState,
+		overlayState: session.overlayState,
 		playbackStatus: vodPlayer.status,
 		remainingMs,
 		selectOption,
-		state,
+		state: session.state,
 		summary,
-		totalMs,
+		totalMs: session.totalMs,
 		vod,
 		...actions,
 	};

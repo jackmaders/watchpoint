@@ -7,19 +7,19 @@ import { formatDuration } from "@/shared/lib/utils";
 import type { VodContainerRef } from "@/shared/media";
 import { extractHeroFromTitle } from "../model/module-filter";
 import {
+	type ScenarioData,
+	type ScenarioOverlayState,
+	toScenarioOverlayData,
+} from "../model/session-contract";
+import {
 	type ManifestVod,
 	type ScenarioItem,
 	useSessionPlayer,
 } from "../model/use-session-player";
-import {
-	type ScenarioData,
-	ScenarioOverlay,
-	type ScenarioOverlayState,
-} from "./scenario-overlay";
+import { ScenarioOverlay } from "./scenario-overlay";
 import { SessionSummaryPanel } from "./session-summary-panel";
 
 export interface SessionPlayerClientProps {
-	modulesParam?: string | null;
 	vod: ManifestVod;
 }
 
@@ -218,26 +218,7 @@ function SessionPlayerViewport({
 	);
 }
 
-function toScenarioData(scenario: ScenarioItem | null): ScenarioData | null {
-	if (!scenario) return null;
-	const options =
-		(scenario.inputConfig as { options: { id: string; text: string }[] })
-			?.options ?? [];
-	return {
-		explanationText: scenario.explanationText,
-		id: scenario.id,
-		imageUrl: scenario.imageUrl,
-		inputConfig: { options },
-		moduleType: scenario.moduleType,
-		promptText: scenario.promptText,
-		timeLimitSeconds: scenario.timeLimitSeconds,
-	};
-}
-
-export function SessionPlayerClient({
-	modulesParam,
-	vod,
-}: SessionPlayerClientProps) {
+export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 	const hero = extractHeroFromTitle(vod.title);
 
 	const {
@@ -260,14 +241,13 @@ export function SessionPlayerClient({
 		summary,
 		totalMs,
 	} = useSessionPlayer({
-		activeModuleKeys: modulesParam ? modulesParam.split(",") : undefined,
 		initialManifest: vod,
 		vodId: vod.id,
 	});
 
 	const effectiveDuration = duration > 0 ? duration : vod.durationSeconds;
 	const overlayScenarioData = useMemo(
-		() => toScenarioData(currentScenario),
+		() => toScenarioOverlayData(currentScenario),
 		[currentScenario],
 	);
 	const isCompleted = state === "COMPLETED" && summary !== null;
@@ -309,7 +289,7 @@ export function SessionPlayerClient({
 				totalMs={totalMs}
 			/>
 
-			{!isCompleted ? (
+			{!isCompleted && !isOverlayVisible ? (
 				<SessionPlayerControls
 					activeScenarios={activeScenarios}
 					currentTime={currentTime}
