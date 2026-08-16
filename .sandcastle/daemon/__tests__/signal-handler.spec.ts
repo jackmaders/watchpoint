@@ -174,6 +174,7 @@ describe("setupGracefulShutdown", () => {
 
 		const controller = setupGracefulShutdown({
 			exit,
+			logger: () => {},
 			processOff,
 			processOn,
 		});
@@ -204,6 +205,7 @@ describe("setupGracefulShutdown", () => {
 		};
 
 		const controller = setupGracefulShutdown({
+			logger: () => {},
 			processOff,
 			processOn,
 		});
@@ -241,6 +243,21 @@ describe("setupGracefulShutdown", () => {
 
 		// Assert
 		expect(controller.isShuttingDown()).toBe(true);
+	});
+
+	it("uses default logger, exit, and signals when options are omitted", () => {
+		// Arrange
+		const processOn = vi.fn();
+		const processOff = vi.fn();
+
+		// Act
+		const controller = setupGracefulShutdown({
+			processOff,
+			processOn,
+		});
+
+		// Assert
+		expect(controller.isShuttingDown()).toBe(false);
 	});
 });
 
