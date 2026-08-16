@@ -78,6 +78,7 @@
 		"prepare": "lefthook install",
 		"preview": "vite preview",
 		"sandcastle": "bun scripts/sandcastle.ts",
+		"sandcastle:pick": "bun scripts/sandcastle.ts pick",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:unit": "vitest run",
