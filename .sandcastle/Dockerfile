@@ -16,6 +16,11 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:/home/agent/.bun/bin:${PATH}"
 
+# Install a reproducible Codex runtime in the image. The host's `codex`
+# symlink is deliberately not mounted: its target lives in the host's global
+# Node package tree and would break container isolation.
+RUN bun add --global @openai/codex@0.147.0
+
 # Ensure user directories exist for auth and tooling
 RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin /home/agent/.codex \
 	&& printf '%s\n' \
@@ -30,6 +35,8 @@ RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.loc
 	'command = "sh"' \
 	'args = ["-c", "echo $OPENROUTER_API_KEY"]' \
 	> /home/agent/.codex/config.toml
+
+ENV CODEX_HOME="/home/agent/.codex"
 
 WORKDIR /workspace
 

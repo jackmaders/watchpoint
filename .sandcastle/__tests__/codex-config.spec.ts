@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildCodexConfig,
+	CODEX_CLI_VERSION,
 	OPENROUTER_DEFAULT_MODEL,
 	validateCodexConfiguration,
 } from "../codex-config";
 
 describe("Codex/OpenRouter configuration", () => {
+	it("publishes the pinned Codex CLI version used by the sandbox image", () => {
+		// Arrange
+
+		// Act
+		const version = CODEX_CLI_VERSION;
+
+		// Assert
+		expect(version).toBe("0.147.0");
+	});
 	it("generates only the minimal provider configuration without a secret", () => {
 		// Arrange
 		const model = "openrouter/free";

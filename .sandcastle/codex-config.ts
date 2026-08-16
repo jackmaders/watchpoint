@@ -1,5 +1,6 @@
 export const OPENROUTER_DEFAULT_MODEL = "openrouter/free";
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+export const CODEX_CLI_VERSION = "0.147.0";
 
 /**
  * The config deliberately contains no credential. Codex resolves the key at

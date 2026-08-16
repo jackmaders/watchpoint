@@ -1,8 +1,51 @@
 import { describe, expect, it, vi } from "vitest";
-import { orchestrateSandcastle } from "../orchestrator";
+import {
+	buildDockerSandboxOptions,
+	orchestrateSandcastle,
+} from "../orchestrator";
 import type { SandcastleCliArgs } from "../types";
 
 describe("orchestrateSandcastle", () => {
+	it("builds the Docker runtime contract with the selected image and auth", () => {
+		// Arrange
+		const authConfig = {
+			env: {
+				HOME: "/home/agent",
+				OPENROUTER_API_KEY: "runtime-only-key",
+			},
+			mounts: [
+				{
+					hostPath: "/home/test/.gitconfig",
+					readonly: true,
+					sandboxPath: "/home/agent/.gitconfig",
+				},
+			],
+		};
+
+		// Act
+		const options = buildDockerSandboxOptions(
+			{ imageName: "sandcastle:issue-202" },
+			authConfig,
+		);
+
+		// Assert
+		expect(options).toEqual({
+			env: authConfig.env,
+			imageName: "sandcastle:issue-202",
+			mounts: authConfig.mounts,
+		});
+	});
+
+	it("uses the reproducible Watchpoint image when no override is supplied", () => {
+		// Arrange
+		const authConfig = { env: {}, mounts: [] };
+
+		// Act
+		const options = buildDockerSandboxOptions({}, authConfig);
+
+		// Assert
+		expect(options.imageName).toBe("sandcastle:watchpoint");
+	});
 	it("executes dry-run without invoking sandbox or git push", async () => {
 		// Arrange
 		const args: SandcastleCliArgs = {
