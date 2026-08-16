@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getVodById, getVodManifest } from "@/shared/db";
+import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
 import * as recordAttemptModule from "../record-attempt";
 import {
 	getSessionManifest,
@@ -19,7 +19,7 @@ describe("server-fns", () => {
 	it("executes getVodDetails handler correctly", async () => {
 		// Arrange
 		const mockVod = { id: "vod_123", title: "Test VOD" } as never;
-		vi.mocked(getVodById).mockResolvedValueOnce(mockVod);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockVod);
 
 		// Act
 		const result = await (
@@ -27,14 +27,14 @@ describe("server-fns", () => {
 		)({ data: "vod_123" });
 
 		// Assert
-		expect(getVodById).toHaveBeenCalledWith("vod_123");
+		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123");
 		expect(result).toBe(mockVod);
 	});
 
 	it("executes getSessionManifest handler correctly", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(getVodManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
 
 		// Act
 		const result = await (
@@ -50,7 +50,7 @@ describe("server-fns", () => {
 		});
 
 		// Assert
-		expect(getVodManifest).toHaveBeenCalledWith("vod_123", {
+		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123", {
 			modules: ["STRATEGY"],
 			publishedOnly: true,
 		});

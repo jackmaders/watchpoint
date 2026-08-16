@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getVodById, getVodManifest } from "@/shared/db";
+import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
 import {
 	type RecordAttemptInput,
 	RecordAttemptInputSchema,
@@ -10,7 +10,7 @@ import { recordAttemptAction } from "./record-attempt";
 export const getVodDetails = createServerFn({ method: "GET" })
 	.validator((vodId: string) => vodId)
 	.handler(async ({ data: vodId }) => {
-		return getVodById(vodId);
+		return dbGetSessionManifest(vodId);
 	});
 
 export interface GetSessionManifestPayload {
@@ -22,7 +22,7 @@ export interface GetSessionManifestPayload {
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator((input: GetSessionManifestPayload) => input)
 	.handler(async ({ data }) => {
-		return getVodManifest(data.vodId, {
+		return dbGetSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});

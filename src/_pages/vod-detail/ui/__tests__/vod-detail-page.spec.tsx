@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getVodById } from "@/shared/db";
+import { getSessionManifest } from "@/shared/db";
 import { VodDetailPage } from "../vod-detail-page";
 
 vi.mock("@/shared/db");
@@ -56,8 +56,8 @@ describe("VodDetailPage", () => {
 
 	it("renders VOD detail header with map name, rank tier, hero badge, duration, and title", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 
 		// Act
@@ -81,8 +81,10 @@ describe("VodDetailPage", () => {
 			...mockVod,
 			title: "Overwatch Ranked Match",
 		};
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			vodWithoutHero as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			vodWithoutHero as unknown as Awaited<
+				ReturnType<typeof getSessionManifest>
+			>,
 		);
 
 		// Act
@@ -97,8 +99,8 @@ describe("VodDetailPage", () => {
 
 	it("renders module filter controls for all 5 modules (STRATEGY, TACTICS, ULTIMATE, COOLDOWN, SPATIAL)", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 
 		// Act
@@ -117,8 +119,8 @@ describe("VodDetailPage", () => {
 
 	it("updates session launcher href when a module filter is toggled off", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
@@ -138,8 +140,8 @@ describe("VodDetailPage", () => {
 
 	it("re-enables a module filter when toggled back on", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
@@ -162,8 +164,8 @@ describe("VodDetailPage", () => {
 
 	it("displays '1 module selected' when exactly 1 module remains selected", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
@@ -189,8 +191,8 @@ describe("VodDetailPage", () => {
 
 	it("handles deselecting all modules by showing warning and disabling start link", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
@@ -215,9 +217,7 @@ describe("VodDetailPage", () => {
 
 	it("renders VOD Not Found UI when vod is not found", async () => {
 		// Arrange
-		vi.mocked(getVodById).mockResolvedValueOnce(
-			undefined as unknown as Awaited<ReturnType<typeof getVodById>>,
-		);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(null);
 
 		// Act
 		const ui = await VodDetailPage({
@@ -233,7 +233,7 @@ describe("VodDetailPage", () => {
 		// Arrange & Act
 		const ui = await VodDetailPage({
 			params: { id: "vod_1" },
-			vod: mockVod as unknown as Awaited<ReturnType<typeof getVodById>>,
+			vod: mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		});
 		render(ui);
 

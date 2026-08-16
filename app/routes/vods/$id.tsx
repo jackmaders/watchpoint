@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VodDetailPage } from "@/_pages/vod-detail";
-import { getVodById } from "@/shared/db";
+import { getSessionManifest } from "@/shared/db";
 
 export const Route = createFileRoute("/vods/$id")({
 	component: VodDetailRoute,
 	loader: async ({ params }) => {
-		const vod = await getVodById(params.id);
+		const vod = await getSessionManifest(params.id);
 		return { vod };
 	},
 });
