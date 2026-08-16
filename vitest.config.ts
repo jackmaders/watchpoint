@@ -40,6 +40,8 @@ export default defineConfig({
 			".next/**",
 			".wrangler/**",
 			".claude/**",
+			".agents/**",
+			".sandcastle/worktrees/**",
 			"dist/**",
 			"generated/**",
 		],
