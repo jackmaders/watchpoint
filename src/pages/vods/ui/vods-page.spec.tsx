@@ -1,15 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getPublishedVods } from "@/shared/db";
 import { formatDuration, VodsPage } from "./vods-page";
 
-vi.mock("@/shared/db");
 vi.mock("@tanstack/react-router");
 
 describe("VodsPage catalog component", () => {
-	it("renders empty state message when no VODs are provided", async () => {
+	it("renders empty state message when no VODs are provided", () => {
 		// Arrange & Act
-		render(await VodsPage());
+		render(<VodsPage />);
 
 		// Assert
 		expect(
@@ -17,9 +15,9 @@ describe("VodsPage catalog component", () => {
 		).toBeDefined();
 	});
 
-	it("renders VOD cards with map name, rank tier, duration, and Start Training action", async () => {
+	it("renders VOD cards with map name, rank tier, duration, and Start Training action", () => {
 		// Arrange
-		vi.mocked(getPublishedVods).mockResolvedValueOnce([
+		const mockVods = [
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 1080,
@@ -37,10 +35,10 @@ describe("VodsPage catalog component", () => {
 				title: "GM Ana VOD — King's Row Defense & Attack",
 				youtubeVideoId: "dQw4w9WgXcQ",
 			},
-		]);
+		];
 
 		// Act
-		render(await VodsPage());
+		render(<VodsPage vods={mockVods} />);
 
 		// Assert
 		expect(
@@ -56,9 +54,9 @@ describe("VodsPage catalog component", () => {
 		expect(startButton.getAttribute("href")).toBe("/vods/vod_1");
 	});
 
-	it("formats duration correctly when under 1 minute or with remaining seconds", async () => {
+	it("formats duration correctly when under 1 minute or with remaining seconds", () => {
 		// Arrange
-		vi.mocked(getPublishedVods).mockResolvedValueOnce([
+		const mockVods = [
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 45,
@@ -70,10 +68,10 @@ describe("VodsPage catalog component", () => {
 				title: "Short VOD",
 				youtubeVideoId: "abc12345",
 			},
-		]);
+		];
 
 		// Act
-		render(await VodsPage());
+		render(<VodsPage vods={mockVods} />);
 
 		// Assert
 		expect(screen.getByText(/0m 45s/)).toBeDefined();

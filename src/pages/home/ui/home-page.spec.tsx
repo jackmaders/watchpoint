@@ -1,15 +1,13 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getPublishedVods } from "@/shared/db";
 import { HomePage } from "./home-page";
 
-vi.mock("@/shared/db");
 vi.mock("@tanstack/react-router");
 
 describe("HomePage component", () => {
-	it("renders heading, description, and user form", async () => {
+	it("renders heading, description, and user form", () => {
 		// Arrange & Act
-		render(await HomePage());
+		render(<HomePage />);
 
 		// Assert
 		expect(
@@ -23,9 +21,9 @@ describe("HomePage component", () => {
 		expect(screen.getByRole("button", { name: "Submit" })).toBeDefined();
 	});
 
-	it("renders empty database state when no VODs are passed", async () => {
+	it("renders empty database state when no VODs are passed", () => {
 		// Arrange & Act
-		render(await HomePage());
+		render(<HomePage vods={[]} />);
 
 		// Assert
 		expect(
@@ -33,9 +31,9 @@ describe("HomePage component", () => {
 		).toBeDefined();
 	});
 
-	it("renders VOD items fetched from database", async () => {
+	it("renders VOD items passed via props", () => {
 		// Arrange
-		vi.mocked(getPublishedVods).mockResolvedValueOnce([
+		const mockVods = [
 			{
 				createdAt: new Date(),
 				durationSeconds: 100,
@@ -53,10 +51,10 @@ describe("HomePage component", () => {
 				title: "Grandmaster Ana VOD",
 				youtubeVideoId: "abcde",
 			},
-		]);
+		];
 
 		// Act
-		render(await HomePage());
+		render(<HomePage vods={mockVods} />);
 
 		// Assert
 		expect(screen.getByText("Grandmaster Ana VOD")).toBeDefined();
@@ -67,7 +65,7 @@ describe("HomePage component", () => {
 
 	it("handles form submission cleanly", async () => {
 		// Arrange
-		render(await HomePage());
+		render(<HomePage />);
 		const nameInput = screen.getByPlaceholderText("Name");
 		const emailInput = screen.getByPlaceholderText("Email");
 		const submitButton = screen.getByRole("button", { name: "Submit" });

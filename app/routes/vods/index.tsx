@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { VodsPage } from "@/pages/vods";
-import { getPublishedVods } from "@/shared/db";
+import { getPublishedVods, VodsPage } from "@/pages/vods";
 
 export const Route = createFileRoute("/vods/")({
 	component: VodsRoute,

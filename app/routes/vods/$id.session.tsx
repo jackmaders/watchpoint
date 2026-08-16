@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { SessionPlayerPage } from "@/pages/vod-detail";
-import { getSessionManifest } from "@/shared/db";
+import { getSessionManifest, SessionPlayerPage } from "@/pages/vod-detail";
 
 const sessionSearchSchema = z.object({
 	modules: z.string().optional(),
@@ -21,8 +20,11 @@ export const Route = createFileRoute("/vods/$id/session")({
 		deps: SessionSearch;
 		params: { id: string };
 	}) => {
-		const vod = await getSessionManifest(params.id, {
-			modules: deps.modules,
+		const vod = await getSessionManifest({
+			data: {
+				modules: deps.modules,
+				vodId: params.id,
+			},
 		});
 		return { vod };
 	},

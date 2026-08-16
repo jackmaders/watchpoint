@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as db from "@/shared/db";
 import {
 	createYouTubeMock,
 	installMockFrames,
@@ -12,7 +11,6 @@ import {
 import * as serverFns from "../../api/server-fns";
 import { SessionPlayerPage } from "../session-player-page";
 
-vi.mock("@/shared/db");
 vi.mock("@tanstack/react-router");
 
 describe("SessionPlayerPage", () => {
@@ -77,14 +75,11 @@ describe("SessionPlayerPage", () => {
 		);
 	};
 
-	it("renders VOD Not Found when vod is not found in database", async () => {
-		// Arrange
-		vi.spyOn(serverFns, "getSessionManifest").mockResolvedValue(null as never);
-
+	it("renders VOD Not Found when vod is not found", async () => {
 		// Act
 		const page = await SessionPlayerPage({
 			params: { id: "missing_id" },
-			vod: null as never,
+			vod: null,
 		});
 		renderWithClient(page);
 
@@ -198,28 +193,6 @@ describe("SessionPlayerPage", () => {
 		expect(player.seekTo).toHaveBeenCalledWith(0, true);
 	});
 
-	it("fetches manifest on the server when vod prop is not supplied", async () => {
-		// Arrange
-		const youtube = createYouTubeMock(600);
-		setYouTubeNamespace(youtube.namespace);
-		vi.mocked(db.getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof db.getSessionManifest>>,
-		);
-
-		// Act
-		const page = await SessionPlayerPage({
-			params: { id: "vod_gm_ana" },
-			searchParams: { modules: "STRATEGY" },
-		});
-		renderWithClient(page);
-
-		// Assert
-		expect(screen.getByText("Grandmaster Ana VOD — King's Row")).toBeDefined();
-		expect(db.getSessionManifest).toHaveBeenCalledWith("vod_gm_ana", {
-			modules: "STRATEGY",
-		});
-	});
-
 	it("renders title without hero tag when no hero is in title", async () => {
 		// Arrange
 		const youtube = createYouTubeMock(600);
@@ -239,21 +212,6 @@ describe("SessionPlayerPage", () => {
 		// Assert
 		expect(screen.getByText("Grandmaster King's Row Defense")).toBeDefined();
 		expect(screen.queryByText(/Hero:/)).toBeNull();
-	});
-
-	it("renders VOD Not Found view when vod does not exist", async () => {
-		// Arrange
-		vi.mocked(db.getSessionManifest).mockResolvedValueOnce(null);
-
-		// Act
-		const page = await SessionPlayerPage({
-			params: { id: "non_existent_vod" },
-		});
-		renderWithClient(page);
-
-		// Assert
-		expect(screen.getByText("VOD Not Found")).toBeDefined();
-		expect(screen.getByText("Back to VOD Catalog")).toBeDefined();
 	});
 
 	it("resolves async Promise params and searchParams correctly", async () => {

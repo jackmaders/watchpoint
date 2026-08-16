@@ -35,9 +35,12 @@ export async function getDb(context?: DbContext): Promise<DrizzleDb> {
 		globalEnv.DB ??
 		globalEnv.__env__?.DB;
 
-	if (!d1Binding) {
+	if (!d1Binding && process.env.NODE_ENV !== "production") {
 		try {
-			const { getPlatformProxy } = await import("wrangler");
+			const pkg = "wrangler";
+			const { getPlatformProxy } = (await import(
+				/* @vite-ignore */ pkg
+			)) as typeof import("wrangler");
 			const proxy = await getPlatformProxy<{ DB: D1Database }>();
 			d1Binding = proxy.env.DB;
 		} catch {

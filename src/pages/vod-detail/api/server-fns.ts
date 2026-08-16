@@ -14,13 +14,20 @@ export const getVodDetails = createServerFn({ method: "GET" })
 	});
 
 export interface GetSessionManifestPayload {
-	modules?: string[];
+	modules?: string | string[];
 	publishedOnly?: boolean;
 	vodId: string;
 }
 
 export const getSessionManifest = createServerFn({ method: "GET" })
-	.validator((input: GetSessionManifestPayload) => input)
+	.validator(
+		(input: string | GetSessionManifestPayload): GetSessionManifestPayload => {
+			if (typeof input === "string") {
+				return { vodId: input };
+			}
+			return input;
+		},
+	)
 	.handler(async ({ data }) => {
 		return dbGetSessionManifest(data.vodId, {
 			modules: data.modules,

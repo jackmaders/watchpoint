@@ -97,9 +97,12 @@ export async function getMediaBucket(
 		globalEnv.MEDIA ??
 		globalEnv.__env__?.MEDIA;
 
-	if (!media) {
+	if (!media && process.env.NODE_ENV !== "production") {
 		try {
-			const { getPlatformProxy } = await import("wrangler");
+			const pkg = "wrangler";
+			const { getPlatformProxy } = (await import(
+				/* @vite-ignore */ pkg
+			)) as typeof import("wrangler");
 			const proxy = await getPlatformProxy<{ MEDIA: R2Bucket }>();
 			media = proxy.env.MEDIA;
 		} catch {

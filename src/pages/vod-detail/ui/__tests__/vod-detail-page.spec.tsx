@@ -1,9 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getSessionManifest } from "@/shared/db";
+import type { SessionManifest } from "@/shared/db";
 import { VodDetailPage } from "../vod-detail-page";
 
-vi.mock("@/shared/db");
 vi.mock("@tanstack/react-router");
 
 describe("VodDetailPage", () => {
@@ -11,7 +10,7 @@ describe("VodDetailPage", () => {
 		vi.clearAllMocks();
 	});
 
-	const mockVod = {
+	const mockVod: SessionManifest = {
 		createdAt: new Date("2026-08-06T10:00:00Z"),
 		durationSeconds: 1080,
 		id: "vod_1",
@@ -20,34 +19,64 @@ describe("VodDetailPage", () => {
 		rankTier: "Grandmaster",
 		scenarios: [
 			{
+				explanationText: "Strategy explanation",
 				id: "sc_1",
-				moduleType: "STRATEGY" as const,
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "STRATEGY",
 				promptText: "Pre-fight strategy",
+				timeLimitSeconds: null,
 				timestampSeconds: 30,
+				vodId: "vod_1",
 			},
 			{
+				explanationText: "Tactics explanation",
 				id: "sc_2",
-				moduleType: "TACTICS" as const,
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "TACTICS",
 				promptText: "Mid-fight tactics",
+				timeLimitSeconds: null,
 				timestampSeconds: 60,
+				vodId: "vod_1",
 			},
 			{
+				explanationText: "Ult explanation",
 				id: "sc_3",
-				moduleType: "ULTIMATE" as const,
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "ULTIMATE",
 				promptText: "Ult tracking",
+				timeLimitSeconds: null,
 				timestampSeconds: 90,
+				vodId: "vod_1",
 			},
 			{
+				explanationText: "Cooldown explanation",
 				id: "sc_4",
-				moduleType: "COOLDOWN" as const,
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "COOLDOWN",
 				promptText: "Cooldown tracking",
+				timeLimitSeconds: null,
 				timestampSeconds: 120,
+				vodId: "vod_1",
 			},
 			{
+				explanationText: "Spatial explanation",
 				id: "sc_5",
-				moduleType: "SPATIAL" as const,
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "SPATIAL",
 				promptText: "Spatial awareness",
+				timeLimitSeconds: null,
 				timestampSeconds: 150,
+				vodId: "vod_1",
 			},
 		],
 		title: "Grandmaster Ana VOD - King's Row",
@@ -55,14 +84,10 @@ describe("VodDetailPage", () => {
 	};
 
 	it("renders VOD detail header with map name, rank tier, hero badge, duration, and title", async () => {
-		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
-
-		// Act
+		// Arrange & Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 
@@ -81,15 +106,11 @@ describe("VodDetailPage", () => {
 			...mockVod,
 			title: "Overwatch Ranked Match",
 		};
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			vodWithoutHero as unknown as Awaited<
-				ReturnType<typeof getSessionManifest>
-			>,
-		);
 
 		// Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: vodWithoutHero,
 		});
 		render(ui);
 
@@ -98,14 +119,10 @@ describe("VodDetailPage", () => {
 	});
 
 	it("renders module filter controls for all 5 modules (STRATEGY, TACTICS, ULTIMATE, COOLDOWN, SPATIAL)", async () => {
-		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
-
-		// Act
+		// Arrange & Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 
@@ -119,11 +136,9 @@ describe("VodDetailPage", () => {
 
 	it("updates session launcher href when a module filter is toggled off", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
@@ -140,11 +155,9 @@ describe("VodDetailPage", () => {
 
 	it("re-enables a module filter when toggled back on", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
@@ -164,11 +177,9 @@ describe("VodDetailPage", () => {
 
 	it("displays '1 module selected' when exactly 1 module remains selected", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 		const modulesToDisable = [
@@ -191,11 +202,9 @@ describe("VodDetailPage", () => {
 
 	it("handles deselecting all modules by showing warning and disabling start link", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
 		});
 		render(ui);
 		const deselectAllBtn = screen.getByRole("button", {
@@ -216,12 +225,10 @@ describe("VodDetailPage", () => {
 	});
 
 	it("renders VOD Not Found UI when vod is not found", async () => {
-		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(null);
-
-		// Act
+		// Arrange & Act
 		const ui = await VodDetailPage({
 			params: Promise.resolve({ id: "non_existent" }),
+			vod: null,
 		});
 		render(ui);
 
@@ -233,7 +240,7 @@ describe("VodDetailPage", () => {
 		// Arrange & Act
 		const ui = await VodDetailPage({
 			params: { id: "vod_1" },
-			vod: mockVod as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
+			vod: mockVod,
 		});
 		render(ui);
 
