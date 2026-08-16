@@ -45,9 +45,37 @@ export interface GithubClientOptions {
 	readonly cwd?: string;
 }
 
+export interface CreatePullRequestOptions {
+	readonly title: string;
+	readonly body: string;
+	readonly head: string;
+	readonly base?: string;
+	readonly labels?: readonly string[];
+	readonly draft?: boolean;
+}
+
+export interface PullRequestResult {
+	readonly url: string;
+	readonly number: number;
+}
+
 export interface GithubClient {
 	listCandidateIssues(): Promise<CandidateIssue[]>;
 	getIssue(issueNumber: number): Promise<CandidateIssue>;
-	claimIssue(issueNumber: number): Promise<CandidateIssue>;
+	claimIssue(
+		issueNumber: number,
+		expectedAssignee?: string,
+	): Promise<CandidateIssue>;
 	releaseClaim(issueNumber: number): Promise<void>;
+	updateLabels(
+		issueNumber: number,
+		options: {
+			readonly add?: readonly string[];
+			readonly remove?: readonly string[];
+		},
+	): Promise<void>;
+	addComment(issueNumber: number, body: string): Promise<void>;
+	createPullRequest(
+		options: CreatePullRequestOptions,
+	): Promise<PullRequestResult>;
 }

@@ -7,4 +7,5 @@ export * from "./github";
 export * from "./orchestrator";
 export * from "./self-healing";
 export * from "./types";
+export * from "./workflow";
 export * from "./worktree";

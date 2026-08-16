@@ -361,6 +361,141 @@ describe("MockGithubClient", () => {
 		// Assert
 		expect(list.map((i) => i.number)).toEqual([2]);
 	});
+
+	it("updates issue labels by adding and removing labels", async () => {
+		// Arrange
+		const issues = createMockIssueDAG([
+			{
+				labels: ["ready-for-agent", "needs-triage"],
+				number: 50,
+				title: "Update labels issue",
+			},
+		]);
+		const client = new MockGithubClient(issues);
+
+		// Act
+		await client.updateLabels(50, {
+			add: ["ready-for-human"],
+			remove: ["ready-for-agent"],
+		});
+		const updated = await client.getIssue(50);
+
+		// Assert
+		expect(updated.labels).toEqual(["needs-triage", "ready-for-human"]);
+	});
+
+	it("updates issue labels when only add or only remove is supplied", async () => {
+		// Arrange
+		const issues = createMockIssueDAG([
+			{
+				labels: ["ready-for-agent", "bug"],
+				number: 55,
+				title: "Partial update issue",
+			},
+		]);
+		const client = new MockGithubClient(issues);
+
+		// Act
+		await client.updateLabels(55, { remove: ["ready-for-agent"] });
+		await client.updateLabels(55, { add: ["ready-for-human"] });
+		const updated = await client.getIssue(55);
+
+		// Assert
+		expect(updated.labels).toEqual(["bug", "ready-for-human"]);
+	});
+
+	it("throws GithubCliError when updateLabels simulation failure is set", async () => {
+		// Arrange
+		const issues = createMockIssueDAG([
+			{ number: 51, title: "Failing update" },
+		]);
+		const client = new MockGithubClient(issues);
+		client.simulateUpdateLabelsFailure("Simulated label failure");
+
+		// Act
+		const resultPromise = client.updateLabels(51, { add: ["bug"] });
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
+	});
+
+	it("adds comments to an issue and retrieves them via getComments", async () => {
+		// Arrange
+		const issues = createMockIssueDAG([{ number: 60, title: "Comment issue" }]);
+		const client = new MockGithubClient(issues);
+
+		// Act
+		await client.addComment(60, "First comment");
+		await client.addComment(60, "Second comment");
+		const comments = client.getComments(60);
+		const emptyComments = client.getComments(999);
+
+		// Assert
+		expect(comments).toEqual(["First comment", "Second comment"]);
+		expect(emptyComments).toEqual([]);
+	});
+
+	it("throws GithubCliError when addComment simulation failure is set", async () => {
+		// Arrange
+		const issues = createMockIssueDAG([
+			{ number: 61, title: "Comment fail issue" },
+		]);
+		const client = new MockGithubClient(issues);
+		client.simulateAddCommentFailure("Simulated comment failure");
+
+		// Act
+		const resultPromise = client.addComment(61, "A comment");
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
+	});
+
+	it("creates pull requests and tracks them via getCreatedPullRequests", async () => {
+		// Arrange
+		const client = new MockGithubClient();
+
+		// Act
+		const pr1 = await client.createPullRequest({
+			body: "Closes #1",
+			head: "feat/one",
+			labels: ["ready-for-human"],
+			title: "PR 1",
+		});
+		const pr2 = await client.createPullRequest({
+			body: "Closes #2",
+			head: "feat/two",
+			title: "PR 2",
+		});
+		const created = client.getCreatedPullRequests();
+
+		// Assert
+		expect(pr1).toEqual({
+			number: 1,
+			url: "https://github.com/mock/repo/pull/1",
+		});
+		expect(pr2).toEqual({
+			number: 2,
+			url: "https://github.com/mock/repo/pull/2",
+		});
+		expect(created).toHaveLength(2);
+		expect(created[0].title).toBe("PR 1");
+	});
+
+	it("throws GithubCliError when createPullRequest simulation failure is set", async () => {
+		// Arrange
+		const client = new MockGithubClient();
+		client.simulateCreatePullRequestFailure("Simulated PR creation failure");
+
+		// Act
+		const resultPromise = client.createPullRequest({
+			body: "Body",
+			head: "feat/branch",
+			title: "PR Title",
+		});
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
+	});
 });
 
 describe("DefaultGithubClient", () => {
@@ -971,5 +1106,239 @@ describe("DefaultGithubClient", () => {
 		} finally {
 			(globalThis as unknown as { Bun?: unknown }).Bun = originalBun;
 		}
+	});
+
+	it("updates issue labels using gh issue edit with add and remove options", async () => {
+		// Arrange
+		let executedCmd: readonly string[] = [];
+		const mockRunner: ProcessRunner = async (cmd) => {
+			executedCmd = cmd;
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		await client.updateLabels(100, {
+			add: ["ready-for-human"],
+			remove: ["ready-for-agent"],
+		});
+
+		// Assert
+		expect(executedCmd).toEqual([
+			"gh",
+			"issue",
+			"edit",
+			"100",
+			"--add-label",
+			"ready-for-human",
+			"--remove-label",
+			"ready-for-agent",
+		]);
+	});
+
+	it("updates issue labels when only add or only remove is provided in DefaultGithubClient", async () => {
+		// Arrange
+		let executedCmd: readonly string[] = [];
+		const mockRunner: ProcessRunner = async (cmd) => {
+			executedCmd = cmd;
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		await client.updateLabels(100, { add: ["ready-for-human"] });
+
+		// Assert
+		expect(executedCmd).toEqual([
+			"gh",
+			"issue",
+			"edit",
+			"100",
+			"--add-label",
+			"ready-for-human",
+		]);
+	});
+
+	it("updates issue labels when only remove is provided in DefaultGithubClient", async () => {
+		// Arrange
+		let executedCmd: readonly string[] = [];
+		const mockRunner: ProcessRunner = async (cmd) => {
+			executedCmd = cmd;
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		await client.updateLabels(100, { remove: ["ready-for-agent"] });
+
+		// Assert
+		expect(executedCmd).toEqual([
+			"gh",
+			"issue",
+			"edit",
+			"100",
+			"--remove-label",
+			"ready-for-agent",
+		]);
+	});
+
+	it("does not invoke runner in updateLabels when add and remove lists are empty", async () => {
+		// Arrange
+		const runnerSpy = vi.fn();
+		const mockRunner: ProcessRunner = async (cmd) => {
+			runnerSpy(cmd);
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		await client.updateLabels(100, { add: [], remove: [] });
+
+		// Assert
+		expect(runnerSpy).not.toHaveBeenCalled();
+	});
+
+	it("throws GithubCliError when updateLabels returns non-zero exit code", async () => {
+		// Arrange
+		const mockRunner: ProcessRunner = async () => ({
+			exitCode: 1,
+			stderr: "Failed to edit labels",
+			stdout: "",
+		});
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		const resultPromise = client.updateLabels(100, { add: ["bug"] });
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
+	});
+
+	it("adds a comment using gh issue comment", async () => {
+		// Arrange
+		let executedCmd: readonly string[] = [];
+		const mockRunner: ProcessRunner = async (cmd) => {
+			executedCmd = cmd;
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		await client.addComment(100, "Diagnostic log output");
+
+		// Assert
+		expect(executedCmd).toEqual([
+			"gh",
+			"issue",
+			"comment",
+			"100",
+			"--body",
+			"Diagnostic log output",
+		]);
+	});
+
+	it("throws GithubCliError when addComment fails with non-zero exit code", async () => {
+		// Arrange
+		const mockRunner: ProcessRunner = async () => ({
+			exitCode: 1,
+			stderr: "Failed to add comment",
+			stdout: "",
+		});
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		const resultPromise = client.addComment(100, "Comment");
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
+	});
+
+	it("creates a pull request with base, labels, draft flags and parses PR url/number", async () => {
+		// Arrange
+		let executedCmd: readonly string[] = [];
+		const mockRunner: ProcessRunner = async (cmd) => {
+			executedCmd = cmd;
+			return {
+				exitCode: 0,
+				stderr: "",
+				stdout: "https://github.com/owner/repo/pull/42\n",
+			};
+		};
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		const result = await client.createPullRequest({
+			base: "main",
+			body: "Closes #100",
+			draft: true,
+			head: "feat/issue-100",
+			labels: ["ready-for-human"],
+			title: "feat: new feature",
+		});
+
+		// Assert
+		expect(executedCmd).toEqual([
+			"gh",
+			"pr",
+			"create",
+			"--title",
+			"feat: new feature",
+			"--body",
+			"Closes #100",
+			"--head",
+			"feat/issue-100",
+			"--base",
+			"main",
+			"--label",
+			"ready-for-human",
+			"--draft",
+		]);
+		expect(result).toEqual({
+			number: 42,
+			url: "https://github.com/owner/repo/pull/42",
+		});
+	});
+
+	it("creates a pull request without base or labels and falls back to number 0 if url cannot be parsed", async () => {
+		// Arrange
+		const mockRunner: ProcessRunner = async () => ({
+			exitCode: 0,
+			stderr: "",
+			stdout: "some unexpected string without pull id\n",
+		});
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		const result = await client.createPullRequest({
+			body: "Body",
+			head: "feat/branch",
+			title: "Title",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			number: 0,
+			url: "some unexpected string without pull id",
+		});
+	});
+
+	it("throws GithubCliError when createPullRequest returns non-zero exit code", async () => {
+		// Arrange
+		const mockRunner: ProcessRunner = async () => ({
+			exitCode: 1,
+			stderr: "Failed to create PR",
+			stdout: "",
+		});
+		const client = new DefaultGithubClient({ runner: mockRunner });
+
+		// Act
+		const resultPromise = client.createPullRequest({
+			body: "Body",
+			head: "feat/branch",
+			title: "Title",
+		});
+
+		// Assert
+		await expect(resultPromise).rejects.toThrow(GithubCliError);
 	});
 });
