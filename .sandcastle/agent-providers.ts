@@ -5,6 +5,7 @@ import {
 	codex,
 	type PrintCommand,
 } from "@ai-hero/sandcastle";
+import { OPENROUTER_DEFAULT_MODEL } from "./codex-config";
 import type { AgentType } from "./types";
 
 type ParsedStreamEvent = ReturnType<AgentProvider["parseStreamLine"]>[number];
@@ -116,7 +117,7 @@ export function createAgentProvider(
 		case "gemini":
 			return geminiAgent(model);
 		case "codex":
-			return codex(model || "o3-mini");
+			return codex(model || OPENROUTER_DEFAULT_MODEL);
 		case "claude":
 			return claudeCode(model || "claude-sonnet-4-6");
 	}

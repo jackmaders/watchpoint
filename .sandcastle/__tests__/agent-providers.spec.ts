@@ -254,6 +254,28 @@ describe("agent-providers", () => {
 			expect(provider.name).toBe("codex");
 		});
 
+		it("uses the OpenRouter free router by default", () => {
+			// Arrange
+			const provider = createAgentProvider("codex");
+
+			// Act
+			const command = provider.buildPrintCommand({ prompt: "Run checks" });
+
+			// Assert
+			expect(command.command).toContain("openrouter/free");
+		});
+
+		it("preserves an explicit Codex model override", () => {
+			// Arrange
+			const provider = createAgentProvider("codex", "openai/gpt-5");
+
+			// Act
+			const command = provider.buildPrintCommand({ prompt: "Run checks" });
+
+			// Assert
+			expect(command.command).toContain("openai/gpt-5");
+		});
+
 		it("creates claude provider", () => {
 			// Arrange & Act
 			const provider = createAgentProvider("claude");

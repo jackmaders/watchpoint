@@ -70,7 +70,7 @@ export class WatcherDaemon {
 	): Promise<void> {
 		this.logger(`[Dry-Run] Target ticket: #${issue.number} (${issue.title})`);
 		this.logger(
-			`[Dry-Run] Agent: ${this.options.agent ?? "agy"}, Model: ${this.options.model ?? "default"}`,
+			`[Dry-Run] Agent: ${this.options.agent ?? "codex"}, Model: ${this.options.model ?? "openrouter/free"}`,
 		);
 		stats.processedCount++;
 		stats.successCount++;

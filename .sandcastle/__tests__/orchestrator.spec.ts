@@ -120,6 +120,39 @@ describe("orchestrateSandcastle", () => {
 		expect(createPr).toHaveBeenCalledTimes(1);
 	});
 
+	it("validates OpenRouter credentials before a Codex run", async () => {
+		// Arrange
+		vi.stubEnv("OPENROUTER_API_KEY", "runtime-test-key");
+		const runAgentInSandbox = vi.fn().mockResolvedValue({
+			commits: [{ sha: "codex123" }],
+			stdout: "Codex completed task",
+		});
+		const runCommand = vi.fn().mockResolvedValue({
+			exitCode: 0,
+			stderr: "",
+			stdout: "Verification OK",
+		});
+
+		// Act
+		const result = await orchestrateSandcastle(
+			{
+				args: {
+					agent: "codex",
+					dryRun: false,
+					localOnly: true,
+					maxRetries: 1,
+					pr: false,
+					prompt: "Run Codex",
+				},
+			},
+			{ runAgentInSandbox, runCommand },
+		);
+
+		// Assert
+		expect(result.success).toBe(true);
+		expect(runAgentInSandbox).toHaveBeenCalledTimes(1);
+	});
+
 	it("honors local-only flag and does not create PR", async () => {
 		// Arrange
 		const args: SandcastleCliArgs = {

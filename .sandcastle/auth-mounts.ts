@@ -14,6 +14,7 @@ interface ResolveAuthMountsOptions {
 const FORWARDED_ENV_KEYS = [
 	"GEMINI_API_KEY",
 	"OPENAI_API_KEY",
+	"OPENROUTER_API_KEY",
 	"ANTHROPIC_API_KEY",
 	"GITHUB_TOKEN",
 	"GH_TOKEN",

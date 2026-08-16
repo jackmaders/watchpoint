@@ -56,7 +56,7 @@ ${BOLD}OPTIONS:${RESET}
   --sandbox <name>     Sandbox execution provider (docker, none) [default: docker]
   --image <name>       Docker image override [default: sandcastle:watchpoint]
   --no-sandbox         Run agent directly on host without Docker container isolation
-  --agent <name>       Agent provider (agy, gemini, codex, claude) [default: agy]
+	--agent <name>       Agent provider (agy, gemini, codex, claude) [default: codex]
   --model <name>       Model name override for agent provider
   --max-attempts <n>   Maximum self-healing attempts before failure [default: 3]
   --branch <name>      Target git branch override
@@ -93,7 +93,7 @@ function buildDryRunResult(
 ): ExecutionResult {
 	logger(`[Dry-Run] Target issue: #${issue.number} (${issue.title})`);
 	logger(
-		`[Dry-Run] Agent: ${args.agent ?? "agy"}, Model: ${args.model ?? "default"}, Sandbox: ${args.sandbox ?? "docker"}`,
+		`[Dry-Run] Agent: ${args.agent ?? "codex"}, Model: ${args.model ?? "openrouter/free"}, Sandbox: ${args.sandbox ?? "docker"}`,
 	);
 	return {
 		attempts: 0,

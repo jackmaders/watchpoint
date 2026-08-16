@@ -17,7 +17,19 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:/home/agent/.bun/bin:${PATH}"
 
 # Ensure user directories exist for auth and tooling
-RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin
+RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin /home/agent/.codex \
+	&& printf '%s\n' \
+	'model_provider = "openrouter"' \
+	'model = "openrouter/free"' \
+	'' \
+	'[model_providers.openrouter]' \
+	'name = "openrouter"' \
+	'base_url = "https://openrouter.ai/api/v1"' \
+	'' \
+	'[model_providers.openrouter.auth]' \
+	'command = "sh"' \
+	'args = ["-c", "echo $OPENROUTER_API_KEY"]' \
+	> /home/agent/.codex/config.toml
 
 WORKDIR /workspace
 
