@@ -233,6 +233,41 @@ describe("DefaultAgentRunner", () => {
 		expect(result.stdout).toBe("Agent completed task");
 	});
 
+	it("uses resolveAuthMounts when authMountsConfig is not provided and handles undefined worktreePath", async () => {
+		// Arrange
+		const executedCmds: { cmd: readonly string[] }[] = [];
+		const processRunner = async (cmd: readonly string[]) => {
+			executedCmds.push({ cmd });
+			if (cmd[0] === "git") {
+				return {
+					exitCode: 0,
+					stderr: "",
+					stdout: "1234567 feat: default mount test",
+				};
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+
+		const runner = new DefaultAgentRunner({
+			homeDir: "/tmp/non-existent-home-dir-9999",
+			processRunner,
+			sandbox: "docker",
+		});
+
+		// Act
+		const result = await runner.run({
+			attempt: 1,
+			branch: "feat/default-mount",
+			maxAttempts: 3,
+			prompt: "Default mount task",
+		});
+
+		// Assert
+		expect(executedCmds[0].cmd).toContain("docker");
+		expect(executedCmds[0].cmd).toContain(":/workspace");
+		expect(result.commits).toEqual([{ sha: "1234567" }]);
+	});
+
 	it("supports direct host execution when sandbox is set to none", async () => {
 		// Arrange
 		const executedCmds: {
@@ -302,6 +337,7 @@ describe("DefaultAgentRunner", () => {
 
 		const runnerCodex = new DefaultAgentRunner({
 			agent: "codex",
+			dangerouslySkipPermissions: true,
 			model: "o3-mini",
 			processRunner,
 			sandbox: "none",
@@ -309,7 +345,15 @@ describe("DefaultAgentRunner", () => {
 
 		const runnerClaude = new DefaultAgentRunner({
 			agent: "claude",
+			dangerouslySkipPermissions: true,
 			model: "claude-sonnet-4-6",
+			processRunner,
+			sandbox: "none",
+		});
+
+		const runnerCodexNoModel = new DefaultAgentRunner({
+			agent: "codex",
+			dangerouslySkipPermissions: false,
 			processRunner,
 			sandbox: "none",
 		});
@@ -339,6 +383,14 @@ describe("DefaultAgentRunner", () => {
 			worktreePath: "/tmp/worktrees/claude",
 		});
 
+		await runnerCodexNoModel.run({
+			attempt: 1,
+			branch: "feat/codex-no-model",
+			maxAttempts: 3,
+			prompt: "Codex no model task",
+			worktreePath: "/tmp/worktrees/codex-no-model",
+		});
+
 		// Assert
 		expect(executedCmds[0].cmd).toEqual([
 			"gemini",
@@ -353,6 +405,7 @@ describe("DefaultAgentRunner", () => {
 			"Codex task",
 			"--model",
 			"o3-mini",
+			"--dangerously-bypass-approvals-and-sandbox",
 		]);
 		expect(executedCmds[4].cmd).toEqual([
 			"claude",
@@ -360,6 +413,12 @@ describe("DefaultAgentRunner", () => {
 			"Claude task",
 			"--model",
 			"claude-sonnet-4-6",
+			"--dangerously-skip-permissions",
+		]);
+		expect(executedCmds[6].cmd).toEqual([
+			"codex",
+			"exec",
+			"Codex no model task",
 		]);
 	});
 

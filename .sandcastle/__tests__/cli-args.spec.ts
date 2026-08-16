@@ -204,19 +204,25 @@ describe("parseCliArgs", () => {
 
 	it("parses custom image name and permissions flags", () => {
 		// Arrange
-		const argv = [
+		const argvNoSkip = [
 			"--prompt",
 			"test",
 			"--image",
 			"custom:image",
 			"--no-skip-permissions",
 		];
+		const argvDanger = ["--prompt", "test", "--dangerously-skip-permissions"];
+		const argvSkip = ["--prompt", "test", "--skip-permissions"];
 
 		// Act
-		const result = parseCliArgs(argv);
+		const resultNoSkip = parseCliArgs(argvNoSkip);
+		const resultDanger = parseCliArgs(argvDanger);
+		const resultSkip = parseCliArgs(argvSkip);
 
 		// Assert
-		expect(result.imageName).toBe("custom:image");
-		expect(result.dangerouslySkipPermissions).toBe(false);
+		expect(resultNoSkip.imageName).toBe("custom:image");
+		expect(resultNoSkip.dangerouslySkipPermissions).toBe(false);
+		expect(resultDanger.dangerouslySkipPermissions).toBe(true);
+		expect(resultSkip.dangerouslySkipPermissions).toBe(true);
 	});
 });
