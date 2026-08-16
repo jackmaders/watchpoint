@@ -537,7 +537,11 @@ describe("useSessionPlayer", () => {
 
 		// Assert
 		expect(result.current.state).toBe("FEEDBACK");
-		expect(result.current.overlayState?.correctOptionId).toBe("");
+		expect(result.current.overlayState).toEqual({
+			correctOptionId: "",
+			isCorrect: false,
+			status: "timedOut",
+		});
 		expect(result.current.attempts[0]?.responseTimeMs).toBe(2000);
 		vi.useRealTimers();
 	});
@@ -1135,7 +1139,12 @@ describe("useSessionPlayer", () => {
 		// Assert
 		expect(result.current.state).toBe("FEEDBACK");
 		expect(result.current.attempts[0]?.isCorrect).toBe(false);
-		expect(result.current.overlayState?.correctOptionId).toBe("");
+		expect(result.current.overlayState).toEqual({
+			correctOptionId: "",
+			isCorrect: false,
+			selectedOptionId: "unknown_opt",
+			status: "answered",
+		});
 	});
 
 	it("ignores onReady when player is not in LOADING state", async () => {
