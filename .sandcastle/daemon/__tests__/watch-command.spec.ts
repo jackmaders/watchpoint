@@ -115,6 +115,18 @@ describe("parseWatchCliArgs", () => {
 		});
 	});
 
+	it("skips leading 'watch' subcommand if passed in argv", () => {
+		// Arrange
+		const argv = ["watch", "--interval", "45", "--once"];
+
+		// Act
+		const args = parseWatchCliArgs(argv);
+
+		// Assert
+		expect(args.intervalSeconds).toBe(45);
+		expect(args.once).toBe(true);
+	});
+
 	it("parses --help and -h flags", () => {
 		// Arrange
 		const helpArgv = ["--help"];

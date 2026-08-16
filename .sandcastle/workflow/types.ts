@@ -89,6 +89,8 @@ export interface WorkflowOptions {
 	readonly signal?: AbortSignal;
 	readonly onProgress?: (stage: WorkflowStage, detail?: string) => void;
 	readonly cwd?: string;
+	readonly pr?: boolean;
+	readonly localOnly?: boolean;
 }
 
 export interface ExecutionResult {

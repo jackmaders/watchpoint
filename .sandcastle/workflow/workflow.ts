@@ -255,6 +255,20 @@ async function deliverSuccessResult(
 	worktreePath: string,
 	issue: CandidateIssue,
 ): Promise<ExecutionResult> {
+	if (ctx.options.localOnly || ctx.options.pr === false) {
+		ctx.options.onProgress?.(
+			"delivering",
+			"Skipping pull request delivery (local-only / no-pr mode)...",
+		);
+		return {
+			attempts: state.attempts,
+			branch: state.branch,
+			durationMs: Date.now() - ctx.startTime,
+			issueNumber: ctx.options.issueNumber,
+			success: true,
+		};
+	}
+
 	ctx.options.onProgress?.("delivering", "Delivering pull request...");
 	const prResult = await deliverPullRequest({
 		attempts: state.attempts,

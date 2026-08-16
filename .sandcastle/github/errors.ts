@@ -72,3 +72,22 @@ export class ClaimVerificationError extends Error {
 		this.reason = reason;
 	}
 }
+
+export function isClaimContention(err: unknown): boolean {
+	if (err instanceof IssueAlreadyClaimedError) {
+		return true;
+	}
+	if (
+		typeof err === "string" &&
+		err.toLowerCase().includes("already claimed")
+	) {
+		return true;
+	}
+	if (
+		err instanceof Error &&
+		err.message.toLowerCase().includes("already claimed")
+	) {
+		return true;
+	}
+	return false;
+}

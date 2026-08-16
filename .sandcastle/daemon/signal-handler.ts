@@ -52,6 +52,14 @@ function handleEmergencySignal(
 			"\n💥 [Sandcastle Watcher] Emergency shutdown requested. Exiting immediately.",
 		);
 		exit(130);
+		return;
+	}
+	if (signal === "SIGTERM") {
+		logger(
+			"\n💥 [Sandcastle Watcher] Emergency shutdown requested via SIGTERM. Exiting immediately.",
+		);
+		exit(143);
+		return;
 	}
 }
 

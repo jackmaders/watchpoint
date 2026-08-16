@@ -163,7 +163,7 @@ describe("setupGracefulShutdown", () => {
 		);
 	});
 
-	it("ignores 2nd SIGTERM during shutdown without calling exit", async () => {
+	it("triggers emergency exit(143) on 2nd SIGTERM during shutdown", async () => {
 		// Arrange
 		let exitCode: number | null = null;
 		const exit = (code: number) => {
@@ -183,6 +183,31 @@ describe("setupGracefulShutdown", () => {
 		await controller.handleSignal("SIGINT");
 		// Act - 2nd signal SIGTERM
 		await controller.handleSignal("SIGTERM");
+
+		// Assert
+		expect(exitCode).toBe(143);
+	});
+
+	it("ignores unhandled 2nd signal like SIGHUP during shutdown", async () => {
+		// Arrange
+		let exitCode: number | null = null;
+		const exit = (code: number) => {
+			exitCode = code;
+		};
+		const processOn = vi.fn();
+		const processOff = vi.fn();
+
+		const controller = setupGracefulShutdown({
+			exit,
+			logger: () => {},
+			processOff,
+			processOn,
+		});
+
+		// Act - 1st signal
+		await controller.handleSignal("SIGINT");
+		// Act - 2nd signal SIGHUP
+		await controller.handleSignal("SIGHUP" as NodeJS.Signals);
 
 		// Assert
 		expect(exitCode).toBeNull();

@@ -1,5 +1,5 @@
 import { DefaultGithubClient } from "../github/client";
-import { IssueAlreadyClaimedError } from "../github/errors";
+import { isClaimContention } from "../github/errors";
 import { resolveFrontier } from "../github/frontier";
 import type { CandidateIssue, GithubClient } from "../github/types";
 import { MockAgentRunner } from "../workflow/agent-runner";
@@ -12,24 +12,7 @@ import type {
 	WatcherDaemonStats,
 } from "./types";
 
-export function isClaimContention(err: unknown): boolean {
-	if (err instanceof IssueAlreadyClaimedError) {
-		return true;
-	}
-	if (
-		typeof err === "string" &&
-		err.toLowerCase().includes("already claimed")
-	) {
-		return true;
-	}
-	if (
-		err instanceof Error &&
-		err.message.toLowerCase().includes("already claimed")
-	) {
-		return true;
-	}
-	return false;
-}
+export { isClaimContention };
 
 export const defaultDaemonLogger = (msg: string): void => {
 	console.log(msg);
@@ -203,6 +186,7 @@ export class WatcherDaemon {
 				githubClient: this.githubClient,
 				gitRunner: this.options.gitRunner,
 				issueNumber: issue.number,
+				localOnly: this.options.localOnly,
 				lockManager: this.options.lockManager,
 				maxAttempts: this.options.maxAttempts,
 				onProgress: (stage, detail) => {
@@ -213,6 +197,7 @@ export class WatcherDaemon {
 						this.logger(`[${stage}] ${detail}`);
 					}
 				},
+				pr: this.options.pr,
 				signal: this.options.signal,
 				validator: this.options.validator,
 				worktreeManager: this.options.worktreeManager,
