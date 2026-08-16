@@ -95,8 +95,11 @@ describe("defaultPickLogger", () => {
 
 describe("parsePickCliArgs", () => {
 	it("returns default args when argv is empty", () => {
-		// Arrange & Act
-		const args = parsePickCliArgs([]);
+		// Arrange
+		const argv: string[] = [];
+
+		// Act
+		const args = parsePickCliArgs(argv);
 
 		// Assert
 		expect(args).toEqual({
@@ -110,9 +113,13 @@ describe("parsePickCliArgs", () => {
 	});
 
 	it("parses --help and -h flags", () => {
-		// Arrange & Act
-		const argsHelp = parsePickCliArgs(["--help"]);
-		const argsH = parsePickCliArgs(["-h"]);
+		// Arrange
+		const helpArgv = ["--help"];
+		const hArgv = ["-h"];
+
+		// Act
+		const argsHelp = parsePickCliArgs(helpArgv);
+		const argsH = parsePickCliArgs(hArgv);
 
 		// Assert
 		expect(argsHelp.help).toBe(true);
@@ -171,21 +178,26 @@ describe("parsePickCliArgs", () => {
 		expect(args.pr).toBe(false);
 	});
 
-	it("parses --pr explicitly", () => {
+	it("parses --pr explicitly and resets local-only", () => {
 		// Arrange
-		const argv = ["--pr"];
+		const argv = ["--local-only", "--pr"];
 
 		// Act
 		const args = parsePickCliArgs(argv);
 
 		// Assert
 		expect(args.pr).toBe(true);
+		expect(args.localOnly).toBe(false);
 	});
 
 	it("parses --retries and --max-retries aliases", () => {
-		// Arrange & Act
-		const argsRetries = parsePickCliArgs(["--retries", "4"]);
-		const argsMaxRetries = parsePickCliArgs(["--max-retries", "6"]);
+		// Arrange
+		const retriesArgv = ["--retries", "4"];
+		const maxRetriesArgv = ["--max-retries", "6"];
+
+		// Act
+		const argsRetries = parsePickCliArgs(retriesArgv);
+		const argsMaxRetries = parsePickCliArgs(maxRetriesArgv);
 
 		// Assert
 		expect(argsRetries.maxAttempts).toBe(4);
@@ -193,23 +205,30 @@ describe("parsePickCliArgs", () => {
 	});
 
 	it("throws error for unsupported agent name", () => {
-		// Arrange & Act & Assert
-		expect(() => parsePickCliArgs(["--agent", "unknown-agent"])).toThrow(
+		// Arrange
+		const argv = ["--agent", "unknown-agent"];
+
+		// Act & Assert
+		expect(() => parsePickCliArgs(argv)).toThrow(
 			"Unsupported agent: unknown-agent",
 		);
 	});
 
 	it("throws error for invalid max-attempts number", () => {
-		// Arrange & Act & Assert
-		expect(() => parsePickCliArgs(["--max-attempts", "invalid"])).toThrow(
-			"Invalid max-attempts",
-		);
+		// Arrange
+		const argv = ["--max-attempts", "invalid"];
+
+		// Act & Assert
+		expect(() => parsePickCliArgs(argv)).toThrow("Invalid max-attempts");
 	});
 });
 
 describe("formatPickHelp", () => {
 	it("returns formatted help text containing usage, keybindings, and options", () => {
-		// Arrange & Act
+		// Arrange
+		// (no inputs required)
+
+		// Act
 		const helpText = formatPickHelp();
 
 		// Assert

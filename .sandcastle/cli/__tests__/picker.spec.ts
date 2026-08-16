@@ -172,7 +172,10 @@ describe("formatAge", () => {
 
 describe("formatHeader", () => {
 	it("returns formatted header string", () => {
-		// Arrange & Act
+		// Arrange
+		// (no setup required)
+
+		// Act
 		const header = formatHeader();
 
 		// Assert

@@ -1,5 +1,6 @@
 import { DefaultGithubClient } from "../github/client";
 import { IssueAlreadyClaimedError } from "../github/errors";
+import { resolveFrontier } from "../github/frontier";
 import type { CandidateIssue, GithubClient } from "../github/types";
 import type { AgentType } from "../types";
 import { MockAgentRunner } from "../workflow/agent-runner";
@@ -90,6 +91,7 @@ function applyBooleanFlag(state: MutablePickArgs, arg: string): void {
 		state.pr = false;
 	} else if (arg === "--pr") {
 		state.pr = true;
+		state.localOnly = false;
 	}
 }
 
@@ -147,6 +149,12 @@ function isClaimContention(err: unknown): boolean {
 		return true;
 	}
 	if (
+		typeof err === "string" &&
+		err.toLowerCase().includes("already claimed")
+	) {
+		return true;
+	}
+	if (
 		err instanceof Error &&
 		err.message.toLowerCase().includes("already claimed")
 	) {
@@ -171,11 +179,7 @@ async function fetchFrontierIssues(
 	githubClient: GithubClient,
 ): Promise<CandidateIssue[]> {
 	const candidates = await githubClient.listCandidateIssues();
-	return candidates.filter(
-		(issue) =>
-			issue.issueDependenciesSummary.blockedBy === 0 &&
-			issue.assignees.length === 0,
-	);
+	return resolveFrontier(candidates);
 }
 
 function buildDryRunResult(
@@ -231,11 +235,7 @@ async function executeSelection(
 		worktreeManager: options.worktreeManager,
 	});
 
-	if (
-		!result.success &&
-		result.error &&
-		result.error.toLowerCase().includes("already claimed")
-	) {
+	if (!result.success && result.error && isClaimContention(result.error)) {
 		logger(
 			`${YELLOW}⚠️  Issue #${issue.number} was claimed concurrently. Refreshing frontier...${RESET}`,
 		);
