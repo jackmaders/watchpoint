@@ -991,4 +991,78 @@ describe("Workflow Orchestration Engine", () => {
 		expect(result.success).toBe(false);
 		expect(comments[0]).toContain("Custom error without stack trace");
 	});
+
+	it("skips PR delivery when localOnly is true", async () => {
+		// Arrange
+		const githubClient = new MockGithubClient([
+			{
+				assignees: [],
+				body: "Local only issue",
+				issueDependenciesSummary: { blockedBy: 0 },
+				labels: ["ready-for-agent"],
+				number: 190,
+				title: "feat: local only execution",
+			},
+		]);
+		const lockManager = new MockRunnerLockManager();
+		const worktreeManager = new MockWorktreeManager();
+		const agentRunner = new MockAgentRunner();
+		const validator = async () => ({
+			checks: [{ name: "check:all", output: "", success: true }],
+			success: true,
+		});
+
+		// Act
+		const result = await executeTicketWorkflow({
+			agentRunner,
+			githubClient,
+			issueNumber: 190,
+			localOnly: true,
+			lockManager,
+			validator,
+			worktreeManager,
+		});
+
+		// Assert
+		expect(result.success).toBe(true);
+		expect(result.prUrl).toBeUndefined();
+		expect(githubClient.getCreatedPullRequests()).toHaveLength(0);
+	});
+
+	it("skips PR delivery when pr is false", async () => {
+		// Arrange
+		const githubClient = new MockGithubClient([
+			{
+				assignees: [],
+				body: "No PR issue",
+				issueDependenciesSummary: { blockedBy: 0 },
+				labels: ["ready-for-agent"],
+				number: 191,
+				title: "feat: no pr execution",
+			},
+		]);
+		const lockManager = new MockRunnerLockManager();
+		const worktreeManager = new MockWorktreeManager();
+		const agentRunner = new MockAgentRunner();
+		const validator = async () => ({
+			checks: [{ name: "check:all", output: "", success: true }],
+			success: true,
+		});
+
+		// Act
+		const result = await executeTicketWorkflow({
+			agentRunner,
+			githubClient,
+			issueNumber: 191,
+			lockManager,
+			pr: false,
+			validator,
+			worktreeManager,
+		});
+
+		// Assert
+		expect(result.success).toBe(true);
+		expect(result.prUrl).toBeUndefined();
+		expect(githubClient.getCreatedPullRequests()).toHaveLength(0);
+	});
 });

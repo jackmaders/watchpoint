@@ -79,6 +79,7 @@
 		"preview": "vite preview",
 		"sandcastle": "bun scripts/sandcastle.ts",
 		"sandcastle:pick": "bun scripts/sandcastle.ts pick",
+		"sandcastle:watch": "bun scripts/sandcastle.ts watch",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:unit": "vitest run",
