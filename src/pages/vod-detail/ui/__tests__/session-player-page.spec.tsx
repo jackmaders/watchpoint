@@ -8,7 +8,7 @@ import {
 	installMockFrames,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "../../../../shared/media/__mocks__/youtube";
+} from "@/shared/lib/testing";
 import * as serverFns from "../../api/server-fns";
 import { SessionPlayerPage } from "../session-player-page";
 

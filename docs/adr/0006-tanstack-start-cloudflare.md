@@ -24,7 +24,7 @@ We have migrated Watchpoint's application framework from Next.js 16 to **TanStac
 Key architectural choices include:
 
 1. **Single-Stage Vite Build**: The entire client and server application builds in a unified Vite pipeline, generating lean, sub-600KB uncompressed worker bundles with sub-5ms cold starts.
-2. **File-Based Routing & Thin Adapters**: Route files located in `app/routes/` serve strictly as thin parameter-binding adapters delegating data loading and rendering to Feature-Sliced Design (FSD) pages in `src/_pages/`.
+2. **File-Based Routing & Thin Adapters**: Route files located in `app/routes/` serve strictly as thin parameter-binding adapters delegating data loading and rendering to Feature-Sliced Design (FSD) pages in `src/pages/`.
 3. **Type-Safe Server Functions (`createServerFn`)**:
    - `getVodDetails(vodId)`: Direct D1 query returning VOD metadata.
    - `getSessionManifest(vodId, options)`: Filtered chronological scenario manifest retrieval.

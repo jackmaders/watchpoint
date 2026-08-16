@@ -2,13 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PlaybackStatus } from "@/shared/media";
 import {
 	createYouTubeMock,
 	installMockFrames,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "../../../../shared/media/__mocks__/youtube";
+} from "@/shared/lib/testing";
+import { PlaybackStatus } from "@/shared/media";
 import * as serverFns from "../../api/server-fns";
 import {
 	initialSessionPlayerSession,

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { handleGetMedia } from "@/_pages/media-asset";
+import { handleGetMedia } from "@/pages/media-asset";
 
 export const Route = createFileRoute("/api/media/$")({
 	server: {

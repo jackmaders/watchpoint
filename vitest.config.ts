@@ -17,7 +17,7 @@ export default defineConfig({
 				".sandcastle/index.ts",
 				".sandcastle/main.ts",
 				"src/app/**",
-				"src/_pages/prototype-*/**",
+				"src/pages/prototype-*/**",
 			],
 			include: ["src/**/*.{ts,tsx}", ".sandcastle/**/*.{ts,tsx}"],
 			provider: "v8",

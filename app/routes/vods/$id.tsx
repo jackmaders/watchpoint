@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { VodDetailPage } from "@/_pages/vod-detail";
+import { VodDetailPage } from "@/pages/vod-detail";
 import { getSessionManifest } from "@/shared/db";
 
 export const Route = createFileRoute("/vods/$id")({

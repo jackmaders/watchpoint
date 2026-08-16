@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { SessionPlayerPage } from "@/_pages/vod-detail";
+import { SessionPlayerPage } from "@/pages/vod-detail";
 import { getSessionManifest } from "@/shared/db";
 
 const sessionSearchSchema = z.object({

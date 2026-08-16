@@ -6,7 +6,7 @@ import {
 	createYouTubeMock,
 	setYouTubeNamespace,
 	YouTubePlayerState,
-} from "../../../../shared/media/__mocks__/youtube";
+} from "@/shared/lib/testing";
 import { SessionPlayerClient } from "../session-player-client";
 
 vi.mock("@tanstack/react-router");

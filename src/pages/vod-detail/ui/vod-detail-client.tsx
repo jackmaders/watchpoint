@@ -2,13 +2,13 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import type { getSessionManifest, ModuleType } from "@/shared/db";
+import { buildSessionUrl } from "../model/module-filter";
 import {
 	calculateModuleCounts,
 	filterScenariosByModules,
-	MODULE_DEFINITIONS,
-} from "@/entities/scenario";
-import type { getSessionManifest, ModuleType } from "@/shared/db";
-import { buildSessionUrl } from "../model/module-filter";
+} from "../model/module-helpers";
+import { MODULE_DEFINITIONS } from "../model/modules";
 import { ModuleFilterPills } from "./module-filter-pills";
 
 export interface VodDetailClientProps {
