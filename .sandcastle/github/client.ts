@@ -6,9 +6,11 @@ import {
 } from "./errors";
 import type {
 	CandidateIssue,
+	CreatePullRequestOptions,
 	GithubClient,
 	GithubClientOptions,
 	ProcessRunner,
+	PullRequestResult,
 } from "./types";
 
 interface RawIssueNode {
@@ -309,11 +311,95 @@ export class DefaultGithubClient implements GithubClient {
 			});
 		}
 	}
+
+	async updateLabels(
+		issueNumber: number,
+		options: {
+			readonly add?: readonly string[];
+			readonly remove?: readonly string[];
+		},
+	): Promise<void> {
+		const cmd = ["gh", "issue", "edit", String(issueNumber)];
+		for (const label of options.add ?? []) {
+			cmd.push("--add-label", label);
+		}
+		for (const label of options.remove ?? []) {
+			cmd.push("--remove-label", label);
+		}
+		if (cmd.length === 4) {
+			return;
+		}
+		const res = await this.runner(cmd, { cwd: this.cwd });
+		if (res.exitCode !== 0) {
+			throw new GithubCliError({
+				command: cmd.join(" "),
+				exitCode: res.exitCode,
+				stderr: res.stderr,
+				stdout: res.stdout,
+			});
+		}
+	}
+
+	async addComment(issueNumber: number, body: string): Promise<void> {
+		const cmd = ["gh", "issue", "comment", String(issueNumber), "--body", body];
+		const res = await this.runner(cmd, { cwd: this.cwd });
+		if (res.exitCode !== 0) {
+			throw new GithubCliError({
+				command: cmd.join(" "),
+				exitCode: res.exitCode,
+				stderr: res.stderr,
+				stdout: res.stdout,
+			});
+		}
+	}
+
+	async createPullRequest(
+		options: CreatePullRequestOptions,
+	): Promise<PullRequestResult> {
+		const cmd = [
+			"gh",
+			"pr",
+			"create",
+			"--title",
+			options.title,
+			"--body",
+			options.body,
+			"--head",
+			options.head,
+		];
+		if (options.base) {
+			cmd.push("--base", options.base);
+		}
+		for (const label of options.labels ?? []) {
+			cmd.push("--label", label);
+		}
+		if (options.draft) {
+			cmd.push("--draft");
+		}
+		const res = await this.runner(cmd, { cwd: this.cwd });
+		if (res.exitCode !== 0) {
+			throw new GithubCliError({
+				command: cmd.join(" "),
+				exitCode: res.exitCode,
+				stderr: res.stderr,
+				stdout: res.stdout,
+			});
+		}
+		const url = res.stdout.trim();
+		const match = url.match(/\/pull\/(\d+)/);
+		const number = match ? Number.parseInt(match[1], 10) : 0;
+		return { number, url };
+	}
 }
 
 export class MockGithubClient implements GithubClient {
 	private issues: Map<number, CandidateIssue>;
+	private comments = new Map<number, string[]>();
+	private createdPullRequests: CreatePullRequestOptions[] = [];
 	private simulatedVerificationFailures = new Map<number, string>();
+	private simulatedAddCommentFailure?: string;
+	private simulatedUpdateLabelsFailure?: string;
+	private simulatedCreatePrFailure?: string;
 
 	constructor(initialIssues: readonly CandidateIssue[] = []) {
 		this.issues = new Map(initialIssues.map((i) => [i.number, { ...i }]));
@@ -329,6 +415,26 @@ export class MockGithubClient implements GithubClient {
 
 	simulateClaimVerificationFailure(issueNumber: number, reason: string): void {
 		this.simulatedVerificationFailures.set(issueNumber, reason);
+	}
+
+	simulateAddCommentFailure(error: string): void {
+		this.simulatedAddCommentFailure = error;
+	}
+
+	simulateUpdateLabelsFailure(error: string): void {
+		this.simulatedUpdateLabelsFailure = error;
+	}
+
+	simulateCreatePullRequestFailure(error: string): void {
+		this.simulatedCreatePrFailure = error;
+	}
+
+	getComments(issueNumber: number): readonly string[] {
+		return this.comments.get(issueNumber) ?? [];
+	}
+
+	getCreatedPullRequests(): readonly CreatePullRequestOptions[] {
+		return this.createdPullRequests;
 	}
 
 	async listCandidateIssues(): Promise<CandidateIssue[]> {
@@ -375,5 +481,62 @@ export class MockGithubClient implements GithubClient {
 			assignees: issue.assignees.filter((a) => a !== "@me"),
 		};
 		this.issues.set(issueNumber, updated);
+	}
+
+	async updateLabels(
+		issueNumber: number,
+		options: {
+			readonly add?: readonly string[];
+			readonly remove?: readonly string[];
+		},
+	): Promise<void> {
+		if (this.simulatedUpdateLabelsFailure) {
+			throw new GithubCliError({
+				exitCode: 1,
+				stderr: this.simulatedUpdateLabelsFailure,
+			});
+		}
+		const issue = await this.getIssue(issueNumber);
+		const currentLabels = new Set(issue.labels);
+		for (const label of options.remove ?? []) {
+			currentLabels.delete(label);
+		}
+		for (const label of options.add ?? []) {
+			currentLabels.add(label);
+		}
+		const updated: CandidateIssue = {
+			...issue,
+			labels: Array.from(currentLabels),
+		};
+		this.issues.set(issueNumber, updated);
+	}
+
+	async addComment(issueNumber: number, body: string): Promise<void> {
+		if (this.simulatedAddCommentFailure) {
+			throw new GithubCliError({
+				exitCode: 1,
+				stderr: this.simulatedAddCommentFailure,
+			});
+		}
+		await this.getIssue(issueNumber);
+		const existing = this.comments.get(issueNumber) ?? [];
+		this.comments.set(issueNumber, [...existing, body]);
+	}
+
+	async createPullRequest(
+		options: CreatePullRequestOptions,
+	): Promise<PullRequestResult> {
+		if (this.simulatedCreatePrFailure) {
+			throw new GithubCliError({
+				exitCode: 1,
+				stderr: this.simulatedCreatePrFailure,
+			});
+		}
+		this.createdPullRequests.push({ ...options });
+		const prNumber = this.createdPullRequests.length;
+		return {
+			number: prNumber,
+			url: `https://github.com/mock/repo/pull/${prNumber}`,
+		};
 	}
 }
