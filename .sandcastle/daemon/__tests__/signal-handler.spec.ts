@@ -255,24 +255,40 @@ describe("default helper functions", () => {
 	it("defaultProcessOn and defaultProcessOff wrap process.on and process.off", () => {
 		// Arrange
 		const handler = () => {};
+		let onCalled = false;
+		let offCalled = false;
+		const originalOn = process.on;
+		const originalOff = process.off;
+		process.on = ((event: string) => {
+			if (event === "SIGINT") onCalled = true;
+			return process;
+		}) as unknown as typeof process.on;
+		process.off = ((event: string) => {
+			if (event === "SIGINT") offCalled = true;
+			return process;
+		}) as unknown as typeof process.off;
 
 		// Act
-		defaultProcessOn("SIGINT", handler);
-		defaultProcessOff("SIGINT", handler);
+		try {
+			defaultProcessOn("SIGINT", handler);
+			defaultProcessOff("SIGINT", handler);
+		} finally {
+			process.on = originalOn;
+			process.off = originalOff;
+		}
 
 		// Assert
-		expect(true).toBe(true);
+		expect(onCalled).toBe(true);
+		expect(offCalled).toBe(true);
 	});
 
 	it("defaultExit calls process.exit", () => {
 		// Arrange
 		let exitCode: number | undefined;
 		const originalExit = process.exit;
-		(process as unknown as { exit: (code: number) => void }).exit = (
-			code: number,
-		) => {
+		process.exit = ((code: number) => {
 			exitCode = code;
-		};
+		}) as unknown as typeof process.exit;
 
 		// Act
 		try {

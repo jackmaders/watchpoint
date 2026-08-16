@@ -310,6 +310,18 @@ describe("runWatchCommand", () => {
 		const issue1 = makeIssue(101, "Auto Signal Ticket");
 		const githubClient = new MockGithubClient([issue1]);
 
+		const originalOn = process.on;
+		const originalOff = process.off;
+		const attached = new Map<string, unknown>();
+		process.on = ((event: string, fn: unknown) => {
+			attached.set(event, fn);
+			return process;
+		}) as unknown as typeof process.on;
+		process.off = ((event: string) => {
+			attached.delete(event);
+			return process;
+		}) as unknown as typeof process.off;
+
 		const executeWorkflow = async (
 			opts: WorkflowOptions,
 		): Promise<ExecutionResult> => {
@@ -323,17 +335,24 @@ describe("runWatchCommand", () => {
 		};
 
 		// Act
-		const result = await runWatchCommand({
-			args: { once: true },
-			clock,
-			executeWorkflow,
-			githubClient,
-			logger: () => {},
-		});
+		let result: ExecutionResult | null = null;
+		try {
+			result = await runWatchCommand({
+				args: { once: true },
+				clock,
+				executeWorkflow,
+				githubClient,
+				logger: () => {},
+			});
+		} finally {
+			process.on = originalOn;
+			process.off = originalOff;
+		}
 
 		// Assert
 		expect(result?.processedCount).toBe(1);
 		expect(result?.successCount).toBe(1);
+		expect(attached.size).toBe(0);
 	});
 
 	it("uses provided signal and parses process.argv when args is omitted", async () => {
@@ -357,15 +376,22 @@ describe("runWatchCommand", () => {
 
 	it("resolves default githubClient, clock, and logger when omitted", async () => {
 		// Arrange
+		const originalLog = console.log;
+		console.log = () => {};
 		const controller = new AbortController();
 		controller.abort();
 
 		// Act
-		const result = await runWatchCommand({
-			signal: controller.signal,
-		});
+		let result: unknown;
+		try {
+			result = await runWatchCommand({
+				signal: controller.signal,
+			});
+		} finally {
+			console.log = originalLog;
+		}
 
 		// Assert
-		expect(result?.aborted).toBe(true);
+		expect((result as { aborted?: boolean })?.aborted).toBe(true);
 	});
 });
