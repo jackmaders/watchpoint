@@ -37,6 +37,7 @@ interface WorkflowState {
 	worktreeInfo: WorktreeInfo | null;
 	attempts: number;
 	lastValidationOutput: string;
+	routedModel?: string;
 }
 
 interface ProvisionedWorkflow {
@@ -180,7 +181,7 @@ async function executeAttemptIteration(
 		"executing",
 		`Running agent attempt ${state.attempts}/${ctx.maxAttempts}...`,
 	);
-	await ctx.options.agentRunner.run({
+	const runResult = await ctx.options.agentRunner.run({
 		attempt: state.attempts,
 		branch: state.branch,
 		maxAttempts: ctx.maxAttempts,
@@ -188,6 +189,7 @@ async function executeAttemptIteration(
 		signal: ctx.options.signal,
 		worktreePath,
 	});
+	state.routedModel = runResult.routedModel ?? state.routedModel;
 
 	if (ctx.options.signal?.aborted) {
 		return false;
@@ -265,6 +267,7 @@ async function deliverSuccessResult(
 			branch: state.branch,
 			durationMs: Date.now() - ctx.startTime,
 			issueNumber: ctx.options.issueNumber,
+			...(state.routedModel ? { routedModel: state.routedModel } : {}),
 			success: true,
 		};
 	}
@@ -285,6 +288,7 @@ async function deliverSuccessResult(
 		durationMs: Date.now() - ctx.startTime,
 		issueNumber: ctx.options.issueNumber,
 		prUrl: prResult.url,
+		...(state.routedModel ? { routedModel: state.routedModel } : {}),
 		success: true,
 	};
 }

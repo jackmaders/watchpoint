@@ -158,6 +158,7 @@ describe("WatcherDaemon", () => {
 				durationMs: 500,
 				issueNumber: options.issueNumber,
 				prUrl: "https://github.com/test/repo/pull/1",
+				routedModel: "provider/routed-model",
 				success: true,
 			};
 		};
@@ -206,6 +207,9 @@ describe("WatcherDaemon", () => {
 			logs.some((l) =>
 				l.includes('Found eligible ticket #101: "Older Ticket"'),
 			),
+		).toBe(true);
+		expect(
+			logs.some((l) => l.includes("Routed model: provider/routed-model")),
 		).toBe(true);
 	});
 

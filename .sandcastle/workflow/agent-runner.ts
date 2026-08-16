@@ -1,22 +1,15 @@
-import { resolveAuthMounts } from "../auth-mounts";
 import {
-	OPENROUTER_DEFAULT_MODEL,
-	validateCodexConfiguration,
-} from "../codex-config";
+	type AgentRuntimeOptions,
+	resolveAgentRuntime,
+} from "../agent-runtime";
+import { validateCodexConfiguration } from "../codex-config";
 import { defaultBunSpawnRunner } from "../github/client";
 import type { ProcessRunner } from "../github/types";
 import type { AgentType, AuthMountsConfig, SandboxType } from "../types";
 import type { AgentRunner, AgentRunOptions, AgentRunResult } from "./types";
 
-export interface DefaultAgentRunnerOptions {
-	readonly agent?: AgentType;
-	readonly model?: string;
-	readonly sandbox?: SandboxType;
-	readonly imageName?: string;
-	readonly dangerouslySkipPermissions?: boolean;
-	readonly homeDir?: string;
+export interface DefaultAgentRunnerOptions extends AgentRuntimeOptions {
 	readonly processRunner?: ProcessRunner;
-	readonly authMountsConfig?: AuthMountsConfig;
 }
 
 function validateAgentCredentials(
@@ -58,23 +51,18 @@ export class DefaultAgentRunner implements AgentRunner {
 	private readonly sandbox: SandboxType;
 	private readonly imageName: string;
 	private readonly dangerouslySkipPermissions: boolean;
-	private readonly homeDir?: string;
 	private readonly processRunner: ProcessRunner;
-	private readonly authMountsConfig?: AuthMountsConfig;
+	private readonly authMountsConfig: AuthMountsConfig;
 
 	constructor(options: DefaultAgentRunnerOptions = {}) {
-		this.agent = options.agent ?? "agy";
-		this.model = options.model;
-		this.sandbox = options.sandbox ?? "docker";
-		this.imageName =
-			options.imageName ??
-			process.env.SANDCASTLE_IMAGE ??
-			"sandcastle:watchpoint";
-		this.dangerouslySkipPermissions =
-			options.dangerouslySkipPermissions ?? this.sandbox === "docker";
-		this.homeDir = options.homeDir;
+		const runtime = resolveAgentRuntime(options);
+		this.agent = runtime.agent;
+		this.model = runtime.model;
+		this.sandbox = runtime.sandbox;
+		this.imageName = runtime.imageName;
+		this.dangerouslySkipPermissions = runtime.dangerouslySkipPermissions;
+		this.authMountsConfig = runtime.authMountsConfig;
 		this.processRunner = options.processRunner ?? defaultBunSpawnRunner;
-		this.authMountsConfig = options.authMountsConfig;
 	}
 
 	async run(options: AgentRunOptions): Promise<AgentRunResult> {
@@ -89,25 +77,20 @@ export class DefaultAgentRunner implements AgentRunner {
 		let executionEnv: Record<string, string | undefined> | undefined;
 
 		if (this.sandbox === "docker") {
-			const authConfig =
-				this.authMountsConfig ?? resolveAuthMounts({ homeDir: this.homeDir });
-			validateAgentCredentials(this.agent, authConfig.env);
+			validateAgentCredentials(this.agent, this.authMountsConfig.env);
 			executionCmd = buildDockerRunCommand({
 				agentCmd,
-				authMounts: authConfig,
+				authMounts: this.authMountsConfig,
 				imageName: this.imageName,
 				worktreePath: options.worktreePath ?? "",
 			});
 			executionEnv = process.env;
 		} else {
-			validateAgentCredentials(
-				this.agent,
-				this.authMountsConfig?.env ?? process.env,
-			);
+			validateAgentCredentials(this.agent, this.authMountsConfig.env);
 			executionCmd = agentCmd;
 			executionEnv = {
 				...process.env,
-				...this.authMountsConfig?.env,
+				...this.authMountsConfig.env,
 				AGY_NON_INTERACTIVE: "1",
 			};
 		}
@@ -144,6 +127,7 @@ export class DefaultAgentRunner implements AgentRunner {
 
 		return {
 			commits,
+			routedModel: extractRoutedModel(result.stdout),
 			stdout: result.stdout,
 		};
 	}
@@ -151,7 +135,7 @@ export class DefaultAgentRunner implements AgentRunner {
 	private buildAgentCommand(prompt: string): string[] {
 		if (this.agent === "codex") {
 			const cmd: string[] = ["codex", "exec", prompt];
-			cmd.push("--model", this.model ?? OPENROUTER_DEFAULT_MODEL);
+			cmd.push("--model", this.model as string);
 			if (this.dangerouslySkipPermissions) {
 				cmd.push("--dangerously-bypass-approvals-and-sandbox");
 			}
@@ -167,6 +151,48 @@ export class DefaultAgentRunner implements AgentRunner {
 		}
 		return cmd;
 	}
+}
+
+export function extractRoutedModel(output?: string): string | undefined {
+	if (!output) {
+		return undefined;
+	}
+
+	for (const line of output.split("\n")) {
+		try {
+			const event = JSON.parse(line) as unknown;
+			const model = findModelValue(event);
+			if (model) {
+				return model;
+			}
+		} catch {
+			// Provider output is best-effort telemetry; invalid lines are harmless.
+		}
+	}
+
+	return undefined;
+}
+
+function findModelValue(value: unknown): string | undefined {
+	if (!value || typeof value !== "object") {
+		return undefined;
+	}
+
+	for (const [key, nested] of Object.entries(value)) {
+		if (
+			(key === "model" || key === "model_name" || key === "routed_model") &&
+			typeof nested === "string" &&
+			nested.length > 0
+		) {
+			return nested;
+		}
+		const nestedModel = findModelValue(nested);
+		if (nestedModel) {
+			return nestedModel;
+		}
+	}
+
+	return undefined;
 }
 
 export class MockAgentRunner implements AgentRunner {

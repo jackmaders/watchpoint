@@ -2,7 +2,7 @@
 
 **Project**: Watchpoint — Interactive Overwatch 2 Game Sense Learning Platform  
 **Status**: Living Specification  
-**Last Updated**: 2026-08-07  
+**Last Updated**: 2026-08-16
 
 This document defines the core domain terminology used across product discussions, system documentation, database schemas, and codebase entities.
 
@@ -53,6 +53,15 @@ This document defines the core domain terminology used across product discussion
 
 ## 3. Architecture & Engine Terms
 
+* **Sandcastle Agent Runtime**
+  The resolved provider, model, credential boundary, sandbox image, and
+  permission configuration used by both ad-hoc runs and queue workflows.
+
+* **Routed Model**
+  Optional provider telemetry identifying the concrete model selected behind a
+  router such as OpenRouter's `openrouter/free`. Missing routed-model metadata
+  is not an execution failure.
+
 * **Time Sync Poller**  
   The client-side background timer operating on a 1-second interval to compare current video playback time against the next scenario's target timestamp.
 
@@ -85,4 +94,3 @@ This document defines the core domain terminology used across product discussion
 
 * **Tab Visibility Sync**  
   An automated event listener that pauses video playback whenever the user switches browser tabs, preventing missed scenario triggers.
-

@@ -73,6 +73,7 @@ describe("parseWatchCliArgs", () => {
 			intervalSeconds: 60,
 			localOnly: false,
 			maxAttempts: 3,
+			model: "openrouter/free",
 			once: false,
 			pr: true,
 			sandbox: "docker",

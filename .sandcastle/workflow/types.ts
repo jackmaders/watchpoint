@@ -27,6 +27,7 @@ export interface AgentRunOptions {
 
 export interface AgentRunResult {
 	readonly commits: readonly { readonly sha: string }[];
+	readonly routedModel?: string;
 	readonly stdout?: string;
 }
 
@@ -100,6 +101,7 @@ export interface ExecutionResult {
 	readonly attempts: number;
 	readonly durationMs: number;
 	readonly prUrl?: string;
+	readonly routedModel?: string;
 	readonly error?: string;
 	readonly aborted?: boolean;
 }
