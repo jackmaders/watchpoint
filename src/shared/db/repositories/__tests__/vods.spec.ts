@@ -186,9 +186,6 @@ describe("VOD database accessors", () => {
 			const result = await getSessionManifest("vod_1", {
 				modules: ["strategy", "TACTICS"],
 			});
-
-			// Assert
-			expect(result).toEqual(mockVod);
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
 				.mock.calls.at(-1)?.[0];
@@ -213,6 +210,9 @@ describe("VOD database accessors", () => {
 					>[1],
 				);
 			}
+
+			// Assert
+			expect(result).toEqual(mockVod);
 			expect(mockInArray).toHaveBeenCalledWith("STRATEGY", [
 				"STRATEGY",
 				"TACTICS",
@@ -231,8 +231,6 @@ describe("VOD database accessors", () => {
 			await getSessionManifest("vod_1", {
 				modules: "ULTIMATE, cooldown",
 			});
-
-			// Assert
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
 				.mock.calls.at(-1)?.[0];
@@ -257,6 +255,8 @@ describe("VOD database accessors", () => {
 					>[1],
 				);
 			}
+
+			// Assert
 			expect(mockInArray).toHaveBeenCalledWith("ULTIMATE", [
 				"ULTIMATE",
 				"COOLDOWN",
@@ -278,8 +278,6 @@ describe("VOD database accessors", () => {
 			await getSessionManifest("vod_1", {
 				modules: searchParams,
 			});
-
-			// Assert
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
 				.mock.calls.at(-1)?.[0];
@@ -304,6 +302,8 @@ describe("VOD database accessors", () => {
 					>[1],
 				);
 			}
+
+			// Assert
 			expect(mockInArray).toHaveBeenCalledWith("SPATIAL", [
 				"SPATIAL",
 				"STRATEGY",
@@ -329,8 +329,6 @@ describe("VOD database accessors", () => {
 			await getSessionManifest("vod_1", {
 				modules: ["   "],
 			});
-
-			// Assert
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
 				.mock.calls.at(-1)?.[0];
@@ -345,6 +343,7 @@ describe("VOD database accessors", () => {
 					? callArgs.with.scenarios.where
 					: undefined;
 
+			// Assert
 			expect(capturedWhereFn).toBeUndefined();
 		});
 
@@ -360,8 +359,6 @@ describe("VOD database accessors", () => {
 			await getSessionManifest("vod_1", {
 				modules: ["INVALID_TYPE", "UNKNOWN"],
 			});
-
-			// Assert
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
 				.mock.calls.at(-1)?.[0];
@@ -384,6 +381,8 @@ describe("VOD database accessors", () => {
 					{ sql: mockSql } as unknown as Parameters<typeof capturedWhereFn>[1],
 				);
 			}
+
+			// Assert
 			expect(mockSql).toHaveBeenCalled();
 		});
 	});

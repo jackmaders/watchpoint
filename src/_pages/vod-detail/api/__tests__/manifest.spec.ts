@@ -45,10 +45,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		const res = await handleGetVodManifest(req, {
 			params: Promise.resolve({ id: "vod_1" }),
 		});
+		const body = await res.json();
 
 		// Assert
 		expect(res.status).toBe(200);
-		const body = await res.json();
 		expect(body).toEqual({
 			createdAt: "2026-08-06T10:00:00.000Z",
 			durationSeconds: 1080,
@@ -96,11 +96,11 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		const res = await handleGetVodManifest(req, {
 			params: Promise.resolve({ id: "vod_1" }),
 		});
+		const capturedModules = vi.mocked(getSessionManifest).mock.calls[0]?.[1]
+			?.modules as URLSearchParams;
 
 		// Assert
 		expect(res.status).toBe(200);
-		const capturedModules = vi.mocked(getSessionManifest).mock.calls[0]?.[1]
-			?.modules as URLSearchParams;
 		expect(capturedModules.getAll("modules")).toEqual(["STRATEGY,TACTICS"]);
 	});
 
@@ -114,10 +114,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		const res = await handleGetVodManifest(req, {
 			params: Promise.resolve({ id: "non_existent" }),
 		});
+		const body = await res.json();
 
 		// Assert
 		expect(res.status).toBe(404);
-		const body = await res.json();
 		expect(body).toEqual({ error: "VOD not found" });
 	});
 });
