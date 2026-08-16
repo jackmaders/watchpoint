@@ -134,6 +134,28 @@ describe("resolveAuthMounts", () => {
 		expect(result.mounts).toHaveLength(1);
 	});
 
+	it("forwards OpenRouter credentials only when present", () => {
+		// Arrange
+		const env = { OPENROUTER_API_KEY: "router-secret" };
+
+		// Act
+		const result = resolveAuthMounts({ env, existsSync: () => false });
+
+		// Assert
+		expect(result.env.OPENROUTER_API_KEY).toBe("router-secret");
+	});
+
+	it("does not create an empty OpenRouter credential entry", () => {
+		// Arrange
+		const env = { OPENROUTER_API_KEY: "" };
+
+		// Act
+		const result = resolveAuthMounts({ env, existsSync: () => false });
+
+		// Assert
+		expect(result.env).not.toHaveProperty("OPENROUTER_API_KEY");
+	});
+
 	it("executes resolveAuthMounts with default environment parameters", () => {
 		// Arrange
 		const options = {};

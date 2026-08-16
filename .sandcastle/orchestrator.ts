@@ -2,6 +2,7 @@ import type { AgentProvider, SandboxProvider } from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 import { createAgentProvider } from "./agent-providers";
 import { resolveAuthMounts } from "./auth-mounts";
+import { validateCodexConfiguration } from "./codex-config";
 import {
 	createGithubPr,
 	execCommand,
@@ -118,6 +119,9 @@ export async function orchestrateSandcastle(
 	}
 
 	const authConfig = resolveAuthMounts({ homeDir: options.homeDir });
+	if (args.agent === "codex") {
+		validateCodexConfiguration(authConfig.env);
+	}
 	const agentProvider = createAgentProvider(args.agent, args.model);
 	const sandboxProvider = docker({
 		env: authConfig.env,

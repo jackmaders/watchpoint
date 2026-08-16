@@ -65,7 +65,7 @@ describe("parseWatchCliArgs", () => {
 
 		// Assert
 		expect(args).toEqual({
-			agent: "agy",
+			agent: "codex",
 			dangerouslySkipPermissions: true,
 			dryRun: false,
 			help: false,

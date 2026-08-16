@@ -595,7 +595,9 @@ describe("WatcherDaemon", () => {
 		expect(stats.processedCount).toBe(1);
 		expect(stats.successCount).toBe(1);
 		expect(
-			logs.some((l) => l.includes("[Dry-Run] Agent: agy, Model: default")),
+			logs.some((l) =>
+				l.includes("[Dry-Run] Agent: codex, Model: openrouter/free"),
+			),
 		).toBe(true);
 	});
 

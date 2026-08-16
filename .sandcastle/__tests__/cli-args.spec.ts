@@ -11,7 +11,7 @@ describe("parseCliArgs", () => {
 
 		// Assert
 		expect(result).toEqual({
-			agent: "agy",
+			agent: "codex",
 			branch: undefined,
 			dangerouslySkipPermissions: true,
 			dryRun: false,
@@ -19,7 +19,7 @@ describe("parseCliArgs", () => {
 			issue: undefined,
 			localOnly: false,
 			maxRetries: 3,
-			model: undefined,
+			model: "openrouter/free",
 			pr: true,
 			prompt: "Refactor video player controls",
 			sandbox: "docker",
@@ -66,6 +66,18 @@ describe("parseCliArgs", () => {
 		expect(resGemini.agent).toBe("gemini");
 		expect(resCodex.agent).toBe("codex");
 		expect(resClaude.agent).toBe("claude");
+	});
+
+	it("does not apply the Codex model default to explicit Antigravity", () => {
+		// Arrange
+		const argv = ["--prompt", "test", "--agent", "agy"];
+
+		// Act
+		const result = parseCliArgs(argv);
+
+		// Assert
+		expect(result.agent).toBe("agy");
+		expect(result.model).toBeUndefined();
 	});
 
 	it("throws error for unsupported agent type", () => {

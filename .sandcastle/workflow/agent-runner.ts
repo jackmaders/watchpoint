@@ -1,4 +1,8 @@
 import { resolveAuthMounts } from "../auth-mounts";
+import {
+	OPENROUTER_DEFAULT_MODEL,
+	validateCodexConfiguration,
+} from "../codex-config";
 import { defaultBunSpawnRunner } from "../github/client";
 import type { ProcessRunner } from "../github/types";
 import type { AgentType, AuthMountsConfig, SandboxType } from "../types";
@@ -13,6 +17,15 @@ export interface DefaultAgentRunnerOptions {
 	readonly homeDir?: string;
 	readonly processRunner?: ProcessRunner;
 	readonly authMountsConfig?: AuthMountsConfig;
+}
+
+function validateAgentCredentials(
+	agent: AgentType,
+	env: Record<string, string | undefined>,
+): void {
+	if (agent === "codex") {
+		validateCodexConfiguration(env);
+	}
 }
 
 export function buildDockerRunCommand(options: {
@@ -78,6 +91,7 @@ export class DefaultAgentRunner implements AgentRunner {
 		if (this.sandbox === "docker") {
 			const authConfig =
 				this.authMountsConfig ?? resolveAuthMounts({ homeDir: this.homeDir });
+			validateAgentCredentials(this.agent, authConfig.env);
 			executionCmd = buildDockerRunCommand({
 				agentCmd,
 				authMounts: authConfig,
@@ -86,9 +100,14 @@ export class DefaultAgentRunner implements AgentRunner {
 			});
 			executionEnv = process.env;
 		} else {
+			validateAgentCredentials(
+				this.agent,
+				this.authMountsConfig?.env ?? process.env,
+			);
 			executionCmd = agentCmd;
 			executionEnv = {
 				...process.env,
+				...this.authMountsConfig?.env,
 				AGY_NON_INTERACTIVE: "1",
 			};
 		}
@@ -132,9 +151,7 @@ export class DefaultAgentRunner implements AgentRunner {
 	private buildAgentCommand(prompt: string): string[] {
 		if (this.agent === "codex") {
 			const cmd: string[] = ["codex", "exec", prompt];
-			if (this.model) {
-				cmd.push("--model", this.model);
-			}
+			cmd.push("--model", this.model ?? OPENROUTER_DEFAULT_MODEL);
 			if (this.dangerouslySkipPermissions) {
 				cmd.push("--dangerously-bypass-approvals-and-sandbox");
 			}

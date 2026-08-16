@@ -1,3 +1,4 @@
+import { OPENROUTER_DEFAULT_MODEL } from "./codex-config";
 import type { AgentType, SandboxType, SandcastleCliArgs } from "./types";
 
 export const VALID_AGENTS: readonly AgentType[] = [
@@ -53,7 +54,7 @@ export interface CommonCliState {
 
 export function createDefaultCommonCliState(): CommonCliState {
 	return {
-		agent: "agy",
+		agent: "codex",
 		dangerouslySkipPermissions: true,
 		dryRun: false,
 		help: false,
@@ -212,7 +213,9 @@ export function parseCliArgs(argv: string[]): SandcastleCliArgs {
 		issue: state.issue,
 		localOnly: state.localOnly,
 		maxRetries: state.maxAttempts,
-		model: state.model,
+		model:
+			state.model ??
+			(state.agent === "codex" ? OPENROUTER_DEFAULT_MODEL : undefined),
 		pr: state.pr,
 		prompt: state.prompt,
 		sandbox: state.sandbox,

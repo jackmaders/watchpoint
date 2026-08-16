@@ -337,6 +337,7 @@ describe("DefaultAgentRunner", () => {
 
 		const runnerCodex = new DefaultAgentRunner({
 			agent: "codex",
+			authMountsConfig: { env: { OPENROUTER_API_KEY: "test-key" }, mounts: [] },
 			dangerouslySkipPermissions: true,
 			model: "o3-mini",
 			processRunner,
@@ -353,6 +354,7 @@ describe("DefaultAgentRunner", () => {
 
 		const runnerCodexNoModel = new DefaultAgentRunner({
 			agent: "codex",
+			authMountsConfig: { env: { OPENROUTER_API_KEY: "test-key" }, mounts: [] },
 			dangerouslySkipPermissions: false,
 			processRunner,
 			sandbox: "none",
@@ -419,7 +421,26 @@ describe("DefaultAgentRunner", () => {
 			"codex",
 			"exec",
 			"Codex no model task",
+			"--model",
+			"openrouter/free",
 		]);
+	});
+
+	it("fails with an actionable error when Codex credentials are missing", async () => {
+		// Arrange
+		const runner = new DefaultAgentRunner({ agent: "codex", sandbox: "none" });
+
+		// Act
+		const runPromise = runner.run({
+			attempt: 1,
+			branch: "feat/missing-key",
+			maxAttempts: 1,
+			prompt: "Run checks",
+			worktreePath: "/tmp/worktrees/missing-key",
+		});
+
+		// Assert
+		await expect(runPromise).rejects.toThrow("OPENROUTER_API_KEY");
 	});
 
 	it("throws error when agent process exits with non-zero exit code", async () => {
