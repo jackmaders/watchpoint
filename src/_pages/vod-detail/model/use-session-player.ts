@@ -179,7 +179,6 @@ function useSessionAttemptCallbacks({
 
 	const handleTimeout = useCallback(() => {
 		const scenario = currentScenarioRef.current;
-		/* c8 ignore next 7 -- defensive guard handles a stale countdown callback. */
 		if (
 			state !== "SCENARIO_ACTIVE" ||
 			overlayState?.status !== "unanswered" ||

@@ -17,6 +17,7 @@ import {
 import {
 	findCorrectOptionId,
 	isSelectedOptionCorrect,
+	type ManifestVod,
 	resolveNewStatusState,
 	toScenarioOverlayData,
 	useSessionPlayer,
@@ -594,6 +595,61 @@ describe("useSessionPlayer", () => {
 			status: "timedOut",
 		});
 		expect(result.current.attempts[0]?.responseTimeMs).toBe(2000);
+		vi.useRealTimers();
+	});
+
+	it("ignores a stale countdown callback after the active scenario is removed", async () => {
+		// Arrange
+		vi.useFakeTimers();
+		const frameController = installMockFrames();
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const tacticsManifest = {
+			...mockManifest,
+			scenarios: [mockManifest.scenarios[1]],
+		};
+		const initialProps: { manifest: ManifestVod | null } = {
+			manifest: tacticsManifest,
+		};
+
+		const { rerender, result } = renderHook(
+			({ manifest }: { manifest: ManifestVod | null }) =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: manifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ initialProps, wrapper: createWrapper() },
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+
+		player.getCurrentTime = vi.fn(() => 60.0);
+		act(() => {
+			frameController.flush();
+		});
+
+		// Act
+		rerender({ manifest: null });
+		act(() => {
+			vi.advanceTimersByTime(3100);
+		});
+
+		// Assert
+		expect(result.current.state).toBe("SCENARIO_ACTIVE");
+		expect(result.current.attempts).toHaveLength(0);
+		expect(result.current.overlayState).toEqual({ status: "unanswered" });
 		vi.useRealTimers();
 	});
 
