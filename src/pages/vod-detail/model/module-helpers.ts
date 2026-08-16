@@ -1,6 +1,6 @@
 import type { ModuleType } from "@/shared/db";
+import type { ModuleDefinition } from "./modules";
 import { DEFAULT_MODULE_TYPES, MODULE_MAP } from "./modules";
-import type { ModuleDefinition } from "./types";
 
 const MODULE_TYPE_SET = new Set<string>(DEFAULT_MODULE_TYPES);
 

@@ -8,7 +8,7 @@ Developer and Reviewer agent skills deleted in #50 — the parts that describe h
 ## Feature-Sliced Design (Pages-First)
 
 - Keep UI components, business logic, and server actions inside the relevant
-  `src/_pages/<slice-name>/` directory by default.
+  `src/pages/<slice-name>/` directory by default.
 - Do not extract logic into `features/` or `widgets/` until a second consumer explicitly
   requires it.
 - Cross-slice imports go through a slice's public API (`index.ts`) only.
@@ -40,7 +40,7 @@ function HomeRoute() {
 ```
 
 No inline business logic or UI rendering in `app/routes/`. All page logic and presentation lives
-in the FSD `src/_pages/` layer.
+in the FSD `src/pages/` layer.
 
 ## Test file location
 
@@ -136,5 +136,5 @@ helper, state machine, or policy object instead of branching further at the call
 ## File size guard
 
 No file grows past 1,000 lines without extracting subcomponents or helper modules. Keep
-FSD slices (`src/_pages/<slice-name>/`) modular and focused rather than letting one file
+FSD slices (`src/pages/<slice-name>/`) modular and focused rather than letting one file
 absorb everything a slice needs.

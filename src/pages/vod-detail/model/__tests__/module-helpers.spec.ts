@@ -9,7 +9,7 @@ import {
 	getModuleLabel,
 	isModuleType,
 	parseModuleTypes,
-} from "../helpers";
+} from "../module-helpers";
 
 describe("scenario domain helpers", () => {
 	describe("isModuleType", () => {

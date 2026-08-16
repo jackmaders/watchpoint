@@ -1,5 +1,13 @@
 import type { ModuleType } from "@/shared/db";
-import type { ModuleDefinition } from "./types";
+
+export interface ModuleDefinition {
+	badge: string;
+	color: string;
+	description: string;
+	key: ModuleType;
+	label: string;
+	tooltip: string;
+}
 
 export const DEFAULT_MODULE_TYPES: readonly ModuleType[] = [
 	"STRATEGY",

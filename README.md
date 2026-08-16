@@ -24,11 +24,10 @@ An interactive Overwatch 2 VOD decision training platform built with **TanStack 
 ```text
 app/            → TanStack Router route tree, SSR/client entrypoints & lightweight adapters
 src/
-├── _app/       → Global styles and application-level configuration
-├── _pages/     → Route-level composition and page-owned logic
+├── app/        → Global styles and application-level configuration
+├── pages/      → Route-level composition and page-owned logic
 ├── widgets/    → Large composite UI blocks reused across pages
 ├── features/   → Reusable user interactions (e.g. user-form)
-├── entities/   → Reusable business domain models
 └── shared/     → Infrastructure, UI kit, db client, utils, auth, media player
 ```
 

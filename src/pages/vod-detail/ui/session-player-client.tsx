@@ -2,10 +2,10 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { MODULE_MAP } from "@/entities/scenario";
 import { formatDuration } from "@/shared/lib/utils";
 import type { VodContainerRef } from "@/shared/media";
 import { extractHeroFromTitle } from "../model/module-filter";
+import { MODULE_MAP } from "../model/modules";
 import {
 	type ScenarioData,
 	type ScenarioOverlayState,
