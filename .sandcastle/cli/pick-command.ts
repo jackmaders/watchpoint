@@ -53,6 +53,9 @@ ${BOLD}KEYBINDINGS:${RESET}
   q / Esc / Ctrl+C   Cancel and exit picker cleanly
 
 ${BOLD}OPTIONS:${RESET}
+  --sandbox <name>     Sandbox execution provider (docker, none) [default: docker]
+  --image <name>       Docker image override [default: sandcastle:watchpoint]
+  --no-sandbox         Run agent directly on host without Docker container isolation
   --agent <name>       Agent provider (agy, gemini, codex, claude) [default: agy]
   --model <name>       Model name override for agent provider
   --max-attempts <n>   Maximum self-healing attempts before failure [default: 3]
@@ -90,7 +93,7 @@ function buildDryRunResult(
 ): ExecutionResult {
 	logger(`[Dry-Run] Target issue: #${issue.number} (${issue.title})`);
 	logger(
-		`[Dry-Run] Agent: ${args.agent ?? "agy"}, Model: ${args.model ?? "default"}`,
+		`[Dry-Run] Agent: ${args.agent ?? "agy"}, Model: ${args.model ?? "default"}, Sandbox: ${args.sandbox ?? "docker"}`,
 	);
 	return {
 		attempts: 0,
@@ -122,8 +125,11 @@ async function executeSelection(
 			options.agentRunner ??
 			new DefaultAgentRunner({
 				agent: args.agent,
+				dangerouslySkipPermissions: args.dangerouslySkipPermissions,
+				imageName: args.imageName,
 				model: args.model,
 				processRunner: options.gitRunner,
+				sandbox: args.sandbox,
 			}),
 		branch: args.branch,
 		cwd: options.cwd,

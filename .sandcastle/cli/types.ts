@@ -1,5 +1,5 @@
 import type { GithubClient, ProcessRunner } from "../github/types";
-import type { AgentType, VerificationResult } from "../types";
+import type { AgentType, SandboxType, VerificationResult } from "../types";
 import type {
 	AgentRunner,
 	ExecutionResult,
@@ -39,6 +39,9 @@ export interface PickCliArgs {
 	readonly localOnly?: boolean;
 	readonly branch?: string;
 	readonly help?: boolean;
+	readonly sandbox?: SandboxType;
+	readonly imageName?: string;
+	readonly dangerouslySkipPermissions?: boolean;
 }
 
 export interface PickCommandOptions {

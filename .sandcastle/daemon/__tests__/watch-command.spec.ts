@@ -66,13 +66,16 @@ describe("parseWatchCliArgs", () => {
 		// Assert
 		expect(args).toEqual({
 			agent: "agy",
+			dangerouslySkipPermissions: true,
 			dryRun: false,
 			help: false,
+			imageName: "sandcastle:watchpoint",
 			intervalSeconds: 60,
 			localOnly: false,
 			maxAttempts: 3,
 			once: false,
 			pr: true,
+			sandbox: "docker",
 		});
 	});
 
@@ -103,8 +106,10 @@ describe("parseWatchCliArgs", () => {
 		expect(args).toEqual({
 			agent: "codex",
 			branch: "feat/custom",
+			dangerouslySkipPermissions: true,
 			dryRun: true,
 			help: false,
+			imageName: "sandcastle:watchpoint",
 			intervalSeconds: 30,
 			limit: 5,
 			localOnly: false,
@@ -112,6 +117,7 @@ describe("parseWatchCliArgs", () => {
 			model: "gpt-4o",
 			once: true,
 			pr: false,
+			sandbox: "docker",
 		});
 	});
 

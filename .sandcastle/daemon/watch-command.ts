@@ -96,6 +96,9 @@ ${BOLD}OPTIONS:${RESET}
   --interval <seconds>  Polling interval in seconds when queue is idle [default: 60]
   --once                Process at most one eligible ticket and exit
   --limit <n>           Process up to n eligible tickets before exiting cleanly
+  --sandbox <name>      Sandbox execution provider (docker, none) [default: docker]
+  --image <name>        Docker image override [default: sandcastle:watchpoint]
+  --no-sandbox          Run agent directly on host without Docker container isolation
   --agent <name>        Agent provider (agy, gemini, codex, claude) [default: agy]
   --model <name>        Model name override for agent provider
   --max-attempts <n>    Maximum self-healing attempts before failure [default: 3]

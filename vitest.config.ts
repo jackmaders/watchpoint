@@ -12,6 +12,7 @@ export default defineConfig({
 				"**/*.d.ts",
 				"src/**/*.{spec,test}.{ts,tsx}",
 				".sandcastle/**/*.{spec,test}.{ts,tsx}",
+				".sandcastle/worktrees/**",
 				"src/**/index.ts",
 				"src/**/index.client.ts",
 				"src/**/index.server.ts",

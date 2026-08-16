@@ -3,7 +3,7 @@ import type {
 	GithubClient,
 	ProcessRunner,
 } from "../github/types";
-import type { AgentType, VerificationResult } from "../types";
+import type { AgentType, SandboxType, VerificationResult } from "../types";
 import type {
 	AgentRunner,
 	ExecutionResult,
@@ -42,6 +42,9 @@ export interface WatcherDaemonOptions extends WatcherTelemetryEvents {
 	readonly branch?: string;
 	readonly pr?: boolean;
 	readonly localOnly?: boolean;
+	readonly sandbox?: SandboxType;
+	readonly imageName?: string;
+	readonly dangerouslySkipPermissions?: boolean;
 
 	readonly githubClient?: GithubClient;
 	readonly worktreeManager?: WorktreeManager;
@@ -74,6 +77,9 @@ export interface WatchCliArgs {
 	readonly localOnly: boolean;
 	readonly branch?: string;
 	readonly help: boolean;
+	readonly sandbox?: SandboxType;
+	readonly imageName?: string;
+	readonly dangerouslySkipPermissions?: boolean;
 }
 
 export interface WatchCommandOptions extends Partial<WatcherDaemonOptions> {

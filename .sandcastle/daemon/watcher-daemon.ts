@@ -184,8 +184,11 @@ export class WatcherDaemon {
 					this.options.agentRunner ??
 					new DefaultAgentRunner({
 						agent: this.options.agent,
+						dangerouslySkipPermissions: this.options.dangerouslySkipPermissions,
+						imageName: this.options.imageName,
 						model: this.options.model,
 						processRunner: this.options.gitRunner,
+						sandbox: this.options.sandbox,
 					}),
 				branch: this.options.branch,
 				cwd: this.options.cwd,

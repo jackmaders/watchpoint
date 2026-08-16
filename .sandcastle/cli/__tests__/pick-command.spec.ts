@@ -104,11 +104,14 @@ describe("parsePickCliArgs", () => {
 		// Assert
 		expect(args).toEqual({
 			agent: "agy",
+			dangerouslySkipPermissions: true,
 			dryRun: false,
 			help: false,
+			imageName: "sandcastle:watchpoint",
 			localOnly: false,
 			maxAttempts: 3,
 			pr: true,
+			sandbox: "docker",
 		});
 	});
 
