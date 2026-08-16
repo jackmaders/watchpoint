@@ -31,7 +31,7 @@ describe("server-fns", () => {
 		expect(result).toBe(mockVod);
 	});
 
-	it("executes getSessionManifest handler correctly", async () => {
+	it("executes getSessionManifest handler correctly with object payload", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
 		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
@@ -53,6 +53,28 @@ describe("server-fns", () => {
 		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123", {
 			modules: ["STRATEGY"],
 			publishedOnly: true,
+		});
+		expect(result).toBe(mockManifest);
+	});
+
+	it("executes getSessionManifest handler correctly with string input", async () => {
+		// Arrange
+		const mockManifest = { id: "vod_123", scenarios: [] } as never;
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+
+		// Act
+		const result = await (
+			getSessionManifest as unknown as (ctx: {
+				data: string;
+			}) => Promise<unknown>
+		)({
+			data: "vod_123",
+		});
+
+		// Assert
+		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123", {
+			modules: undefined,
+			publishedOnly: undefined,
 		});
 		expect(result).toBe(mockManifest);
 	});

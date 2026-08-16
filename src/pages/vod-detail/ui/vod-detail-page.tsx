@@ -1,21 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { getSessionManifest } from "@/shared/db";
+import type { SessionManifest } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
 import { extractHeroFromTitle } from "../model/module-filter";
 import { VodDetailClient } from "./vod-detail-client";
 
 export async function VodDetailPage({
 	params,
-	vod: initialVod,
+	vod,
 }: {
 	params: Promise<{ id: string }> | { id: string };
-	vod?: Awaited<ReturnType<typeof getSessionManifest>>;
+	vod?: SessionManifest | null;
 }) {
-	const resolvedParams = await params;
-	const vod =
-		initialVod !== undefined
-			? initialVod
-			: await getSessionManifest(resolvedParams.id);
+	await params;
 
 	if (!vod) {
 		return (

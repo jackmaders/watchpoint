@@ -1,13 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
-import { getPublishedVods } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
 
 export type VodItem = PublishedVodItem;
 export { formatDuration };
 
-export async function VodsPage(props?: { vods?: PublishedVodItem[] }) {
-	const vods = props?.vods ?? (await getPublishedVods());
+export function VodsPage(props?: { vods?: PublishedVodItem[] }) {
+	const vods = props?.vods ?? [];
 
 	return (
 		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">

@@ -1,27 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { getSessionManifest } from "@/shared/db";
+import type { SessionManifest } from "@/shared/db";
 import { SessionPlayerClient } from "./session-player-client";
 
 export async function SessionPlayerPage({
 	params,
 	searchParams,
-	vod: initialVod,
+	vod,
 }: {
 	params: Promise<{ id: string }> | { id: string };
 	searchParams?:
 		| Promise<{ modules?: string }>
 		| { modules?: string }
 		| undefined;
-	vod?: Awaited<ReturnType<typeof getSessionManifest>>;
+	vod?: SessionManifest | null;
 }) {
-	const resolvedParams = await params;
-	const resolvedSearch = await searchParams;
-	let vod = initialVod;
-	if (vod === undefined) {
-		vod = await getSessionManifest(resolvedParams.id, {
-			modules: resolvedSearch?.modules,
-		});
-	}
+	await params;
+	await searchParams;
 
 	if (!vod) {
 		return (

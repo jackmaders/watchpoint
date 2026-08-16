@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
-import { getPublishedVods } from "@/shared/db";
 import { UserForm } from "./user-form";
 
-export async function HomePage(props?: { vods?: PublishedVodItem[] }) {
-	const vods = props?.vods ?? (await getPublishedVods());
+export function HomePage(props?: { vods?: PublishedVodItem[] }) {
+	const vods = props?.vods ?? [];
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-8 sm:p-24 bg-slate-950 text-slate-50">

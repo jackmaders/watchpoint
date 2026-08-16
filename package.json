@@ -72,7 +72,6 @@
 		"db:status:prod": "wrangler d1 migrations list DB --remote",
 		"db:studio": "drizzle-kit studio",
 		"deploy": "wrangler deploy",
-		"deploy:worker": "wrangler deploy",
 		"dev": "vite dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
 		"prepare": "lefthook install",
@@ -83,7 +82,7 @@
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:unit": "vitest run",
-		"validate": "bun run check:types && bun run check:all && bun run check:architecture && bun run test:coverage && bun run build"
+		"validate": "bun run check:types && bun run check:all && bun run check:architecture && bun run test:coverage && bun run build && bun run deploy --dry-run"
 	},
 	"trustedDependencies": [
 		"sharp",

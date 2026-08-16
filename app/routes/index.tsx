@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomePage } from "@/pages/home";
-import { getPublishedVods } from "@/shared/db";
+import { getPublishedVods } from "@/pages/vods";
 
 export const Route = createFileRoute("/")({
 	component: HomeRoute,

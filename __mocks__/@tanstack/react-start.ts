@@ -4,10 +4,11 @@ export const createServerFn = vi.fn(() => {
 	let storedValidator: ((data: unknown) => unknown) | undefined;
 	const chain = {
 		handler: vi.fn((fn) => {
-			const serverFn = async (ctx: { data: unknown }) => {
+			const serverFn = async (ctx?: { data?: unknown }) => {
+				const rawData = ctx?.data;
 				const validatedData = storedValidator
-					? storedValidator(ctx.data)
-					: ctx.data;
+					? storedValidator(rawData)
+					: rawData;
 				return fn({ data: validatedData });
 			};
 			return serverFn;
