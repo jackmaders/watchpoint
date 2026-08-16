@@ -2,9 +2,13 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import {
+	calculateModuleCounts,
+	filterScenariosByModules,
+	MODULE_DEFINITIONS,
+} from "@/entities/scenario";
 import type { getSessionManifest, ModuleType } from "@/shared/db";
-import { buildSessionUrl, calculateModuleCounts } from "../model/module-filter";
-import { MODULE_DEFINITIONS } from "../model/modules";
+import { buildSessionUrl } from "../model/module-filter";
 import { ModuleFilterPills } from "./module-filter-pills";
 
 export interface VodDetailClientProps {
@@ -21,10 +25,10 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 		[vod.scenarios],
 	);
 
-	const matchingScenarioCount = useMemo(() => {
-		const activeSet = new Set(activeModules);
-		return vod.scenarios.filter((sc) => activeSet.has(sc.moduleType)).length;
-	}, [vod.scenarios, activeModules]);
+	const matchingScenarioCount = useMemo(
+		() => filterScenariosByModules(vod.scenarios, activeModules).length,
+		[vod.scenarios, activeModules],
+	);
 
 	const startHref = useMemo(
 		() => buildSessionUrl(vod.id, activeModules),

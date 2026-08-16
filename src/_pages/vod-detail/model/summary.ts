@@ -1,5 +1,5 @@
+import { MODULE_DEFINITIONS } from "@/entities/scenario";
 import type { ModuleType } from "@/shared/db";
-import { MODULE_DEFINITIONS } from "./modules";
 
 export interface SessionAttempt {
 	isCorrect: boolean;

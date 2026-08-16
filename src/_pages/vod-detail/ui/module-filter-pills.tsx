@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
+import { MODULE_DEFINITIONS, type ModuleDefinition } from "@/entities/scenario";
 import type { ModuleType } from "@/shared/db";
-import { MODULE_DEFINITIONS, type ModuleDefinition } from "../model/modules";
 
 export interface ModuleFilterPillsProps {
 	availableCounts?: Record<ModuleType, number>;

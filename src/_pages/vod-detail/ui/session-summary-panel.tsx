@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { MODULE_MAP } from "@/entities/scenario";
 import type { ModuleType } from "@/shared/db";
-import { MODULE_MAP } from "../model/modules";
 import type { SessionSummaryReport } from "../model/summary";
 
 export interface SessionSummaryPanelProps {

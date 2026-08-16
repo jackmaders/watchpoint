@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useId } from "react";
+import { MODULE_MAP } from "@/entities/scenario";
 import type { ModuleType } from "@/shared/db";
-import { MODULE_MAP } from "../model/modules";
 
 export interface ScenarioOption {
 	id: string;

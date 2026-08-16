@@ -1,3 +1,8 @@
+export {
+	MODULE_DEFINITIONS,
+	MODULE_MAP,
+	type ModuleDefinition,
+} from "@/entities/scenario";
 export { handleGetVodManifest } from "./api/manifest";
 export { recordAttemptAction } from "./api/record-attempt";
 export {
@@ -13,15 +18,9 @@ export {
 } from "./model/attempt";
 export {
 	buildSessionUrl,
-	calculateModuleCounts,
 	extractHeroFromTitle,
 	serializeModulesParam,
 } from "./model/module-filter";
-export {
-	MODULE_DEFINITIONS,
-	MODULE_MAP,
-	type ModuleDefinition,
-} from "./model/modules";
 export {
 	calculateSessionSummary,
 	type ModuleSummaryReport,
