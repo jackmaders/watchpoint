@@ -61,9 +61,11 @@ describe("setupGracefulShutdown", () => {
 		) => {
 			registered.set(event, handler);
 		};
+		const processOff = vi.fn();
 
 		const controller = setupGracefulShutdown({
 			logger,
+			processOff,
 			processOn,
 		});
 
@@ -83,10 +85,12 @@ describe("setupGracefulShutdown", () => {
 			throw new Error("Cleanup disk failure");
 		};
 		const processOn = vi.fn();
+		const processOff = vi.fn();
 
 		const controller = setupGracefulShutdown({
 			logger,
 			onGracefulShutdown,
+			processOff,
 			processOn,
 		});
 
@@ -109,10 +113,12 @@ describe("setupGracefulShutdown", () => {
 			throw "string failure";
 		};
 		const processOn = vi.fn();
+		const processOff = vi.fn();
 
 		const controller = setupGracefulShutdown({
 			logger,
 			onGracefulShutdown,
+			processOff,
 			processOn,
 		});
 
@@ -136,10 +142,12 @@ describe("setupGracefulShutdown", () => {
 			exitCode = code;
 		};
 		const processOn = vi.fn();
+		const processOff = vi.fn();
 
 		const controller = setupGracefulShutdown({
 			exit,
 			logger,
+			processOff,
 			processOn,
 		});
 
@@ -162,9 +170,11 @@ describe("setupGracefulShutdown", () => {
 			exitCode = code;
 		};
 		const processOn = vi.fn();
+		const processOff = vi.fn();
 
 		const controller = setupGracefulShutdown({
 			exit,
+			processOff,
 			processOn,
 		});
 
@@ -217,8 +227,10 @@ describe("setupGracefulShutdown", () => {
 		) => {
 			listeners.set(event, handler);
 		};
+		const processOff = vi.fn();
 		const controller = setupGracefulShutdown({
 			logger,
+			processOff,
 			processOn,
 		});
 

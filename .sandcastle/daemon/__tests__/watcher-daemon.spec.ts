@@ -665,6 +665,7 @@ describe("WatcherDaemon", () => {
 			githubClient,
 			gitRunner: async () => ({ exitCode: 0, stderr: "", stdout: "" }),
 			lockManager,
+			logger: () => {},
 			once: true,
 			validator: async () => ({
 				checks: [{ name: "test", output: "ok", success: true }],
