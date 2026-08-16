@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MockGithubClient } from "../../github/client";
 import type { CandidateIssue } from "../../github/types";
 import type { ExecutionResult, WorkflowOptions } from "../../workflow/types";
-import { MockWatcherClock } from "../heartbeat";
+import { MockWatcherClock } from "../__mocks__/watcher-clock";
 import {
 	defaultWatchLogger,
 	formatWatchHelp,
@@ -175,10 +175,11 @@ describe("parseWatchCliArgs", () => {
 		// Arrange
 		const argv = ["--agent", "invalid-agent"];
 
-		// Act & Assert
-		expect(() => parseWatchCliArgs(argv)).toThrow(
-			"Unsupported agent: invalid-agent",
-		);
+		// Act
+		const parseFn = () => parseWatchCliArgs(argv);
+
+		// Assert
+		expect(parseFn).toThrow("Unsupported agent: invalid-agent");
 	});
 
 	it("throws error for invalid interval", () => {
@@ -186,25 +187,35 @@ describe("parseWatchCliArgs", () => {
 		const argv = ["--interval", "not-a-number"];
 		const argvZero = ["--interval", "0"];
 
-		// Act & Assert
-		expect(() => parseWatchCliArgs(argv)).toThrow("Invalid interval");
-		expect(() => parseWatchCliArgs(argvZero)).toThrow("Invalid interval");
+		// Act
+		const parseFn = () => parseWatchCliArgs(argv);
+		const parseZeroFn = () => parseWatchCliArgs(argvZero);
+
+		// Assert
+		expect(parseFn).toThrow("Invalid interval");
+		expect(parseZeroFn).toThrow("Invalid interval");
 	});
 
 	it("throws error for invalid limit", () => {
 		// Arrange
 		const argv = ["--limit", "-5"];
 
-		// Act & Assert
-		expect(() => parseWatchCliArgs(argv)).toThrow("Invalid limit");
+		// Act
+		const parseFn = () => parseWatchCliArgs(argv);
+
+		// Assert
+		expect(parseFn).toThrow("Invalid limit");
 	});
 
 	it("throws error for invalid max-attempts", () => {
 		// Arrange
 		const argv = ["--max-attempts", "0"];
 
-		// Act & Assert
-		expect(() => parseWatchCliArgs(argv)).toThrow("Invalid max-attempts");
+		// Act
+		const parseFn = () => parseWatchCliArgs(argv);
+
+		// Assert
+		expect(parseFn).toThrow("Invalid max-attempts");
 	});
 });
 

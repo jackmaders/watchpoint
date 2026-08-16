@@ -167,12 +167,14 @@ function resolveDaemonOptions(
 	const githubClient =
 		options.githubClient ?? new DefaultGithubClient({ cwd: options.cwd });
 	const clock = options.clock ?? new DefaultWatcherClock();
+	const output = options.output ?? process.stdout;
 
 	const merged: WatcherDaemonOptions = {
 		...options,
 		clock,
 		githubClient,
 		logger,
+		output,
 		signal,
 	};
 

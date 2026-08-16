@@ -5,7 +5,7 @@ import type { CandidateIssue } from "../../github/types";
 import { MockAgentRunner } from "../../workflow/agent-runner";
 import type { ExecutionResult, WorkflowOptions } from "../../workflow/types";
 import { MockRunnerLockManager, MockWorktreeManager } from "../../worktree";
-import { MockWatcherClock } from "../heartbeat";
+import { MockWatcherClock } from "../__mocks__/watcher-clock";
 import {
 	defaultDaemonLogger,
 	isClaimContention,
@@ -639,8 +639,11 @@ describe("WatcherDaemon", () => {
 	});
 
 	it("instantiates with default options, clock, and github client", () => {
-		// Arrange & Act
-		const daemon = new WatcherDaemon();
+		// Arrange
+		const options = {};
+
+		// Act
+		const daemon = new WatcherDaemon(options);
 
 		// Assert
 		expect(daemon).toBeDefined();

@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-	DefaultWatcherClock,
-	MockWatcherClock,
-	renderHeartbeatCountdown,
-} from "../heartbeat";
+import { MockWatcherClock } from "../__mocks__/watcher-clock";
+import { DefaultWatcherClock, renderHeartbeatCountdown } from "../heartbeat";
 
 class MockOutputStream {
 	readonly chunks: string[] = [];
