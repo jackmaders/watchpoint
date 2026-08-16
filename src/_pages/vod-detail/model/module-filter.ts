@@ -68,24 +68,6 @@ export function extractHeroFromTitle(title: string): OverwatchHero | null {
 	return null;
 }
 
-export function calculateModuleCounts(
-	scenarios: { moduleType: ModuleType }[],
-): Record<ModuleType, number> {
-	const counts: Record<ModuleType, number> = {
-		COOLDOWN: 0,
-		SPATIAL: 0,
-		STRATEGY: 0,
-		TACTICS: 0,
-		ULTIMATE: 0,
-	};
-
-	for (const scenario of scenarios) {
-		counts[scenario.moduleType] += 1;
-	}
-
-	return counts;
-}
-
 export function serializeModulesParam(modules: ModuleType[]): string {
 	return modules.join(",");
 }

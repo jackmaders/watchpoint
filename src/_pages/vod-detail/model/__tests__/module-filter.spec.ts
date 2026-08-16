@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { ModuleType } from "@/shared/db";
 import {
 	buildSessionUrl,
-	calculateModuleCounts,
 	extractHeroFromTitle,
 	serializeModulesParam,
 } from "../module-filter";
@@ -93,48 +92,6 @@ describe("module-filter helpers", () => {
 
 			// Assert
 			expect(result).toBeNull();
-		});
-	});
-
-	describe("calculateModuleCounts", () => {
-		it("counts scenarios for each module type and defaults missing modules to 0", () => {
-			// Arrange
-			const scenarios = [
-				{ moduleType: "STRATEGY" as ModuleType },
-				{ moduleType: "STRATEGY" as ModuleType },
-				{ moduleType: "TACTICS" as ModuleType },
-				{ moduleType: "ULTIMATE" as ModuleType },
-				{ moduleType: "COOLDOWN" as ModuleType },
-			];
-
-			// Act
-			const counts = calculateModuleCounts(scenarios);
-
-			// Assert
-			expect(counts).toEqual({
-				COOLDOWN: 1,
-				SPATIAL: 0,
-				STRATEGY: 2,
-				TACTICS: 1,
-				ULTIMATE: 1,
-			});
-		});
-
-		it("returns 0 for all modules when scenarios array is empty", () => {
-			// Arrange
-			const scenarios: { moduleType: ModuleType }[] = [];
-
-			// Act
-			const counts = calculateModuleCounts(scenarios);
-
-			// Assert
-			expect(counts).toEqual({
-				COOLDOWN: 0,
-				SPATIAL: 0,
-				STRATEGY: 0,
-				TACTICS: 0,
-				ULTIMATE: 0,
-			});
 		});
 	});
 
