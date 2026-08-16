@@ -1,5 +1,6 @@
 export * from "./agent-providers";
 export * from "./auth-mounts";
+export * from "./cli";
 export * from "./cli-args";
 export * from "./exec-helpers";
 export * from "./git-manager";
