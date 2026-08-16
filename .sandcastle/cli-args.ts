@@ -1,4 +1,4 @@
-import type { AgentType, SandcastleCliArgs } from "./types";
+import type { AgentType, SandboxType, SandcastleCliArgs } from "./types";
 
 export const VALID_AGENTS: readonly AgentType[] = [
 	"agy",
@@ -7,11 +7,23 @@ export const VALID_AGENTS: readonly AgentType[] = [
 	"claude",
 ];
 
+export const VALID_SANDBOXES: readonly SandboxType[] = ["docker", "none"];
+
 export function parseAgent(val: string): AgentType {
 	const candidate = val as AgentType;
 	if (!VALID_AGENTS.includes(candidate)) {
 		throw new Error(
 			`Unsupported agent: ${candidate}. Expected one of: ${VALID_AGENTS.join(", ")}`,
+		);
+	}
+	return candidate;
+}
+
+export function parseSandbox(val: string): SandboxType {
+	const candidate = val as SandboxType;
+	if (!VALID_SANDBOXES.includes(candidate)) {
+		throw new Error(
+			`Unsupported sandbox: ${candidate}. Expected one of: ${VALID_SANDBOXES.join(", ")}`,
 		);
 	}
 	return candidate;
@@ -34,16 +46,22 @@ export interface CommonCliState {
 	localOnly: boolean;
 	branch?: string;
 	help: boolean;
+	sandbox: SandboxType;
+	imageName?: string;
+	dangerouslySkipPermissions: boolean;
 }
 
 export function createDefaultCommonCliState(): CommonCliState {
 	return {
 		agent: "agy",
+		dangerouslySkipPermissions: true,
 		dryRun: false,
 		help: false,
+		imageName: process.env.SANDCASTLE_IMAGE || "sandcastle:watchpoint",
 		localOnly: false,
 		maxAttempts: 3,
 		pr: true,
+		sandbox: "docker",
 	};
 }
 
@@ -73,33 +91,65 @@ export function applyCommonValueFlag(
 		state.branch = nextVal;
 		return 1;
 	}
+	if (arg === "--sandbox") {
+		state.sandbox = parseSandbox(nextVal);
+		return 1;
+	}
+	if (arg === "--image" || arg === "--image-name") {
+		state.imageName = nextVal;
+		return 1;
+	}
 	return 0;
 }
+
+const BOOLEAN_FLAG_ACTIONS: Record<
+	string,
+	(state: Partial<CommonCliState>) => void
+> = {
+	"--dangerously-skip-permissions": (s) => {
+		s.dangerouslySkipPermissions = true;
+	},
+	"--docker": (s) => {
+		s.sandbox = "docker";
+	},
+	"--dry-run": (s) => {
+		s.dryRun = true;
+	},
+	"--help": (s) => {
+		s.help = true;
+	},
+	"--local-only": (s) => {
+		s.localOnly = true;
+		s.pr = false;
+	},
+	"--no-pr": (s) => {
+		s.pr = false;
+	},
+	"--no-sandbox": (s) => {
+		s.sandbox = "none";
+	},
+	"--no-skip-permissions": (s) => {
+		s.dangerouslySkipPermissions = false;
+	},
+	"--pr": (s) => {
+		s.pr = true;
+		s.localOnly = false;
+	},
+	"--skip-permissions": (s) => {
+		s.dangerouslySkipPermissions = true;
+	},
+	"-h": (s) => {
+		s.help = true;
+	},
+};
 
 export function applyCommonBooleanFlag(
 	state: Partial<CommonCliState>,
 	arg: string,
 ): boolean {
-	if (arg === "--help" || arg === "-h") {
-		state.help = true;
-		return true;
-	}
-	if (arg === "--dry-run") {
-		state.dryRun = true;
-		return true;
-	}
-	if (arg === "--local-only") {
-		state.localOnly = true;
-		state.pr = false;
-		return true;
-	}
-	if (arg === "--no-pr") {
-		state.pr = false;
-		return true;
-	}
-	if (arg === "--pr") {
-		state.pr = true;
-		state.localOnly = false;
+	const action = BOOLEAN_FLAG_ACTIONS[arg];
+	if (action) {
+		action(state);
 		return true;
 	}
 	return false;
@@ -156,12 +206,15 @@ export function parseCliArgs(argv: string[]): SandcastleCliArgs {
 	return {
 		agent: state.agent,
 		branch: state.branch,
+		dangerouslySkipPermissions: state.dangerouslySkipPermissions,
 		dryRun: state.dryRun,
+		imageName: state.imageName,
 		issue: state.issue,
 		localOnly: state.localOnly,
 		maxRetries: state.maxAttempts,
 		model: state.model,
 		pr: state.pr,
 		prompt: state.prompt,
+		sandbox: state.sandbox,
 	};
 }

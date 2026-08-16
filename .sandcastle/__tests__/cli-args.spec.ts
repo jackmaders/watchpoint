@@ -13,13 +13,16 @@ describe("parseCliArgs", () => {
 		expect(result).toEqual({
 			agent: "agy",
 			branch: undefined,
+			dangerouslySkipPermissions: true,
 			dryRun: false,
+			imageName: "sandcastle:watchpoint",
 			issue: undefined,
 			localOnly: false,
 			maxRetries: 3,
 			model: undefined,
 			pr: true,
 			prompt: "Refactor video player controls",
+			sandbox: "docker",
 		});
 	});
 
@@ -169,16 +172,51 @@ describe("parseCliArgs", () => {
 		);
 	});
 
-	it("throws error if issue is not a valid positive integer", () => {
+	it("parses sandbox flags including --sandbox none and --no-sandbox", () => {
 		// Arrange
-		const argv = ["--issue", "abc"];
+		const argv1 = ["--prompt", "test", "--sandbox", "none"];
+		const argv2 = ["--prompt", "test", "--no-sandbox"];
+		const argv3 = ["--prompt", "test", "--docker"];
+
+		// Act
+		const res1 = parseCliArgs(argv1);
+		const res2 = parseCliArgs(argv2);
+		const res3 = parseCliArgs(argv3);
+
+		// Assert
+		expect(res1.sandbox).toBe("none");
+		expect(res2.sandbox).toBe("none");
+		expect(res3.sandbox).toBe("docker");
+	});
+
+	it("throws error for unsupported sandbox type", () => {
+		// Arrange
+		const argv = ["--prompt", "test", "--sandbox", "invalid-sandbox"];
 
 		// Act
 		const action = () => parseCliArgs(argv);
 
 		// Assert
 		expect(action).toThrow(
-			"Invalid issue number: abc. Must be a positive integer.",
+			"Unsupported sandbox: invalid-sandbox. Expected one of: docker, none",
 		);
+	});
+
+	it("parses custom image name and permissions flags", () => {
+		// Arrange
+		const argv = [
+			"--prompt",
+			"test",
+			"--image",
+			"custom:image",
+			"--no-skip-permissions",
+		];
+
+		// Act
+		const result = parseCliArgs(argv);
+
+		// Assert
+		expect(result.imageName).toBe("custom:image");
+		expect(result.dangerouslySkipPermissions).toBe(false);
 	});
 });

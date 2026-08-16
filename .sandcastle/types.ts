@@ -1,6 +1,7 @@
 import type { MountConfig } from "@ai-hero/sandcastle";
 
 export type AgentType = "agy" | "gemini" | "codex" | "claude";
+export type SandboxType = "docker" | "none";
 
 export interface SandcastleCliArgs {
 	readonly issue?: number;
@@ -12,6 +13,9 @@ export interface SandcastleCliArgs {
 	readonly localOnly: boolean;
 	readonly dryRun: boolean;
 	readonly branch?: string;
+	readonly sandbox?: SandboxType;
+	readonly imageName?: string;
+	readonly dangerouslySkipPermissions?: boolean;
 }
 
 export interface AuthMountsConfig {
