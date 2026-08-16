@@ -1075,4 +1075,36 @@ describe("Workflow Orchestration Engine", () => {
 		expect(result.prUrl).toBeUndefined();
 		expect(githubClient.getCreatedPullRequests()).toHaveLength(0);
 	});
+
+	it("treats a branch already checked out in a worktree as claim contention", async () => {
+		// Arrange
+		const githubClient = new MockGithubClient([
+			{
+				assignees: [],
+				body: "Already checked out issue",
+				issueDependenciesSummary: { blockedBy: 0 },
+				labels: ["ready-for-agent"],
+				number: 192,
+				title: "feat: already checked out",
+			},
+		]);
+		const worktreeManager = new MockWorktreeManager();
+		await worktreeManager.createWorktree({
+			branch: "feat/issue-192-already-checked-out",
+			runInstall: false,
+		});
+
+		// Act
+		const result = await executeTicketWorkflow({
+			agentRunner: new MockAgentRunner(),
+			githubClient,
+			issueNumber: 192,
+			worktreeManager,
+		});
+
+		// Assert
+		expect(result.success).toBe(false);
+		expect(result.error).toContain("already claimed");
+		expect((await githubClient.getIssue(192)).assignees).toEqual([]);
+	});
 });
