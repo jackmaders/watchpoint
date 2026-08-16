@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { defaultBunSpawnRunner } from "../github/client";
 import type { ProcessRunner } from "../github/types";
@@ -59,9 +60,7 @@ export class DefaultWorktreeManager implements WorktreeManager {
 		}
 	}
 
-	private async removeExistingWorktreePath(
-		worktreePath: string,
-	): Promise<void> {
+	private async removeWorktreePath(worktreePath: string): Promise<void> {
 		await this.runner(["git", "worktree", "remove", "--force", worktreePath], {
 			cwd: this.cwd,
 		});
@@ -72,9 +71,18 @@ export class DefaultWorktreeManager implements WorktreeManager {
 		branch: string,
 		worktreePath: string,
 		baseBranch: string,
+		resetExistingBranch = true,
 	): Promise<void> {
 		const addRes = await this.runner(
-			["git", "worktree", "add", "-B", branch, worktreePath, baseBranch],
+			[
+				"git",
+				"worktree",
+				"add",
+				resetExistingBranch ? "-B" : "-b",
+				branch,
+				worktreePath,
+				baseBranch,
+			],
 			{ cwd: this.cwd },
 		);
 		if (addRes.exitCode !== 0) {
@@ -87,6 +95,36 @@ export class DefaultWorktreeManager implements WorktreeManager {
 		}
 	}
 
+	private async resolveAvailableWorktreeTarget(
+		branch: string,
+	): Promise<{ branch: string; path: string; resetExistingBranch: boolean }> {
+		const basePath = this.resolveWorktreePath(branch);
+		const existingWorktrees = await this.listWorktrees();
+		const occupiedPaths = new Set(
+			existingWorktrees.map((worktree) => path.resolve(worktree.path)),
+		);
+		const occupiedBranches = new Set(
+			existingWorktrees.map((worktree) => worktree.branch),
+		);
+
+		for (let suffix = 1; ; suffix++) {
+			const candidateBranch = suffix === 1 ? branch : `${branch}-${suffix}`;
+			const candidatePath = suffix === 1 ? basePath : `${basePath}-${suffix}`;
+			const pathOccupied =
+				occupiedPaths.has(path.resolve(candidatePath)) ||
+				existsSync(candidatePath);
+			const branchOccupied = occupiedBranches.has(candidateBranch);
+
+			if (!pathOccupied && !branchOccupied) {
+				return {
+					branch: candidateBranch,
+					path: candidatePath,
+					resetExistingBranch: suffix === 1,
+				};
+			}
+		}
+	}
+
 	private async installWorktreeDeps(
 		worktreePath: string,
 		branch: string,
@@ -96,7 +134,7 @@ export class DefaultWorktreeManager implements WorktreeManager {
 			{ cwd: worktreePath },
 		);
 		if (installRes.exitCode !== 0) {
-			await this.removeExistingWorktreePath(worktreePath);
+			await this.removeWorktreePath(worktreePath);
 			const errorMsg = installRes.stderr || installRes.stdout;
 			throw new WorktreeCreationError(
 				branch,
@@ -109,23 +147,27 @@ export class DefaultWorktreeManager implements WorktreeManager {
 	async createWorktree(options: CreateWorktreeOptions): Promise<WorktreeInfo> {
 		const baseBranch = options.baseBranch ?? "origin/main";
 		const runInstall = options.runInstall ?? true;
-		const worktreePath = this.resolveWorktreePath(options.branch);
+		const target = await this.resolveAvailableWorktreeTarget(options.branch);
 
-		await this.fetchBaseBranch(baseBranch, options.branch, worktreePath);
-		await this.removeExistingWorktreePath(worktreePath);
-		await this.addGitWorktree(options.branch, worktreePath, baseBranch);
+		await this.fetchBaseBranch(baseBranch, target.branch, target.path);
+		await this.addGitWorktree(
+			target.branch,
+			target.path,
+			baseBranch,
+			target.resetExistingBranch,
+		);
 
 		if (runInstall) {
-			await this.installWorktreeDeps(worktreePath, options.branch);
+			await this.installWorktreeDeps(target.path, target.branch);
 		}
 
 		const info: WorktreeInfo = {
 			baseBranch,
-			branch: options.branch,
+			branch: target.branch,
 			createdAt: new Date().toISOString(),
-			path: worktreePath,
+			path: target.path,
 		};
-		this.activeWorktrees.set(worktreePath, info);
+		this.activeWorktrees.set(target.path, info);
 		return info;
 	}
 

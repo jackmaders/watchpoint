@@ -376,7 +376,8 @@ describe("WatcherDaemon", () => {
 		const logger = (msg: string) => logs.push(msg);
 		const issue1 = makeIssue(101, "Contended Ticket");
 		const issue2 = makeIssue(102, "Next Ticket");
-		const githubClient = new MockGithubClient([issue1, issue2]);
+		const issue3 = makeIssue(103, "Final Ticket");
+		const githubClient = new MockGithubClient([issue1, issue2, issue3]);
 
 		let attemptCount = 0;
 		const executeWorkflow = async (
@@ -393,14 +394,14 @@ describe("WatcherDaemon", () => {
 					success: false,
 				};
 			}
-			if (options.issueNumber === 101 && attemptCount === 2) {
-				throw new IssueAlreadyClaimedError(101, ["@other"]);
+			if (options.issueNumber === 102) {
+				throw new IssueAlreadyClaimedError(102, ["@other"]);
 			}
 			return {
 				attempts: 1,
-				branch: "feat/issue-102",
+				branch: "feat/issue-103",
 				durationMs: 100,
-				issueNumber: 102,
+				issueNumber: 103,
 				success: true,
 			};
 		};
@@ -427,7 +428,7 @@ describe("WatcherDaemon", () => {
 		).toBe(true);
 		expect(
 			logs.some((l) =>
-				l.includes("Issue #101 is already claimed. Refreshing queue..."),
+				l.includes("Issue #102 is already claimed. Refreshing queue..."),
 			),
 		).toBe(true);
 	});

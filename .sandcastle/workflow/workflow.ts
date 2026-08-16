@@ -1,6 +1,5 @@
 import { generateBranchName } from "../git-manager";
 import { DefaultGithubClient, defaultBunSpawnRunner } from "../github/client";
-import { IssueAlreadyClaimedError } from "../github/errors";
 import type {
 	CandidateIssue,
 	GithubClient,
@@ -118,13 +117,6 @@ async function provisionWorkflow(
 			issue: { number: issue.number, title: issue.title },
 		});
 
-	const existingWorktree = (await ctx.worktreeManager.listWorktrees()).find(
-		(worktree) => worktree.branch === state.branch,
-	);
-	if (existingWorktree) {
-		throw new IssueAlreadyClaimedError(ctx.options.issueNumber, [state.branch]);
-	}
-
 	ctx.options.onProgress?.(
 		"locking",
 		`Acquiring lock for issue #${ctx.options.issueNumber}...`,
@@ -168,6 +160,7 @@ async function provisionWorkflow(
 		branch: state.branch,
 	});
 	state.worktreeInfo = worktreeInfo;
+	state.branch = worktreeInfo.branch;
 
 	return {
 		provisioned: {
