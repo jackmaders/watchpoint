@@ -45,7 +45,7 @@ function resolveForwardedEnv(
 ): Record<string, string> {
 	const env: Record<string, string> = {
 		HOME: "/home/agent",
-		PATH: "/home/agent/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		PATH: "/home/agent/.bun/bin:/home/agent/.local/bin:/opt/acttoolcache/node/24.17.0/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 	};
 	for (const key of FORWARDED_ENV_KEYS) {
 		const val = source[key];
