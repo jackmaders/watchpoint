@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getVodManifest } from "@/shared/db";
-import { handleGetVodManifest, parseModulesParam } from "../manifest";
+import { getSessionManifest } from "@/shared/db";
+import { handleGetVodManifest } from "../manifest";
 
 vi.mock("@/shared/db");
 
@@ -35,8 +35,8 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			youtubeVideoId: "dQw4w9WgXcQ",
 		};
 
-		vi.mocked(getVodManifest).mockResolvedValueOnce(
-			mockManifest as unknown as Awaited<ReturnType<typeof getVodManifest>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockManifest as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 
 		const req = new Request("http://localhost/api/vods/vod_1/manifest");
@@ -72,20 +72,20 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			title: "GM Ana VOD",
 			youtubeVideoId: "dQw4w9WgXcQ",
 		});
-		expect(getVodManifest).toHaveBeenCalledWith("vod_1", {
-			modules: undefined,
+		expect(getSessionManifest).toHaveBeenCalledWith("vod_1", {
+			modules: expect.any(URLSearchParams),
 		});
 	});
 
-	it("parses modules query parameter and passes parsed modules array to getVodManifest", async () => {
+	it("passes search params directly to getSessionManifest", async () => {
 		// Arrange
 		const mockManifest = {
 			id: "vod_1",
 			scenarios: [],
 		};
 
-		vi.mocked(getVodManifest).mockResolvedValueOnce(
-			mockManifest as unknown as Awaited<ReturnType<typeof getVodManifest>>,
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(
+			mockManifest as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
 		);
 
 		const req = new Request(
@@ -99,14 +99,14 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 
 		// Assert
 		expect(res.status).toBe(200);
-		expect(getVodManifest).toHaveBeenCalledWith("vod_1", {
-			modules: ["STRATEGY", "TACTICS"],
-		});
+		const capturedModules = vi.mocked(getSessionManifest).mock.calls[0]?.[1]
+			?.modules as URLSearchParams;
+		expect(capturedModules.getAll("modules")).toEqual(["STRATEGY,TACTICS"]);
 	});
 
 	it("returns 404 JSON response if VOD manifest is not found", async () => {
 		// Arrange
-		vi.mocked(getVodManifest).mockResolvedValueOnce(null);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce(null);
 
 		const req = new Request("http://localhost/api/vods/non_existent/manifest");
 
@@ -119,31 +119,5 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		expect(res.status).toBe(404);
 		const body = await res.json();
 		expect(body).toEqual({ error: "VOD not found" });
-	});
-});
-
-describe("parseModulesParam helper", () => {
-	it("parses comma-separated and multiple query params into uppercase array", () => {
-		// Arrange
-		const searchParams = new URLSearchParams(
-			"modules=strategy,tactics&modules=ultimate",
-		);
-
-		// Act
-		const result = parseModulesParam(searchParams);
-
-		// Assert
-		expect(result).toEqual(["STRATEGY", "TACTICS", "ULTIMATE"]);
-	});
-
-	it("returns empty array when no modules param is present", () => {
-		// Arrange
-		const searchParams = new URLSearchParams("");
-
-		// Act
-		const result = parseModulesParam(searchParams);
-
-		// Assert
-		expect(result).toEqual([]);
 	});
 });

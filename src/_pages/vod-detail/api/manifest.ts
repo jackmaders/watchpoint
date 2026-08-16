@@ -1,12 +1,4 @@
-import { getVodManifest } from "@/shared/db";
-
-export function parseModulesParam(searchParams: URLSearchParams): string[] {
-	const rawModules = searchParams.getAll("modules");
-	return rawModules
-		.flatMap((m) => m.split(","))
-		.map((m) => m.trim().toUpperCase())
-		.filter(Boolean);
-}
+import { getSessionManifest } from "@/shared/db";
 
 export async function handleGetVodManifest(
 	request: Request,
@@ -15,10 +7,8 @@ export async function handleGetVodManifest(
 	const { id } = await params;
 	const url = new URL(request.url);
 
-	const modulesList = parseModulesParam(url.searchParams);
-
-	const manifest = await getVodManifest(id, {
-		modules: modulesList.length > 0 ? modulesList : undefined,
+	const manifest = await getSessionManifest(id, {
+		modules: url.searchParams,
 	});
 
 	if (!manifest) {

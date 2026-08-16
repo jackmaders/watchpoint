@@ -2,13 +2,13 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import type { getVodById, ModuleType } from "@/shared/db";
+import type { getSessionManifest, ModuleType } from "@/shared/db";
 import { buildSessionUrl, calculateModuleCounts } from "../model/module-filter";
 import { MODULE_DEFINITIONS } from "../model/modules";
 import { ModuleFilterPills } from "./module-filter-pills";
 
 export interface VodDetailClientProps {
-	vod: NonNullable<Awaited<ReturnType<typeof getVodById>>>;
+	vod: NonNullable<Awaited<ReturnType<typeof getSessionManifest>>>;
 }
 
 export function VodDetailClient({ vod }: VodDetailClientProps) {

@@ -1,13 +1,12 @@
 export { type DbContext, getDb } from "./client/client";
 export type {
-	GetVodByIdOptions,
-	GetVodManifestOptions,
+	GetSessionManifestOptions,
 	PublishedVodItem,
+	SessionManifest,
 } from "./repositories/vods";
 export {
 	getPublishedVods,
-	getVodById,
-	getVodManifest,
+	getSessionManifest,
 } from "./repositories/vods";
 export {
 	attemptRecords,
