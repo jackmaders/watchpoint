@@ -95,6 +95,30 @@ export class DefaultWorktreeManager implements WorktreeManager {
 		}
 	}
 
+	private async branchExists(branch: string): Promise<boolean> {
+		const result = await this.runner(["git", "branch", "--list", branch], {
+			cwd: this.cwd,
+		});
+		return result.exitCode === 0 && result.stdout.trim().length > 0;
+	}
+
+	private async isTargetOccupied(
+		branch: string,
+		worktreePath: string,
+		suffix: number,
+		occupiedPaths: ReadonlySet<string>,
+		occupiedBranches: ReadonlySet<string>,
+	): Promise<boolean> {
+		if (
+			occupiedPaths.has(path.resolve(worktreePath)) ||
+			existsSync(worktreePath) ||
+			occupiedBranches.has(branch)
+		) {
+			return true;
+		}
+		return suffix > 1 && (await this.branchExists(branch));
+	}
+
 	private async resolveAvailableWorktreeTarget(
 		branch: string,
 	): Promise<{ branch: string; path: string; resetExistingBranch: boolean }> {
@@ -110,12 +134,15 @@ export class DefaultWorktreeManager implements WorktreeManager {
 		for (let suffix = 1; ; suffix++) {
 			const candidateBranch = suffix === 1 ? branch : `${branch}-${suffix}`;
 			const candidatePath = suffix === 1 ? basePath : `${basePath}-${suffix}`;
-			const pathOccupied =
-				occupiedPaths.has(path.resolve(candidatePath)) ||
-				existsSync(candidatePath);
-			const branchOccupied = occupiedBranches.has(candidateBranch);
-
-			if (!pathOccupied && !branchOccupied) {
+			if (
+				!(await this.isTargetOccupied(
+					candidateBranch,
+					candidatePath,
+					suffix,
+					occupiedPaths,
+					occupiedBranches,
+				))
+			) {
 				return {
 					branch: candidateBranch,
 					path: candidatePath,
