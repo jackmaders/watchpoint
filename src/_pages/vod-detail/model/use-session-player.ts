@@ -441,7 +441,7 @@ function useScenarioTimeTrigger(
 	>,
 	startTimeRef: React.RefObject<number>,
 	setTotalMs: React.Dispatch<React.SetStateAction<number | undefined>>,
-	pauseRef: React.RefObject<() => void>,
+	pauseRef: React.RefObject<(() => void) | null>,
 ) {
 	return useCallback(
 		(time: number) => {
@@ -452,7 +452,7 @@ function useScenarioTimeTrigger(
 			setOverlayState({ status: "unanswered" });
 			startTimeRef.current = Date.now();
 			setTotalMs(getScenarioLimitMs(scenario));
-			pauseRef.current();
+			pauseRef.current?.();
 		},
 		[
 			stateRef,
@@ -479,7 +479,7 @@ export function useSessionPlayer({
 	const [activeScenarioIndex, setActiveScenarioIndex] = useState<number>(0);
 	const [totalMs, setTotalMs] = useState<number | undefined>(undefined);
 	const startTimeRef = useRef<number>(0);
-	const pauseRef = useRef<() => void>(() => {});
+	const pauseRef = useRef<(() => void) | null>(null);
 	const stateRef = useRef(state);
 	const currentScenario = activeScenarios[activeScenarioIndex] ?? null;
 	const currentScenarioRef = useRef(currentScenario);
