@@ -39,6 +39,21 @@ export interface OrchestratorDependencies {
 	logger?: (msg: string) => void;
 }
 
+export function buildDockerSandboxOptions(
+	args: Pick<SandcastleCliArgs, "imageName">,
+	authConfig: ReturnType<typeof resolveAuthMounts>,
+): {
+	env: typeof authConfig.env;
+	imageName: string;
+	mounts: typeof authConfig.mounts;
+} {
+	return {
+		env: authConfig.env,
+		imageName: args.imageName ?? "sandcastle:watchpoint",
+		mounts: authConfig.mounts,
+	};
+}
+
 async function resolveTaskInput(
 	args: SandcastleCliArgs,
 	fetchIssue: (n: number) => Promise<IssueDetails>,
@@ -123,11 +138,7 @@ export async function orchestrateSandcastle(
 		validateCodexConfiguration(authConfig.env);
 	}
 	const agentProvider = createAgentProvider(args.agent, args.model);
-	const sandboxProvider = docker({
-		env: authConfig.env,
-		imageName: "sandcastle:local",
-		mounts: authConfig.mounts,
-	});
+	const sandboxProvider = docker(buildDockerSandboxOptions(args, authConfig));
 
 	const capturedCommits: { sha: string }[] = [];
 

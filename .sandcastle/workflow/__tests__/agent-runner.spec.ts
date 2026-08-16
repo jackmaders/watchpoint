@@ -233,6 +233,68 @@ describe("DefaultAgentRunner", () => {
 		expect(result.stdout).toBe("Agent completed task");
 	});
 
+	it("executes Codex through the Docker image with the OpenRouter key forwarded", async () => {
+		// Arrange
+		const executedCmds: {
+			cmd: readonly string[];
+			env?: Record<string, string | undefined>;
+		}[] = [];
+		const processRunner = async (
+			cmd: readonly string[],
+			opts?: { env?: Record<string, string | undefined> },
+		) => {
+			executedCmds.push({ cmd, env: opts?.env });
+			if (cmd[0] === "git") {
+				return { exitCode: 0, stderr: "", stdout: "codex123 feat: codex task" };
+			}
+			return { exitCode: 0, stderr: "", stdout: "Codex completed task" };
+		};
+		const runner = new DefaultAgentRunner({
+			agent: "codex",
+			authMountsConfig: {
+				env: { HOME: "/home/agent", OPENROUTER_API_KEY: "runtime-key" },
+				mounts: [],
+			},
+			imageName: "sandcastle:watchpoint",
+			processRunner,
+			sandbox: "docker",
+		});
+
+		// Act
+		const result = await runner.run({
+			attempt: 1,
+			branch: "feat/codex-docker",
+			maxAttempts: 1,
+			prompt: "Run a low-risk local-only task",
+			worktreePath: "/tmp/worktrees/codex-docker",
+		});
+
+		// Assert
+		expect(executedCmds[0].cmd).toEqual([
+			"docker",
+			"run",
+			"--rm",
+			"-i",
+			"-v",
+			"/tmp/worktrees/codex-docker:/workspace",
+			"-w",
+			"/workspace",
+			"-e",
+			"HOME=/home/agent",
+			"-e",
+			"OPENROUTER_API_KEY=runtime-key",
+			"sandcastle:watchpoint",
+			"codex",
+			"exec",
+			"Run a low-risk local-only task",
+			"--model",
+			"openrouter/free",
+			"--dangerously-bypass-approvals-and-sandbox",
+		]);
+		expect(executedCmds[0].env).toBe(process.env);
+		expect(result.commits).toEqual([{ sha: "codex123" }]);
+	});
+
 	it("uses resolveAuthMounts when authMountsConfig is not provided and handles undefined worktreePath", async () => {
 		// Arrange
 		const executedCmds: { cmd: readonly string[] }[] = [];
