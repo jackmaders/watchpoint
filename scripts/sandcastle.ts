@@ -3,7 +3,9 @@ import {
 	orchestrateSandcastle,
 	parseCliArgs,
 	parsePickCliArgs,
+	parseWatchCliArgs,
 	runPickCommand,
+	runWatchCommand,
 } from "../.sandcastle";
 
 async function handlePickSubcommand(): Promise<void> {
@@ -25,6 +27,30 @@ async function handlePickSubcommand(): Promise<void> {
 	if (result?.success) {
 		console.log(
 			`\n✨ Sandcastle execution completed successfully!\n- Issue: #${result.issueNumber}\n- Branch: ${result.branch}\n- Attempts: ${result.attempts}${result.prUrl ? `\n- PR: ${result.prUrl}` : ""}`,
+		);
+	}
+}
+
+async function handleWatchSubcommand(): Promise<void> {
+	const watchArgs = parseWatchCliArgs(process.argv.slice(3));
+	const stats = await runWatchCommand({
+		args: watchArgs,
+		logger: (msg) => {
+			console.log(msg);
+		},
+		output: process.stdout,
+	});
+
+	if (stats && stats.failureCount > 0 && stats.successCount === 0) {
+		console.error(
+			`\n❌ Sandcastle watch finished with ${stats.failureCount} failure(s).`,
+		);
+		process.exit(1);
+	}
+
+	if (stats) {
+		console.log(
+			`\n✨ Sandcastle watch daemon stopped cleanly.\n- Processed: ${stats.processedCount}\n- Succeeded: ${stats.successCount}\n- Failed: ${stats.failureCount}`,
 		);
 	}
 }
@@ -56,6 +82,11 @@ async function main() {
 	try {
 		if (process.argv[2] === "pick") {
 			await handlePickSubcommand();
+			return;
+		}
+
+		if (process.argv[2] === "watch") {
+			await handleWatchSubcommand();
 			return;
 		}
 
