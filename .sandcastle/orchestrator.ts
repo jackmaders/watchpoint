@@ -63,7 +63,6 @@ function validateRuntimeCredentials(
 		validateCodexConfiguration(runtime.authMountsConfig.env);
 	}
 }
-
 async function resolveTaskInput(
 	args: SandcastleCliArgs,
 	fetchIssue: (n: number) => Promise<IssueDetails>,
