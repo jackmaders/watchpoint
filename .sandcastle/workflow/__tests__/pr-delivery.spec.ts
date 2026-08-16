@@ -141,6 +141,36 @@ describe("PR Delivery Engine", () => {
 		);
 	});
 
+	it("throws error when branch has 0 commits ahead of base branch", async () => {
+		// Arrange
+		const githubClient = new MockGithubClient();
+		const zeroCommitsGitRunner: ProcessRunner = async (cmd) => {
+			if (cmd[0] === "git" && cmd[1] === "rev-list") {
+				return { exitCode: 0, stderr: "", stdout: "0\n" };
+			}
+			return { exitCode: 0, stderr: "", stdout: "" };
+		};
+
+		const options: DeliverPullRequestOptions = {
+			attempts: 1,
+			branch: "feat/zero-commits",
+			githubClient,
+			gitRunner: zeroCommitsGitRunner,
+			issue: {
+				number: 400,
+				title: "Zero commits feature",
+			},
+		};
+
+		// Act
+		const deliveryPromise = deliverPullRequest(options);
+
+		// Assert
+		await expect(deliveryPromise).rejects.toThrow(
+			"Cannot deliver pull request: branch 'feat/zero-commits' has 0 commits ahead of 'main'",
+		);
+	});
+
 	it("uses default runner when gitRunner is omitted in options", async () => {
 		// Arrange
 		const githubClient = new MockGithubClient();

@@ -108,6 +108,10 @@ export const defaultBunSpawnRunner: ProcessRunner = async (
 	command,
 	options,
 ) => {
+	if (options?.signal?.aborted) {
+		return { exitCode: 1, stderr: "Process aborted", stdout: "" };
+	}
+
 	const proc = Bun.spawn(command as string[], {
 		cwd: options?.cwd,
 		env: options?.env ? { ...process.env, ...options.env } : process.env,
@@ -115,11 +119,25 @@ export const defaultBunSpawnRunner: ProcessRunner = async (
 		stdout: "pipe",
 	});
 
-	const stdout = await new Response(proc.stdout).text();
-	const stderr = await new Response(proc.stderr).text();
-	const exitCode = await proc.exited;
+	const onAbort = () => {
+		try {
+			proc.kill();
+		} catch {
+			// Process may have already exited
+		}
+	};
 
-	return { exitCode, stderr, stdout };
+	options?.signal?.addEventListener("abort", onAbort, { once: true });
+
+	try {
+		const stdout = await new Response(proc.stdout).text();
+		const stderr = await new Response(proc.stderr).text();
+		const exitCode = await proc.exited;
+
+		return { exitCode, stderr, stdout };
+	} finally {
+		options?.signal?.removeEventListener("abort", onAbort);
+	}
 };
 
 const LIST_CANDIDATES_QUERY = `query($owner: String!, $repo: String!) {

@@ -7,7 +7,7 @@ import { DefaultGithubClient } from "../github/client";
 import { IssueAlreadyClaimedError, isClaimContention } from "../github/errors";
 import { resolveFrontier } from "../github/frontier";
 import type { CandidateIssue, GithubClient } from "../github/types";
-import { MockAgentRunner } from "../workflow/agent-runner";
+import { DefaultAgentRunner } from "../workflow/agent-runner";
 import type { ExecutionResult } from "../workflow/types";
 import { executeTicketWorkflow } from "../workflow/workflow";
 import { renderInteractivePicker } from "./picker";
@@ -118,7 +118,13 @@ async function executeSelection(
 	const executeWorkflow = options.executeWorkflow ?? executeTicketWorkflow;
 
 	const result = await executeWorkflow({
-		agentRunner: options.agentRunner ?? new MockAgentRunner(),
+		agentRunner:
+			options.agentRunner ??
+			new DefaultAgentRunner({
+				agent: args.agent,
+				model: args.model,
+				processRunner: options.gitRunner,
+			}),
 		branch: args.branch,
 		cwd: options.cwd,
 		githubClient,

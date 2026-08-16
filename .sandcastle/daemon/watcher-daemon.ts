@@ -2,7 +2,7 @@ import { DefaultGithubClient } from "../github/client";
 import { isClaimContention } from "../github/errors";
 import { resolveFrontier } from "../github/frontier";
 import type { CandidateIssue, GithubClient } from "../github/types";
-import { MockAgentRunner } from "../workflow/agent-runner";
+import { DefaultAgentRunner } from "../workflow/agent-runner";
 import type { ExecutionResult, WorkflowOptions } from "../workflow/types";
 import { executeTicketWorkflow } from "../workflow/workflow";
 import { DefaultWatcherClock, renderHeartbeatCountdown } from "./heartbeat";
@@ -180,7 +180,13 @@ export class WatcherDaemon {
 
 		try {
 			const result = await this.executeWorkflow({
-				agentRunner: this.options.agentRunner ?? new MockAgentRunner(),
+				agentRunner:
+					this.options.agentRunner ??
+					new DefaultAgentRunner({
+						agent: this.options.agent,
+						model: this.options.model,
+						processRunner: this.options.gitRunner,
+					}),
 				branch: this.options.branch,
 				cwd: this.options.cwd,
 				githubClient: this.githubClient,

@@ -35,6 +35,7 @@ export type ProcessRunner = (
 	options?: {
 		cwd?: string;
 		env?: Record<string, string | undefined>;
+		signal?: AbortSignal;
 	},
 ) => Promise<ProcessExecResult>;
 
