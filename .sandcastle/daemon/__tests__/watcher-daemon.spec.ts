@@ -116,6 +116,7 @@ describe("WatcherDaemon", () => {
 		const daemon = new WatcherDaemon({
 			clock,
 			githubClient,
+			logger: () => {},
 			signal: controller.signal,
 		});
 
@@ -244,6 +245,7 @@ describe("WatcherDaemon", () => {
 			executeWorkflow,
 			githubClient,
 			limit: 2,
+			logger: () => {},
 		});
 
 		// Act
