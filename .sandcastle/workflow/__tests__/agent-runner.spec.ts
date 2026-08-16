@@ -2,8 +2,41 @@ import { describe, expect, it } from "vitest";
 import {
 	buildDockerRunCommand,
 	DefaultAgentRunner,
+	extractRoutedModel,
 	MockAgentRunner,
 } from "../agent-runner";
+
+describe("extractRoutedModel", () => {
+	it("returns provider model metadata from nested JSON output", () => {
+		// Arrange
+		const output = [
+			"not json",
+			JSON.stringify({ result: { model: "x/model" }, type: "turn.completed" }),
+		].join("\n");
+
+		// Act
+		const result = extractRoutedModel(output);
+
+		// Assert
+		expect(result).toBe("x/model");
+	});
+
+	it("ignores missing, empty, and malformed metadata", () => {
+		// Arrange
+		const output = [
+			JSON.stringify({ model: "" }),
+			JSON.stringify({ usage: { input_tokens: 2 } }),
+			"{invalid",
+		].join("\n");
+
+		// Act
+		const result = extractRoutedModel(output);
+
+		// Assert
+		expect(extractRoutedModel()).toBeUndefined();
+		expect(result).toBeUndefined();
+	});
+});
 
 describe("MockAgentRunner", () => {
 	it("records execution options and returns default simulated commit result", async () => {

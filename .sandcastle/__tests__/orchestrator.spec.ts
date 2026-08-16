@@ -130,7 +130,7 @@ describe("orchestrateSandcastle", () => {
 		const fetchIssue = vi.fn().mockResolvedValue(issue);
 		const runAgentInSandbox = vi.fn().mockResolvedValue({
 			commits: [{ sha: "abcdef123456" }],
-			stdout: "Agent completed task",
+			stdout: '{"model":"provider/routed-model"}',
 		});
 		const runCommand = vi.fn().mockResolvedValue({
 			exitCode: 0,
@@ -158,6 +158,7 @@ describe("orchestrateSandcastle", () => {
 		expect(result.prUrl).toBe(
 			"https://github.com/jackmaders/watchpoint/pull/153",
 		);
+		expect(result.routedModel).toBe("provider/routed-model");
 		expect(fetchIssue).toHaveBeenCalledWith(152);
 		expect(runAgentInSandbox).toHaveBeenCalledTimes(1);
 		expect(createPr).toHaveBeenCalledTimes(1);
@@ -289,7 +290,7 @@ describe("orchestrateSandcastle", () => {
 		};
 		const runAgentInSandbox = vi.fn().mockResolvedValue({
 			commits: [],
-			stdout: "Fail",
+			stdout: '{"model":"provider/failure-model"}',
 		});
 		const runCommand = vi.fn().mockResolvedValue({
 			exitCode: 1,
@@ -312,6 +313,7 @@ describe("orchestrateSandcastle", () => {
 		expect(result.success).toBe(false);
 		expect(result.attempts).toBe(2);
 		expect(result.error).toContain("Compilation failed");
+		expect(result.routedModel).toBe("provider/failure-model");
 		expect(createPr).not.toHaveBeenCalled();
 	});
 });

@@ -95,6 +95,9 @@ export class WatcherDaemon {
 		this.logger(
 			`✨ [Sandcastle Watcher] Successfully processed issue #${issue.number}!${result.prUrl ? ` (PR: ${result.prUrl})` : ""}`,
 		);
+		if (result.routedModel) {
+			this.logger(`[Sandcastle Watcher] Routed model: ${result.routedModel}`);
+		}
 	}
 
 	private handleWorkflowFailure(

@@ -51,6 +51,7 @@ export interface OrchestratorResult {
 	readonly success: boolean;
 	readonly branch: string;
 	readonly commits: { sha: string }[];
+	readonly routedModel?: string;
 	readonly prUrl?: string;
 	readonly error?: string;
 	readonly attempts: number;

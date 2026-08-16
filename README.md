@@ -71,6 +71,10 @@ bun run sandcastle --prompt "Refactor timeline seeking logic"
 bun run sandcastle --prompt "Fix button alignment" --dry-run
 ```
 
+The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route, or pass `--agent agy` to use the Antigravity escape hatch with its separate credentials.
+
+`OPENROUTER_API_KEY` is forwarded only at runtime into the Sandcastle container. It is not written to the Codex configuration or baked into the image. When a provider reports the routed model, queue output records it; missing provider metadata is ignored.
+
 ---
 
 ## Setup & Getting Started

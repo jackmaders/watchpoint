@@ -1,7 +1,7 @@
 import type { AgentProvider, SandboxProvider } from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 import { createAgentProvider } from "./agent-providers";
-import { resolveAuthMounts } from "./auth-mounts";
+import { resolveAgentRuntime } from "./agent-runtime";
 import { validateCodexConfiguration } from "./codex-config";
 import {
 	createGithubPr,
@@ -16,11 +16,13 @@ import {
 	runVerificationChecks,
 } from "./self-healing";
 import type {
+	AuthMountsConfig,
 	IssueDetails,
 	OrchestratorOptions,
 	OrchestratorResult,
 	SandcastleCliArgs,
 } from "./types";
+import { extractRoutedModel } from "./workflow/agent-runner";
 
 export interface OrchestratorDependencies {
 	fetchIssue?: (issueNumber: number) => Promise<IssueDetails>;
@@ -41,7 +43,7 @@ export interface OrchestratorDependencies {
 
 export function buildDockerSandboxOptions(
 	args: Pick<SandcastleCliArgs, "imageName">,
-	authConfig: ReturnType<typeof resolveAuthMounts>,
+	authConfig: AuthMountsConfig,
 ): {
 	env: typeof authConfig.env;
 	imageName: string;
@@ -54,6 +56,13 @@ export function buildDockerSandboxOptions(
 	};
 }
 
+function validateRuntimeCredentials(
+	runtime: ReturnType<typeof resolveAgentRuntime>,
+): void {
+	if (runtime.agent === "codex") {
+		validateCodexConfiguration(runtime.authMountsConfig.env);
+	}
+}
 async function resolveTaskInput(
 	args: SandcastleCliArgs,
 	fetchIssue: (n: number) => Promise<IssueDetails>,
@@ -133,14 +142,25 @@ export async function orchestrateSandcastle(
 		};
 	}
 
-	const authConfig = resolveAuthMounts({ homeDir: options.homeDir });
-	if (args.agent === "codex") {
-		validateCodexConfiguration(authConfig.env);
-	}
-	const agentProvider = createAgentProvider(args.agent, args.model);
-	const sandboxProvider = docker(buildDockerSandboxOptions(args, authConfig));
+	const runtime = resolveAgentRuntime({
+		agent: args.agent,
+		dangerouslySkipPermissions: args.dangerouslySkipPermissions,
+		homeDir: options.homeDir,
+		imageName: args.imageName,
+		model: args.model,
+		sandbox: args.sandbox,
+	});
+	validateRuntimeCredentials(runtime);
+	const agentProvider = createAgentProvider(runtime.agent, runtime.model);
+	const sandboxProvider = docker(
+		buildDockerSandboxOptions(
+			{ imageName: runtime.imageName },
+			runtime.authMountsConfig,
+		),
+	);
 
 	const capturedCommits: { sha: string }[] = [];
+	let routedModel: string | undefined;
 
 	const loopResult = await executeSelfHealingLoop({
 		initialPrompt,
@@ -156,6 +176,7 @@ export async function orchestrateSandcastle(
 			if (res.commits.length > 0) {
 				capturedCommits.push(...res.commits);
 			}
+			routedModel = extractRoutedModel(res.stdout) ?? routedModel;
 		},
 		verify: async () => {
 			return runVerificationChecks(async (cmd) => runCmd(cmd, cwd));
@@ -168,6 +189,7 @@ export async function orchestrateSandcastle(
 			branch,
 			commits: capturedCommits,
 			error: loopResult.lastVerification.aggregatedError,
+			routedModel,
 			success: false,
 		};
 	}
@@ -185,6 +207,7 @@ export async function orchestrateSandcastle(
 		branch,
 		commits: capturedCommits,
 		prUrl,
+		routedModel,
 		success: true,
 	};
 }

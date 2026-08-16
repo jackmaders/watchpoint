@@ -21,6 +21,10 @@ describe("Workflow Orchestration Engine", () => {
 		const lockManager = new MockRunnerLockManager();
 		const worktreeManager = new MockWorktreeManager();
 		const agentRunner = new MockAgentRunner();
+		agentRunner.setRunResult({
+			commits: [{ sha: "workflow-sha" }],
+			routedModel: "provider/routed-model",
+		});
 		const stages: string[] = [];
 
 		let gitPushCalled = false;
@@ -60,6 +64,7 @@ describe("Workflow Orchestration Engine", () => {
 		expect(result.branch).toContain("feat/issue-165-execution-lifecycle");
 		expect(result.attempts).toBe(1);
 		expect(result.prUrl).toBe("https://github.com/mock/repo/pull/1");
+		expect(result.routedModel).toBe("provider/routed-model");
 		expect(gitPushCalled).toBe(true);
 		expect(prs).toHaveLength(1);
 		expect(prs[0].labels).toEqual(["ready-for-human"]);
@@ -1007,6 +1012,10 @@ describe("Workflow Orchestration Engine", () => {
 		const lockManager = new MockRunnerLockManager();
 		const worktreeManager = new MockWorktreeManager();
 		const agentRunner = new MockAgentRunner();
+		agentRunner.setRunResult({
+			commits: [{ sha: "local-sha" }],
+			routedModel: "provider/local-model",
+		});
 		const validator = async () => ({
 			checks: [{ name: "check:all", output: "", success: true }],
 			success: true,
@@ -1026,6 +1035,7 @@ describe("Workflow Orchestration Engine", () => {
 		// Assert
 		expect(result.success).toBe(true);
 		expect(result.prUrl).toBeUndefined();
+		expect(result.routedModel).toBe("provider/local-model");
 		expect(githubClient.getCreatedPullRequests()).toHaveLength(0);
 	});
 

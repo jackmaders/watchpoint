@@ -26,3 +26,24 @@ fall back to another provider.
 
 Antigravity remains available with `--agent agy`; its existing `~/.gemini` and
 `agy` mounts are independent of Codex's runtime configuration.
+
+The `pick` and `watch` commands resolve the same provider, model, credentials,
+Docker image, and Codex configuration as ad-hoc runs. Codex is the default and
+uses `openrouter/free`; pass `--model provider/model` to pin a route, or use
+`--agent agy` for the Antigravity escape hatch. The free router is dynamic and
+may vary its selected model, availability, latency, and rate limits, so it is
+intended for low-volume experimentation rather than reproducible unattended
+production work.
+
+Retries reuse the selected runner and configuration. A failed Codex/OpenRouter
+run never silently falls back to another provider or model. Queue output
+includes the routed model when the provider exposes it, but absent metadata is
+not an execution failure.
+
+Environment setup:
+
+```sh
+export OPENROUTER_API_KEY="..."
+```
+
+See `.sandcastle/.env.example` for the complete forwarded environment list.

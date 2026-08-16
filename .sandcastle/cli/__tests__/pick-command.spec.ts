@@ -110,6 +110,7 @@ describe("parsePickCliArgs", () => {
 			imageName: "sandcastle:watchpoint",
 			localOnly: false,
 			maxAttempts: 3,
+			model: "openrouter/free",
 			pr: true,
 			sandbox: "docker",
 		});

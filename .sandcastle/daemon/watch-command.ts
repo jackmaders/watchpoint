@@ -4,6 +4,7 @@ import {
 	createDefaultCommonCliState,
 	parsePositiveInt,
 } from "../cli-args";
+import { OPENROUTER_DEFAULT_MODEL } from "../codex-config";
 import { DefaultGithubClient } from "../github/client";
 import { DefaultWatcherClock } from "./heartbeat";
 import { setupGracefulShutdown } from "./signal-handler";
@@ -27,6 +28,15 @@ interface MutableWatchArgs extends WatchCliArgs {
 	intervalSeconds: number;
 	once: boolean;
 	limit?: number;
+}
+
+function withDefaultModel(state: MutableWatchArgs): WatchCliArgs {
+	return {
+		...state,
+		model:
+			state.model ??
+			(state.agent === "codex" ? OPENROUTER_DEFAULT_MODEL : undefined),
+	};
 }
 
 function handleWatchCustomFlag(
@@ -80,7 +90,7 @@ export function parseWatchCliArgs(argv: string[]): WatchCliArgs {
 		}
 	}
 
-	return state;
+	return withDefaultModel(state);
 }
 
 export function formatWatchHelp(): string {
@@ -100,7 +110,8 @@ ${BOLD}OPTIONS:${RESET}
   --image <name>        Docker image override [default: sandcastle:watchpoint]
   --no-sandbox          Run agent directly on host without Docker container isolation
 	--agent <name>        Agent provider (agy, gemini, codex, claude) [default: codex]
-  --model <name>        Model name override for agent provider
+	  --model <name>        Model name override for agent provider
+	                        Codex defaults to openrouter/free; --agent agy preserves Antigravity
   --max-attempts <n>    Maximum self-healing attempts before failure [default: 3]
   --branch <name>       Target git branch override
   --dry-run             Preview target tickets without executing workflow
