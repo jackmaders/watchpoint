@@ -523,7 +523,11 @@ describe("DefaultAgentRunner", () => {
 
 	it("fails with an actionable error when Codex credentials are missing", async () => {
 		// Arrange
-		const runner = new DefaultAgentRunner({ agent: "codex", sandbox: "none" });
+		const runner = new DefaultAgentRunner({
+			agent: "codex",
+			authMountsConfig: { env: {}, mounts: [] },
+			sandbox: "none",
+		});
 
 		// Act
 		const runPromise = runner.run({

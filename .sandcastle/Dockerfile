@@ -16,10 +16,13 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:/home/agent/.bun/bin:${PATH}"
 
-# Install a reproducible Codex runtime in the image. The host's `codex`
-# symlink is deliberately not mounted: its target lives in the host's global
-# Node package tree and would break container isolation.
-RUN bun add --global @openai/codex@0.147.0
+# Install a reproducible Codex runtime for Sandcastle's non-root runtime user.
+# The host's `codex` symlink is deliberately not mounted: its target lives in
+# the host's global Node package tree and would break container isolation.
+RUN mkdir -p /home/agent/.bun \
+	&& chown -R 1000:1000 /home/agent/.bun \
+	&& BUN_INSTALL=/home/agent/.bun bun add --global @openai/codex@0.147.0 \
+	&& chown -R 1000:1000 /home/agent/.bun
 
 # Ensure user directories exist for auth and tooling
 RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin /home/agent/.codex \
@@ -34,10 +37,14 @@ RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.loc
 	'[model_providers.openrouter.auth]' \
 	'command = "sh"' \
 	'args = ["-c", "echo $OPENROUTER_API_KEY"]' \
-	> /home/agent/.codex/config.toml
+	> /home/agent/.codex/config.toml \
+	&& chown -R 1000:1000 /home/agent/.codex
 
 ENV CODEX_HOME="/home/agent/.codex"
+# Keep Sandcastle's global Git safety configuration writable without allowing
+# the agent to modify the host's mounted ~/.gitconfig.
+ENV GIT_CONFIG_GLOBAL="/tmp/sandcastle-gitconfig"
 
 WORKDIR /workspace
 
-CMD ["/bin/bash"]
+CMD ["sh", "-c", "cp /home/agent/.gitconfig /tmp/sandcastle-gitconfig 2>/dev/null || true; exec sleep infinity"]
