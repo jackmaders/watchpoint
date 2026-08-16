@@ -25,6 +25,22 @@ export async function deliverPullRequest(
 ): Promise<PullRequestResult> {
 	const runner = options.gitRunner ?? defaultBunSpawnRunner;
 
+	const countRes = await runner(
+		[
+			"git",
+			"rev-list",
+			"--count",
+			`origin/${options.baseBranch ?? "main"}..HEAD`,
+		],
+		{ cwd: options.cwd },
+	);
+	const count = Number.parseInt(countRes.stdout.trim(), 10);
+	if (countRes.exitCode === 0 && !Number.isNaN(count) && count === 0) {
+		throw new Error(
+			`Cannot deliver pull request: branch '${options.branch}' has 0 commits ahead of '${options.baseBranch ?? "main"}'`,
+		);
+	}
+
 	const pushRes = await runner(
 		["git", "push", "-u", "origin", options.branch],
 		{ cwd: options.cwd },

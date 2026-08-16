@@ -1342,3 +1342,52 @@ describe("DefaultGithubClient", () => {
 		await expect(resultPromise).rejects.toThrow(GithubCliError);
 	});
 });
+
+describe("defaultBunSpawnRunner", () => {
+	it("returns early when signal is already aborted", async () => {
+		// Arrange
+		const controller = new AbortController();
+		controller.abort();
+
+		// Act
+		const result = await defaultBunSpawnRunner(["echo", "hello"], {
+			signal: controller.signal,
+		});
+
+		// Assert
+		expect(result.exitCode).toBe(1);
+		expect(result.stderr).toBe("Process aborted");
+	});
+
+	it("executes command and aborts via signal event listener", async () => {
+		// Arrange
+		const originalBun = (globalThis as unknown as { Bun?: unknown }).Bun;
+		let killed = false;
+		const mockSpawn = vi.fn().mockImplementation(() => ({
+			exited: Promise.resolve(143),
+			kill: () => {
+				killed = true;
+			},
+			stderr: new Blob([""]).stream(),
+			stdout: new Blob([""]).stream(),
+		}));
+		(globalThis as unknown as { Bun?: unknown }).Bun = { spawn: mockSpawn };
+
+		try {
+			const controller = new AbortController();
+
+			// Act
+			const promise = defaultBunSpawnRunner(["sleep", "5"], {
+				signal: controller.signal,
+			});
+			controller.abort();
+			const result = await promise;
+
+			// Assert
+			expect(killed).toBe(true);
+			expect(result.exitCode).toBe(143);
+		} finally {
+			(globalThis as unknown as { Bun?: unknown }).Bun = originalBun;
+		}
+	});
+});
