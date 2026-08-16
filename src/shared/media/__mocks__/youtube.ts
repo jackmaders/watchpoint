@@ -6,6 +6,8 @@ import type {
 	YouTubePlayerState,
 } from "../youtube-adapter";
 
+export { YouTubePlayerState } from "../youtube-adapter";
+
 export function setYouTubeNamespace(namespace: YouTubeNamespace | undefined) {
 	Object.defineProperty(window, "YT", {
 		configurable: true,

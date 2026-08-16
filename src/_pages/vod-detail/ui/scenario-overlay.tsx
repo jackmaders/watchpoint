@@ -2,45 +2,16 @@
 
 import { useCallback, useEffect, useId } from "react";
 import { MODULE_MAP } from "@/entities/scenario";
-import type { ModuleType } from "@/shared/db";
-
-export interface ScenarioOption {
-	id: string;
-	label?: string;
-	text: string;
-}
-
-export interface ScenarioInputConfig {
-	options: ScenarioOption[];
-}
-
-export interface ScenarioData {
-	explanationText: string;
-	id: string;
-	imageUrl?: string | null;
-	inputConfig: ScenarioInputConfig;
-	moduleType: ModuleType;
-	promptText: string;
-	timeLimitSeconds?: number | null;
-}
-
-export type ScenarioOverlayState =
-	| { status: "unanswered" }
-	| {
-			correctOptionId: string;
-			isCorrect: boolean;
-			selectedOptionId: string;
-			status: "answered";
-	  }
-	| {
-			correctOptionId: string;
-			isCorrect: false;
-			status: "timedOut";
-	  };
+import type {
+	ScenarioData,
+	ScenarioOption,
+	ScenarioOverlayState,
+} from "../model/session-contract";
 
 export interface ScenarioOverlayProps {
-	onSelectOption: (optionId: string) => void;
+	onReplayContext?: () => void;
 	onResume: () => void;
+	onSelectOption: (optionId: string) => void;
 	remainingMs?: number;
 	scenario: ScenarioData;
 	state: ScenarioOverlayState;
@@ -207,6 +178,7 @@ function ScenarioFeedbackPanel({
 
 			<button
 				className="w-full mt-2 py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+				data-testid="resume-playback-button"
 				onClick={onResume}
 				type="button"
 			>
@@ -216,9 +188,38 @@ function ScenarioFeedbackPanel({
 	);
 }
 
+function useOverlayHotkeys(
+	isUnanswered: boolean,
+	options: ScenarioOption[],
+	onSelectOption: (id: string) => void,
+) {
+	useEffect(() => {
+		if (!isUnanswered) return;
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				return;
+			}
+
+			const keyNum = Number.parseInt(event.key, 10);
+			if (!Number.isNaN(keyNum) && keyNum >= 1 && keyNum <= options.length) {
+				const targetOption = options[keyNum - 1];
+				onSelectOption(targetOption.id);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [isUnanswered, options, onSelectOption]);
+}
+
 export function ScenarioOverlay({
-	onSelectOption,
+	onReplayContext,
 	onResume,
+	onSelectOption,
 	remainingMs,
 	scenario,
 	state,
@@ -234,31 +235,7 @@ export function ScenarioOverlay({
 		totalMs > 0 &&
 		typeof remainingMs === "number";
 
-	useEffect(() => {
-		if (!isUnanswered) return;
-
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				event.preventDefault();
-				return;
-			}
-
-			const keyNum = Number.parseInt(event.key, 10);
-			if (
-				!Number.isNaN(keyNum) &&
-				keyNum >= 1 &&
-				keyNum <= scenario.inputConfig.options.length
-			) {
-				const targetOption = scenario.inputConfig.options[keyNum - 1];
-				onSelectOption(targetOption.id);
-			}
-		};
-
-		window.addEventListener("keydown", handleKeyDown);
-		return () => {
-			window.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [isUnanswered, scenario.inputConfig.options, onSelectOption]);
+	useOverlayHotkeys(isUnanswered, scenario.inputConfig.options, onSelectOption);
 
 	return (
 		<div
@@ -329,6 +306,17 @@ export function ScenarioOverlay({
 						);
 					})}
 				</div>
+
+				{isUnanswered && onReplayContext ? (
+					<button
+						className="w-full py-2.5 px-4 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+						data-testid="replay-context-button"
+						onClick={onReplayContext}
+						type="button"
+					>
+						↺ Replay Context (-10s)
+					</button>
+				) : null}
 
 				{!isUnanswered ? (
 					<ScenarioFeedbackPanel

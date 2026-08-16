@@ -14,6 +14,7 @@ import { Route as VodsIndexRouteImport } from './routes/vods/index'
 import { Route as VodsIdRouteImport } from './routes/vods/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
+import { Route as VodsIdSessionRouteImport } from './routes/vods/$id.session'
 import { Route as ApiVodsIdManifestRouteImport } from './routes/api/vods/$id/manifest'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
   path: '/api/media/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VodsIdSessionRoute = VodsIdSessionRouteImport.update({
+  id: '/session',
+  path: '/session',
+  getParentRoute: () => VodsIdRoute,
+} as any)
 const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
   id: '/api/vods/$id/manifest',
   path: '/api/vods/$id/manifest',
@@ -49,27 +55,30 @@ const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/vods/$id': typeof VodsIdRoute
+  '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/vods/$id/session': typeof VodsIdSessionRoute
   '/api/vods/$id/manifest': typeof ApiVodsIdManifestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/vods/$id': typeof VodsIdRoute
+  '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/vods/$id/session': typeof VodsIdSessionRoute
   '/api/vods/$id/manifest': typeof ApiVodsIdManifestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/vods/$id': typeof VodsIdRoute
+  '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/vods/$id/session': typeof VodsIdSessionRoute
   '/api/vods/$id/manifest': typeof ApiVodsIdManifestRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/vods/'
     | '/api/auth/$'
     | '/api/media/$'
+    | '/vods/$id/session'
     | '/api/vods/$id/manifest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/vods'
     | '/api/auth/$'
     | '/api/media/$'
+    | '/vods/$id/session'
     | '/api/vods/$id/manifest'
   id:
     | '__root__'
@@ -96,12 +107,13 @@ export interface FileRouteTypes {
     | '/vods/'
     | '/api/auth/$'
     | '/api/media/$'
+    | '/vods/$id/session'
     | '/api/vods/$id/manifest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  VodsIdRoute: typeof VodsIdRoute
+  VodsIdRoute: typeof VodsIdRouteWithChildren
   VodsIndexRoute: typeof VodsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
@@ -145,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMediaSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vods/$id/session': {
+      id: '/vods/$id/session'
+      path: '/session'
+      fullPath: '/vods/$id/session'
+      preLoaderRoute: typeof VodsIdSessionRouteImport
+      parentRoute: typeof VodsIdRoute
+    }
     '/api/vods/$id/manifest': {
       id: '/api/vods/$id/manifest'
       path: '/api/vods/$id/manifest'
@@ -155,9 +174,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface VodsIdRouteChildren {
+  VodsIdSessionRoute: typeof VodsIdSessionRoute
+}
+
+const VodsIdRouteChildren: VodsIdRouteChildren = {
+  VodsIdSessionRoute: VodsIdSessionRoute,
+}
+
+const VodsIdRouteWithChildren =
+  VodsIdRoute._addFileChildren(VodsIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  VodsIdRoute: VodsIdRoute,
+  VodsIdRoute: VodsIdRouteWithChildren,
   VodsIndexRoute: VodsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMediaSplatRoute: ApiMediaSplatRoute,

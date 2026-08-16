@@ -28,4 +28,11 @@ export default [
 			"fsd/insignificant-slice": "off",
 		},
 	},
+	{
+		// Tests may import adjacent manual mocks directly; these are not production dependencies.
+		files: ["./src/**/__tests__/**"],
+		rules: {
+			"fsd/no-public-api-sidestep": "off",
+		},
+	},
 ];
