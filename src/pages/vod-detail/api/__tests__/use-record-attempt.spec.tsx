@@ -2,10 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as sentry from "@/shared/lib/sentry";
 import * as serverFns from "../server-fns";
 import {
 	calculateBackoffDelay,
 	executeRecordAttempt,
+	isRetryableAttemptError,
 	useRecordAttemptMutation,
 } from "../use-record-attempt";
 
@@ -35,6 +37,29 @@ describe("useRecordAttemptMutation", () => {
 		expect(calculateBackoffDelay(2)).toBe(4000);
 		expect(calculateBackoffDelay(3)).toBe(8000);
 		expect(calculateBackoffDelay(10)).toBe(30000);
+	});
+
+	it("classifies only transient network and service failures as retryable", () => {
+		// Arrange
+		const serviceFailure = Object.assign(new Error("Service unavailable"), {
+			status: 503,
+		});
+		const permanentFailure = Object.assign(new Error("Invalid payload"), {
+			status: 500,
+		});
+
+		// Act
+		const results = [
+			isRetryableAttemptError(null),
+			isRetryableAttemptError("fetch failed"),
+			isRetryableAttemptError(serviceFailure),
+			isRetryableAttemptError(permanentFailure),
+			isRetryableAttemptError({ status: "503" }),
+			isRetryableAttemptError({ message: "Bad request", status: 400 }),
+		];
+
+		// Assert
+		expect(results).toEqual([false, true, true, false, false, false]);
 	});
 
 	it("executes executeRecordAttempt successfully when server function returns success", async () => {
@@ -226,5 +251,256 @@ describe("useRecordAttemptMutation", () => {
 		expect(
 			recordAttempt.mock.calls.map(([call]) => call.data.idempotencyKey),
 		).toEqual([payload.idempotencyKey, payload.idempotencyKey]);
+	});
+
+	it("limits transient delivery to three total requests", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000002",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockRejectedValue(new Error("Transient network failure"));
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Transient network failure",
+			);
+		});
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledTimes(3);
+	});
+
+	it("does not retry validation failures", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000003",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockResolvedValue({
+				error: "Invalid attempt payload",
+				success: false,
+			} as never);
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Invalid attempt payload",
+			);
+		});
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not retry malformed-payload failures", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000007",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockRejectedValue(new Error("Malformed payload"));
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Malformed payload",
+			);
+		});
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not retry authorization failures", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000004",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockRejectedValue(new Error("Unauthorized"));
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Unauthorized",
+			);
+		});
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not retry idempotency conflicts", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000005",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockResolvedValue({
+				error: "Attempt idempotency conflict",
+				success: false,
+			} as never);
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Attempt idempotency conflict",
+			);
+		});
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledTimes(1);
+	});
+
+	it("reports exhausted delivery with structured outcome context", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000006",
+			isCorrect: false,
+			isTimedOut: true,
+			moduleType: "TACTICS" as const,
+			responseTimeMs: 3000,
+			scenarioId: "a0000000-0000-0000-0000-000000000002",
+			selectedOptionId: null,
+		};
+		const error = new Error("Service unavailable");
+		vi.spyOn(serverFns, "recordAttempt").mockRejectedValue(error);
+		const captureException = vi.spyOn(sentry, "captureException");
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toThrow(
+				"Service unavailable",
+			);
+		});
+
+		// Assert
+		expect(captureException).toHaveBeenCalledWith(error, {
+			extra: {
+				outcomeIdentity: payload.idempotencyKey,
+				scenarioId: payload.scenarioId,
+			},
+			tags: {
+				telemetry: "attempt-delivery",
+			},
+		});
+	});
+
+	it("normalizes a non-Error transport rejection for observability", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000008",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
+		};
+		vi.spyOn(serverFns, "recordAttempt").mockRejectedValue(
+			"Service unavailable" as never,
+		);
+		const captureException = vi.spyOn(sentry, "captureException");
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		await act(async () => {
+			await expect(result.current.mutateAsync(payload)).rejects.toBe(
+				"Service unavailable",
+			);
+		});
+
+		// Assert
+		expect(captureException).toHaveBeenCalledWith(
+			expect.objectContaining({
+				message: "Service unavailable",
+			}),
+			expect.anything(),
+		);
 	});
 });

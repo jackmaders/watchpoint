@@ -327,6 +327,119 @@ describe("useSessionPlayer", () => {
 		expect(result.current.attempts[0].moduleType).toBe("STRATEGY");
 	});
 
+	it("keeps feedback and playback responsive while telemetry is pending", async () => {
+		// Arrange
+		const frameController = installMockFrames();
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		vi.mocked(serverFns.recordAttempt).mockImplementationOnce(
+			() => new Promise(() => {}) as never,
+		);
+
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: mockManifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+		player.getCurrentTime = vi.fn(() => 30.0);
+		act(() => {
+			frameController.flush();
+		});
+
+		// Act
+		act(() => {
+			result.current.selectOption("opt_1a");
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		act(() => {
+			result.current.resumePlayback();
+		});
+
+		// Assert
+		expect(serverFns.recordAttempt).toHaveBeenCalledTimes(1);
+		expect(result.current.state).toBe("PLAYING");
+		expect(result.current.activeScenarioIndex).toBe(1);
+		expect(player.playVideo).toHaveBeenCalled();
+	});
+
+	it("keeps the playthrough responsive after telemetry retries are exhausted", async () => {
+		// Arrange
+		vi.useFakeTimers();
+		const frameController = installMockFrames();
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		vi.mocked(serverFns.recordAttempt).mockRejectedValue(
+			new Error("Service unavailable"),
+		);
+
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: mockManifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+		player.getCurrentTime = vi.fn(() => 30.0);
+		act(() => {
+			frameController.flush();
+		});
+
+		// Act
+		act(() => {
+			result.current.selectOption("opt_1a");
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		act(() => {
+			result.current.resumePlayback();
+		});
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(3000);
+		});
+
+		// Assert
+		expect(serverFns.recordAttempt).toHaveBeenCalledTimes(3);
+		expect(result.current.state).toBe("PLAYING");
+		expect(result.current.activeScenarioIndex).toBe(1);
+		expect(result.current.attempts).toHaveLength(1);
+		vi.useRealTimers();
+	});
+
 	it("does not resume playback from FEEDBACK through the outer play action", async () => {
 		// Arrange
 		const frameController = installMockFrames();
