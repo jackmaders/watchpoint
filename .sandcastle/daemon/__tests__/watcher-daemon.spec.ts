@@ -319,6 +319,27 @@ describe("WatcherDaemon", () => {
 		).toBe(true);
 	});
 
+	it("exits immediately in once mode when the queue is empty", async () => {
+		// Arrange
+		const daemon = new WatcherDaemon({
+			clock: new MockWatcherClock(),
+			githubClient: new MockGithubClient(),
+			logger: () => {},
+			once: true,
+		});
+
+		// Act
+		const stats = await daemon.run();
+
+		// Assert
+		expect(stats).toEqual({
+			aborted: false,
+			failureCount: 0,
+			processedCount: 0,
+			successCount: 0,
+		});
+	});
+
 	it("recovers gracefully from transient GitHub API query errors and sleeps for interval", async () => {
 		// Arrange
 		const clock = new MockWatcherClock();
