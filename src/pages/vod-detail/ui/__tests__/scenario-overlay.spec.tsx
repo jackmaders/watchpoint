@@ -4,6 +4,7 @@ import type {
 	ScenarioData,
 	ScenarioOverlayState,
 } from "../../model/session-contract";
+import { normalizeScenarioInput } from "../../model/session-contract";
 import { ScenarioOverlay } from "../scenario-overlay";
 
 describe("ScenarioOverlay", () => {
@@ -12,14 +13,15 @@ describe("ScenarioOverlay", () => {
 			"Ana used Sleep Dart aggressively 4s ago, leaving her vulnerable to dive.",
 		id: "sc_1",
 		imageUrl: null,
-		inputConfig: {
+		input: normalizeScenarioInput("MULTIPLE_CHOICE", {
 			options: [
-				{ id: "opt_1", text: "Dive Ana immediately" },
-				{ id: "opt_2", text: "Rotate to high ground" },
-				{ id: "opt_3", text: "Wait for Coalescence" },
-				{ id: "opt_4", text: "Fall back to point" },
+				{ id: "opt_1", is_correct: true, text: "Dive Ana immediately" },
+				{ id: "opt_2", is_correct: false, text: "Rotate to high ground" },
+				{ id: "opt_3", is_correct: false, text: "Wait for Coalescence" },
+				{ id: "opt_4", is_correct: false, text: "Fall back to point" },
 			],
-		},
+		}),
+		inputType: "MULTIPLE_CHOICE",
 		moduleType: "TACTICS",
 		promptText: "Enemy Ana just missed Sleep Dart. What is your priority?",
 		timeLimitSeconds: 3,
@@ -85,6 +87,37 @@ describe("ScenarioOverlay", () => {
 		// Assert
 		expect(image).toBeDefined();
 		expect(image.getAttribute("src")).toContain("map-view.png");
+	});
+
+	it("renders a safe fallback without controls for unsupported normalized inputs", () => {
+		// Arrange
+		const handleResume = vi.fn();
+		const handleSelect = vi.fn();
+		const unsupportedScenario: ScenarioData = {
+			...baseScenario,
+			input: normalizeScenarioInput("MAP_PIN_2D", { height: 100, width: 100 }),
+			inputType: "MAP_PIN_2D",
+		};
+		const state: ScenarioOverlayState = { status: "unanswered" };
+
+		// Act
+		render(
+			<ScenarioOverlay
+				onResume={handleResume}
+				onSelectOption={handleSelect}
+				onSkipUnsupportedInput={handleResume}
+				scenario={unsupportedScenario}
+				state={state}
+			/>,
+		);
+		fireEvent.keyDown(window, { key: "1" });
+		fireEvent.click(screen.getByTestId("skip-unsupported-input-button"));
+
+		// Assert
+		expect(screen.getByTestId("unsupported-scenario-input")).toBeDefined();
+		expect(screen.queryByRole("button", { name: /Dive Ana/i })).toBeNull();
+		expect(handleSelect).not.toHaveBeenCalled();
+		expect(handleResume).toHaveBeenCalledTimes(1);
 	});
 
 	it("does not render an image or empty image container when imageUrl is null", () => {

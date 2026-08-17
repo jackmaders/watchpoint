@@ -16,7 +16,8 @@ import {
 } from "@/shared/media";
 import { useRecordAttemptMutation } from "../api/use-record-attempt";
 import {
-	getScenarioOptions,
+	type NormalizedScenario,
+	normalizeScenario,
 	type ScenarioOption,
 	type ScenarioOverlayState,
 } from "./session-contract";
@@ -34,17 +35,19 @@ import {
 
 export type {
 	ScenarioData,
-	ScenarioInputConfig,
 	ScenarioOverlayState,
 } from "./session-contract";
-export { getScenarioOptions, toScenarioOverlayData } from "./session-contract";
+export {
+	normalizeScenario,
+	toScenarioOverlayData,
+} from "./session-contract";
 export type { SessionPlayerState } from "./session-player-state";
 export { resolveNewStatusState } from "./session-player-state";
 
 export type ManifestVod = NonNullable<
 	Awaited<ReturnType<typeof getSessionManifest>>
 >;
-export type ScenarioItem = ManifestVod["scenarios"][number];
+export type ScenarioItem = NormalizedScenario<ManifestVod["scenarios"][number]>;
 
 export interface UseSessionPlayerOptions {
 	autoplay?: boolean;
@@ -72,6 +75,7 @@ export interface UseSessionPlayerResult {
 	resumePlayback: () => void;
 	retrySession: () => void;
 	selectOption: (optionId: string) => void;
+	skipUnsupportedInput: () => void;
 	state: SessionPlayerState;
 	summary: SessionSummaryReport | null;
 	totalMs?: number;
@@ -80,29 +84,12 @@ export interface UseSessionPlayerResult {
 
 export type ScenarioOptionItem = ScenarioOption;
 
-export function findCorrectOptionId(options: ScenarioOption[]): string {
-	for (const option of options) {
-		if (option.is_correct) return option.id;
-	}
-	return "";
-}
-
-export function isSelectedOptionCorrect(
-	options: ScenarioOption[],
-	optionId: string,
-): boolean {
-	for (const option of options) {
-		if (option.id === optionId) return Boolean(option.is_correct);
-	}
-	return false;
-}
-
 function useSessionScenarios(vod: ManifestVod | null): ScenarioItem[] {
 	return useMemo(() => {
 		if (!vod?.scenarios) return [];
-		return [...vod.scenarios].sort(
-			(a, b) => a.timestampSeconds - b.timestampSeconds,
-		);
+		return [...vod.scenarios]
+			.map(normalizeScenario)
+			.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
 	}, [vod]);
 }
 
@@ -188,9 +175,7 @@ function useSessionAttemptCallbacks({
 			return;
 		}
 
-		const correctOptionId = findCorrectOptionId(
-			getScenarioOptions(scenario.inputConfig),
-		);
+		const { correctOptionId } = scenario.input;
 		const attempt: SessionAttempt = {
 			isCorrect: false,
 			isTimedOut: true,
@@ -228,9 +213,8 @@ function useSessionAttemptCallbacks({
 				return;
 			}
 
-			const options = getScenarioOptions(scenario.inputConfig);
-			const isCorrect = isSelectedOptionCorrect(options, optionId);
-			const correctOptionId = findCorrectOptionId(options);
+			const { correctOptionId } = scenario.input;
+			const isCorrect = scenario.input.evaluateAnswer(optionId);
 			let elapsedMs = Date.now() - startTimeRef.current;
 			if (typeof totalMs === "number" && totalMs > 0) {
 				elapsedMs = Math.min(totalMs, elapsedMs);
@@ -313,6 +297,16 @@ function useSessionActionCallbacks({
 		vodPlayer.play();
 	}, [dispatch, state, vodPlayer]);
 
+	const skipUnsupportedInput = useCallback(() => {
+		if (
+			state === "SCENARIO_ACTIVE" &&
+			currentScenario?.input.kind === "unsupported"
+		) {
+			dispatch({ type: "UNSUPPORTED_INPUT_SKIPPED" });
+			vodPlayer.play();
+		}
+	}, [currentScenario?.input.kind, dispatch, state, vodPlayer]);
+
 	const retrySession = useCallback(() => {
 		dispatch({ type: "RETRY_SESSION" });
 		vodPlayer.seekTo(0, true);
@@ -330,6 +324,7 @@ function useSessionActionCallbacks({
 		replayContext,
 		resumePlayback,
 		retrySession,
+		skipUnsupportedInput,
 	};
 }
 

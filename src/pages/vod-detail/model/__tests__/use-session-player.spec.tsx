@@ -15,11 +15,8 @@ import {
 	sessionPlayerReducer,
 } from "../session-player-state";
 import {
-	findCorrectOptionId,
-	isSelectedOptionCorrect,
 	type ManifestVod,
 	resolveNewStatusState,
-	toScenarioOverlayData,
 	useSessionPlayer,
 } from "../use-session-player";
 
@@ -179,6 +176,10 @@ describe("useSessionPlayer", () => {
 		expect(result.current.activeScenarios).toHaveLength(2);
 		expect(result.current.activeScenarios[0].moduleType).toBe("STRATEGY");
 		expect(result.current.activeScenarios[1].moduleType).toBe("ULTIMATE");
+		expect(result.current.activeScenarios[0].inputType).toBe("MULTIPLE_CHOICE");
+		expect(result.current.activeScenarios[0].input.kind).toBe(
+			"multiple-choice",
+		);
 	});
 
 	it("intercepts playhead time and pauses to enter SCENARIO_ACTIVE at scenario timestamp", async () => {
@@ -216,12 +217,72 @@ describe("useSessionPlayer", () => {
 		act(() => {
 			frameController.flush();
 		});
+		act(() => {
+			result.current.skipUnsupportedInput();
+		});
 
 		// Assert
 		expect(result.current.state).toBe("SCENARIO_ACTIVE");
 		expect(result.current.currentScenario?.id).toBe("sc_1");
 		expect(result.current.overlayState).toEqual({ status: "unanswered" });
 		expect(player.pauseVideo).toHaveBeenCalled();
+	});
+
+	it("continues playback when an unsupported untimed input is skipped", async () => {
+		// Arrange
+		const frameController = installMockFrames();
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const unsupportedManifest = {
+			...mockManifest,
+			scenarios: [
+				{
+					...mockManifest.scenarios[0],
+					inputConfig: { max: 100, min: 0 },
+					inputType: "MAP_PIN_2D" as const,
+				},
+			],
+		};
+
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: unsupportedManifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+		player.getCurrentTime = vi.fn(() => 30.5);
+		act(() => {
+			frameController.flush();
+		});
+		const activeInputKind = result.current.currentScenario?.input.kind;
+
+		// Act
+		act(() => {
+			result.current.skipUnsupportedInput();
+		});
+
+		// Assert
+		expect(activeInputKind).toBe("unsupported");
+		expect(result.current.state).toBe("PLAYING");
+		expect(result.current.activeScenarioIndex).toBe(1);
+		expect(player.playVideo).toHaveBeenCalled();
 	});
 
 	it("records attempt and transitions to FEEDBACK when user selects an option", async () => {
@@ -892,32 +953,6 @@ describe("useSessionPlayer", () => {
 		});
 	});
 
-	it("safely handles getScenarioOptions with non-object or malformed inputConfig", async () => {
-		// Arrange
-		const { getScenarioOptions } = await import("../use-session-player");
-
-		// Act & Assert
-		expect(getScenarioOptions(null)).toEqual([]);
-		expect(getScenarioOptions(undefined)).toEqual([]);
-		expect(getScenarioOptions("invalid")).toEqual([]);
-		expect(getScenarioOptions({ options: "not-an-array" })).toEqual([]);
-		expect(
-			getScenarioOptions({
-				options: [
-					{ id: "opt_1", label: "A", text: "Option 1" },
-					{ id: "missing-text" },
-					null,
-				],
-			}),
-		).toEqual([{ id: "opt_1", label: "A", text: "Option 1" }]);
-		expect(
-			toScenarioOverlayData({
-				...mockManifest.scenarios[0],
-				inputConfig: { options: "not-an-array" },
-			})?.inputConfig.options,
-		).toEqual([]);
-	});
-
 	it("ignores feedback actions when no scenario answer is pending", () => {
 		// Arrange
 		const attempt = {
@@ -980,6 +1015,12 @@ describe("useSessionPlayer", () => {
 		const resumedSession = sessionPlayerReducer(replayedSession, {
 			type: "RESUME_PLAYBACK",
 		});
+		const ignoredUnsupported = sessionPlayerReducer(
+			initialSessionPlayerSession,
+			{
+				type: "UNSUPPORTED_INPUT_SKIPPED",
+			},
+		);
 
 		// Assert
 		expect(readySession.state).toBe("PLAYING");
@@ -989,6 +1030,33 @@ describe("useSessionPlayer", () => {
 		expect(inertSession).toBe(initialSessionPlayerSession);
 		expect(replayedSession.state).toBe("PLAYING");
 		expect(resumedSession).toBe(replayedSession);
+		expect(ignoredUnsupported).toBe(initialSessionPlayerSession);
+	});
+
+	it("skips an unsupported active input and resumes playback", () => {
+		// Arrange
+		const readySession = sessionPlayerReducer(initialSessionPlayerSession, {
+			autoplay: true,
+			type: "PLAYER_READY",
+		});
+		const activeSession = sessionPlayerReducer(readySession, {
+			totalMs: undefined,
+			type: "SCENARIO_TRIGGERED",
+		});
+
+		// Act
+		const nextSession = sessionPlayerReducer(activeSession, {
+			type: "UNSUPPORTED_INPUT_SKIPPED",
+		});
+
+		// Assert
+		expect(nextSession).toEqual({
+			activeScenarioIndex: 1,
+			attempts: [],
+			overlayState: null,
+			state: "PLAYING",
+			totalMs: undefined,
+		});
 	});
 
 	it("ignores unhandled status transitions gracefully", () => {
@@ -1409,21 +1477,6 @@ describe("useSessionPlayer", () => {
 
 		// Assert - state is still PLAYING
 		expect(result.current.state).toBe("PLAYING");
-	});
-
-	it("correctly identifies option correctness with findCorrectOptionId and isSelectedOptionCorrect", () => {
-		// Arrange
-		const options = [
-			{ id: "opt_1", is_correct: false, text: "A" },
-			{ id: "opt_2", is_correct: true, text: "B" },
-		];
-
-		// Act & Assert
-		expect(findCorrectOptionId(options)).toBe("opt_2");
-		expect(findCorrectOptionId([{ id: "opt_x", text: "X" }])).toBe("");
-		expect(isSelectedOptionCorrect(options, "opt_2")).toBe(true);
-		expect(isSelectedOptionCorrect(options, "opt_1")).toBe(false);
-		expect(isSelectedOptionCorrect(options, "opt_nonexistent")).toBe(false);
 	});
 
 	it("correctly resolves playback status state transitions", () => {
