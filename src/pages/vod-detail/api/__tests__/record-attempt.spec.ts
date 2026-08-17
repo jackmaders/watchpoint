@@ -283,6 +283,7 @@ describe("recordAttemptAction", () => {
 			idempotencyKey: validIdempotencyKey,
 			inputValue: null,
 			isCorrect: true,
+			isTimedOut: false,
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
@@ -364,6 +365,44 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Attempt idempotency conflict",
+			success: false,
+		});
+	});
+
+	it("returns a generic conflict when timeout state changes on key reuse", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockImplementationOnce(() => {
+			throw new Error(
+				"UNIQUE constraint failed: attempt_record.idempotency_key",
+			);
+		});
+		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
+			id: "attempt_existing",
+			idempotencyKey: validIdempotencyKey,
+			inputValue: null,
+			isCorrect: false,
+			isTimedOut: true,
+			responseTimeMs: 3000,
+			scenarioId: validScenarioId,
+			selectedOptionId: null,
+			userId: "usr_guest_demo",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: false,
+			isTimedOut: false,
+			responseTimeMs: 3000,
+			scenarioId: validScenarioId,
+			selectedOptionId: null,
 		};
 
 		// Act
@@ -486,7 +525,7 @@ describe("recordAttemptAction", () => {
 		});
 	});
 
-	it("maps timeout persistence through the existing correctness fields", async () => {
+	it("persists timeout state independently from correctness", async () => {
 		// Arrange
 		const db = await getDb();
 		const values = vi.fn((_record: unknown) => ({
@@ -496,6 +535,7 @@ describe("recordAttemptAction", () => {
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: false,
+			isTimedOut: true,
 			responseTimeMs: 3000,
 			scenarioId: validScenarioId,
 			selectedOptionId: null,
@@ -510,6 +550,7 @@ describe("recordAttemptAction", () => {
 			idempotencyKey: validIdempotencyKey,
 			inputValue: null,
 			isCorrect: false,
+			isTimedOut: true,
 			responseTimeMs: 3000,
 			scenarioId: validScenarioId,
 			selectedOptionId: null,

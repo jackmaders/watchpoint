@@ -23,7 +23,7 @@ This document defines the core domain terminology used across product discussion
   The complete pre-loaded data bundle sent to the client at the start of a VOD training session. Contains VOD metadata, video ID, and the ordered array of active scenarios filtered by user settings.
 
 * **Attempt Record**  
-  A single telemetry log documenting a user's answer choice, PASS/FAIL result, and response latency for a specific scenario.
+  A single telemetry log documenting a user's answer choice or timeout, correctness, explicit timeout state, and response latency for a specific scenario.
 
 * **User**  
   The individual account an Attempt Record is attributed to. Distinct from the **Administrator** role (spec user story 17), which seeds and manages VOD/Scenario content rather than taking training sessions. How a User's identity is established (login, or a V1 stand-in) is an implementation concern, not part of this term's definition.

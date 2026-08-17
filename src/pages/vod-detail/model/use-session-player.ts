@@ -150,6 +150,7 @@ function executeSessionEffect(
 			recordAttempt.mutate({
 				idempotencyKey: effect.outcome.idempotencyKey,
 				isCorrect: effect.outcome.attempt.isCorrect,
+				isTimedOut: effect.outcome.kind === "timedOut",
 				responseTimeMs: effect.outcome.attempt.responseTimeMs,
 				scenarioId: effect.outcome.attempt.scenarioId,
 				...(effect.outcome.kind === "answered"

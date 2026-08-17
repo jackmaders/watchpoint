@@ -61,6 +61,7 @@ function isIdenticalAttempt(
 	existing: {
 		inputValue: Record<string, JsonValue> | null | undefined;
 		isCorrect: boolean;
+		isTimedOut: boolean | null | undefined;
 		responseTimeMs: number;
 		scenarioId: string;
 		selectedOptionId: string | null;
@@ -73,6 +74,7 @@ function isIdenticalAttempt(
 		existing.userId === userId &&
 		existing.scenarioId === input.scenarioId &&
 		existing.isCorrect === input.isCorrect &&
+		(existing.isTimedOut ?? false) === (input.isTimedOut ?? false) &&
 		existing.responseTimeMs === input.responseTimeMs &&
 		existing.selectedOptionId === (input.selectedOptionId ?? null) &&
 		areJsonValuesEqual(existing.inputValue, input.inputValue ?? null)
@@ -87,6 +89,7 @@ async function insertAttempt(
 		idempotencyKey: string;
 		inputValue: Record<string, JsonValue> | null;
 		isCorrect: boolean;
+		isTimedOut: boolean;
 		responseTimeMs: number;
 		scenarioId: string;
 		selectedOptionId: string | null;
@@ -141,6 +144,7 @@ export async function recordAttemptAction(
 			inputValue:
 				parsed.data.inputValue !== undefined ? parsed.data.inputValue : null,
 			isCorrect: parsed.data.isCorrect,
+			isTimedOut: parsed.data.isTimedOut,
 			responseTimeMs: parsed.data.responseTimeMs,
 			scenarioId: parsed.data.scenarioId,
 			selectedOptionId: parsed.data.selectedOptionId ?? null,
