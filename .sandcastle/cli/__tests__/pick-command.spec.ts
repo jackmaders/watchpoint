@@ -104,6 +104,7 @@ describe("parsePickCliArgs", () => {
 		// Assert
 		expect(args).toEqual({
 			agent: "codex",
+			codexProvider: "openrouter",
 			dangerouslySkipPermissions: true,
 			dryRun: false,
 			help: false,
@@ -128,6 +129,13 @@ describe("parsePickCliArgs", () => {
 		// Assert
 		expect(argsHelp.help).toBe(true);
 		expect(argsH.help).toBe(true);
+	});
+
+	it("selects the native OpenAI Codex provider", () => {
+		const args = parsePickCliArgs(["--codex-provider", "openai"]);
+
+		expect(args.codexProvider).toBe("openai");
+		expect(args.model).toBe("gpt-5.3-codex");
 	});
 
 	it("parses value and boolean flags correctly", () => {

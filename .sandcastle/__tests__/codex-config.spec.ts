@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
 	buildCodexConfig,
 	CODEX_CLI_VERSION,
+	OPENAI_CODEX_DEFAULT_MODEL,
 	OPENROUTER_DEFAULT_MODEL,
+	parseCodexProvider,
 	validateCodexConfiguration,
 } from "../codex-config";
 
@@ -60,5 +62,32 @@ describe("Codex/OpenRouter configuration", () => {
 
 		// Assert
 		expect(action).not.toThrow();
+	});
+
+	it("generates native OpenAI Codex configuration", () => {
+		const config = buildCodexConfig(OPENAI_CODEX_DEFAULT_MODEL, "openai");
+
+		expect(config).toContain('model_provider = "openai"');
+		expect(config).toContain("https://api.openai.com/v1");
+		expect(config).toContain("OPENAI_API_KEY");
+		expect(config).not.toContain("OPENROUTER_API_KEY");
+	});
+
+	it("validates native OpenAI credentials", () => {
+		expect(() => validateCodexConfiguration({}, "openai")).toThrow(
+			"Codex/OpenAI requires OPENAI_API_KEY",
+		);
+		expect(() =>
+			validateCodexConfiguration(
+				{ OPENAI_API_KEY: "runtime-only-secret" },
+				"openai",
+			),
+		).not.toThrow();
+	});
+
+	it("rejects unknown providers", () => {
+		expect(() => parseCodexProvider("custom")).toThrow(
+			"Unsupported Codex provider: custom",
+		);
 	});
 });

@@ -15,9 +15,10 @@ export interface DefaultAgentRunnerOptions extends AgentRuntimeOptions {
 function validateAgentCredentials(
 	agent: AgentType,
 	env: Record<string, string | undefined>,
+	provider: Parameters<typeof validateCodexConfiguration>[1],
 ): void {
 	if (agent === "codex") {
-		validateCodexConfiguration(env);
+		validateCodexConfiguration(env, provider);
 	}
 }
 
@@ -48,6 +49,9 @@ export function buildDockerRunCommand(options: {
 export class DefaultAgentRunner implements AgentRunner {
 	private readonly agent: AgentType;
 	private readonly model?: string;
+	private readonly codexProvider: ReturnType<
+		typeof resolveAgentRuntime
+	>["codexProvider"];
 	private readonly sandbox: SandboxType;
 	private readonly imageName: string;
 	private readonly dangerouslySkipPermissions: boolean;
@@ -58,6 +62,7 @@ export class DefaultAgentRunner implements AgentRunner {
 		const runtime = resolveAgentRuntime(options);
 		this.agent = runtime.agent;
 		this.model = runtime.model;
+		this.codexProvider = runtime.codexProvider;
 		this.sandbox = runtime.sandbox;
 		this.imageName = runtime.imageName;
 		this.dangerouslySkipPermissions = runtime.dangerouslySkipPermissions;
@@ -77,7 +82,11 @@ export class DefaultAgentRunner implements AgentRunner {
 		let executionEnv: Record<string, string | undefined> | undefined;
 
 		if (this.sandbox === "docker") {
-			validateAgentCredentials(this.agent, this.authMountsConfig.env);
+			validateAgentCredentials(
+				this.agent,
+				this.authMountsConfig.env,
+				this.codexProvider,
+			);
 			executionCmd = buildDockerRunCommand({
 				agentCmd,
 				authMounts: this.authMountsConfig,
@@ -86,7 +95,11 @@ export class DefaultAgentRunner implements AgentRunner {
 			});
 			executionEnv = process.env;
 		} else {
-			validateAgentCredentials(this.agent, this.authMountsConfig.env);
+			validateAgentCredentials(
+				this.agent,
+				this.authMountsConfig.env,
+				this.codexProvider,
+			);
 			executionCmd = agentCmd;
 			executionEnv = {
 				...process.env,

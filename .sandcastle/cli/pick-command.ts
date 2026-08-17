@@ -3,7 +3,7 @@ import {
 	applyCommonValueFlag,
 	createDefaultCommonCliState,
 } from "../cli-args";
-import { OPENROUTER_DEFAULT_MODEL } from "../codex-config";
+import { type CodexProvider, defaultCodexModel } from "../codex-config";
 import { DefaultGithubClient } from "../github/client";
 import { IssueAlreadyClaimedError, isClaimContention } from "../github/errors";
 import { resolveFrontier } from "../github/frontier";
@@ -39,7 +39,9 @@ export function parsePickCliArgs(argv: string[]): PickCliArgs {
 		...state,
 		model:
 			state.model ??
-			(state.agent === "codex" ? OPENROUTER_DEFAULT_MODEL : undefined),
+			(state.agent === "codex"
+				? defaultCodexModel(state.codexProvider as CodexProvider)
+				: undefined),
 	};
 }
 
@@ -63,8 +65,9 @@ ${BOLD}OPTIONS:${RESET}
   --image <name>       Docker image override [default: sandcastle:watchpoint]
   --no-sandbox         Run agent directly on host without Docker container isolation
 	--agent <name>       Agent provider (agy, gemini, codex, claude) [default: codex]
+	  --codex-provider <name> Codex provider (openrouter, openai) [default: openrouter]
 	  --model <name>       Model name override for agent provider
-	                       Codex defaults to openrouter/free; --agent agy preserves Antigravity
+	                       Codex defaults to the selected provider; --agent agy preserves Antigravity
   --max-attempts <n>   Maximum self-healing attempts before failure [default: 3]
   --branch <name>      Target git branch override
   --dry-run            Preview target ticket and prompt without running execution
@@ -132,6 +135,7 @@ async function executeSelection(
 			options.agentRunner ??
 			new DefaultAgentRunner({
 				agent: args.agent,
+				codexProvider: args.codexProvider,
 				dangerouslySkipPermissions: args.dangerouslySkipPermissions,
 				imageName: args.imageName,
 				model: args.model,

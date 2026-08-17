@@ -1,4 +1,5 @@
 import type { MountConfig } from "@ai-hero/sandcastle";
+import type { CodexProvider } from "./codex-config";
 
 export type AgentType = "agy" | "gemini" | "codex" | "claude";
 export type SandboxType = "docker" | "none";
@@ -8,6 +9,7 @@ export interface SandcastleCliArgs {
 	readonly prompt?: string;
 	readonly agent: AgentType;
 	readonly model?: string;
+	readonly codexProvider?: CodexProvider;
 	readonly maxRetries: number;
 	readonly pr: boolean;
 	readonly localOnly: boolean;

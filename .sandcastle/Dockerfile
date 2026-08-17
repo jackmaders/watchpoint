@@ -25,19 +25,9 @@ RUN mkdir -p /home/agent/.bun \
 	&& chown -R 1000:1000 /home/agent/.bun
 
 # Ensure user directories exist for auth and tooling
-RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin /home/agent/.codex \
-	&& printf '%s\n' \
-	'model_provider = "openrouter"' \
-	'model = "openrouter/free"' \
-	'' \
-	'[model_providers.openrouter]' \
-	'name = "openrouter"' \
-	'base_url = "https://openrouter.ai/api/v1"' \
-	'' \
-	'[model_providers.openrouter.auth]' \
-	'command = "sh"' \
-	'args = ["-c", "echo $OPENROUTER_API_KEY"]' \
-	> /home/agent/.codex/config.toml \
+RUN mkdir -p /root/.gemini /root/.local/bin /home/agent/.gemini /home/agent/.local/bin /home/agent/.codex
+COPY .sandcastle/codex-entrypoint.sh /usr/local/bin/sandcastle-codex-entrypoint
+RUN chmod +x /usr/local/bin/sandcastle-codex-entrypoint \
 	&& chown -R 1000:1000 /home/agent/.codex
 
 ENV CODEX_HOME="/home/agent/.codex"
@@ -47,4 +37,4 @@ ENV GIT_CONFIG_GLOBAL="/tmp/sandcastle-gitconfig"
 
 WORKDIR /workspace
 
-CMD ["sh", "-c", "cp /home/agent/.gitconfig /tmp/sandcastle-gitconfig 2>/dev/null || true; exec sleep infinity"]
+CMD ["/usr/local/bin/sandcastle-codex-entrypoint"]

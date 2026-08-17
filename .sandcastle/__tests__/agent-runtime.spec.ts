@@ -13,6 +13,7 @@ describe("resolveAgentRuntime", () => {
 		expect(runtime).toEqual({
 			agent: "agy",
 			authMountsConfig,
+			codexProvider: "openrouter",
 			dangerouslySkipPermissions: true,
 			imageName: "sandcastle:watchpoint",
 			model: undefined,
