@@ -40,4 +40,9 @@ EOF
 esac
 
 cp /home/agent/.gitconfig /tmp/sandcastle-gitconfig 2>/dev/null || true
+
+if [ "$#" -gt 0 ]; then
+	exec "$@"
+fi
+
 exec sleep infinity

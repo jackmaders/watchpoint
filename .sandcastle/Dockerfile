@@ -37,4 +37,4 @@ ENV GIT_CONFIG_GLOBAL="/tmp/sandcastle-gitconfig"
 
 WORKDIR /workspace
 
-CMD ["/usr/local/bin/sandcastle-codex-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/sandcastle-codex-entrypoint"]
