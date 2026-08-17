@@ -2,6 +2,7 @@
 
 import { useEffect, useId } from "react";
 import { MODULE_MAP } from "../model/modules";
+import { SCENARIO_CHOICE_SHORTCUTS } from "../model/scenario-choice-shortcuts";
 import type {
 	ScenarioData,
 	ScenarioOption,
@@ -82,8 +83,6 @@ interface ScenarioFeedbackPanelProps {
 	state: Exclude<ScenarioOverlayState, { status: "unanswered" }>;
 }
 
-const SCENARIO_CHOICE_HOTKEYS = ["1", "2", "3", "4"] as const;
-
 function ScenarioFeedbackPanel({
 	explanationText,
 	onResume,
@@ -139,8 +138,8 @@ function useOverlayHotkeys(
 				return;
 			}
 
-			const optionIndex = SCENARIO_CHOICE_HOTKEYS.indexOf(
-				event.key as (typeof SCENARIO_CHOICE_HOTKEYS)[number],
+			const optionIndex = SCENARIO_CHOICE_SHORTCUTS.indexOf(
+				event.key as (typeof SCENARIO_CHOICE_SHORTCUTS)[number],
 			);
 			if (optionIndex < 0) return;
 

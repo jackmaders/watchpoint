@@ -249,6 +249,7 @@ describe("ScenarioOverlay", () => {
 		fireEvent.keyDown(window, { key: "Numpad1" });
 
 		// Assert
+		expect(screen.queryByTestId("scenario-option-opt_5")).toBeNull();
 		expect(handleSelect).not.toHaveBeenCalled();
 	});
 

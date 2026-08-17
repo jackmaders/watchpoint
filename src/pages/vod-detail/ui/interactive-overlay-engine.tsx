@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { SCENARIO_CHOICE_SHORTCUTS } from "../model/scenario-choice-shortcuts";
 import type {
 	ScenarioOption,
 	ScenarioOverlayState,
@@ -18,7 +19,7 @@ interface MultipleChoiceOptionButtonProps {
 	isWrongSelection: boolean;
 	onAnswer: (optionId: string) => void;
 	option: ScenarioOption;
-	optionNumber: number;
+	shortcut: (typeof SCENARIO_CHOICE_SHORTCUTS)[number];
 }
 
 function MultipleChoiceOptionButton({
@@ -27,7 +28,7 @@ function MultipleChoiceOptionButton({
 	isWrongSelection,
 	onAnswer,
 	option,
-	optionNumber,
+	shortcut,
 }: MultipleChoiceOptionButtonProps) {
 	const handleClick = useCallback(() => {
 		onAnswer(option.id);
@@ -52,6 +53,7 @@ function MultipleChoiceOptionButton({
 	return (
 		<button
 			aria-disabled={!isUnanswered}
+			aria-keyshortcuts={shortcut}
 			className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${buttonStyle}`}
 			data-testid={`scenario-option-${option.id}`}
 			disabled={!isUnanswered}
@@ -59,9 +61,9 @@ function MultipleChoiceOptionButton({
 			type="button"
 		>
 			<div className="flex items-center gap-3">
-				<span className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-slate-300">
-					{optionNumber}
-				</span>
+				<kbd className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-slate-300">
+					{shortcut}
+				</kbd>
 				<span className="text-sm font-medium">{option.text}</span>
 			</div>
 
@@ -85,11 +87,16 @@ export function InteractiveOverlayEngine({
 	state,
 }: InteractiveOverlayEngineProps) {
 	const isUnanswered = state.status === "unanswered";
+	// V1 keyboard and presentation shortcuts support choices A through D only.
+	const renderedOptions = options.slice(0, SCENARIO_CHOICE_SHORTCUTS.length);
 
 	return (
 		<fieldset className="space-y-3">
 			<legend className="sr-only">Scenario choices</legend>
-			{options.map((option, index) => {
+			{renderedOptions.map((option, index) => {
+				const shortcut = SCENARIO_CHOICE_SHORTCUTS[
+					index
+				] as (typeof SCENARIO_CHOICE_SHORTCUTS)[number];
 				const isSelected =
 					state.status === "answered" && state.selectedOptionId === option.id;
 				const isCorrectOption =
@@ -106,7 +113,7 @@ export function InteractiveOverlayEngine({
 						key={option.id}
 						onAnswer={onAnswer}
 						option={option}
-						optionNumber={index + 1}
+						shortcut={shortcut}
 					/>
 				);
 			})}
