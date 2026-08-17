@@ -159,6 +159,7 @@ interface SessionPlayerViewportProps {
 	isOverlayVisible: boolean;
 	onReplayContext: () => void;
 	onResume: () => void;
+	onSkipUnsupportedInput: () => void;
 	onSelectOption: (id: string) => void;
 	overlayScenarioData: ScenarioData | null;
 	overlayState: ScenarioOverlayState | null;
@@ -173,6 +174,7 @@ function SessionPlayerViewport({
 	isOverlayVisible,
 	onReplayContext,
 	onResume,
+	onSkipUnsupportedInput,
 	onSelectOption,
 	overlayScenarioData,
 	overlayState,
@@ -207,6 +209,7 @@ function SessionPlayerViewport({
 						onReplayContext={onReplayContext}
 						onResume={onResume}
 						onSelectOption={onSelectOption}
+						onSkipUnsupportedInput={onSkipUnsupportedInput}
 						remainingMs={remainingMs}
 						scenario={overlayScenarioData}
 						state={overlayState}
@@ -237,6 +240,7 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 		resumePlayback,
 		retrySession,
 		selectOption,
+		skipUnsupportedInput,
 		state,
 		summary,
 		totalMs,
@@ -283,6 +287,7 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 				onReplayContext={replayContext}
 				onResume={resumePlayback}
 				onSelectOption={selectOption}
+				onSkipUnsupportedInput={skipUnsupportedInput}
 				overlayScenarioData={overlayScenarioData}
 				overlayState={overlayState}
 				remainingMs={remainingMs}

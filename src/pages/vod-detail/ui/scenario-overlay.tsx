@@ -12,6 +12,7 @@ import { InteractiveOverlayEngine } from "./interactive-overlay-engine";
 export interface ScenarioOverlayProps {
 	onReplayContext?: () => void;
 	onResume: () => void;
+	onSkipUnsupportedInput?: () => void;
 	onSelectOption: (optionId: string) => void;
 	remainingMs?: number;
 	scenario: ScenarioData;
@@ -153,6 +154,7 @@ function useOverlayHotkeys(
 export function ScenarioOverlay({
 	onReplayContext,
 	onResume,
+	onSkipUnsupportedInput,
 	onSelectOption,
 	remainingMs,
 	scenario,
@@ -168,14 +170,17 @@ export function ScenarioOverlay({
 		typeof totalMs === "number" &&
 		totalMs > 0 &&
 		typeof remainingMs === "number";
+	const options =
+		scenario.input.kind === "multiple-choice" ? scenario.input.options : [];
 
-	useOverlayHotkeys(isUnanswered, scenario.inputConfig.options, onSelectOption);
+	useOverlayHotkeys(isUnanswered, options, onSelectOption);
 
 	return (
 		<div
 			aria-labelledby={promptId}
 			aria-modal="true"
 			className="relative flex flex-col lg:flex-row w-full h-full bg-slate-950/80 backdrop-blur-md border border-slate-800 rounded-2xl overflow-hidden shadow-2xl"
+			data-input-type={scenario.inputType}
 			role="dialog"
 		>
 			<div className="w-full lg:w-[35%] flex flex-col justify-between p-6 bg-slate-900/95 border-b lg:border-b-0 lg:border-l border-slate-800/80 overflow-y-auto space-y-6">
@@ -218,11 +223,30 @@ export function ScenarioOverlay({
 				</div>
 
 				<div className="space-y-3">
-					<InteractiveOverlayEngine
-						onAnswer={onSelectOption}
-						options={scenario.inputConfig.options}
-						state={state}
-					/>
+					{scenario.input.kind === "multiple-choice" ? (
+						<InteractiveOverlayEngine
+							onAnswer={onSelectOption}
+							options={options}
+							state={state}
+						/>
+					) : (
+						<>
+							<p
+								className="rounded-xl border border-slate-700 bg-slate-950/60 p-4 text-sm text-slate-400"
+								data-testid="unsupported-scenario-input"
+							>
+								This scenario input is not available yet.
+							</p>
+							<button
+								className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-indigo-500"
+								data-testid="skip-unsupported-input-button"
+								onClick={onSkipUnsupportedInput}
+								type="button"
+							>
+								Continue Playback
+							</button>
+						</>
+					)}
 				</div>
 
 				{isUnanswered && onReplayContext ? (

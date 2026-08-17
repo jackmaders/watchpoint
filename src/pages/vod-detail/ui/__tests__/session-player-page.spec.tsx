@@ -156,6 +156,9 @@ describe("SessionPlayerPage", () => {
 		// Assert overlay is rendered
 		expect(screen.getByText("Where should Ana position?")).toBeDefined();
 		expect(screen.getByText("Highground Balcony")).toBeDefined();
+		expect(screen.getByRole("dialog").getAttribute("data-input-type")).toBe(
+			"MULTIPLE_CHOICE",
+		);
 		expect(screen.queryByTestId("play-pause-button")).toBeNull();
 
 		// Act: select option

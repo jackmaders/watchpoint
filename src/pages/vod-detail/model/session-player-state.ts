@@ -53,6 +53,7 @@ export type SessionPlayerAction =
 	  }
 	| { type: "REPLAY_CONTEXT" }
 	| { type: "RESUME_PLAYBACK" }
+	| { type: "UNSUPPORTED_INPUT_SKIPPED" }
 	| { type: "RETRY_SESSION" };
 
 export function resolveNewStatusState(
@@ -159,14 +160,27 @@ function handleReplayContext(
 function handleResumePlayback(
 	session: SessionPlayerSession,
 ): SessionPlayerSession {
-	return session.state === "FEEDBACK"
-		? {
-				...session,
-				activeScenarioIndex: session.activeScenarioIndex + 1,
-				overlayState: null,
-				state: "PLAYING",
-				totalMs: undefined,
-			}
+	return session.state === "FEEDBACK" ? transitionToPlayback(session) : session;
+}
+
+function transitionToPlayback(
+	session: SessionPlayerSession,
+): SessionPlayerSession {
+	return {
+		...session,
+		activeScenarioIndex: session.activeScenarioIndex + 1,
+		overlayState: null,
+		state: "PLAYING",
+		totalMs: undefined,
+	};
+}
+
+function handleUnsupportedInputSkipped(
+	session: SessionPlayerSession,
+): SessionPlayerSession {
+	return session.state === "SCENARIO_ACTIVE" &&
+		session.overlayState?.status === "unanswered"
+		? transitionToPlayback(session)
 		: session;
 }
 
@@ -199,6 +213,8 @@ export function sessionPlayerReducer(
 			return handleReplayContext(session);
 		case "RESUME_PLAYBACK":
 			return handleResumePlayback(session);
+		case "UNSUPPORTED_INPUT_SKIPPED":
+			return handleUnsupportedInputSkipped(session);
 		case "RETRY_SESSION":
 			return handleRetrySession();
 	}

@@ -23,9 +23,15 @@ export {
 } from "./model/modules";
 export type {
 	ScenarioData,
-	ScenarioInputConfig,
+	ScenarioInput,
+	ScenarioInputType,
 	ScenarioOption,
 	ScenarioOverlayState,
+} from "./model/session-contract";
+export {
+	normalizeScenario,
+	normalizeScenarioInput,
+	toScenarioOverlayData,
 } from "./model/session-contract";
 export {
 	calculateSessionSummary,

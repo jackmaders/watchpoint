@@ -1,12 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ModuleType } from "@/shared/db";
-import { InteractiveOverlayEngine, ScenarioOverlay } from "../../index";
+import {
+	InteractiveOverlayEngine,
+	normalizeScenarioInput,
+	ScenarioOverlay,
+} from "../../index";
 import type { ScenarioOverlayState } from "../../model/session-contract";
 
 const options = [
-	{ id: "opt_a", text: "Take the high ground" },
-	{ id: "opt_b", text: "Rotate to spawn" },
+	{ id: "opt_a", is_correct: true, text: "Take the high ground" },
+	{ id: "opt_b", is_correct: false, text: "Rotate to spawn" },
 ];
 const moduleTypes: ModuleType[] = [
 	"STRATEGY",
@@ -46,7 +50,8 @@ describe("InteractiveOverlayEngine", () => {
 			const scenario = {
 				explanationText: "The first option creates the best opening.",
 				id: `scenario-${moduleType.toLowerCase()}`,
-				inputConfig: { options },
+				input: normalizeScenarioInput("MULTIPLE_CHOICE", { options }),
+				inputType: "MULTIPLE_CHOICE" as const,
 				moduleType,
 				promptText: `${moduleType} decision point`,
 				timeLimitSeconds: null,
