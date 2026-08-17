@@ -42,10 +42,9 @@ async function handleWatchSubcommand(): Promise<void> {
 	});
 
 	if (stats && stats.failureCount > 0 && stats.successCount === 0) {
-		console.error(
-			`\n❌ Sandcastle watch finished with ${stats.failureCount} failure(s).`,
+		console.warn(
+			`\n⚠️ Sandcastle watch stopped after ${stats.failureCount} handled failure(s).`,
 		);
-		process.exit(1);
 	}
 
 	if (stats) {
