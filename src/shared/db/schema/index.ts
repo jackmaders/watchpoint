@@ -163,6 +163,7 @@ export const attemptRecords = sqliteTable("attempt_record", {
 	id: text("id")
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
+	idempotencyKey: text("idempotency_key").unique(),
 	inputValue: text("input_value", { mode: "json" }).$type<
 		Record<string, JsonValue>
 	>(),

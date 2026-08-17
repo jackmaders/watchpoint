@@ -40,6 +40,7 @@ describe("useRecordAttemptMutation", () => {
 	it("executes executeRecordAttempt successfully when server function returns success", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "7b3b7f7e-4f3c-4f84-8a0d-5e3a4f7f2c91",
 			isCorrect: true,
 			responseTimeMs: 200,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
@@ -59,6 +60,7 @@ describe("useRecordAttemptMutation", () => {
 	it("throws error in executeRecordAttempt when server function returns unsuccessful result", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "8c4c8f8f-5a4d-4f95-9b1e-6f4b5f8f3da2",
 			isCorrect: false,
 			responseTimeMs: 500,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
@@ -77,6 +79,7 @@ describe("useRecordAttemptMutation", () => {
 	it("throws default error message in executeRecordAttempt when server function error string is omitted", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "9d5d9f90-6b5e-40a6-ac2f-7a5c6f904eb3",
 			isCorrect: false,
 			responseTimeMs: 500,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
@@ -94,6 +97,7 @@ describe("useRecordAttemptMutation", () => {
 	it("initializes hook with default options and executes mutation successfully", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "ae6ea0a1-7c6f-41b7-bd30-8b6d70a15fc4",
 			isCorrect: true,
 			responseTimeMs: 350,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
@@ -120,6 +124,7 @@ describe("useRecordAttemptMutation", () => {
 	it("runs mutation successfully with explicit options override", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "bf7fb1b2-8d70-42c8-ce41-9c7e81b260d5",
 			isCorrect: true,
 			responseTimeMs: 350,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
@@ -148,5 +153,46 @@ describe("useRecordAttemptMutation", () => {
 
 		// Assert
 		expect(res).toEqual({ attemptId: "att_456", success: true });
+	});
+
+	it("reuses the same idempotency key through a transient retry", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "c0ffee00-0000-4000-8000-000000000001",
+			isCorrect: true,
+			responseTimeMs: 350,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockRejectedValueOnce(new Error("Transient network failure"))
+			.mockResolvedValueOnce({
+				attemptId: "att_retried",
+				success: true,
+			} as never);
+		const { result } = renderHook(
+			() =>
+				useRecordAttemptMutation({
+					retry: 1,
+					retryDelay: () => 0,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		let mutationResult: unknown;
+		await act(async () => {
+			mutationResult = await result.current.mutateAsync(payload);
+		});
+
+		// Assert
+		expect(mutationResult).toEqual({
+			attemptId: "att_retried",
+			success: true,
+		});
+		expect(recordAttempt).toHaveBeenCalledTimes(2);
+		expect(
+			recordAttempt.mock.calls.map(([call]) => call.data.idempotencyKey),
+		).toEqual([payload.idempotencyKey, payload.idempotencyKey]);
 	});
 });

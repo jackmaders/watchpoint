@@ -28,12 +28,12 @@ Key architectural choices include:
 3. **Type-Safe Server Functions (`createServerFn`)**:
    - `getVodDetails(vodId)`: Direct D1 query returning VOD metadata.
    - `getSessionManifest(vodId, options)`: Filtered chronological scenario manifest retrieval.
-   - `recordAttempt(payload)`: Telemetry persistence with client-generated idempotency keys.
+   - `recordAttempt(payload)`: Telemetry persistence with a client-generated UUID idempotency key. The key is nullable only for historical rows, globally unique for new rows, and arbitrated by the database during insert. An identical replay for the same User and immutable outcome returns the canonical Attempt Record identifier; changed or cross-User reuse returns a generic conflict without disclosing the existing record. Timeout remains explicit in the domain outcome and maps to the existing correctness and selected-input fields.
 4. **Standard HTTP Route Handlers**:
    - `/api/auth/*`: Better-Auth Web-standard request handler mounted on TanStack Router server handlers.
    - `/api/media/:key`: R2 binary asset streaming endpoint with HTTP metadata and ETag cache negotiation.
 5. **Decoupled Database Context**: A centralized `getDb(context)` helper in `src/shared/db/` extracts `env.DB` from runtime context with seamless local Wrangler proxy fallback for local development, CLI scripts, and offline testing.
-6. **Attempt Telemetry Mutations**: Client-side attempt tracking utilizes `@tanstack/react-query` mutations (`useRecordAttemptMutation`) configured with automatic exponential retry backoff.
+6. **Attempt Telemetry Mutations**: Client-side attempt tracking utilizes `@tanstack/react-query` mutations (`useRecordAttemptMutation`) configured with automatic exponential retry backoff. Persistence remains non-blocking; safe replay is guaranteed by the Attempt Record idempotency policy above rather than by read-before-write coordination in the caller.
 7. **Unified Tooling**: Standardized `package.json` scripts on Vite and Wrangler (`dev`, `build`, `preview`, `deploy`, `validate`).
 
 ---

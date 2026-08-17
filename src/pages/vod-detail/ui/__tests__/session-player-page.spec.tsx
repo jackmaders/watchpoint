@@ -173,6 +173,7 @@ describe("SessionPlayerPage", () => {
 		expect(screen.queryByTestId("play-pause-button")).toBeNull();
 		expect(serverFns.recordAttempt).toHaveBeenCalledWith({
 			data: {
+				idempotencyKey: expect.any(String),
 				isCorrect: true,
 				responseTimeMs: expect.any(Number),
 				scenarioId: "sc_1",
@@ -203,6 +204,7 @@ describe("SessionPlayerPage", () => {
 		expect(screen.getByText("FAIL")).toBeDefined();
 		expect(serverFns.recordAttempt).toHaveBeenNthCalledWith(2, {
 			data: {
+				idempotencyKey: expect.any(String),
 				isCorrect: false,
 				responseTimeMs: expect.any(Number),
 				scenarioId: "sc_2",

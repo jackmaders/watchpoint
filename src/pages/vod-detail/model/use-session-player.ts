@@ -184,6 +184,7 @@ function executeSessionEffect(
 			return;
 		case "RECORD_ATTEMPT":
 			recordAttempt.mutate({
+				idempotencyKey: effect.outcome.idempotencyKey,
 				isCorrect: effect.outcome.attempt.isCorrect,
 				responseTimeMs: effect.outcome.attempt.responseTimeMs,
 				scenarioId: effect.outcome.attempt.scenarioId,
@@ -271,6 +272,7 @@ function useSessionPlayerActions(
 			if (!scenario) return;
 			dispatch({
 				generation: state.generation,
+				idempotencyKey: crypto.randomUUID(),
 				nowMs: Date.now(),
 				optionId,
 				scenarioId: scenario.id,
@@ -368,6 +370,7 @@ function useSessionPlayerRuntime({
 		dispatch({
 			deadlineAtMs,
 			generation: state.generation,
+			idempotencyKey: crypto.randomUUID(),
 			nowMs: Date.now(),
 			scenarioId: scenario.id,
 			type: "TIMEOUT_REQUESTED",

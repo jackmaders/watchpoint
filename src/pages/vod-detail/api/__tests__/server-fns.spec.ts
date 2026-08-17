@@ -63,6 +63,7 @@ describe("server-fns", () => {
 	it("executes recordAttempt validator and handler correctly on valid payload", async () => {
 		// Arrange
 		const payload = {
+			idempotencyKey: "7b3b7f7e-4f3c-4f84-8a0d-5e3a4f7f2c91",
 			isCorrect: true,
 			responseTimeMs: 1500,
 			scenarioId: "f47ac10b-58cc-4372-a567-0e02b2c3d479",

@@ -24,11 +24,13 @@ export interface SessionScenario {
 export type SessionAttemptOutcome =
 	| {
 			attempt: SessionAttempt;
+			idempotencyKey: string;
 			kind: "answered";
 			selectedOptionId: string;
 	  }
 	| {
 			attempt: SessionAttempt;
+			idempotencyKey: string;
 			kind: "timedOut";
 	  };
 
@@ -86,6 +88,7 @@ export type SessionPlaythroughAction =
 	  }
 	| {
 			generation: number;
+			idempotencyKey?: string;
 			nowMs: number;
 			optionId: string;
 			scenarioId: string;
@@ -94,6 +97,7 @@ export type SessionPlaythroughAction =
 	| {
 			deadlineAtMs: number;
 			generation: number;
+			idempotencyKey?: string;
 			nowMs: number;
 			scenarioId: string;
 			type: "TIMEOUT_REQUESTED";
@@ -251,6 +255,10 @@ function getResponseTimeMs(
 		: Math.round(elapsedMs);
 }
 
+function resolveAttemptIdempotencyKey(idempotencyKey?: string): string {
+	return idempotencyKey ?? crypto.randomUUID();
+}
+
 function handleOptionSelected(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "OPTION_SELECTED" }>,
@@ -269,6 +277,7 @@ function handleOptionSelected(
 		return handleTimeoutRequested(state, {
 			deadlineAtMs: state.deadlineAtMs,
 			generation: state.generation,
+			idempotencyKey: action.idempotencyKey,
 			nowMs: action.nowMs,
 			scenarioId: scenario.id,
 			type: "TIMEOUT_REQUESTED",
@@ -297,6 +306,7 @@ function handleOptionSelected(
 				generation: state.generation,
 				outcome: {
 					attempt,
+					idempotencyKey: resolveAttemptIdempotencyKey(action.idempotencyKey),
 					kind: "answered",
 					selectedOptionId: action.optionId,
 				},
@@ -342,7 +352,11 @@ function handleTimeoutRequested(
 		[
 			{
 				generation: state.generation,
-				outcome: { attempt, kind: "timedOut" },
+				outcome: {
+					attempt,
+					idempotencyKey: resolveAttemptIdempotencyKey(action.idempotencyKey),
+					kind: "timedOut",
+				},
 				type: "RECORD_ATTEMPT",
 			},
 		],

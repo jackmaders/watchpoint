@@ -293,6 +293,72 @@ describe("session playthrough coordinator", () => {
 		expect(lateTimeout).toBe(answered);
 	});
 
+	it("emits one keyed persistence outcome for either side of the answer-timeout race", () => {
+		// Arrange
+		const state = readyPlayingState([timedScenario]);
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 60,
+			type: "TIME_UPDATED",
+		});
+		const deadline = active.deadlineAtMs ?? 0;
+
+		// Act
+		const answered = sessionPlaythroughReducer(active, {
+			generation: active.generation,
+			idempotencyKey: "answer-key",
+			nowMs: 1500,
+			optionId: "option-1",
+			scenarioId: timedScenario.id,
+			type: "OPTION_SELECTED",
+		});
+		const answeredThenTimedOut = sessionPlaythroughReducer(answered, {
+			deadlineAtMs: deadline,
+			generation: active.generation,
+			idempotencyKey: "timeout-key",
+			nowMs: deadline,
+			scenarioId: timedScenario.id,
+			type: "TIMEOUT_REQUESTED",
+		});
+		const timedOut = sessionPlaythroughReducer(active, {
+			deadlineAtMs: deadline,
+			generation: active.generation,
+			idempotencyKey: "timeout-key",
+			nowMs: deadline,
+			scenarioId: timedScenario.id,
+			type: "TIMEOUT_REQUESTED",
+		});
+		const timedOutThenAnswered = sessionPlaythroughReducer(timedOut, {
+			generation: active.generation,
+			idempotencyKey: "answer-key",
+			nowMs: 1500,
+			optionId: "option-1",
+			scenarioId: timedScenario.id,
+			type: "OPTION_SELECTED",
+		});
+		const answeredPersistenceEffects = answered.effects.filter(
+			(effect) => effect.type === "RECORD_ATTEMPT",
+		);
+		const timedOutPersistenceEffects = timedOut.effects.filter(
+			(effect) => effect.type === "RECORD_ATTEMPT",
+		);
+
+		// Assert
+		expect(answeredThenTimedOut).toBe(answered);
+		expect(answeredPersistenceEffects).toHaveLength(1);
+		expect(answeredPersistenceEffects[0]).toMatchObject({
+			outcome: { idempotencyKey: "answer-key" },
+			type: "RECORD_ATTEMPT",
+		});
+		expect(timedOutThenAnswered).toBe(timedOut);
+		expect(timedOutPersistenceEffects).toHaveLength(1);
+		expect(timedOutPersistenceEffects[0]).toMatchObject({
+			outcome: { idempotencyKey: "timeout-key" },
+			type: "RECORD_ATTEMPT",
+		});
+	});
+
 	it("rejects stale answer and timeout events", () => {
 		// Arrange
 		const state = readyPlayingState([timedScenario]);
