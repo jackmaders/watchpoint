@@ -66,15 +66,8 @@ describe("WorktreeManager", () => {
 			expect(result.baseBranch).toBe("origin/main");
 			expect(result.path).toBe("/repo/.sandcastle/worktrees/feat-my-feature");
 			expect(executedCommands).toEqual([
+				["git", "worktree", "list", "--porcelain"],
 				["git", "fetch", "origin", "main"],
-				[
-					"git",
-					"worktree",
-					"remove",
-					"--force",
-					"/repo/.sandcastle/worktrees/feat-my-feature",
-				],
-				["git", "worktree", "prune"],
 				[
 					"git",
 					"worktree",
@@ -85,6 +78,50 @@ describe("WorktreeManager", () => {
 					"origin/main",
 				],
 				["bun", "install", "--frozen-lockfile"],
+			]);
+		});
+
+		it("uses numerical branch and path suffixes when the requested branch is checked out", async () => {
+			// Arrange
+			const executedCommands: string[][] = [];
+			const mockRunner: ProcessRunner = async (command) => {
+				executedCommands.push([...command]);
+				if (
+					command[0] === "git" &&
+					command[1] === "worktree" &&
+					command[2] === "list"
+				) {
+					return {
+						exitCode: 0,
+						stderr: "",
+						stdout:
+							"worktree /repo\nHEAD abc123\nbranch refs/heads/feat/my-feature\n",
+					};
+				}
+				return { exitCode: 0, stderr: "", stdout: "" };
+			};
+			const manager = new DefaultWorktreeManager({
+				cwd: "/repo",
+				runner: mockRunner,
+			});
+
+			// Act
+			const result = await manager.createWorktree({
+				branch: "feat/my-feature",
+				runInstall: false,
+			});
+
+			// Assert
+			expect(result.branch).toBe("feat/my-feature-2");
+			expect(result.path).toBe("/repo/.sandcastle/worktrees/feat-my-feature-2");
+			expect(executedCommands).toContainEqual([
+				"git",
+				"worktree",
+				"add",
+				"-b",
+				"feat/my-feature-2",
+				"/repo/.sandcastle/worktrees/feat-my-feature-2",
+				"origin/main",
 			]);
 		});
 
@@ -454,7 +491,7 @@ some data
 			expect(list[2].path).toBe(
 				"/repo/.sandcastle/worktrees/feat-active-headless",
 			);
-			expect(list[2].branch).toBe("feat/active-headless");
+			expect(list[2].branch).toBe("feat-active-headless");
 			expect(list[3].path).toBe("/repo/bare-detached");
 			expect(list[3].branch).toBe("bare-detached");
 		});

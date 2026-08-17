@@ -160,6 +160,7 @@ async function provisionWorkflow(
 		branch: state.branch,
 	});
 	state.worktreeInfo = worktreeInfo;
+	state.branch = worktreeInfo.branch;
 
 	return {
 		provisioned: {

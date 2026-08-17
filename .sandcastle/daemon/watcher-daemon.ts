@@ -24,6 +24,7 @@ export class WatcherDaemon {
 	private readonly clock: WatcherClock;
 	private readonly githubClient: GithubClient;
 	private readonly logger: (msg: string) => void;
+	private readonly temporarilySkippedIssues = new Set<number>();
 	private readonly executeWorkflow: (
 		options: WorkflowOptions,
 	) => Promise<ExecutionResult>;
@@ -54,7 +55,9 @@ export class WatcherDaemon {
 	private async queryFrontier(): Promise<CandidateIssue[] | null> {
 		try {
 			const candidates = await this.githubClient.listCandidateIssues();
-			return resolveFrontier(candidates);
+			return resolveFrontier(candidates).filter(
+				(issue) => !this.temporarilySkippedIssues.has(issue.number),
+			);
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
 			this.logger(
@@ -132,6 +135,7 @@ export class WatcherDaemon {
 		}
 
 		if (result.error && isClaimContention(result.error)) {
+			this.temporarilySkippedIssues.add(issue.number);
 			this.logger(
 				`⚠️  [Sandcastle Watcher] Issue #${issue.number} was claimed concurrently. Refreshing queue...`,
 			);
@@ -148,6 +152,7 @@ export class WatcherDaemon {
 		stats: WatcherDaemonStats,
 	): boolean {
 		if (isClaimContention(err)) {
+			this.temporarilySkippedIssues.add(issue.number);
 			this.logger(
 				`⚠️  [Sandcastle Watcher] Issue #${issue.number} is already claimed. Refreshing queue...`,
 			);
@@ -238,6 +243,36 @@ export class WatcherDaemon {
 		return await this.executeCandidate(issue, stats);
 	}
 
+	private async waitForNextFrontierCycle(): Promise<boolean> {
+		if (this.options.once) {
+			return false;
+		}
+		await renderHeartbeatCountdown({
+			clock: this.clock,
+			durationSeconds: this.intervalSeconds,
+			logger: this.logger,
+			output: this.options.output,
+			signal: this.options.signal,
+		});
+		return true;
+	}
+
+	private async runCycle(stats: WatcherDaemonStats): Promise<boolean> {
+		const frontier = await this.queryFrontier();
+		if (!frontier || frontier.length === 0) {
+			if (!(await this.waitForNextFrontierCycle())) {
+				return false;
+			}
+			return true;
+		}
+
+		const shouldContinue = await this.processFrontierCandidate(
+			frontier[0],
+			stats,
+		);
+		return shouldContinue && !this.isLimitReached(stats);
+	}
+
 	async run(): Promise<WatcherDaemonStats> {
 		const stats: WatcherDaemonStats = {
 			aborted: false,
@@ -247,24 +282,7 @@ export class WatcherDaemon {
 		};
 
 		while (!this.options.signal?.aborted && !this.isLimitReached(stats)) {
-			const frontier = await this.queryFrontier();
-
-			if (!frontier || frontier.length === 0) {
-				await renderHeartbeatCountdown({
-					clock: this.clock,
-					durationSeconds: this.intervalSeconds,
-					logger: this.logger,
-					output: this.options.output,
-					signal: this.options.signal,
-				});
-				continue;
-			}
-
-			const shouldContinue = await this.processFrontierCandidate(
-				frontier[0],
-				stats,
-			);
-			if (!shouldContinue || this.isLimitReached(stats)) {
+			if (!(await this.runCycle(stats))) {
 				break;
 			}
 		}
