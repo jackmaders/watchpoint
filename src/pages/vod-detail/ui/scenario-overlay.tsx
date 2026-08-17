@@ -82,6 +82,8 @@ interface ScenarioFeedbackPanelProps {
 	state: Exclude<ScenarioOverlayState, { status: "unanswered" }>;
 }
 
+const SCENARIO_CHOICE_HOTKEYS = ["1", "2", "3", "4"] as const;
+
 function ScenarioFeedbackPanel({
 	explanationText,
 	onResume,
@@ -137,11 +139,13 @@ function useOverlayHotkeys(
 				return;
 			}
 
-			const keyNum = Number.parseInt(event.key, 10);
-			if (!Number.isNaN(keyNum) && keyNum >= 1 && keyNum <= options.length) {
-				const targetOption = options[keyNum - 1];
-				onSelectOption(targetOption.id);
-			}
+			const optionIndex = SCENARIO_CHOICE_HOTKEYS.indexOf(
+				event.key as (typeof SCENARIO_CHOICE_HOTKEYS)[number],
+			);
+			if (optionIndex < 0) return;
+
+			const targetOption = options[optionIndex];
+			if (targetOption) onSelectOption(targetOption.id);
 		};
 
 		window.addEventListener("keydown", handleKeyDown);

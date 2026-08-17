@@ -7,6 +7,14 @@ import type {
 import { normalizeScenarioInput } from "../../model/session-contract";
 import { ScenarioOverlay } from "../scenario-overlay";
 
+const moduleTypes = [
+	"STRATEGY",
+	"TACTICS",
+	"ULTIMATE",
+	"COOLDOWN",
+	"SPATIAL",
+] as const;
+
 describe("ScenarioOverlay", () => {
 	const baseScenario: ScenarioData = {
 		explanationText:
@@ -179,6 +187,98 @@ describe("ScenarioOverlay", () => {
 
 		// Assert
 		expect(handleSelect).toHaveBeenCalledWith("opt_2");
+	});
+
+	it.each(moduleTypes)(
+		"routes number-row shortcuts 1-4 to rendered choices for %s scenarios",
+		(moduleType) => {
+			// Arrange
+			const handleSelect = vi.fn();
+			const scenario = { ...baseScenario, moduleType };
+			const state: ScenarioOverlayState = { status: "unanswered" };
+			render(
+				<ScenarioOverlay
+					onResume={vi.fn()}
+					onSelectOption={handleSelect}
+					scenario={scenario}
+					state={state}
+				/>,
+			);
+
+			// Act
+			fireEvent.keyDown(window, { key: "1" });
+			fireEvent.keyDown(window, { key: "2" });
+			fireEvent.keyDown(window, { key: "3" });
+			fireEvent.keyDown(window, { key: "4" });
+
+			// Assert
+			expect(handleSelect).toHaveBeenCalledTimes(4);
+			expect(handleSelect).toHaveBeenNthCalledWith(1, "opt_1");
+			expect(handleSelect).toHaveBeenNthCalledWith(2, "opt_2");
+			expect(handleSelect).toHaveBeenNthCalledWith(3, "opt_3");
+			expect(handleSelect).toHaveBeenNthCalledWith(4, "opt_4");
+		},
+	);
+
+	it("does not activate an unmapped shortcut or a choice beyond the rendered options", () => {
+		// Arrange
+		const handleSelect = vi.fn();
+		const fiveOptionScenario: ScenarioData = {
+			...baseScenario,
+			input: normalizeScenarioInput("MULTIPLE_CHOICE", {
+				options: [
+					...(baseScenario.input.kind === "multiple-choice"
+						? baseScenario.input.options
+						: []),
+					{ id: "opt_5", is_correct: false, text: "Wait for backup" },
+				],
+			}),
+		};
+		render(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={fiveOptionScenario}
+				state={{ status: "unanswered" }}
+			/>,
+		);
+
+		// Act
+		fireEvent.keyDown(window, { key: "5" });
+		fireEvent.keyDown(window, { key: "1foo" });
+		fireEvent.keyDown(window, { key: "Numpad1" });
+
+		// Assert
+		expect(handleSelect).not.toHaveBeenCalled();
+	});
+
+	it("ignores shortcuts that are not rendered when fewer than four choices exist", () => {
+		// Arrange
+		const handleSelect = vi.fn();
+		const twoOptionScenario: ScenarioData = {
+			...baseScenario,
+			input: normalizeScenarioInput("MULTIPLE_CHOICE", {
+				options: [
+					{ id: "opt_1", is_correct: true, text: "Dive Ana immediately" },
+					{ id: "opt_2", is_correct: false, text: "Rotate to high ground" },
+				],
+			}),
+		};
+		render(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={twoOptionScenario}
+				state={{ status: "unanswered" }}
+			/>,
+		);
+
+		// Act
+		fireEvent.keyDown(window, { key: "3" });
+		fireEvent.keyDown(window, { key: "4" });
+
+		// Assert
+		expect(handleSelect).not.toHaveBeenCalled();
 	});
 
 	it("ignores keyboard number keys for out-of-range options and non-digit keys", () => {
