@@ -13,7 +13,7 @@ Watchpoint previously ran on the Next.js 16 App Router using OpenNext translatio
 1. **Large Worker Bundle Sizes**: OpenNext runtime shims and Node.js emulation produced 3–5MB worker bundles, impacting deployment velocity and cold-start performance at the edge.
 2. **Multi-Stage Build Overhead**: Two-stage compilation (Next.js production build followed by OpenNext translation) increased CI build times and introduced build pipeline fragility.
 3. **RSC Serialization Friction**: React Server Components imposed serialization constraints on interactive playthrough pages with high-frequency timeline state.
-4. **Telemetry Retry Needs**: Gameplay attempt telemetry required client-side exponential retry backoff and non-blocking background queueing that were awkward with native server actions.
+4. **Telemetry Retry Needs**: Gameplay attempt telemetry required client-side bounded retry backoff and non-blocking delivery reporting that were awkward with native server actions.
 
 ---
 
@@ -33,7 +33,7 @@ Key architectural choices include:
    - `/api/auth/*`: Better-Auth Web-standard request handler mounted on TanStack Router server handlers.
    - `/api/media/:key`: R2 binary asset streaming endpoint with HTTP metadata and ETag cache negotiation.
 5. **Decoupled Database Context**: A centralized `getDb(context)` helper in `src/shared/db/` extracts `env.DB` from runtime context with seamless local Wrangler proxy fallback for local development, CLI scripts, and offline testing.
-6. **Attempt Telemetry Mutations**: Client-side attempt tracking utilizes `@tanstack/react-query` mutations (`useRecordAttemptMutation`) configured with automatic exponential retry backoff. Persistence remains non-blocking; safe replay is guaranteed by the Attempt Record idempotency policy above rather than by read-before-write coordination in the caller.
+6. **Attempt Telemetry Mutations**: Client-side attempt tracking utilizes `@tanstack/react-query` mutations (`useRecordAttemptMutation`) with exponential backoff bounded to three total delivery attempts. Only transient network or service-availability failures are retried; validation, authorization, malformed-payload, and idempotency-conflict failures stop immediately. Persistence remains non-blocking, and an exhausted delivery reports the outcome identity and Scenario identity through structured observability. Safe replay is guaranteed by the Attempt Record idempotency policy above rather than by read-before-write coordination in the caller.
 7. **Unified Tooling**: Standardized `package.json` scripts on Vite and Wrangler (`dev`, `build`, `preview`, `deploy`, `validate`).
 
 ---
@@ -45,7 +45,7 @@ Key architectural choices include:
 - **Sub-600KB Worker Bundles**: Reduced worker bundle size by over 80%, yielding instant cold starts.
 - **Instant Local HMR**: Vite provides sub-second hot module replacement during development.
 - **End-to-End Type Safety**: Server functions and route parameters share full TypeScript typing between client and server without custom RPC schemas.
-- **Resilient Telemetry**: TanStack Query automatically retries failed attempt telemetry submissions during transient network blips without blocking video playback.
+- **Resilient Telemetry**: TanStack Query retries only transient attempt-telemetry delivery failures, allows three total requests with bounded backoff, and reports exhausted delivery with structured context without blocking video playback.
 - **Strict FSD Isolation**: Route definitions remain decoupled from business logic and presentation layers.
 
 ### Negative / Trade-Offs
