@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { MODULE_MAP } from "../model/modules";
 import { SCENARIO_CHOICE_SHORTCUTS } from "../model/scenario-choice-shortcuts";
 import type {
@@ -128,30 +128,66 @@ function useOverlayHotkeys(
 	isUnanswered: boolean,
 	options: ScenarioOption[],
 	onSelectOption: (id: string) => void,
+	scenarioId: string,
 ) {
+	const claimedShortcutScenarioRef = useRef<string | null>(null);
+	const isUnansweredRef = useRef(isUnanswered);
+	isUnansweredRef.current = isUnanswered;
+
 	useEffect(() => {
-		if (!isUnanswered) return;
+		if (!isUnanswered) {
+			claimedShortcutScenarioRef.current = null;
+			return;
+		}
 
 		const handleKeyDown = (event: KeyboardEvent) => {
+			if (
+				!isUnansweredRef.current ||
+				claimedShortcutScenarioRef.current === scenarioId
+			)
+				return;
+
 			if (event.key === "Escape") {
 				event.preventDefault();
 				return;
 			}
 
-			const optionIndex = SCENARIO_CHOICE_SHORTCUTS.indexOf(
-				event.key as (typeof SCENARIO_CHOICE_SHORTCUTS)[number],
-			);
-			if (optionIndex < 0) return;
+			const targetOption = getKeyboardShortcutOption(event, options);
+			if (!targetOption) return;
 
-			const targetOption = options[optionIndex];
-			if (targetOption) onSelectOption(targetOption.id);
+			claimedShortcutScenarioRef.current = scenarioId;
+			onSelectOption(targetOption.id);
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [isUnanswered, options, onSelectOption]);
+	}, [isUnanswered, options, onSelectOption, scenarioId]);
+}
+
+function getKeyboardShortcutOption(
+	event: KeyboardEvent,
+	options: ScenarioOption[],
+): ScenarioOption | undefined {
+	if (isKeyboardEditableTarget(event.target)) return undefined;
+
+	const optionIndex = SCENARIO_CHOICE_SHORTCUTS.indexOf(
+		event.key as (typeof SCENARIO_CHOICE_SHORTCUTS)[number],
+	);
+	return optionIndex >= 0 ? options[optionIndex] : undefined;
+}
+
+function isKeyboardEditableTarget(target: EventTarget | null): boolean {
+	if (!(target instanceof HTMLElement)) return false;
+
+	return (
+		target instanceof HTMLInputElement ||
+		target instanceof HTMLTextAreaElement ||
+		target instanceof HTMLSelectElement ||
+		target.isContentEditable ||
+		target.closest("[contenteditable='true']") !== null
+	);
 }
 
 export function ScenarioOverlay({
@@ -176,7 +212,7 @@ export function ScenarioOverlay({
 	const options =
 		scenario.input.kind === "multiple-choice" ? scenario.input.options : [];
 
-	useOverlayHotkeys(isUnanswered, options, onSelectOption);
+	useOverlayHotkeys(isUnanswered, options, onSelectOption, scenario.id);
 
 	return (
 		<div
