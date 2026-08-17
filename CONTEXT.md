@@ -2,7 +2,7 @@
 
 **Project**: Watchpoint — Interactive Overwatch 2 Game Sense Learning Platform  
 **Status**: Living Specification  
-**Last Updated**: 2026-08-16
+**Last Updated**: 2026-08-17
 
 This document defines the core domain terminology used across product discussions, system documentation, database schemas, and codebase entities.
 
@@ -89,8 +89,17 @@ This document defines the core domain terminology used across product discussion
 * **Session Playthrough**
   The cohesive client-side coordinator for one training run. It owns accepted phase transitions, Scenario triggering, answer-or-timeout arbitration, retry generations, and terminal completion while delegating media and Attempt Record effects to adapters.
 
+* **Session Playthrough Boundary**
+  The private domain boundary behind `useSessionPlayer`. It accepts normalized media and user events, projects the stable public player contract, and emits semantic media, Attempt Outcome, and completion effects without exposing phase guards or infrastructure details to `SessionPlayerClient`.
+
 * **Playthrough Generation**
   The identity of one active Session Playthrough run. Initial loading, a changed Session Manifest, and retry create a new generation; asynchronous playback, timer, and trigger events from another generation are ignored.
 
 * **Attempt Outcome**
   The normalized result accepted by a Session Playthrough for one Scenario: either a selected answer with its correctness and latency or an explicit timeout. Exactly one outcome may be accepted for an unanswered Scenario.
+
+* **Semantic Session Media Adapter**
+  The infrastructure seam that translates the media provider into normalized ready, playback-status, and time-update events and executes play, pause, context-replay, and restart commands. Context replay seeks back ten seconds and clamps at the beginning of the VOD.
+
+* **Attempt Outcome Idempotency Key**
+  The client-generated UUID attached to one accepted Attempt Outcome. The key remains stable across persistence retries and is enforced as unique by Attempt Record storage so a retry cannot create a duplicate record.

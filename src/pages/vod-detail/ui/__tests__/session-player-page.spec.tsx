@@ -241,10 +241,18 @@ describe("SessionPlayerPage", () => {
 		act(() => {
 			fireEvent.click(screen.getByTestId("retry-session-button"));
 		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const restartedPlayer = youtube.players[1];
+		act(() => {
+			restartedPlayer.triggerReady();
+		});
 
 		// Assert summary panel is dismissed and player resets
 		expect(screen.queryByTestId("session-summary-panel")).toBeNull();
-		expect(player.seekTo).toHaveBeenCalledWith(0, true);
+		expect(restartedPlayer.seekTo).toHaveBeenCalledWith(0, true);
 	});
 
 	it("renders title without hero tag when no hero is in title", async () => {

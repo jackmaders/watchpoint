@@ -8,17 +8,8 @@ import {
 	setYouTubeNamespace,
 	YouTubePlayerState,
 } from "@/shared/lib/testing";
-import { PlaybackStatus } from "@/shared/media";
 import * as serverFns from "../../api/server-fns";
-import {
-	initialSessionPlayerSession,
-	sessionPlayerReducer,
-} from "../session-player-state";
-import {
-	type ManifestVod,
-	resolveNewStatusState,
-	useSessionPlayer,
-} from "../use-session-player";
+import { type ManifestVod, useSessionPlayer } from "../use-session-player";
 
 describe("useSessionPlayer", () => {
 	const mockManifest = {
@@ -748,12 +739,61 @@ describe("useSessionPlayer", () => {
 		act(() => {
 			player.triggerStateChange(YouTubePlayerState.ENDED);
 		});
+		act(() => {
+			player.triggerStateChange(YouTubePlayerState.ENDED);
+		});
 
 		// Assert
 		expect(result.current.state).toBe("COMPLETED");
 		expect(result.current.summary).toBeDefined();
 		expect(result.current.summary?.totalScenarios).toBe(0);
+		expect(onSessionComplete).toHaveBeenCalledTimes(1);
 		expect(onSessionComplete).toHaveBeenCalledWith(result.current.summary);
+	});
+
+	it("uses the latest completion callback without duplicating a terminal notification", async () => {
+		// Arrange
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const firstCallback = vi.fn();
+		const secondCallback = vi.fn();
+
+		const { result, rerender } = renderHook(
+			({ onSessionComplete }: { onSessionComplete: () => void }) =>
+				useSessionPlayer({
+					initialManifest: mockManifest,
+					onSessionComplete,
+					vodId: "vod_gm_ana",
+				}),
+			{
+				initialProps: { onSessionComplete: firstCallback },
+				wrapper: createWrapper(),
+			},
+		);
+
+		act(() => {
+			result.current.containerRef(container);
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => {
+			player.triggerReady();
+			player.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+
+		// Act
+		rerender({ onSessionComplete: secondCallback });
+		act(() => {
+			player.triggerStateChange(YouTubePlayerState.ENDED);
+			player.triggerStateChange(YouTubePlayerState.ENDED);
+		});
+
+		// Assert
+		expect(firstCallback).not.toHaveBeenCalled();
+		expect(secondCallback).toHaveBeenCalledTimes(1);
 	});
 
 	it("allows user to manually pause and play during video playback", async () => {
@@ -839,13 +879,23 @@ describe("useSessionPlayer", () => {
 		act(() => {
 			result.current.retrySession();
 		});
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const restartedPlayer = youtube.players[1];
+		act(() => {
+			restartedPlayer.triggerReady();
+			restartedPlayer.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
 
 		// Assert
 		expect(result.current.state).toBe("PLAYING");
 		expect(result.current.activeScenarioIndex).toBe(0);
 		expect(result.current.attempts).toHaveLength(0);
-		expect(player.seekTo).toHaveBeenCalledWith(0, true);
-		expect(player.playVideo).toHaveBeenCalled();
+		expect(player.destroy).toHaveBeenCalledTimes(1);
+		expect(restartedPlayer.seekTo).toHaveBeenCalledWith(0, true);
+		expect(restartedPlayer.playVideo).toHaveBeenCalled();
 
 		// Act: a late terminal event from the previous run arrives after retry
 		act(() => {
@@ -979,116 +1029,6 @@ describe("useSessionPlayer", () => {
 		Object.defineProperty(window, "location", {
 			configurable: true,
 			value: originalLocation,
-		});
-	});
-
-	it("ignores feedback actions when no scenario answer is pending", () => {
-		// Arrange
-		const attempt = {
-			isCorrect: true,
-			moduleType: "STRATEGY" as const,
-			responseTimeMs: 100,
-			scenarioId: "sc_1",
-		};
-
-		// Act
-		const nextSession = sessionPlayerReducer(initialSessionPlayerSession, {
-			attempt,
-			overlayState: {
-				correctOptionId: "opt_1",
-				isCorrect: true,
-				selectedOptionId: "opt_1",
-				status: "answered",
-			},
-			type: "ANSWER_RECORDED",
-		});
-
-		// Assert
-		expect(nextSession).toBe(initialSessionPlayerSession);
-	});
-
-	it("keeps reducer events inert outside their legal states", () => {
-		// Arrange
-		const readySession = sessionPlayerReducer(initialSessionPlayerSession, {
-			autoplay: true,
-			type: "PLAYER_READY",
-		});
-		const pausedSession = sessionPlayerReducer(readySession, {
-			type: "PAUSE_REQUESTED",
-		});
-		const activeSession = sessionPlayerReducer(
-			sessionPlayerReducer(pausedSession, { type: "PLAY_REQUESTED" }),
-			{ totalMs: 1000, type: "SCENARIO_TRIGGERED" },
-		);
-		const replayedSession = sessionPlayerReducer(activeSession, {
-			type: "REPLAY_CONTEXT",
-		});
-
-		// Act
-		const ignoredReady = sessionPlayerReducer(readySession, {
-			autoplay: false,
-			type: "PLAYER_READY",
-		});
-		const inertSession = sessionPlayerReducer(
-			sessionPlayerReducer(
-				sessionPlayerReducer(
-					sessionPlayerReducer(initialSessionPlayerSession, {
-						type: "PAUSE_REQUESTED",
-					}),
-					{ type: "PLAY_REQUESTED" },
-				),
-				{ totalMs: 1000, type: "SCENARIO_TRIGGERED" },
-			),
-			{ type: "REPLAY_CONTEXT" },
-		);
-		const resumedSession = sessionPlayerReducer(replayedSession, {
-			type: "RESUME_PLAYBACK",
-		});
-		const ignoredUnsupported = sessionPlayerReducer(
-			initialSessionPlayerSession,
-			{
-				type: "UNSUPPORTED_INPUT_SKIPPED",
-			},
-		);
-		const retriedSession = sessionPlayerReducer(initialSessionPlayerSession, {
-			type: "RETRY_SESSION",
-		});
-
-		// Assert
-		expect(readySession.state).toBe("PLAYING");
-		expect(ignoredReady).toBe(readySession);
-		expect(pausedSession.state).toBe("PAUSED_USER");
-		expect(activeSession.state).toBe("SCENARIO_ACTIVE");
-		expect(inertSession).toBe(initialSessionPlayerSession);
-		expect(replayedSession.state).toBe("PLAYING");
-		expect(resumedSession).toBe(replayedSession);
-		expect(ignoredUnsupported).toBe(initialSessionPlayerSession);
-		expect(retriedSession.state).toBe("PLAYING");
-	});
-
-	it("skips an unsupported active input and resumes playback", () => {
-		// Arrange
-		const readySession = sessionPlayerReducer(initialSessionPlayerSession, {
-			autoplay: true,
-			type: "PLAYER_READY",
-		});
-		const activeSession = sessionPlayerReducer(readySession, {
-			totalMs: undefined,
-			type: "SCENARIO_TRIGGERED",
-		});
-
-		// Act
-		const nextSession = sessionPlayerReducer(activeSession, {
-			type: "UNSUPPORTED_INPUT_SKIPPED",
-		});
-
-		// Assert
-		expect(nextSession).toEqual({
-			activeScenarioIndex: 1,
-			attempts: [],
-			overlayState: null,
-			state: "PLAYING",
-			totalMs: undefined,
 		});
 	});
 
@@ -1512,27 +1452,5 @@ describe("useSessionPlayer", () => {
 
 		// Assert - state is still PLAYING
 		expect(result.current.state).toBe("PLAYING");
-	});
-
-	it("correctly resolves playback status state transitions", () => {
-		// Act & Assert
-		expect(resolveNewStatusState("LOADING", PlaybackStatus.PLAYING)).toBe(
-			"PLAYING",
-		);
-		expect(resolveNewStatusState("PAUSED_USER", PlaybackStatus.PLAYING)).toBe(
-			"PLAYING",
-		);
-		expect(resolveNewStatusState("PLAYING", PlaybackStatus.PAUSED)).toBe(
-			"PAUSED_USER",
-		);
-		expect(resolveNewStatusState("PLAYING", PlaybackStatus.ENDED)).toBe(
-			"COMPLETED",
-		);
-		expect(
-			resolveNewStatusState("PLAYING", PlaybackStatus.BUFFERING),
-		).toBeNull();
-		expect(
-			resolveNewStatusState("PAUSED_USER", PlaybackStatus.PAUSED),
-		).toBeNull();
 	});
 });

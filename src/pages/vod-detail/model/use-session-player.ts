@@ -23,26 +23,22 @@ import {
 	type ScenarioOption,
 	type ScenarioOverlayState,
 } from "./session-contract";
-import type { SessionPlayerState } from "./session-player-state";
 import {
 	createSessionPlaythroughState,
 	getScenarioLimitMs,
+	type SessionPlayerState,
 	type SessionPlaythroughAction,
 	type SessionPlaythroughEffect,
 	type SessionPlaythroughState,
 	type SessionScenario,
 	sessionPlaythroughReducer,
 } from "./session-playthrough-coordinator";
-import {
-	calculateSessionSummary,
-	type SessionAttempt,
-	type SessionSummaryReport,
-} from "./summary";
+import type { SessionAttempt, SessionSummaryReport } from "./summary";
 
 export type { ScenarioData, ScenarioOverlayState } from "./session-contract";
 export { normalizeScenario, toScenarioOverlayData } from "./session-contract";
-export type { SessionPlayerState } from "./session-player-state";
-export { resolveNewStatusState } from "./session-player-state";
+export type { SessionPlayerState } from "./session-playthrough-coordinator";
+export { resolveNewStatusState } from "./session-playthrough-coordinator";
 
 export type ManifestVod = NonNullable<
 	Awaited<ReturnType<typeof getSessionManifest>>
@@ -188,15 +184,16 @@ function useSessionEffects(
 
 function useSessionMedia(
 	autoplay: boolean,
+	generation: number,
 	vod: ManifestVod | null,
 	coordinatorRef: React.RefObject<SessionPlaythroughState>,
 	dispatch: React.Dispatch<SessionPlaythroughAction>,
 ) {
 	const onTimeUpdate = useCallback(
-		(time: number) => {
+		(time: number, eventGeneration?: number) => {
 			if (coordinatorRef.current.session.state !== "PLAYING") return;
 			dispatch({
-				generation: coordinatorRef.current.generation,
+				generation: eventGeneration as number,
 				nowMs: Date.now(),
 				time,
 				type: "TIME_UPDATED",
@@ -210,26 +207,27 @@ function useSessionMedia(
 				case "READY":
 					dispatch({
 						autoplay,
-						generation: coordinatorRef.current.generation,
+						generation: event.generation as number,
 						type: "PLAYER_READY",
 					});
 					return;
 				case "PLAYBACK_STATUS_CHANGED":
 					dispatch({
-						generation: coordinatorRef.current.generation,
+						generation: event.generation as number,
 						status: event.status,
 						type: "PLAYBACK_STATUS_CHANGED",
 					});
 					return;
 				case "TIME_UPDATED":
-					onTimeUpdate(event.time);
+					onTimeUpdate(event.time, event.generation);
 			}
 		},
-		[autoplay, coordinatorRef, dispatch, onTimeUpdate],
+		[autoplay, dispatch, onTimeUpdate],
 	);
 
 	return useSessionMediaAdapter({
 		autoplay,
+		generation,
 		onEvent: onMediaEvent,
 		videoId: vod?.youtubeVideoId ?? "",
 	});
@@ -344,7 +342,13 @@ function useSessionPlayerRuntime({
 		(activeScenarios[
 			coordinator.session.activeScenarioIndex
 		] as ScenarioItem) ?? null;
-	const media = useSessionMedia(autoplay, vod, coordinatorRef, dispatch);
+	const media = useSessionMedia(
+		autoplay,
+		coordinator.generation,
+		vod,
+		coordinatorRef,
+		dispatch,
+	);
 	const recordAttempt = useRecordAttemptMutation();
 	const manifestKey = getManifestKey(vod);
 	const previousManifestKeyRef = useRef(manifestKey);
@@ -415,14 +419,6 @@ export function useSessionPlayer({
 		vodId,
 	);
 
-	const summary = useMemo(
-		() =>
-			coordinator.session.state === "COMPLETED"
-				? calculateSessionSummary(coordinator.session.attempts)
-				: null,
-		[coordinator.session.attempts, coordinator.session.state],
-	);
-
 	return {
 		activeScenarioIndex: coordinator.session.activeScenarioIndex,
 		activeScenarios,
@@ -437,7 +433,7 @@ export function useSessionPlayer({
 		playbackStatus: media.status,
 		remainingMs,
 		state: coordinator.session.state,
-		summary,
+		summary: coordinator.summary,
 		totalMs: coordinator.session.totalMs,
 		vod,
 	};

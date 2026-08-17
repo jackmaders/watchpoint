@@ -1,11 +1,15 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { PlaybackStatus, VodContainerRef, VodPlayerResult } from "./types";
 import { useVodPlayer } from "./use-vod-player";
 
 export type SessionMediaEvent =
-	| { duration: number; type: "READY" }
-	| { status: PlaybackStatus; type: "PLAYBACK_STATUS_CHANGED" }
-	| { time: number; type: "TIME_UPDATED" };
+	| { duration: number; generation?: number; type: "READY" }
+	| {
+			generation?: number;
+			status: PlaybackStatus;
+			type: "PLAYBACK_STATUS_CHANGED";
+	  }
+	| { generation?: number; time: number; type: "TIME_UPDATED" };
 
 export type SessionMediaCommand =
 	| { type: "PAUSE" }
@@ -15,6 +19,7 @@ export type SessionMediaCommand =
 
 export interface SessionMediaAdapterOptions {
 	autoplay?: boolean;
+	generation?: number;
 	onEvent?: (event: SessionMediaEvent) => void;
 	videoId: string;
 }
@@ -29,6 +34,13 @@ export interface SessionMediaAdapterResult {
 }
 
 type SessionMediaControls = Pick<VodPlayerResult, "pause" | "play" | "seekTo">;
+
+function addGeneration<T extends object>(
+	event: T,
+	generation: number | undefined,
+): T & { generation?: number } {
+	return generation === undefined ? event : { ...event, generation };
+}
 
 export function executeSessionMediaCommand(
 	command: SessionMediaCommand,
@@ -53,32 +65,55 @@ export function executeSessionMediaCommand(
 
 export function useSessionMediaAdapter({
 	autoplay = false,
+	generation,
 	onEvent,
 	videoId,
 }: SessionMediaAdapterOptions): SessionMediaAdapterResult {
+	const controlsRef = useRef<SessionMediaControls | null>(null);
+	const pendingCommandRef = useRef<SessionMediaCommand | null>(null);
 	const onReady = useCallback(
-		(duration: number) => onEvent?.({ duration, type: "READY" }),
+		(duration: number, lifecycleKey?: number) => {
+			onEvent?.(addGeneration({ duration, type: "READY" }, lifecycleKey));
+			const pendingCommand = pendingCommandRef.current;
+			const controls = controlsRef.current;
+			if (!pendingCommand || !controls) return;
+			pendingCommandRef.current = null;
+			executeSessionMediaCommand(pendingCommand, controls);
+		},
 		[onEvent],
 	);
 	const onStatusChange = useCallback(
-		(status: PlaybackStatus) =>
-			onEvent?.({ status, type: "PLAYBACK_STATUS_CHANGED" }),
+		(status: PlaybackStatus, lifecycleKey?: number) =>
+			onEvent?.(
+				addGeneration(
+					{ status, type: "PLAYBACK_STATUS_CHANGED" },
+					lifecycleKey,
+				),
+			),
 		[onEvent],
 	);
 	const onTimeUpdate = useCallback(
-		(time: number) => onEvent?.({ time, type: "TIME_UPDATED" }),
+		(time: number, lifecycleKey?: number) =>
+			onEvent?.(addGeneration({ time, type: "TIME_UPDATED" }, lifecycleKey)),
 		[onEvent],
 	);
 	const player = useVodPlayer({
 		autoplay,
+		lifecycleKey: generation,
 		onReady,
 		onStatusChange,
 		onTimeUpdate,
 		videoId,
 	});
+	controlsRef.current = player;
 	const execute = useCallback(
-		(command: SessionMediaCommand) =>
-			executeSessionMediaCommand(command, player),
+		(command: SessionMediaCommand) => {
+			if (command.type === "RESTART") {
+				pendingCommandRef.current = command;
+				return;
+			}
+			executeSessionMediaCommand(command, player);
+		},
 		[player],
 	);
 

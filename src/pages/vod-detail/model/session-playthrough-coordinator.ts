@@ -2,16 +2,53 @@ import type { ModuleType } from "@/shared/db";
 import { PlaybackStatus } from "@/shared/media";
 import type { ScenarioInput, ScenarioOverlayState } from "./session-contract";
 import {
-	initialSessionPlayerSession,
-	type SessionPlayerAction,
-	type SessionPlayerSession,
-	sessionPlayerReducer,
-} from "./session-player-state";
-import {
 	calculateSessionSummary,
 	type SessionAttempt,
 	type SessionSummaryReport,
 } from "./summary";
+
+export type SessionPlayerState =
+	| "LOADING"
+	| "PLAYING"
+	| "PAUSED_USER"
+	| "SCENARIO_ACTIVE"
+	| "FEEDBACK"
+	| "COMPLETED";
+
+export interface SessionPlayerSession {
+	activeScenarioIndex: number;
+	attempts: SessionAttempt[];
+	overlayState: ScenarioOverlayState | null;
+	state: SessionPlayerState;
+	totalMs?: number;
+}
+
+export const initialSessionPlayerSession: SessionPlayerSession = {
+	activeScenarioIndex: 0,
+	attempts: [],
+	overlayState: null,
+	state: "LOADING",
+	totalMs: undefined,
+};
+
+export function resolveNewStatusState(
+	current: SessionPlayerState,
+	newStatus: PlaybackStatus,
+): SessionPlayerState | null {
+	if (
+		newStatus === PlaybackStatus.PLAYING &&
+		(current === "LOADING" || current === "PAUSED_USER")
+	) {
+		return "PLAYING";
+	}
+	if (newStatus === PlaybackStatus.PAUSED && current === "PLAYING") {
+		return "PAUSED_USER";
+	}
+	if (newStatus === PlaybackStatus.ENDED) {
+		return "COMPLETED";
+	}
+	return null;
+}
 
 export interface SessionScenario {
 	id: string;
@@ -68,6 +105,7 @@ export interface SessionPlaythroughState {
 	scenarios: readonly SessionScenario[];
 	scenarioStartedAtMs?: number;
 	session: SessionPlayerSession;
+	summary: SessionSummaryReport | null;
 	effects: readonly SessionPlaythroughEffect[];
 }
 
@@ -132,6 +170,7 @@ export function createSessionPlaythroughState(
 		restartPending: false,
 		scenarios,
 		session: initialSessionPlayerSession,
+		summary: null,
 	};
 }
 
@@ -160,14 +199,12 @@ function withEffects(
 	};
 }
 
-function withSession(
+function transitionSession(
 	state: SessionPlaythroughState,
-	action: SessionPlayerAction,
+	session: SessionPlayerSession,
 	patch: Partial<SessionPlaythroughState> = {},
 	effects: readonly SessionPlaythroughEffect[] = [],
 ): SessionPlaythroughState {
-	const session = sessionPlayerReducer(state.session, action);
-	if (session === state.session) return state;
 	return withEffects(state, { ...patch, session }, effects);
 }
 
@@ -193,6 +230,7 @@ function handleRestartPendingTime(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "TIME_UPDATED" }>,
 ): SessionPlaythroughState {
+	if (!isCurrentGeneration(state, action)) return state;
 	const scenario = getCurrentScenario(state);
 	return scenario && action.time <= scenario.timestampSeconds
 		? withEffects(state, { restartPending: false })
@@ -232,9 +270,14 @@ function handleTimeUpdated(
 	const totalMs = getScenarioLimitMs(scenario);
 	const deadlineAtMs =
 		totalMs === undefined ? undefined : action.nowMs + totalMs;
-	return withSession(
+	return transitionSession(
 		state,
-		{ totalMs, type: "SCENARIO_TRIGGERED" },
+		{
+			...state.session,
+			overlayState: { status: "unanswered" },
+			state: "SCENARIO_ACTIVE",
+			totalMs,
+		},
 		{
 			deadlineAtMs,
 			lastTriggeredScenarioId: scenario.id,
@@ -297,9 +340,14 @@ function handleOptionSelected(
 		selectedOptionId: action.optionId,
 		status: "answered",
 	};
-	return withSession(
+	return transitionSession(
 		state,
-		{ attempt, overlayState, type: "ANSWER_RECORDED" },
+		{
+			...state.session,
+			attempts: [...state.session.attempts, attempt],
+			overlayState,
+			state: "FEEDBACK",
+		},
 		{ deadlineAtMs: undefined, scenarioStartedAtMs: undefined },
 		[
 			{
@@ -345,9 +393,14 @@ function handleTimeoutRequested(
 		isCorrect: false,
 		status: "timedOut",
 	};
-	return withSession(
+	return transitionSession(
 		state,
-		{ attempt, overlayState, type: "TIMEOUT_RECORDED" },
+		{
+			...state.session,
+			attempts: [...state.session.attempts, attempt],
+			overlayState,
+			state: "FEEDBACK",
+		},
 		{ deadlineAtMs: undefined, scenarioStartedAtMs: undefined },
 		[
 			{
@@ -379,25 +432,25 @@ function handlePlaybackStatusChanged(
 	if (state.restartPending && action.status === PlaybackStatus.ENDED) {
 		return state;
 	}
-	const session = sessionPlayerReducer(state.session, {
-		status: action.status,
-		type: "PLAYBACK_STATUS_CHANGED",
-	});
-	if (session === state.session) return state;
+	const nextState = resolveNewStatusState(state.session.state, action.status);
+	if (!nextState) return state;
+	const session = { ...state.session, state: nextState };
 	if (action.status !== PlaybackStatus.ENDED || session.state !== "COMPLETED") {
-		return withEffects(state, { session });
+		return transitionSession(state, session);
 	}
-	return withEffects(
+	const summary = calculateSessionSummary(session.attempts);
+	return transitionSession(
 		state,
+		session,
 		{
 			deadlineAtMs: undefined,
 			scenarioStartedAtMs: undefined,
-			session,
+			summary,
 		},
 		[
 			{
 				generation: state.generation,
-				summary: calculateSessionSummary(session.attempts),
+				summary,
 				type: "SESSION_COMPLETED",
 			},
 		],
@@ -408,26 +461,37 @@ function handlePauseRequested(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "PAUSE_REQUESTED" }>,
 ): SessionPlaythroughState {
-	return isCurrentGeneration(state, action)
-		? withSession(state, { type: "PAUSE_REQUESTED" }, {}, [
-				{ generation: state.generation, type: "MEDIA_PAUSE" },
-			])
-		: state;
+	if (
+		!isCurrentGeneration(state, action) ||
+		state.session.state !== "PLAYING"
+	) {
+		return state;
+	}
+	return transitionSession(
+		state,
+		{ ...state.session, state: "PAUSED_USER" },
+		{},
+		[{ generation: state.generation, type: "MEDIA_PAUSE" }],
+	);
 }
 
 function handlePlayRequested(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "PLAY_REQUESTED" }>,
 ): SessionPlaythroughState {
-	return isCurrentGeneration(state, action)
-		? withSession(state, { type: "PLAY_REQUESTED" }, {}, [
-				{
-					generation: state.generation,
-					reason: "play",
-					type: "MEDIA_PLAY",
-				},
-			])
-		: state;
+	if (
+		!isCurrentGeneration(state, action) ||
+		state.session.state !== "PAUSED_USER"
+	) {
+		return state;
+	}
+	return transitionSession(state, { ...state.session, state: "PLAYING" }, {}, [
+		{
+			generation: state.generation,
+			reason: "play",
+			type: "MEDIA_PLAY",
+		},
+	]);
 }
 
 function handleReplayContext(
@@ -437,9 +501,15 @@ function handleReplayContext(
 	if (!isCurrentGeneration(state, action)) return state;
 	const scenario = getCurrentScenario(state);
 	if (!scenario) return state;
-	return withSession(
+	if (state.session.state !== "SCENARIO_ACTIVE") return state;
+	return transitionSession(
 		state,
-		{ type: "REPLAY_CONTEXT" },
+		{
+			...state.session,
+			overlayState: null,
+			state: "PLAYING",
+			totalMs: undefined,
+		},
 		{ replayAwaitingSeek: true },
 		[
 			{
@@ -456,25 +526,35 @@ function handleResumePlayback(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "RESUME_PLAYBACK" }>,
 ): SessionPlaythroughState {
-	return isCurrentGeneration(state, action)
-		? withSession(
-				state,
-				{ type: "RESUME_PLAYBACK" },
-				{
-					deadlineAtMs: undefined,
-					lastTriggeredScenarioId: null,
-					replayAwaitingSeek: false,
-					scenarioStartedAtMs: undefined,
-				},
-				[
-					{
-						generation: state.generation,
-						reason: "resume",
-						type: "MEDIA_PLAY",
-					},
-				],
-			)
-		: state;
+	if (
+		!isCurrentGeneration(state, action) ||
+		state.session.state !== "FEEDBACK"
+	) {
+		return state;
+	}
+	return transitionSession(
+		state,
+		{
+			...state.session,
+			activeScenarioIndex: state.session.activeScenarioIndex + 1,
+			overlayState: null,
+			state: "PLAYING",
+			totalMs: undefined,
+		},
+		{
+			deadlineAtMs: undefined,
+			lastTriggeredScenarioId: null,
+			replayAwaitingSeek: false,
+			scenarioStartedAtMs: undefined,
+		},
+		[
+			{
+				generation: state.generation,
+				reason: "resume",
+				type: "MEDIA_PLAY",
+			},
+		],
+	);
 }
 
 function handleUnsupportedInputSkipped(
@@ -492,9 +572,15 @@ function handleUnsupportedInputSkipped(
 	) {
 		return state;
 	}
-	return withSession(
+	return transitionSession(
 		state,
-		{ type: "UNSUPPORTED_INPUT_SKIPPED" },
+		{
+			...state.session,
+			activeScenarioIndex: state.session.activeScenarioIndex + 1,
+			overlayState: null,
+			state: "PLAYING",
+			totalMs: undefined,
+		},
 		{ lastTriggeredScenarioId: null, replayAwaitingSeek: false },
 		[
 			{
@@ -517,39 +603,61 @@ function handleRetrySession(
 		generation,
 		restartPending: state.scenarios.length > 0,
 		session: { ...initialSessionPlayerSession, state: "PLAYING" },
+		summary: null,
 	};
 }
 
-export function sessionPlaythroughReducer(
+type MediaAction = Extract<
+	SessionPlaythroughAction,
+	{ type: "PLAYER_READY" | "PLAYBACK_STATUS_CHANGED" | "TIME_UPDATED" }
+>;
+
+function handlePlayerReady(
 	state: SessionPlaythroughState,
-	action: SessionPlaythroughAction,
+	action: Extract<SessionPlaythroughAction, { type: "PLAYER_READY" }>,
 ): SessionPlaythroughState {
-	if (action.type === "EFFECTS_CONSUMED") {
-		return state.effects.length === 0 ? state : { ...state, effects: [] };
+	if (
+		!isCurrentGeneration(state, action) ||
+		state.session.state !== "LOADING"
+	) {
+		return state;
 	}
+	return transitionSession(
+		state,
+		{
+			...state.session,
+			state: action.autoplay ? "PLAYING" : "PAUSED_USER",
+		},
+		{ restartPending: false },
+	);
+}
 
-	if (action.type === "MANIFEST_CHANGED") {
-		return handleManifestChanged(state, action);
-	}
-
+function handleMediaAction(
+	state: SessionPlaythroughState,
+	action: MediaAction,
+): SessionPlaythroughState {
 	switch (action.type) {
 		case "PLAYER_READY":
-			return isCurrentGeneration(state, action)
-				? withSession(
-						state,
-						{
-							autoplay: action.autoplay,
-							type: "PLAYER_READY",
-						},
-						{ restartPending: false },
-					)
-				: state;
+			return handlePlayerReady(state, action);
 		case "PLAYBACK_STATUS_CHANGED":
 			return handlePlaybackStatusChanged(state, action);
 		case "TIME_UPDATED":
 			return state.restartPending
 				? handleRestartPendingTime(state, action)
 				: handleTimeUpdated(state, action);
+	}
+}
+
+type ScenarioAction = Exclude<
+	SessionPlaythroughAction,
+	MediaAction | { type: "EFFECTS_CONSUMED" | "MANIFEST_CHANGED" }
+>;
+
+function handleScenarioAction(
+	state: SessionPlaythroughState,
+	action: ScenarioAction,
+): SessionPlaythroughState {
+	switch (action.type) {
 		case "OPTION_SELECTED":
 			return handleOptionSelected(state, action);
 		case "TIMEOUT_REQUESTED":
@@ -567,4 +675,26 @@ export function sessionPlaythroughReducer(
 		case "RETRY_SESSION":
 			return handleRetrySession(state, action);
 	}
+}
+
+export function sessionPlaythroughReducer(
+	state: SessionPlaythroughState,
+	action: SessionPlaythroughAction,
+): SessionPlaythroughState {
+	if (action.type === "EFFECTS_CONSUMED") {
+		return state.effects.length === 0 ? state : { ...state, effects: [] };
+	}
+
+	if (action.type === "MANIFEST_CHANGED") {
+		return handleManifestChanged(state, action);
+	}
+
+	if (
+		action.type === "PLAYER_READY" ||
+		action.type === "PLAYBACK_STATUS_CHANGED" ||
+		action.type === "TIME_UPDATED"
+	) {
+		return handleMediaAction(state, action);
+	}
+	return handleScenarioAction(state, action);
 }
