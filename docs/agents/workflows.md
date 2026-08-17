@@ -1,6 +1,6 @@
 # Engineering Workflows & Skill Sequences
 
-This guide defines how skills link together into sequential workflows for different scopes of work, and how GitHub labels track execution state across manual sessions and GitHub Actions (GHA) automation.
+This guide defines how skills link together into sequential workflows for different scopes of work, and how GitHub labels track execution state across manual sessions.
 
 ---
 
@@ -102,7 +102,7 @@ The skill ecosystem uses GitHub labels to track issue and PR lifecycle state acr
 | **Category** | `enhancement` | Identifies new features, improvements, or refactors. |
 | **Triage State** | `needs-triage` | Entry point for newly filed issues and external PRs awaiting evaluation. |
 | **Triage State** | `needs-info` | Issue blocked waiting on reporter/author feedback. |
-| **Execution State** | `ready-for-agent` | Specification/acceptance criteria complete. Triggers AFK automated agent workflows in GHA or indicates an unblocked task ready for `/implement`. |
+| **Execution State** | `ready-for-agent` | Specification/acceptance criteria complete and the ticket is ready for `/implement`. |
 | **Execution State** | `ready-for-human` | Requires human judgment, external dashboard access, secrets, or manual UI signoff. |
 | **Resolution** | `wontfix` | Closed as out of scope, invalid, or already implemented. |
 | **Wayfinding** | `wayfinder:map` | Index issue representing a multi-ticket milestone map. |

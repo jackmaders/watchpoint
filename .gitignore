@@ -52,6 +52,3 @@ next-env.d.ts
 .claude/
 .tmp-agent-output/
 .agent
-.sandcastle/worktrees/
-.sandcastle/logs/
-.sandcastle/runner.lock
