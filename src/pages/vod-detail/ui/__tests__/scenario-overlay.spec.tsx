@@ -15,6 +15,17 @@ const moduleTypes = [
 	"SPATIAL",
 ] as const;
 
+const shortcutCases = moduleTypes.flatMap((moduleType) =>
+	(
+		[
+			["1", "opt_1"],
+			["2", "opt_2"],
+			["3", "opt_3"],
+			["4", "opt_4"],
+		] as const
+	).map(([shortcut, optionId]) => [shortcut, moduleType, optionId] as const),
+);
+
 describe("ScenarioOverlay", () => {
 	const baseScenario: ScenarioData = {
 		explanationText:
@@ -183,15 +194,120 @@ describe("ScenarioOverlay", () => {
 		);
 
 		// Act
-		fireEvent.keyDown(window, { key: "2" });
+		fireEvent.keyDown(screen.getByTestId("scenario-option-opt_2"), {
+			key: "2",
+		});
 
 		// Assert
 		expect(handleSelect).toHaveBeenCalledWith("opt_2");
 	});
 
-	it.each(moduleTypes)(
-		"routes number-row shortcuts 1-4 to rendered choices for %s scenarios",
-		(moduleType) => {
+	it.each([
+		[
+			"input",
+			<input aria-label="search" data-testid="text-entry" key="input" />,
+		],
+		[
+			"textarea",
+			<textarea
+				aria-label="commentary"
+				data-testid="text-entry"
+				key="textarea"
+			/>,
+		],
+		[
+			"select",
+			<select aria-label="filter" data-testid="text-entry" key="select" />,
+		],
+		[
+			"contenteditable commentary/search control",
+			<div contentEditable data-testid="text-entry" key="contenteditable" />,
+		],
+	] as const)(
+		"does not claim number shortcuts from a focused %s",
+		(_, control) => {
+			// Arrange
+			const handleSelect = vi.fn();
+			render(
+				<>
+					<ScenarioOverlay
+						onResume={vi.fn()}
+						onSelectOption={handleSelect}
+						scenario={baseScenario}
+						state={{ status: "unanswered" }}
+					/>
+					{control}
+				</>,
+			);
+			const textEntry = screen.getByTestId("text-entry");
+
+			// Act
+			textEntry.focus();
+			fireEvent.keyDown(textEntry, { key: "1" });
+
+			// Assert
+			expect(handleSelect).not.toHaveBeenCalled();
+		},
+	);
+
+	it("accepts only the first shortcut before the Scenario becomes answered", () => {
+		// Arrange
+		const handleSelect = vi.fn();
+		render(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={baseScenario}
+				state={{ status: "unanswered" }}
+			/>,
+		);
+
+		// Act
+		fireEvent.keyDown(window, { key: "1" });
+		fireEvent.keyDown(window, { key: "2" });
+
+		// Assert
+		expect(handleSelect).toHaveBeenCalledTimes(1);
+		expect(handleSelect).toHaveBeenCalledWith("opt_1");
+	});
+
+	it("ignores a late shortcut after the Scenario becomes answered", () => {
+		// Arrange
+		const handleSelect = vi.fn();
+		const { rerender } = render(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={baseScenario}
+				state={{ status: "unanswered" }}
+			/>,
+		);
+		fireEvent.keyDown(window, { key: "1" });
+
+		// Act
+		rerender(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={baseScenario}
+				state={{
+					correctOptionId: "opt_1",
+					isCorrect: true,
+					selectedOptionId: "opt_1",
+					status: "answered",
+				}}
+			/>,
+		);
+		fireEvent.keyDown(window, { key: "2" });
+
+		// Assert
+		expect(handleSelect).toHaveBeenCalledTimes(1);
+		expect(handleSelect).toHaveBeenCalledWith("opt_1");
+	});
+
+	it.each(shortcutCases)(
+		"routes shortcut %s to its rendered choice for %s scenarios",
+		(shortcut, moduleType, optionId) => {
 			// Arrange
 			const handleSelect = vi.fn();
 			const scenario = { ...baseScenario, moduleType };
@@ -206,17 +322,11 @@ describe("ScenarioOverlay", () => {
 			);
 
 			// Act
-			fireEvent.keyDown(window, { key: "1" });
-			fireEvent.keyDown(window, { key: "2" });
-			fireEvent.keyDown(window, { key: "3" });
-			fireEvent.keyDown(window, { key: "4" });
+			fireEvent.keyDown(window, { key: shortcut });
 
 			// Assert
-			expect(handleSelect).toHaveBeenCalledTimes(4);
-			expect(handleSelect).toHaveBeenNthCalledWith(1, "opt_1");
-			expect(handleSelect).toHaveBeenNthCalledWith(2, "opt_2");
-			expect(handleSelect).toHaveBeenNthCalledWith(3, "opt_3");
-			expect(handleSelect).toHaveBeenNthCalledWith(4, "opt_4");
+			expect(handleSelect).toHaveBeenCalledTimes(1);
+			expect(handleSelect).toHaveBeenCalledWith(optionId);
 		},
 	);
 
@@ -313,7 +423,7 @@ describe("ScenarioOverlay", () => {
 			selectedOptionId: "opt_1",
 			status: "answered",
 		};
-		render(
+		const { rerender } = render(
 			<ScenarioOverlay
 				onResume={vi.fn()}
 				onSelectOption={handleSelect}
@@ -323,6 +433,39 @@ describe("ScenarioOverlay", () => {
 		);
 
 		// Act
+		fireEvent.keyDown(window, { key: "1" });
+		rerender(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={baseScenario}
+				state={{
+					correctOptionId: "opt_1",
+					isCorrect: false,
+					status: "timedOut",
+				}}
+			/>,
+		);
+		fireEvent.keyDown(window, { key: "2" });
+
+		// Assert
+		expect(handleSelect).not.toHaveBeenCalled();
+	});
+
+	it("ignores keyboard hotkeys after the Scenario overlay is dismissed", () => {
+		// Arrange
+		const handleSelect = vi.fn();
+		const { unmount } = render(
+			<ScenarioOverlay
+				onResume={vi.fn()}
+				onSelectOption={handleSelect}
+				scenario={baseScenario}
+				state={{ status: "unanswered" }}
+			/>,
+		);
+
+		// Act
+		unmount();
 		fireEvent.keyDown(window, { key: "1" });
 
 		// Assert
