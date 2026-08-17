@@ -4,7 +4,7 @@ import { getSessionManifest, VodDetailPage } from "@/pages/vod-detail";
 export const Route = createFileRoute("/vods/$id")({
 	component: VodDetailRoute,
 	loader: async ({ params }) => {
-		const vod = await getSessionManifest({ data: params.id });
+		const vod = await getSessionManifest({ data: { vodId: params.id } });
 		return { vod };
 	},
 });

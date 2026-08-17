@@ -1,4 +1,5 @@
 import { getSessionManifest } from "@/shared/db";
+import { normalizeSessionManifestModules } from "./session-manifest-query";
 
 export async function handleGetVodManifest(
 	request: Request,
@@ -8,7 +9,9 @@ export async function handleGetVodManifest(
 	const url = new URL(request.url);
 
 	const manifest = await getSessionManifest(id, {
-		modules: url.searchParams,
+		modules: normalizeSessionManifestModules(
+			url.searchParams.getAll("modules"),
+		),
 	});
 
 	if (!manifest) {

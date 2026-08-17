@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
 import * as recordAttemptModule from "../record-attempt";
-import {
-	getSessionManifest,
-	getVodDetails,
-	recordAttempt,
-} from "../server-fns";
+import { getSessionManifest, recordAttempt } from "../server-fns";
 
 vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
@@ -14,21 +10,6 @@ vi.mock("../record-attempt");
 describe("server-fns", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-	});
-
-	it("executes getVodDetails handler correctly", async () => {
-		// Arrange
-		const mockVod = { id: "vod_123", title: "Test VOD" } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockVod);
-
-		// Act
-		const result = await (
-			getVodDetails as unknown as (ctx: { data: string }) => Promise<unknown>
-		)({ data: "vod_123" });
-
-		// Assert
-		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123");
-		expect(result).toBe(mockVod);
 	});
 
 	it("executes getSessionManifest handler correctly with object payload", async () => {
@@ -57,7 +38,7 @@ describe("server-fns", () => {
 		expect(result).toBe(mockManifest);
 	});
 
-	it("executes getSessionManifest handler correctly with string input", async () => {
+	it("normalizes a blank module filter at the server-function seam", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
 		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
@@ -65,10 +46,10 @@ describe("server-fns", () => {
 		// Act
 		const result = await (
 			getSessionManifest as unknown as (ctx: {
-				data: string;
+				data: { modules: string; vodId: string };
 			}) => Promise<unknown>
 		)({
-			data: "vod_123",
+			data: { modules: "   ", vodId: "vod_123" },
 		});
 
 		// Assert

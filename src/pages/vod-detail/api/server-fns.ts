@@ -6,28 +6,15 @@ import {
 	type RecordAttemptResult,
 } from "../model/attempt";
 import { recordAttemptAction } from "./record-attempt";
+import {
+	normalizeSessionManifestQuery,
+	type SessionManifestTransportQuery,
+} from "./session-manifest-query";
 
-export const getVodDetails = createServerFn({ method: "GET" })
-	.validator((vodId: string) => vodId)
-	.handler(async ({ data: vodId }) => {
-		return dbGetSessionManifest(vodId);
-	});
-
-export interface GetSessionManifestPayload {
-	modules?: string | string[];
-	publishedOnly?: boolean;
-	vodId: string;
-}
+export type GetSessionManifestPayload = SessionManifestTransportQuery;
 
 export const getSessionManifest = createServerFn({ method: "GET" })
-	.validator(
-		(input: string | GetSessionManifestPayload): GetSessionManifestPayload => {
-			if (typeof input === "string") {
-				return { vodId: input };
-			}
-			return input;
-		},
-	)
+	.validator(normalizeSessionManifestQuery)
 	.handler(async ({ data }) => {
 		return dbGetSessionManifest(data.vodId, {
 			modules: data.modules,
