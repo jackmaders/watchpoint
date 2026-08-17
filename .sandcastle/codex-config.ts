@@ -28,6 +28,24 @@ export function defaultCodexModel(provider: CodexProvider): string {
 		: OPENROUTER_DEFAULT_MODEL;
 }
 
+export function resolveCodexModel(
+	provider: CodexProvider,
+	model?: string,
+): string {
+	return model || process.env.CODEX_MODEL || defaultCodexModel(provider);
+}
+
+export function validateCodexModel(
+	provider: CodexProvider,
+	model: string,
+): void {
+	if (provider === "openai" && model.startsWith("openrouter/")) {
+		throw new Error(
+			`Codex model ${model} belongs to OpenRouter but CODEX_PROVIDER is openai. Use CODEX_PROVIDER=openrouter or select an OpenAI model such as ${OPENAI_CODEX_DEFAULT_MODEL}.`,
+		);
+	}
+}
+
 /**
  * The config deliberately contains no credential. Codex resolves the key at
  * runtime through the command, so this text is safe to bake into the image or
@@ -47,7 +65,10 @@ model = "${model}"
 [model_providers.${name}]
 name = "${name}"
 base_url = "${baseUrl}"
-env_key = "${apiKey}"
+
+[model_providers.${name}.auth]
+command = "sh"
+args = ["-c", "echo $${apiKey}"]
 `;
 }
 

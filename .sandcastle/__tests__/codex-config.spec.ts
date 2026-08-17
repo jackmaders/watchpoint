@@ -5,6 +5,7 @@ import {
 	OPENAI_CODEX_DEFAULT_MODEL,
 	OPENROUTER_DEFAULT_MODEL,
 	parseCodexProvider,
+	resolveCodexModel,
 	validateCodexConfiguration,
 } from "../codex-config";
 
@@ -70,6 +71,7 @@ describe("Codex/OpenRouter configuration", () => {
 		expect(config).toContain('model_provider = "openai"');
 		expect(config).toContain("https://api.openai.com/v1");
 		expect(config).toContain("OPENAI_API_KEY");
+		expect(config).toContain("[model_providers.openai.auth]");
 		expect(config).not.toContain("OPENROUTER_API_KEY");
 	});
 
@@ -89,5 +91,16 @@ describe("Codex/OpenRouter configuration", () => {
 		expect(() => parseCodexProvider("custom")).toThrow(
 			"Unsupported Codex provider: custom",
 		);
+	});
+
+	it("treats an empty configured model as unset", () => {
+		const previous = process.env.CODEX_MODEL;
+		process.env.CODEX_MODEL = "";
+		try {
+			expect(resolveCodexModel("openrouter")).toBe(OPENROUTER_DEFAULT_MODEL);
+		} finally {
+			if (previous === undefined) delete process.env.CODEX_MODEL;
+			else process.env.CODEX_MODEL = previous;
+		}
 	});
 });

@@ -14,7 +14,9 @@ model = "$model"
 [model_providers.openai]
 name = "openai"
 base_url = "https://api.openai.com/v1"
-env_key = "OPENAI_API_KEY"
+[model_providers.openai.auth]
+command = "sh"
+args = ["-c", "echo \$OPENAI_API_KEY"]
 EOF
 		;;
 	openrouter)
@@ -26,7 +28,9 @@ model = "$model"
 [model_providers.openrouter]
 name = "openrouter"
 base_url = "https://openrouter.ai/api/v1"
-env_key = "OPENROUTER_API_KEY"
+[model_providers.openrouter.auth]
+command = "sh"
+args = ["-c", "echo \$OPENROUTER_API_KEY"]
 EOF
 		;;
 	*)
