@@ -677,7 +677,7 @@ describe("useSessionPlayer", () => {
 		const { rerender, result } = renderHook(
 			({ manifest }: { manifest: ManifestVod | null }) =>
 				useSessionPlayer({
-					autoplay: true,
+					autoplay: false,
 					initialManifest: manifest,
 					vodId: "vod_gm_ana",
 				}),
@@ -708,9 +708,9 @@ describe("useSessionPlayer", () => {
 		});
 
 		// Assert
-		expect(result.current.state).toBe("SCENARIO_ACTIVE");
+		expect(result.current.state).toBe("LOADING");
 		expect(result.current.attempts).toHaveLength(0);
-		expect(result.current.overlayState).toEqual({ status: "unanswered" });
+		expect(result.current.overlayState).toBeNull();
 		vi.useRealTimers();
 	});
 
@@ -846,6 +846,14 @@ describe("useSessionPlayer", () => {
 		expect(result.current.attempts).toHaveLength(0);
 		expect(player.seekTo).toHaveBeenCalledWith(0, true);
 		expect(player.playVideo).toHaveBeenCalled();
+
+		// Act: a late terminal event from the previous run arrives after retry
+		act(() => {
+			player.triggerStateChange(YouTubePlayerState.ENDED);
+		});
+
+		// Assert: the restart generation remains active
+		expect(result.current.state).toBe("PLAYING");
 	});
 
 	it("transitions to PAUSED_USER on ready when autoplay is false", async () => {
@@ -913,6 +921,27 @@ describe("useSessionPlayer", () => {
 			result.current.selectOption("opt_1a");
 			result.current.resumePlayback();
 			result.current.replayContext();
+		});
+
+		// Assert
+		expect(result.current.state).toBe("LOADING");
+		expect(result.current.attempts).toHaveLength(0);
+	});
+
+	it("ignores option and timeout callbacks when the manifest has no scenarios", () => {
+		// Arrange
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					initialManifest: { ...mockManifest, scenarios: [] },
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		// Act
+		act(() => {
+			result.current.selectOption("missing");
 		});
 
 		// Assert
@@ -1021,6 +1050,9 @@ describe("useSessionPlayer", () => {
 				type: "UNSUPPORTED_INPUT_SKIPPED",
 			},
 		);
+		const retriedSession = sessionPlayerReducer(initialSessionPlayerSession, {
+			type: "RETRY_SESSION",
+		});
 
 		// Assert
 		expect(readySession.state).toBe("PLAYING");
@@ -1031,6 +1063,7 @@ describe("useSessionPlayer", () => {
 		expect(replayedSession.state).toBe("PLAYING");
 		expect(resumedSession).toBe(replayedSession);
 		expect(ignoredUnsupported).toBe(initialSessionPlayerSession);
+		expect(retriedSession.state).toBe("PLAYING");
 	});
 
 	it("skips an unsupported active input and resumes playback", () => {
@@ -1169,7 +1202,7 @@ describe("useSessionPlayer", () => {
 		expect(result.current.state).toBe("PAUSED_USER");
 	});
 
-	it("clamps responseTimeMs to totalMs when answering timed scenario after delay", async () => {
+	it("accepts the wall-clock timeout before a late timed answer", async () => {
 		// Arrange
 		const frameController = installMockFrames();
 		const youtube = createYouTubeMock(600);
@@ -1215,7 +1248,7 @@ describe("useSessionPlayer", () => {
 
 		expect(result.current.totalMs).toBe(3000);
 
-		// When selecting option after 5000ms elapsed
+		// When selecting an option after the 3000ms deadline
 		dateSpy.mockReturnValueOnce(6000);
 
 		// Act - select option
@@ -1225,7 +1258,9 @@ describe("useSessionPlayer", () => {
 
 		// Assert
 		expect(result.current.state).toBe("FEEDBACK");
+		expect(result.current.attempts[0]?.isTimedOut).toBe(true);
 		expect(result.current.attempts[0]?.responseTimeMs).toBe(3000);
+		expect(result.current.overlayState?.status).toBe("timedOut");
 		dateSpy.mockRestore();
 	});
 

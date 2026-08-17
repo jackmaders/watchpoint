@@ -85,3 +85,12 @@ This document defines the core domain terminology used across product discussion
 
 * **Tab Visibility Sync**  
   An automated event listener that pauses video playback whenever the user switches browser tabs, preventing missed scenario triggers.
+
+* **Session Playthrough**
+  The cohesive client-side coordinator for one training run. It owns accepted phase transitions, Scenario triggering, answer-or-timeout arbitration, retry generations, and terminal completion while delegating media and Attempt Record effects to adapters.
+
+* **Playthrough Generation**
+  The identity of one active Session Playthrough run. Initial loading, a changed Session Manifest, and retry create a new generation; asynchronous playback, timer, and trigger events from another generation are ignored.
+
+* **Attempt Outcome**
+  The normalized result accepted by a Session Playthrough for one Scenario: either a selected answer with its correctness and latency or an explicit timeout. Exactly one outcome may be accepted for an unanswered Scenario.
