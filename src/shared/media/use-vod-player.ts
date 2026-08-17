@@ -130,18 +130,32 @@ interface PlayerLifecycleParams extends UseVodPlayerStateOptions {
 }
 
 function resetPlayerState({
+	durationRef,
 	setCurrentTime,
 	setDuration,
 	setIsReady,
 	setStatus,
 }: Pick<
 	PlayerLifecycleParams,
-	"setCurrentTime" | "setDuration" | "setIsReady" | "setStatus"
+	"durationRef" | "setCurrentTime" | "setDuration" | "setIsReady" | "setStatus"
 >) {
 	setIsReady(false);
+	durationRef.current = 0;
 	setDuration(0);
 	setCurrentTime(0);
 	setStatus(PlaybackStatus.UNSTARTED);
+}
+
+function invokeWithLifecycleKey<T>(
+	callback: ((value: T, lifecycleKey?: number) => void) | undefined,
+	value: T,
+	lifecycleKey: number | undefined,
+) {
+	if (lifecycleKey === undefined) {
+		callback?.(value);
+		return;
+	}
+	callback?.(value, lifecycleKey);
 }
 
 function usePlayerLifecycle({
@@ -150,6 +164,7 @@ function usePlayerLifecycle({
 	container,
 	durationRef,
 	generationRef,
+	lifecycleKey,
 	onReady,
 	onStatusChange,
 	onTimeUpdate,
@@ -166,9 +181,8 @@ function usePlayerLifecycle({
 	onReadyRef.current = onReady;
 	onStatusChangeRef.current = onStatusChange;
 	onTimeUpdateRef.current = onTimeUpdate;
-
 	useEffect(() => {
-		const generation = generationRef.current + 1;
+		const generation = lifecycleKey ?? generationRef.current + 1;
 		generationRef.current = generation;
 		let active = true;
 		let player: YouTubePlayer | undefined;
@@ -180,7 +194,8 @@ function usePlayerLifecycle({
 		const poller = createTimePoller({
 			getCurrentPlayer,
 			isActiveGeneration,
-			onTimeUpdate: (time) => onTimeUpdateRef.current?.(time),
+			onTimeUpdate: (time) =>
+				invokeWithLifecycleKey(onTimeUpdateRef.current, time, lifecycleKey),
 			setCurrentTime,
 		});
 		const unbindVisibility = bindVisibilitySync(
@@ -194,8 +209,10 @@ function usePlayerLifecycle({
 			markReadyNotified: () => {
 				hasNotifiedReady = true;
 			},
-			onReady: (d) => onReadyRef.current?.(d),
-			onStatusChange: (s) => onStatusChangeRef.current?.(s),
+			onReady: (d) =>
+				invokeWithLifecycleKey(onReadyRef.current, d, lifecycleKey),
+			onStatusChange: (s) =>
+				invokeWithLifecycleKey(onStatusChangeRef.current, s, lifecycleKey),
 			poller,
 			setActivePlayer: (p) => {
 				player = p;
@@ -211,11 +228,9 @@ function usePlayerLifecycle({
 		});
 
 		resetPlayerState({
+			durationRef,
 			setCurrentTime,
-			setDuration: (d) => {
-				durationRef.current = d;
-				setDuration(d);
-			},
+			setDuration,
 			setIsReady,
 			setStatus,
 		});
@@ -251,6 +266,7 @@ function usePlayerLifecycle({
 		container,
 		durationRef,
 		generationRef,
+		lifecycleKey,
 		setCurrentTime,
 		setDuration,
 		setIsReady,
@@ -293,6 +309,7 @@ function useVodPlayerState(options: UseVodPlayerStateOptions) {
 
 export function useVodPlayer({
 	autoplay = false,
+	lifecycleKey,
 	onReady,
 	onStatusChange,
 	onTimeUpdate,
@@ -309,6 +326,7 @@ export function useVodPlayer({
 	const state = useVodPlayerState({
 		autoplay,
 		container,
+		lifecycleKey,
 		onReady,
 		onStatusChange,
 		onTimeUpdate,

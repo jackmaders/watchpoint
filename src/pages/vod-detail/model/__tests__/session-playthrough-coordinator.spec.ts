@@ -474,6 +474,12 @@ describe("session playthrough coordinator", () => {
 			time: 60,
 			type: "TIME_UPDATED",
 		});
+		const staleRestartTime = sessionPlaythroughReducer(retried, {
+			generation: retried.generation - 1,
+			nowMs: 1000,
+			time: 0,
+			type: "TIME_UPDATED",
+		});
 		const completed = sessionPlaythroughReducer(reset, {
 			generation: retried.generation,
 			status: PlaybackStatus.ENDED,
@@ -494,9 +500,12 @@ describe("session playthrough coordinator", () => {
 		expect(playing).toBe(retried);
 		expect(reset.restartPending).toBe(false);
 		expect(staleTime).toBe(retried);
+		expect(staleRestartTime).toBe(retried);
 		expect(completed.session.state).toBe("COMPLETED");
+		expect(completed.summary).toMatchObject({ totalScenarios: 0 });
 		expect(completed.effects.at(-1)?.type).toBe("SESSION_COMPLETED");
 		expect(duplicate).toBe(completed);
+		expect(duplicate.summary).toBe(completed.summary);
 	});
 
 	it("consumes queued effects and ignores an already empty queue", () => {

@@ -14,9 +14,10 @@ export type VodContainerRef = (node: HTMLDivElement | null) => void;
 
 export interface VodPlayerOptions {
 	autoplay?: boolean;
-	onReady?: (duration: number) => void;
-	onStatusChange?: (status: PlaybackStatus) => void;
-	onTimeUpdate?: (currentTime: number) => void;
+	lifecycleKey?: number;
+	onReady?: (duration: number, lifecycleKey?: number) => void;
+	onStatusChange?: (status: PlaybackStatus, lifecycleKey?: number) => void;
+	onTimeUpdate?: (currentTime: number, lifecycleKey?: number) => void;
 	videoId: string;
 }
 
