@@ -63,4 +63,14 @@ describe("resolveAgentRuntime", () => {
 		// Assert
 		expect(runtime.model).toBe("openrouter/free");
 	});
+
+	it("rejects an OpenRouter model paired with native OpenAI", () => {
+		expect(() =>
+			resolveAgentRuntime({
+				agent: "codex",
+				codexProvider: "openai",
+				model: "openrouter/free",
+			}),
+		).toThrow("belongs to OpenRouter but CODEX_PROVIDER is openai");
+	});
 });

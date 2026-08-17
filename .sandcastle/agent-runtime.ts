@@ -1,8 +1,9 @@
 import { resolveAuthMounts } from "./auth-mounts";
 import {
 	type CodexProvider,
-	defaultCodexModel,
+	resolveCodexModel,
 	resolveCodexProvider,
+	validateCodexModel,
 } from "./codex-config";
 import type { AgentType, AuthMountsConfig, SandboxType } from "./types";
 
@@ -33,6 +34,13 @@ export function resolveAgentRuntime(
 	const agent = options.agent ?? "agy";
 	const sandbox = options.sandbox ?? "docker";
 	const codexProvider = resolveCodexProvider(options.codexProvider);
+	const model =
+		agent === "codex"
+			? resolveCodexModel(codexProvider, options.model)
+			: options.model;
+	if (agent === "codex") {
+		validateCodexModel(codexProvider, model as string);
+	}
 	return {
 		agent,
 		authMountsConfig:
@@ -45,9 +53,7 @@ export function resolveAgentRuntime(
 			options.imageName ??
 			process.env.SANDCASTLE_IMAGE ??
 			"sandcastle:watchpoint",
-		model:
-			options.model ??
-			(agent === "codex" ? defaultCodexModel(codexProvider) : undefined),
+		model,
 		sandbox,
 	};
 }

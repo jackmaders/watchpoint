@@ -3,7 +3,7 @@ import {
 	applyCommonValueFlag,
 	createDefaultCommonCliState,
 } from "../cli-args";
-import { type CodexProvider, defaultCodexModel } from "../codex-config";
+import { type CodexProvider, resolveCodexModel } from "../codex-config";
 import { DefaultGithubClient } from "../github/client";
 import { IssueAlreadyClaimedError, isClaimContention } from "../github/errors";
 import { resolveFrontier } from "../github/frontier";
@@ -40,7 +40,7 @@ export function parsePickCliArgs(argv: string[]): PickCliArgs {
 		model:
 			state.model ??
 			(state.agent === "codex"
-				? defaultCodexModel(state.codexProvider as CodexProvider)
+				? resolveCodexModel(state.codexProvider as CodexProvider, state.model)
 				: undefined),
 	};
 }

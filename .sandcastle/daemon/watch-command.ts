@@ -4,7 +4,7 @@ import {
 	createDefaultCommonCliState,
 	parsePositiveInt,
 } from "../cli-args";
-import { type CodexProvider, defaultCodexModel } from "../codex-config";
+import { type CodexProvider, resolveCodexModel } from "../codex-config";
 import { DefaultGithubClient } from "../github/client";
 import { DefaultWatcherClock } from "./heartbeat";
 import { setupGracefulShutdown } from "./signal-handler";
@@ -36,7 +36,7 @@ function withDefaultModel(state: MutableWatchArgs): WatchCliArgs {
 		model:
 			state.model ??
 			(state.agent === "codex"
-				? defaultCodexModel(state.codexProvider as CodexProvider)
+				? resolveCodexModel(state.codexProvider as CodexProvider, state.model)
 				: undefined),
 	};
 }

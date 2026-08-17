@@ -71,9 +71,11 @@ bun run sandcastle --prompt "Refactor timeline seeking logic"
 bun run sandcastle --prompt "Fix button alignment" --dry-run
 ```
 
-The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. To use native OpenAI GPT Codex models, set `OPENAI_API_KEY` and pass `--codex-provider openai`; the default native model is `gpt-5.3-codex`. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route, or pass `--agent agy` to use the Antigravity escape hatch with its separate credentials.
+The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. To use native OpenAI/ChatGPT API models, set `OPENAI_API_KEY`, pass `--codex-provider openai`, and select the model with `--model` (the default is `gpt-5.3-codex`). Gemini and Antigravity remain available with `--agent gemini` and `--agent agy`. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route.
 
 `OPENROUTER_API_KEY` and `OPENAI_API_KEY` are forwarded only at runtime into the Sandcastle container. They are not written to the Codex configuration or baked into the image. `CODEX_PROVIDER` and `CODEX_MODEL` can be used instead of CLI flags for unattended watcher deployments. When a provider reports the routed model, queue output records it; missing provider metadata is ignored.
+
+For the default unattended setup, use `CODEX_PROVIDER=openrouter` and leave `CODEX_MODEL` unset. If `CODEX_PROVIDER=openai`, `CODEX_MODEL` must be an OpenAI model ID; an OpenRouter model such as `openrouter/free` is rejected before the agent starts.
 
 ---
 

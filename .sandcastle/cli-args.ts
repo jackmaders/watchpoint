@@ -1,6 +1,6 @@
 import {
-	defaultCodexModel,
 	parseCodexProvider,
+	resolveCodexModel,
 	resolveCodexProvider,
 } from "./codex-config";
 import type { AgentType, SandboxType, SandcastleCliArgs } from "./types";
@@ -227,7 +227,7 @@ export function parseCliArgs(argv: string[]): SandcastleCliArgs {
 		model:
 			state.model ??
 			(state.agent === "codex"
-				? defaultCodexModel(state.codexProvider)
+				? resolveCodexModel(state.codexProvider, state.model)
 				: undefined),
 		pr: state.pr,
 		prompt: state.prompt,
