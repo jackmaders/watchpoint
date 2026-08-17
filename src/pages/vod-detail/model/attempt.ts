@@ -1,5 +1,16 @@
 import { z } from "zod";
-import type { JsonValue } from "@/shared/db";
+import type { JsonValue, ModuleType } from "@/shared/db";
+
+export interface AttemptOutcome {
+	idempotencyKey: string;
+	inputValue?: Record<string, JsonValue>;
+	isCorrect: boolean;
+	isTimedOut: boolean;
+	moduleType: ModuleType;
+	responseTimeMs: number;
+	scenarioId: string;
+	selectedOptionId: string | null;
+}
 
 export const RecordAttemptInputSchema = z.object({
 	idempotencyKey: z.string().uuid(),

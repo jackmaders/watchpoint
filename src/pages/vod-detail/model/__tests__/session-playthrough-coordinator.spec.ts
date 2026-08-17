@@ -307,7 +307,6 @@ describe("session playthrough coordinator", () => {
 		// Act
 		const answered = sessionPlaythroughReducer(active, {
 			generation: active.generation,
-			idempotencyKey: "answer-key",
 			nowMs: 1500,
 			optionId: "option-1",
 			scenarioId: timedScenario.id,
@@ -316,7 +315,6 @@ describe("session playthrough coordinator", () => {
 		const answeredThenTimedOut = sessionPlaythroughReducer(answered, {
 			deadlineAtMs: deadline,
 			generation: active.generation,
-			idempotencyKey: "timeout-key",
 			nowMs: deadline,
 			scenarioId: timedScenario.id,
 			type: "TIMEOUT_REQUESTED",
@@ -324,14 +322,12 @@ describe("session playthrough coordinator", () => {
 		const timedOut = sessionPlaythroughReducer(active, {
 			deadlineAtMs: deadline,
 			generation: active.generation,
-			idempotencyKey: "timeout-key",
 			nowMs: deadline,
 			scenarioId: timedScenario.id,
 			type: "TIMEOUT_REQUESTED",
 		});
 		const timedOutThenAnswered = sessionPlaythroughReducer(timedOut, {
 			generation: active.generation,
-			idempotencyKey: "answer-key",
 			nowMs: 1500,
 			optionId: "option-1",
 			scenarioId: timedScenario.id,
@@ -348,13 +344,29 @@ describe("session playthrough coordinator", () => {
 		expect(answeredThenTimedOut).toBe(answered);
 		expect(answeredPersistenceEffects).toHaveLength(1);
 		expect(answeredPersistenceEffects[0]).toMatchObject({
-			outcome: { idempotencyKey: "answer-key" },
+			outcome: {
+				idempotencyKey: expect.any(String),
+				isCorrect: true,
+				isTimedOut: false,
+				moduleType: "TACTICS",
+				responseTimeMs: 500,
+				scenarioId: timedScenario.id,
+				selectedOptionId: "option-1",
+			},
 			type: "RECORD_ATTEMPT",
 		});
 		expect(timedOutThenAnswered).toBe(timedOut);
 		expect(timedOutPersistenceEffects).toHaveLength(1);
 		expect(timedOutPersistenceEffects[0]).toMatchObject({
-			outcome: { idempotencyKey: "timeout-key" },
+			outcome: {
+				idempotencyKey: expect.any(String),
+				isCorrect: false,
+				isTimedOut: true,
+				moduleType: "TACTICS",
+				responseTimeMs: 2000,
+				scenarioId: timedScenario.id,
+				selectedOptionId: null,
+			},
 			type: "RECORD_ATTEMPT",
 		});
 	});
@@ -400,6 +412,99 @@ describe("session playthrough coordinator", () => {
 		expect(staleAnswer).toBe(active);
 		expect(staleTimeout).toBe(active);
 		expect(missingStart.session.attempts[0]?.responseTimeMs).toBe(0);
+	});
+
+	it("uses one finalized outcome for local attempts and persistence effects", () => {
+		// Arrange
+		const state = readyPlayingState();
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 30,
+			type: "TIME_UPDATED",
+		});
+
+		// Act
+		const answered = sessionPlaythroughReducer(active, {
+			generation: active.generation,
+			nowMs: 1250,
+			optionId: "option-1",
+			scenarioId: scenario.id,
+			type: "OPTION_SELECTED",
+		});
+		const outcome = answered.effects.find(
+			(effect) => effect.type === "RECORD_ATTEMPT",
+		)?.outcome;
+		const completed = sessionPlaythroughReducer(answered, {
+			generation: answered.generation,
+			status: PlaybackStatus.ENDED,
+			type: "PLAYBACK_STATUS_CHANGED",
+		});
+
+		// Assert
+		expect(outcome).toBe(answered.session.attempts[0]);
+		expect(outcome).toMatchObject({
+			idempotencyKey: expect.stringMatching(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+			),
+			isTimedOut: false,
+			moduleType: "STRATEGY",
+			responseTimeMs: 250,
+			selectedOptionId: "option-1",
+		});
+		expect(completed.summary).toMatchObject({
+			accuracyPercentage: 100,
+			correctCount: 1,
+			totalScenarios: 1,
+		});
+	});
+
+	it("gives repeated playthroughs distinct finalized outcome identities", () => {
+		// Arrange
+		const state = readyPlayingState();
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 30,
+			type: "TIME_UPDATED",
+		});
+		const first = sessionPlaythroughReducer(active, {
+			generation: active.generation,
+			nowMs: 1100,
+			optionId: "option-1",
+			scenarioId: scenario.id,
+			type: "OPTION_SELECTED",
+		});
+		const retried = sessionPlaythroughReducer(first, {
+			autoplay: true,
+			type: "RETRY_SESSION",
+		});
+
+		// Act
+		const restartSettled = sessionPlaythroughReducer(retried, {
+			generation: retried.generation,
+			nowMs: 2000,
+			time: scenario.timestampSeconds,
+			type: "TIME_UPDATED",
+		});
+		const activeAgain = sessionPlaythroughReducer(restartSettled, {
+			generation: retried.generation,
+			nowMs: 2100,
+			time: scenario.timestampSeconds + 0.1,
+			type: "TIME_UPDATED",
+		});
+		const second = sessionPlaythroughReducer(activeAgain, {
+			generation: retried.generation,
+			nowMs: 2200,
+			optionId: "option-1",
+			scenarioId: scenario.id,
+			type: "OPTION_SELECTED",
+		});
+
+		// Assert
+		expect(second.session.attempts[0]?.idempotencyKey).not.toBe(
+			first.session.attempts[0]?.idempotencyKey,
+		);
 	});
 
 	it("replays the current scenario without advancing and waits for the seek", () => {

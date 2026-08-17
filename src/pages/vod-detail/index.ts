@@ -6,6 +6,7 @@ export {
 } from "./api/server-fns";
 export { useRecordAttemptMutation } from "./api/use-record-attempt";
 export {
+	type AttemptOutcome,
 	type RecordAttemptInput,
 	RecordAttemptInputSchema,
 	type RecordAttemptResult,

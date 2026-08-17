@@ -1,11 +1,8 @@
 import type { ModuleType } from "@/shared/db";
 import { PlaybackStatus } from "@/shared/media";
+import type { AttemptOutcome } from "./attempt";
 import type { ScenarioInput, ScenarioOverlayState } from "./session-contract";
-import {
-	calculateSessionSummary,
-	type SessionAttempt,
-	type SessionSummaryReport,
-} from "./summary";
+import { calculateSessionSummary, type SessionSummaryReport } from "./summary";
 
 export type SessionPlayerState =
 	| "LOADING"
@@ -17,7 +14,7 @@ export type SessionPlayerState =
 
 export interface SessionPlayerSession {
 	activeScenarioIndex: number;
-	attempts: SessionAttempt[];
+	attempts: AttemptOutcome[];
 	overlayState: ScenarioOverlayState | null;
 	state: SessionPlayerState;
 	totalMs?: number;
@@ -58,18 +55,7 @@ export interface SessionScenario {
 	timeLimitSeconds?: number | null;
 }
 
-export type SessionAttemptOutcome =
-	| {
-			attempt: SessionAttempt;
-			idempotencyKey: string;
-			kind: "answered";
-			selectedOptionId: string;
-	  }
-	| {
-			attempt: SessionAttempt;
-			idempotencyKey: string;
-			kind: "timedOut";
-	  };
+export type SessionAttemptOutcome = AttemptOutcome;
 
 export type SessionPlaythroughEffect =
 	| { generation: number; type: "MEDIA_PAUSE" }
@@ -126,7 +112,6 @@ export type SessionPlaythroughAction =
 	  }
 	| {
 			generation: number;
-			idempotencyKey?: string;
 			nowMs: number;
 			optionId: string;
 			scenarioId: string;
@@ -135,7 +120,6 @@ export type SessionPlaythroughAction =
 	| {
 			deadlineAtMs: number;
 			generation: number;
-			idempotencyKey?: string;
 			nowMs: number;
 			scenarioId: string;
 			type: "TIMEOUT_REQUESTED";
@@ -298,8 +282,19 @@ function getResponseTimeMs(
 		: Math.round(elapsedMs);
 }
 
-function resolveAttemptIdempotencyKey(idempotencyKey?: string): string {
-	return idempotencyKey ?? crypto.randomUUID();
+function finalizeAttemptOutcome(
+	scenario: SessionScenario,
+	input: Pick<
+		SessionAttemptOutcome,
+		"isCorrect" | "isTimedOut" | "responseTimeMs" | "selectedOptionId"
+	>,
+): SessionAttemptOutcome {
+	return {
+		...input,
+		idempotencyKey: crypto.randomUUID(),
+		moduleType: scenario.moduleType,
+		scenarioId: scenario.id,
+	};
 }
 
 function handleOptionSelected(
@@ -320,7 +315,6 @@ function handleOptionSelected(
 		return handleTimeoutRequested(state, {
 			deadlineAtMs: state.deadlineAtMs,
 			generation: state.generation,
-			idempotencyKey: action.idempotencyKey,
 			nowMs: action.nowMs,
 			scenarioId: scenario.id,
 			type: "TIMEOUT_REQUESTED",
@@ -328,12 +322,12 @@ function handleOptionSelected(
 	}
 
 	const isCorrect = scenario.input.evaluateAnswer(action.optionId);
-	const attempt: SessionAttempt = {
+	const outcome = finalizeAttemptOutcome(scenario, {
 		isCorrect,
-		moduleType: scenario.moduleType,
+		isTimedOut: false,
 		responseTimeMs: getResponseTimeMs(state, action.nowMs),
-		scenarioId: scenario.id,
-	};
+		selectedOptionId: action.optionId,
+	});
 	const overlayState: Extract<ScenarioOverlayState, { status: "answered" }> = {
 		correctOptionId: scenario.input.correctOptionId,
 		isCorrect,
@@ -344,7 +338,7 @@ function handleOptionSelected(
 		state,
 		{
 			...state.session,
-			attempts: [...state.session.attempts, attempt],
+			attempts: [...state.session.attempts, outcome],
 			overlayState,
 			state: "FEEDBACK",
 		},
@@ -352,12 +346,7 @@ function handleOptionSelected(
 		[
 			{
 				generation: state.generation,
-				outcome: {
-					attempt,
-					idempotencyKey: resolveAttemptIdempotencyKey(action.idempotencyKey),
-					kind: "answered",
-					selectedOptionId: action.optionId,
-				},
+				outcome,
 				type: "RECORD_ATTEMPT",
 			},
 		],
@@ -381,13 +370,12 @@ function handleTimeoutRequested(
 		return state;
 	}
 
-	const attempt: SessionAttempt = {
+	const outcome = finalizeAttemptOutcome(scenario, {
 		isCorrect: false,
 		isTimedOut: true,
-		moduleType: scenario.moduleType,
 		responseTimeMs: state.session.totalMs ?? 0,
-		scenarioId: scenario.id,
-	};
+		selectedOptionId: null,
+	});
 	const overlayState: Extract<ScenarioOverlayState, { status: "timedOut" }> = {
 		correctOptionId: scenario.input.correctOptionId,
 		isCorrect: false,
@@ -397,7 +385,7 @@ function handleTimeoutRequested(
 		state,
 		{
 			...state.session,
-			attempts: [...state.session.attempts, attempt],
+			attempts: [...state.session.attempts, outcome],
 			overlayState,
 			state: "FEEDBACK",
 		},
@@ -405,11 +393,7 @@ function handleTimeoutRequested(
 		[
 			{
 				generation: state.generation,
-				outcome: {
-					attempt,
-					idempotencyKey: resolveAttemptIdempotencyKey(action.idempotencyKey),
-					kind: "timedOut",
-				},
+				outcome,
 				type: "RECORD_ATTEMPT",
 			},
 		],
