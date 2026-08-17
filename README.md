@@ -15,7 +15,6 @@ An interactive Overwatch 2 VOD decision training platform built with **TanStack 
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) & [Radix UI](https://www.radix-ui.com)
 - **Form Handling & Validation**: [TanStack React Form](https://tanstack.com/form) & [Zod](https://zod.dev)
 - **Testing**: [Vitest](https://vitest.dev) (100% coverage threshold, <50ms tests) & [Playwright](https://playwright.dev) (E2E)
-- **Automated AI SDLC**: [Sandcastle Autonomous Agent Runner](docs/adr/0005-sandcastle-agent-orchestration.md)
 
 ---
 
@@ -48,34 +47,12 @@ src/
 | `bun run check:all` | Run all Biome checks |
 | `bun run check:architecture` | Run Steiger FSD architecture linter |
 | `bun run fix:all` | Auto-fix Biome formatting and lint issues |
-| `bun run sandcastle` | Run autonomous coding agents in isolated Docker sandboxes |
 | `bun run test:unit` | Run Vitest unit tests |
 | `bun run test:coverage` | Run Vitest unit tests with 100% coverage check |
 | `bun run test:e2e` | Run Playwright E2E tests |
 | `bun run validate` | Run complete quality gate (`types`, `all`, `architecture`, `coverage`, `build`) |
 
 ---
-
-## Autonomous Agent Orchestration (Sandcastle)
-
-Run autonomous coding agents (`agy`, `gemini`, `codex`, `claude`) in container-isolated Docker sandboxes with host credential forwarding and self-healing verification:
-
-```bash
-# Run a task from a GitHub issue
-bun run sandcastle --issue 152
-
-# Run an ad-hoc task with iterative verification
-bun run sandcastle --prompt "Refactor timeline seeking logic"
-
-# Local-only dry-run without creating PRs
-bun run sandcastle --prompt "Fix button alignment" --dry-run
-```
-
-The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. To use native OpenAI/ChatGPT API models, set `OPENAI_API_KEY`, pass `--codex-provider openai`, and select the model with `--model` (the default is `gpt-5.3-codex`). Gemini and Antigravity remain available with `--agent gemini` and `--agent agy`. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route.
-
-`OPENROUTER_API_KEY` and `OPENAI_API_KEY` are forwarded only at runtime into the Sandcastle container. They are not written to the Codex configuration or baked into the image. `CODEX_PROVIDER` and `CODEX_MODEL` can be used instead of CLI flags for unattended watcher deployments. When a provider reports the routed model, queue output records it; missing provider metadata is ignored.
-
-For the default unattended setup, use `CODEX_PROVIDER=openrouter` and leave `CODEX_MODEL` unset. If `CODEX_PROVIDER=openai`, `CODEX_MODEL` must be an OpenAI model ID; an OpenRouter model such as `openrouter/free` is rejected before the agent starts.
 
 ---
 

@@ -53,15 +53,6 @@ This document defines the core domain terminology used across product discussion
 
 ## 3. Architecture & Engine Terms
 
-* **Sandcastle Agent Runtime**
-  The resolved provider, model, credential boundary, sandbox image, and
-  permission configuration used by both ad-hoc runs and queue workflows.
-
-* **Routed Model**
-  Optional provider telemetry identifying the concrete model selected behind a
-  router such as OpenRouter's `openrouter/free`. Missing routed-model metadata
-  is not an execution failure.
-
 * **Time Sync Poller**  
   The client-side background timer operating on a 1-second interval to compare current video playback time against the next scenario's target timestamp.
 
