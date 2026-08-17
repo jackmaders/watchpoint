@@ -1,4 +1,14 @@
 export type {
+	SessionMediaAdapterOptions,
+	SessionMediaAdapterResult,
+	SessionMediaCommand,
+	SessionMediaEvent,
+} from "./session-media-adapter";
+export {
+	executeSessionMediaCommand,
+	useSessionMediaAdapter,
+} from "./session-media-adapter";
+export type {
 	VodContainerRef,
 	VodPlayerOptions,
 	VodPlayerResult,
