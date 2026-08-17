@@ -1,3 +1,4 @@
+import type { CodexProvider } from "../codex-config";
 import type { GithubClient, ProcessRunner } from "../github/types";
 import type { AgentType, SandboxType, VerificationResult } from "../types";
 import type {
@@ -33,6 +34,7 @@ export interface PickerOptions {
 export interface PickCliArgs {
 	readonly agent?: AgentType;
 	readonly model?: string;
+	readonly codexProvider?: CodexProvider;
 	readonly maxAttempts?: number;
 	readonly dryRun?: boolean;
 	readonly pr?: boolean;

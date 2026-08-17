@@ -66,6 +66,7 @@ describe("parseWatchCliArgs", () => {
 		// Assert
 		expect(args).toEqual({
 			agent: "codex",
+			codexProvider: "openrouter",
 			dangerouslySkipPermissions: true,
 			dryRun: false,
 			help: false,
@@ -107,6 +108,7 @@ describe("parseWatchCliArgs", () => {
 		expect(args).toEqual({
 			agent: "codex",
 			branch: "feat/custom",
+			codexProvider: "openrouter",
 			dangerouslySkipPermissions: true,
 			dryRun: true,
 			help: false,
@@ -120,6 +122,13 @@ describe("parseWatchCliArgs", () => {
 			pr: false,
 			sandbox: "docker",
 		});
+	});
+
+	it("selects the native OpenAI Codex provider", () => {
+		const args = parseWatchCliArgs(["--codex-provider", "openai"]);
+
+		expect(args.codexProvider).toBe("openai");
+		expect(args.model).toBe("gpt-5.3-codex");
 	});
 
 	it("skips leading 'watch' subcommand if passed in argv", () => {

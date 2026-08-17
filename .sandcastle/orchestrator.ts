@@ -60,7 +60,10 @@ function validateRuntimeCredentials(
 	runtime: ReturnType<typeof resolveAgentRuntime>,
 ): void {
 	if (runtime.agent === "codex") {
-		validateCodexConfiguration(runtime.authMountsConfig.env);
+		validateCodexConfiguration(
+			runtime.authMountsConfig.env,
+			runtime.codexProvider,
+		);
 	}
 }
 async function resolveTaskInput(
@@ -144,6 +147,7 @@ export async function orchestrateSandcastle(
 
 	const runtime = resolveAgentRuntime({
 		agent: args.agent,
+		codexProvider: args.codexProvider,
 		dangerouslySkipPermissions: args.dangerouslySkipPermissions,
 		homeDir: options.homeDir,
 		imageName: args.imageName,

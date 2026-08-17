@@ -1,3 +1,4 @@
+import type { CodexProvider } from "../codex-config";
 import type {
 	CandidateIssue,
 	GithubClient,
@@ -38,6 +39,7 @@ export interface WatcherDaemonOptions extends WatcherTelemetryEvents {
 	readonly dryRun?: boolean;
 	readonly agent?: AgentType;
 	readonly model?: string;
+	readonly codexProvider?: CodexProvider;
 	readonly maxAttempts?: number;
 	readonly branch?: string;
 	readonly pr?: boolean;
@@ -71,6 +73,7 @@ export interface WatchCliArgs {
 	readonly limit?: number;
 	readonly agent: AgentType;
 	readonly model?: string;
+	readonly codexProvider?: CodexProvider;
 	readonly maxAttempts: number;
 	readonly dryRun: boolean;
 	readonly pr: boolean;

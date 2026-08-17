@@ -1,4 +1,8 @@
-import { OPENROUTER_DEFAULT_MODEL } from "./codex-config";
+import {
+	defaultCodexModel,
+	parseCodexProvider,
+	resolveCodexProvider,
+} from "./codex-config";
 import type { AgentType, SandboxType, SandcastleCliArgs } from "./types";
 
 export const VALID_AGENTS: readonly AgentType[] = [
@@ -41,6 +45,7 @@ export function parsePositiveInt(val: string, flagName: string): number {
 export interface CommonCliState {
 	agent: AgentType;
 	model?: string;
+	codexProvider: ReturnType<typeof resolveCodexProvider>;
 	maxAttempts: number;
 	dryRun: boolean;
 	pr: boolean;
@@ -55,6 +60,7 @@ export interface CommonCliState {
 export function createDefaultCommonCliState(): CommonCliState {
 	return {
 		agent: "codex",
+		codexProvider: resolveCodexProvider(),
 		dangerouslySkipPermissions: true,
 		dryRun: false,
 		help: false,
@@ -78,6 +84,10 @@ export function applyCommonValueFlag(
 	}
 	if (arg === "--model") {
 		state.model = nextVal;
+		return 1;
+	}
+	if (arg === "--codex-provider") {
+		state.codexProvider = parseCodexProvider(nextVal);
 		return 1;
 	}
 	if (
@@ -207,6 +217,7 @@ export function parseCliArgs(argv: string[]): SandcastleCliArgs {
 	return {
 		agent: state.agent,
 		branch: state.branch,
+		codexProvider: state.codexProvider,
 		dangerouslySkipPermissions: state.dangerouslySkipPermissions,
 		dryRun: state.dryRun,
 		imageName: state.imageName,
@@ -215,7 +226,9 @@ export function parseCliArgs(argv: string[]): SandcastleCliArgs {
 		maxRetries: state.maxAttempts,
 		model:
 			state.model ??
-			(state.agent === "codex" ? OPENROUTER_DEFAULT_MODEL : undefined),
+			(state.agent === "codex"
+				? defaultCodexModel(state.codexProvider)
+				: undefined),
 		pr: state.pr,
 		prompt: state.prompt,
 		sandbox: state.sandbox,

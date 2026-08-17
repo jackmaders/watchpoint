@@ -71,9 +71,9 @@ bun run sandcastle --prompt "Refactor timeline seeking logic"
 bun run sandcastle --prompt "Fix button alignment" --dry-run
 ```
 
-The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route, or pass `--agent agy` to use the Antigravity escape hatch with its separate credentials.
+The issue picker (`bun run sandcastle:pick`) and watcher (`bun run sandcastle:watch`) use the same runtime selection as ad-hoc runs. Codex is the default provider and uses the OpenRouter `openrouter/free` router; set `OPENROUTER_API_KEY` for queue execution. To use native OpenAI GPT Codex models, set `OPENAI_API_KEY` and pass `--codex-provider openai`; the default native model is `gpt-5.3-codex`. The free router can change the selected model, has variable availability and rate limits, and is not a reproducible production route. Pass `--model provider/model` to pin a route, or pass `--agent agy` to use the Antigravity escape hatch with its separate credentials.
 
-`OPENROUTER_API_KEY` is forwarded only at runtime into the Sandcastle container. It is not written to the Codex configuration or baked into the image. When a provider reports the routed model, queue output records it; missing provider metadata is ignored.
+`OPENROUTER_API_KEY` and `OPENAI_API_KEY` are forwarded only at runtime into the Sandcastle container. They are not written to the Codex configuration or baked into the image. `CODEX_PROVIDER` and `CODEX_MODEL` can be used instead of CLI flags for unattended watcher deployments. When a provider reports the routed model, queue output records it; missing provider metadata is ignored.
 
 ---
 

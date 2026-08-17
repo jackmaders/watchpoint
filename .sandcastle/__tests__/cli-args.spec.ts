@@ -13,6 +13,7 @@ describe("parseCliArgs", () => {
 		expect(result).toEqual({
 			agent: "codex",
 			branch: undefined,
+			codexProvider: "openrouter",
 			dangerouslySkipPermissions: true,
 			dryRun: false,
 			imageName: "sandcastle:watchpoint",
@@ -169,6 +170,18 @@ describe("parseCliArgs", () => {
 		// Assert
 		expect(result.branch).toBe("feat/custom-branch");
 		expect(result.model).toBe("gemini-2.5-pro");
+	});
+
+	it("selects native OpenAI Codex and its default model", () => {
+		const result = parseCliArgs([
+			"--prompt",
+			"Implement the feature",
+			"--codex-provider",
+			"openai",
+		]);
+
+		expect(result.codexProvider).toBe("openai");
+		expect(result.model).toBe("gpt-5.3-codex");
 	});
 
 	it("throws error if neither issue nor prompt is specified", () => {

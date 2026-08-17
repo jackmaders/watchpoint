@@ -192,6 +192,7 @@ export class WatcherDaemon {
 					this.options.agentRunner ??
 					new DefaultAgentRunner({
 						agent: this.options.agent,
+						codexProvider: this.options.codexProvider,
 						dangerouslySkipPermissions: this.options.dangerouslySkipPermissions,
 						imageName: this.options.imageName,
 						model: this.options.model,
