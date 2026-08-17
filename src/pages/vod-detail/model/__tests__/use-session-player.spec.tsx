@@ -569,6 +569,9 @@ describe("useSessionPlayer", () => {
 		act(() => {
 			vi.advanceTimersByTime(3100);
 		});
+		await act(async () => {
+			await Promise.resolve();
+		});
 
 		// Assert
 		expect(result.current.state).toBe("FEEDBACK");
@@ -581,6 +584,16 @@ describe("useSessionPlayer", () => {
 		expect(result.current.attempts[0].isCorrect).toBe(false);
 		expect(result.current.attempts[0].isTimedOut).toBe(true);
 		expect(result.current.attempts[0].responseTimeMs).toBe(3000);
+		expect(serverFns.recordAttempt).toHaveBeenCalledWith({
+			data: {
+				idempotencyKey: expect.any(String),
+				isCorrect: false,
+				isTimedOut: true,
+				responseTimeMs: 3000,
+				scenarioId: "sc_2",
+				selectedOptionId: null,
+			},
+		});
 		vi.useRealTimers();
 	});
 

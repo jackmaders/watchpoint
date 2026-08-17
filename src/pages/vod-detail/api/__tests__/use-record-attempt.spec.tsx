@@ -41,20 +41,37 @@ describe("useRecordAttemptMutation", () => {
 		// Arrange
 		const payload = {
 			idempotencyKey: "7b3b7f7e-4f3c-4f84-8a0d-5e3a4f7f2c91",
+			inputValue: { selected: "option-1" },
 			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 200,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
 		};
-		vi.spyOn(serverFns, "recordAttempt").mockResolvedValueOnce({
-			attemptId: "att_123",
-			success: true,
-		} as never);
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockResolvedValueOnce({
+				attemptId: "att_123",
+				success: true,
+			} as never);
 
 		// Act
 		const result = await executeRecordAttempt(payload);
 
 		// Assert
 		expect(result).toEqual({ attemptId: "att_123", success: true });
+		expect(recordAttempt).toHaveBeenCalledWith({
+			data: {
+				idempotencyKey: payload.idempotencyKey,
+				inputValue: payload.inputValue,
+				isCorrect: true,
+				isTimedOut: false,
+				responseTimeMs: 200,
+				scenarioId: payload.scenarioId,
+				selectedOptionId: "option-1",
+			},
+		});
 	});
 
 	it("throws error in executeRecordAttempt when server function returns unsuccessful result", async () => {
@@ -62,8 +79,11 @@ describe("useRecordAttemptMutation", () => {
 		const payload = {
 			idempotencyKey: "8c4c8f8f-5a4d-4f95-9b1e-6f4b5f8f3da2",
 			isCorrect: false,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 500,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-2",
 		};
 		vi.spyOn(serverFns, "recordAttempt").mockResolvedValueOnce({
 			error: "Database unavailable",
@@ -81,8 +101,11 @@ describe("useRecordAttemptMutation", () => {
 		const payload = {
 			idempotencyKey: "9d5d9f90-6b5e-40a6-ac2f-7a5c6f904eb3",
 			isCorrect: false,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 500,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-2",
 		};
 		vi.spyOn(serverFns, "recordAttempt").mockResolvedValueOnce({
 			success: false,
@@ -99,8 +122,11 @@ describe("useRecordAttemptMutation", () => {
 		const payload = {
 			idempotencyKey: "ae6ea0a1-7c6f-41b7-bd30-8b6d70a15fc4",
 			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 350,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
 		};
 		vi.spyOn(serverFns, "recordAttempt").mockResolvedValueOnce({
 			attemptId: "att_default",
@@ -126,8 +152,11 @@ describe("useRecordAttemptMutation", () => {
 		const payload = {
 			idempotencyKey: "bf7fb1b2-8d70-42c8-ce41-9c7e81b260d5",
 			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 350,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
 		};
 		vi.spyOn(serverFns, "recordAttempt").mockResolvedValueOnce({
 			attemptId: "att_456",
@@ -160,8 +189,11 @@ describe("useRecordAttemptMutation", () => {
 		const payload = {
 			idempotencyKey: "c0ffee00-0000-4000-8000-000000000001",
 			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
 			responseTimeMs: 350,
 			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			selectedOptionId: "option-1",
 		};
 		const recordAttempt = vi
 			.spyOn(serverFns, "recordAttempt")

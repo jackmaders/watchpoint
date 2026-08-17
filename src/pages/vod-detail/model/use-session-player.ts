@@ -17,6 +17,7 @@ import {
 	type VodContainerRef,
 } from "@/shared/media";
 import { useRecordAttemptMutation } from "../api/use-record-attempt";
+import type { AttemptOutcome } from "./attempt";
 import {
 	type NormalizedScenario,
 	normalizeScenario,
@@ -33,7 +34,7 @@ import {
 	type SessionScenario,
 	sessionPlaythroughReducer,
 } from "./session-playthrough-coordinator";
-import type { SessionAttempt, SessionSummaryReport } from "./summary";
+import type { SessionSummaryReport } from "./summary";
 
 export type { ScenarioData, ScenarioOverlayState } from "./session-contract";
 export { normalizeScenario, toScenarioOverlayData } from "./session-contract";
@@ -55,7 +56,7 @@ export interface UseSessionPlayerOptions {
 export interface UseSessionPlayerResult {
 	activeScenarioIndex: number;
 	activeScenarios: ScenarioItem[];
-	attempts: SessionAttempt[];
+	attempts: AttemptOutcome[];
 	containerRef: VodContainerRef;
 	currentScenario: ScenarioItem | null;
 	currentTime: number;
@@ -147,16 +148,7 @@ function executeSessionEffect(
 			media.execute({ autoplay: effect.autoplay, type: "RESTART" });
 			return;
 		case "RECORD_ATTEMPT":
-			recordAttempt.mutate({
-				idempotencyKey: effect.outcome.idempotencyKey,
-				isCorrect: effect.outcome.attempt.isCorrect,
-				isTimedOut: effect.outcome.kind === "timedOut",
-				responseTimeMs: effect.outcome.attempt.responseTimeMs,
-				scenarioId: effect.outcome.attempt.scenarioId,
-				...(effect.outcome.kind === "answered"
-					? { selectedOptionId: effect.outcome.selectedOptionId }
-					: {}),
-			});
+			recordAttempt.mutate(effect.outcome);
 			return;
 		case "SESSION_COMPLETED":
 			onSessionCompleteRef.current?.(effect.summary);
@@ -283,7 +275,6 @@ function useSessionPlayerActions(
 			if (!scenario) return;
 			dispatch({
 				generation: state.generation,
-				idempotencyKey: crypto.randomUUID(),
 				nowMs: Date.now(),
 				optionId,
 				scenarioId: scenario.id,
@@ -370,7 +361,6 @@ function useSessionPlayerRuntime({
 		dispatch({
 			deadlineAtMs,
 			generation: state.generation,
-			idempotencyKey: crypto.randomUUID(),
 			nowMs: Date.now(),
 			scenarioId: scenario.id,
 			type: "TIMEOUT_REQUESTED",
