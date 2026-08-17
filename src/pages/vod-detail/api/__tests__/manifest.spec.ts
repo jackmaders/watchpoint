@@ -73,11 +73,11 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			youtubeVideoId: "dQw4w9WgXcQ",
 		});
 		expect(getSessionManifest).toHaveBeenCalledWith("vod_1", {
-			modules: expect.any(URLSearchParams),
+			modules: undefined,
 		});
 	});
 
-	it("passes search params directly to getSessionManifest", async () => {
+	it("normalizes module search params before calling the manifest query", async () => {
 		// Arrange
 		const mockManifest = {
 			id: "vod_1",
@@ -96,12 +96,12 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		const res = await handleGetVodManifest(req, {
 			params: Promise.resolve({ id: "vod_1" }),
 		});
-		const capturedModules = vi.mocked(getSessionManifest).mock.calls[0]?.[1]
-			?.modules as URLSearchParams;
+		const capturedModules =
+			vi.mocked(getSessionManifest).mock.calls[0]?.[1]?.modules;
 
 		// Assert
 		expect(res.status).toBe(200);
-		expect(capturedModules.getAll("modules")).toEqual(["STRATEGY,TACTICS"]);
+		expect(capturedModules).toEqual(["STRATEGY", "TACTICS"]);
 	});
 
 	it("returns 404 JSON response if VOD manifest is not found", async () => {

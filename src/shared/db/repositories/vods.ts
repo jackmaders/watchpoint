@@ -1,9 +1,10 @@
 import { desc } from "drizzle-orm";
 import { type DbContext, getDb } from "../client/client";
-import { type ModuleType, moduleTypeEnum, vods } from "../schema";
+import { type ModuleType, vods } from "../schema";
 
 export interface GetSessionManifestOptions {
-	modules?: string | readonly string[] | URLSearchParams;
+	/** A null filter represents a nonblank filter with no valid module types. */
+	modules?: readonly ModuleType[] | null;
 	publishedOnly?: boolean;
 }
 
@@ -31,40 +32,6 @@ export async function getPublishedVods(context?: DbContext) {
 	});
 }
 
-function parseAndValidateModules(
-	modules?: string | readonly string[] | URLSearchParams,
-): { hasFilter: boolean; validModules: ModuleType[] } {
-	if (modules === undefined) {
-		return { hasFilter: false, validModules: [] };
-	}
-
-	let rawTokens: string[];
-
-	if (typeof modules === "string") {
-		rawTokens = modules.split(",");
-	} else if (modules instanceof URLSearchParams) {
-		rawTokens = modules.getAll("modules").flatMap((m) => m.split(","));
-	} else {
-		rawTokens = modules.flatMap((m) => m.split(","));
-	}
-
-	const tokens = rawTokens.map((m) => m.trim().toUpperCase()).filter(Boolean);
-
-	if (tokens.length === 0) {
-		return { hasFilter: false, validModules: [] };
-	}
-
-	const validModules = Array.from(
-		new Set(
-			tokens.filter((m): m is ModuleType =>
-				moduleTypeEnum.includes(m as ModuleType),
-			),
-		),
-	);
-
-	return { hasFilter: true, validModules };
-}
-
 export async function getSessionManifest(
 	id: string,
 	options: GetSessionManifestOptions = {},
@@ -72,7 +39,6 @@ export async function getSessionManifest(
 ) {
 	const db = await getDb(context);
 	const { modules, publishedOnly = true } = options;
-	const { hasFilter, validModules } = parseAndValidateModules(modules);
 
 	const vod = await db.query.vods.findFirst({
 		where: publishedOnly
@@ -81,12 +47,15 @@ export async function getSessionManifest(
 		with: {
 			scenarios: {
 				orderBy: (scenarios, { asc }) => [asc(scenarios.timestampSeconds)],
-				where: hasFilter
-					? validModules.length > 0
-						? (scenarios, { inArray }) =>
-								inArray(scenarios.moduleType, validModules)
-						: (_scenarios, { sql }) => sql`1 = 0`
-					: undefined,
+				where:
+					modules === null
+						? (_scenarios, { sql }) => sql`1 = 0`
+						: modules !== undefined
+							? modules.length > 0
+								? (scenarios, { inArray }) =>
+										inArray(scenarios.moduleType, modules)
+								: undefined
+							: undefined,
 			},
 		},
 	});

@@ -15,4 +15,5 @@ export {
 	type JsonPrimitive,
 	type JsonValue,
 	type ModuleType,
+	moduleTypeEnum,
 } from "./schema";

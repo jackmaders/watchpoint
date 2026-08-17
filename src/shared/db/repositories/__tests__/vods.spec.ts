@@ -152,7 +152,7 @@ describe("VOD database accessors", () => {
 			expect(result).toBeNull();
 		});
 
-		it("filters scenarios by moduleType when modules array is provided", async () => {
+		it("filters scenarios by moduleType when normalized modules are provided", async () => {
 			// Arrange
 			const db = await getDb();
 			const mockVod = {
@@ -184,7 +184,7 @@ describe("VOD database accessors", () => {
 
 			// Act
 			const result = await getSessionManifest("vod_1", {
-				modules: ["strategy", "TACTICS"],
+				modules: ["STRATEGY", "TACTICS"],
 			});
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
@@ -219,7 +219,7 @@ describe("VOD database accessors", () => {
 			]);
 		});
 
-		it("filters scenarios when modules is passed as a comma-separated string", async () => {
+		it("filters scenarios when normalized modules contain multiple module types", async () => {
 			// Arrange
 			const db = await getDb();
 			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce({
@@ -229,7 +229,7 @@ describe("VOD database accessors", () => {
 
 			// Act
 			await getSessionManifest("vod_1", {
-				modules: "ULTIMATE, cooldown",
+				modules: ["ULTIMATE", "COOLDOWN"],
 			});
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
@@ -263,20 +263,16 @@ describe("VOD database accessors", () => {
 			]);
 		});
 
-		it("filters scenarios when modules is passed as URLSearchParams", async () => {
+		it("filters scenarios when normalized modules are passed as a readonly array", async () => {
 			// Arrange
 			const db = await getDb();
 			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce({
 				id: "vod_1",
 				scenarios: [],
 			} as unknown as SessionManifest);
-			const searchParams = new URLSearchParams(
-				"modules=spatial&modules=strategy,tactics",
-			);
-
 			// Act
 			await getSessionManifest("vod_1", {
-				modules: searchParams,
+				modules: ["SPATIAL", "STRATEGY", "TACTICS"],
 			});
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
@@ -311,7 +307,7 @@ describe("VOD database accessors", () => {
 			]);
 		});
 
-		it("does not apply scenario filter when modules is empty string or empty array", async () => {
+		it("does not apply scenario filter when no normalized modules are provided", async () => {
 			// Arrange
 			const db = await getDb();
 			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce({
@@ -320,14 +316,9 @@ describe("VOD database accessors", () => {
 			} as unknown as SessionManifest);
 
 			// Act
-			await getSessionManifest("vod_1", {
-				modules: "",
-			});
+			await getSessionManifest("vod_1");
 			await getSessionManifest("vod_1", {
 				modules: [],
-			});
-			await getSessionManifest("vod_1", {
-				modules: ["   "],
 			});
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
@@ -347,7 +338,7 @@ describe("VOD database accessors", () => {
 			expect(capturedWhereFn).toBeUndefined();
 		});
 
-		it("produces empty match condition when modules filter contains only invalid modules", async () => {
+		it("produces empty match condition when normalized modules are null", async () => {
 			// Arrange
 			const db = await getDb();
 			vi.mocked(db.query.vods.findFirst).mockResolvedValueOnce({
@@ -357,7 +348,7 @@ describe("VOD database accessors", () => {
 
 			// Act
 			await getSessionManifest("vod_1", {
-				modules: ["INVALID_TYPE", "UNKNOWN"],
+				modules: null,
 			});
 			const callArgs = vi
 				.mocked(db.query.vods.findFirst)
