@@ -168,6 +168,9 @@ export const attemptRecords = sqliteTable("attempt_record", {
 		Record<string, JsonValue>
 	>(),
 	isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
+	isTimedOut: integer("is_timed_out", { mode: "boolean" })
+		.notNull()
+		.default(false),
 	responseTimeMs: integer("response_time_ms").notNull(),
 	scenarioId: text("scenario_id")
 		.notNull()

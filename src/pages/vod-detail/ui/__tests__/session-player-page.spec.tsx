@@ -175,6 +175,7 @@ describe("SessionPlayerPage", () => {
 			data: {
 				idempotencyKey: expect.any(String),
 				isCorrect: true,
+				isTimedOut: false,
 				responseTimeMs: expect.any(Number),
 				scenarioId: "sc_1",
 				selectedOptionId: "opt_1a",
@@ -206,6 +207,7 @@ describe("SessionPlayerPage", () => {
 			data: {
 				idempotencyKey: expect.any(String),
 				isCorrect: false,
+				isTimedOut: false,
 				responseTimeMs: expect.any(Number),
 				scenarioId: "sc_2",
 				selectedOptionId: "opt_2a",

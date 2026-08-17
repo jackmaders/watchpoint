@@ -1,0 +1,1 @@
+ALTER TABLE `attempt_record` ADD `is_timed_out` integer DEFAULT false NOT NULL;
