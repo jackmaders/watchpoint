@@ -113,10 +113,28 @@ describe("SessionPlayerPage", () => {
 		const frameController = installMockFrames();
 		const youtube = createYouTubeMock(600);
 		setYouTubeNamespace(youtube.namespace);
+		const progressionVod = {
+			...mockVod,
+			scenarios: [
+				...mockVod.scenarios,
+				{
+					...mockVod.scenarios[0],
+					id: "sc_2",
+					inputConfig: {
+						options: [
+							{ id: "opt_2a", is_correct: false, text: "Hold the arch" },
+							{ id: "opt_2b", is_correct: true, text: "Rotate to point" },
+						],
+					},
+					promptText: "Where should Ana rotate next?",
+					timestampSeconds: 60,
+				},
+			],
+		};
 
 		const page = await SessionPlayerPage({
 			params: { id: "vod_gm_ana" },
-			vod: mockVod,
+			vod: progressionVod,
 		});
 		renderWithClient(page);
 		await act(async () => {
@@ -144,22 +162,53 @@ describe("SessionPlayerPage", () => {
 		expect(screen.queryByTestId("play-pause-button")).toBeNull();
 
 		// Act: select option
-		act(() => {
+		await act(async () => {
 			fireEvent.click(screen.getByText("Highground Balcony"));
+			await Promise.resolve();
 		});
 
 		// Assert feedback is rendered
 		expect(screen.getByText("PASS")).toBeDefined();
 		expect(screen.getByText("Highground is optimal position.")).toBeDefined();
 		expect(screen.queryByTestId("play-pause-button")).toBeNull();
+		expect(serverFns.recordAttempt).toHaveBeenCalledWith({
+			data: {
+				isCorrect: true,
+				responseTimeMs: expect.any(Number),
+				scenarioId: "sc_1",
+				selectedOptionId: "opt_1a",
+			},
+		});
 
 		// Act: resume playback
 		act(() => {
 			fireEvent.click(screen.getByTestId("resume-playback-button"));
 		});
 
-		// Assert overlay is dismissed
+		// Assert next Scenario becomes active after resuming playback
 		expect(screen.queryByText("Where should Ana position?")).toBeNull();
+		player.getCurrentTime = vi.fn(() => 60.5);
+		act(() => {
+			frameController.flush();
+		});
+		expect(screen.getByText("Where should Ana rotate next?")).toBeDefined();
+
+		// Act: select an incorrect option in the next Scenario
+		await act(async () => {
+			fireEvent.click(screen.getByText("Hold the arch"));
+			await Promise.resolve();
+		});
+
+		// Assert FAIL evaluation and second Attempt Record
+		expect(screen.getByText("FAIL")).toBeDefined();
+		expect(serverFns.recordAttempt).toHaveBeenNthCalledWith(2, {
+			data: {
+				isCorrect: false,
+				responseTimeMs: expect.any(Number),
+				scenarioId: "sc_2",
+				selectedOptionId: "opt_2a",
+			},
+		});
 	});
 
 	it("renders SessionSummaryPanel when session completes and allows retry", async () => {
