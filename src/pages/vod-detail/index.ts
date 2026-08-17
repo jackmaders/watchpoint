@@ -42,6 +42,10 @@ export {
 	useSessionPlayer,
 } from "./model/use-session-player";
 export {
+	InteractiveOverlayEngine,
+	type InteractiveOverlayEngineProps,
+} from "./ui/interactive-overlay-engine";
+export {
 	ModuleFilterPills,
 	type ModuleFilterPillsProps,
 } from "./ui/module-filter-pills";
