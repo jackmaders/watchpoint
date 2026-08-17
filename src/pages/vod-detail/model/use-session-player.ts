@@ -21,26 +21,24 @@ import {
 	type ScenarioOption,
 	type ScenarioOverlayState,
 } from "./session-contract";
+import type { SessionPlayerState } from "./session-player-state";
 import {
-	initialSessionPlayerSession,
-	type SessionPlayerAction,
-	type SessionPlayerState,
-	sessionPlayerReducer,
-} from "./session-player-state";
+	createSessionPlaythroughState,
+	getScenarioLimitMs,
+	type SessionPlaythroughAction,
+	type SessionPlaythroughEffect,
+	type SessionPlaythroughState,
+	type SessionScenario,
+	sessionPlaythroughReducer,
+} from "./session-playthrough-coordinator";
 import {
 	calculateSessionSummary,
 	type SessionAttempt,
 	type SessionSummaryReport,
 } from "./summary";
 
-export type {
-	ScenarioData,
-	ScenarioOverlayState,
-} from "./session-contract";
-export {
-	normalizeScenario,
-	toScenarioOverlayData,
-} from "./session-contract";
+export type { ScenarioData, ScenarioOverlayState } from "./session-contract";
+export { normalizeScenario, toScenarioOverlayData } from "./session-contract";
 export type { SessionPlayerState } from "./session-player-state";
 export { resolveNewStatusState } from "./session-player-state";
 
@@ -94,224 +92,200 @@ function useSessionScenarios(vod: ManifestVod | null): ScenarioItem[] {
 }
 
 function useScenarioCountdown(
-	state: SessionPlayerState,
-	totalMs: number | undefined,
+	deadlineAtMs: number | undefined,
 	isUnanswered: boolean,
-	onTimeout: () => void,
+	onTimeout: (deadlineAtMs: number) => void,
 ) {
 	const [remainingMs, setRemainingMs] = useState<number | undefined>(undefined);
 	const onTimeoutRef = useRef(onTimeout);
-	const hasFiredRef = useRef(false);
-	const remainingRef = useRef<number>(0);
 	onTimeoutRef.current = onTimeout;
 
 	useEffect(() => {
-		if (
-			state !== "SCENARIO_ACTIVE" ||
-			typeof totalMs !== "number" ||
-			totalMs <= 0 ||
-			!isUnanswered
-		) {
+		if (!isUnanswered || deadlineAtMs === undefined) {
 			setRemainingMs(undefined);
-			hasFiredRef.current = false;
 			return;
 		}
 
-		hasFiredRef.current = false;
-		remainingRef.current = totalMs;
-		setRemainingMs(totalMs);
-		const interval = setInterval(() => {
-			remainingRef.current = Math.max(0, remainingRef.current - 50);
-			setRemainingMs(remainingRef.current);
-			if (remainingRef.current <= 0 && !hasFiredRef.current) {
-				hasFiredRef.current = true;
-				clearInterval(interval);
-				onTimeoutRef.current();
+		let hasFired = false;
+		const update = () => {
+			const remaining = Math.max(0, deadlineAtMs - Date.now());
+			setRemainingMs(remaining);
+			if (remaining === 0 && !hasFired) {
+				hasFired = true;
+				onTimeoutRef.current(deadlineAtMs);
 			}
-		}, 50);
-
-		return () => {
-			clearInterval(interval);
-			hasFiredRef.current = false;
 		};
-	}, [state, totalMs, isUnanswered]);
+
+		update();
+		const interval = setInterval(update, 50);
+		return () => clearInterval(interval);
+	}, [deadlineAtMs, isUnanswered]);
 
 	return remainingMs;
 }
 
-function getScenarioLimitMs(scenario: ScenarioItem): number | undefined {
-	const limitSec =
-		scenario.timeLimitSeconds ?? (scenario.moduleType === "TACTICS" ? 3 : null);
-	return limitSec && limitSec > 0 ? limitSec * 1000 : undefined;
-}
-
-interface SessionAttemptCallbacksParams {
-	currentScenarioRef: React.RefObject<ScenarioItem | null>;
-	dispatch: React.Dispatch<SessionPlayerAction>;
-	overlayState: ScenarioOverlayState | null;
-	startTimeRef: React.RefObject<number>;
-	state: SessionPlayerState;
-	totalMs: number | undefined;
-}
-
-function useSessionAttemptCallbacks({
-	currentScenarioRef,
-	dispatch,
-	overlayState,
-	startTimeRef,
-	state,
-	totalMs,
-}: SessionAttemptCallbacksParams) {
-	const recordMutation = useRecordAttemptMutation();
-
-	const handleTimeout = useCallback(() => {
-		const scenario = currentScenarioRef.current;
-		if (
-			state !== "SCENARIO_ACTIVE" ||
-			overlayState?.status !== "unanswered" ||
-			!scenario ||
-			typeof totalMs !== "number"
-		) {
-			return;
-		}
-
-		const { correctOptionId } = scenario.input;
-		const attempt: SessionAttempt = {
-			isCorrect: false,
-			isTimedOut: true,
-			moduleType: scenario.moduleType,
-			responseTimeMs: totalMs,
-			scenarioId: scenario.id,
-		};
+function useSessionPlaybackAdapter(
+	autoplay: boolean,
+	vod: ManifestVod | null,
+	dispatch: React.Dispatch<SessionPlaythroughAction>,
+	generationRef: React.RefObject<number>,
+	onTimeUpdate: (time: number) => void,
+) {
+	const onReady = useCallback(() => {
 		dispatch({
-			attempt,
-			overlayState: { correctOptionId, isCorrect: false, status: "timedOut" },
-			type: "TIMEOUT_RECORDED",
+			autoplay,
+			generation: generationRef.current,
+			type: "PLAYER_READY",
 		});
-		recordMutation.mutate({
-			isCorrect: false,
-			responseTimeMs: totalMs,
-			scenarioId: scenario.id,
+	}, [autoplay, dispatch, generationRef]);
+
+	const onStatusChange = useCallback(
+		(status: PlaybackStatus) => {
+			dispatch({
+				generation: generationRef.current,
+				status,
+				type: "PLAYBACK_STATUS_CHANGED",
+			});
+		},
+		[dispatch, generationRef],
+	);
+
+	return useVodPlayer({
+		autoplay,
+		onReady,
+		onStatusChange,
+		onTimeUpdate,
+		videoId: vod?.youtubeVideoId ?? "",
+	});
+}
+
+function executeSessionEffect(
+	effect: SessionPlaythroughEffect,
+	vodPlayer: ReturnType<typeof useVodPlayer>,
+	recordAttempt: ReturnType<typeof useRecordAttemptMutation>,
+	onSessionCompleteRef: React.RefObject<
+		((summary: SessionSummaryReport) => void) | undefined
+	>,
+) {
+	switch (effect.type) {
+		case "MEDIA_PAUSE":
+			vodPlayer.pause();
+			return;
+		case "MEDIA_PLAY":
+			vodPlayer.play();
+			return;
+		case "MEDIA_REPLAY_CONTEXT":
+			vodPlayer.seekTo(Math.max(0, effect.timestampSeconds - 10), true);
+			vodPlayer.play();
+			return;
+		case "MEDIA_RESTART":
+			vodPlayer.seekTo(0, true);
+			if (effect.autoplay) vodPlayer.play();
+			return;
+		case "RECORD_ATTEMPT":
+			recordAttempt.mutate({
+				isCorrect: effect.outcome.attempt.isCorrect,
+				responseTimeMs: effect.outcome.attempt.responseTimeMs,
+				scenarioId: effect.outcome.attempt.scenarioId,
+				...(effect.outcome.kind === "answered"
+					? { selectedOptionId: effect.outcome.selectedOptionId }
+					: {}),
+			});
+			return;
+		case "SESSION_COMPLETED":
+			onSessionCompleteRef.current?.(effect.summary);
+	}
+}
+
+function useSessionEffects(
+	effects: readonly SessionPlaythroughEffect[],
+	dispatch: React.Dispatch<SessionPlaythroughAction>,
+	vodPlayer: ReturnType<typeof useVodPlayer>,
+	recordAttempt: ReturnType<typeof useRecordAttemptMutation>,
+	onSessionCompleteRef: React.RefObject<
+		((summary: SessionSummaryReport) => void) | undefined
+	>,
+) {
+	useEffect(() => {
+		if (effects.length === 0) return;
+
+		effects.forEach((effect) => {
+			executeSessionEffect(
+				effect,
+				vodPlayer,
+				recordAttempt,
+				onSessionCompleteRef,
+			);
 		});
-	}, [
-		currentScenarioRef,
-		dispatch,
-		overlayState?.status,
-		recordMutation,
-		state,
-		totalMs,
-	]);
+
+		dispatch({ type: "EFFECTS_CONSUMED" });
+	}, [dispatch, effects, onSessionCompleteRef, recordAttempt, vodPlayer]);
+}
+
+function getManifestKey(vod: ManifestVod | null): string {
+	if (!vod) return "empty";
+	return JSON.stringify(vod);
+}
+
+function useSessionPlayerActions(
+	dispatch: React.Dispatch<SessionPlaythroughAction>,
+	coordinatorRef: React.RefObject<SessionPlaythroughState>,
+	vodId: string,
+) {
+	const pause = useCallback(() => {
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			type: "PAUSE_REQUESTED",
+		});
+	}, [coordinatorRef, dispatch]);
+
+	const play = useCallback(() => {
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			type: "PLAY_REQUESTED",
+		});
+	}, [coordinatorRef, dispatch]);
+
+	const replayContext = useCallback(() => {
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			type: "REPLAY_CONTEXT",
+		});
+	}, [coordinatorRef, dispatch]);
+
+	const resumePlayback = useCallback(() => {
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			type: "RESUME_PLAYBACK",
+		});
+	}, [coordinatorRef, dispatch]);
+
+	const retrySession = useCallback(() => {
+		dispatch({ autoplay: true, type: "RETRY_SESSION" });
+	}, [dispatch]);
 
 	const selectOption = useCallback(
 		(optionId: string) => {
-			const scenario = currentScenarioRef.current;
-			if (
-				state !== "SCENARIO_ACTIVE" ||
-				overlayState?.status !== "unanswered" ||
-				!scenario
-			) {
-				return;
-			}
-
-			const { correctOptionId } = scenario.input;
-			const isCorrect = scenario.input.evaluateAnswer(optionId);
-			let elapsedMs = Date.now() - startTimeRef.current;
-			if (typeof totalMs === "number" && totalMs > 0) {
-				elapsedMs = Math.min(totalMs, elapsedMs);
-			}
-			const responseTimeMs = Math.round(elapsedMs);
-			const attempt: SessionAttempt = {
-				isCorrect,
-				moduleType: scenario.moduleType,
-				responseTimeMs,
-				scenarioId: scenario.id,
-			};
+			const state = coordinatorRef.current;
+			const scenario = state.scenarios[state.session.activeScenarioIndex];
+			if (!scenario) return;
 			dispatch({
-				attempt,
-				overlayState: {
-					correctOptionId,
-					isCorrect,
-					selectedOptionId: optionId,
-					status: "answered",
-				},
-				type: "ANSWER_RECORDED",
-			});
-			recordMutation.mutate({
-				isCorrect,
-				responseTimeMs,
+				generation: state.generation,
+				nowMs: Date.now(),
+				optionId,
 				scenarioId: scenario.id,
-				selectedOptionId: optionId,
+				type: "OPTION_SELECTED",
 			});
 		},
-		[
-			currentScenarioRef,
-			dispatch,
-			overlayState?.status,
-			recordMutation,
-			startTimeRef,
-			state,
-			totalMs,
-		],
+		[coordinatorRef, dispatch],
 	);
 
-	return { handleTimeout, selectOption };
-}
-
-interface SessionActionCallbacksParams {
-	currentScenario: ScenarioItem | null;
-	dispatch: React.Dispatch<SessionPlayerAction>;
-	state: SessionPlayerState;
-	vodId: string;
-	vodPlayer: ReturnType<typeof useVodPlayer>;
-}
-
-function useSessionActionCallbacks({
-	currentScenario,
-	dispatch,
-	state,
-	vodId,
-	vodPlayer,
-}: SessionActionCallbacksParams) {
-	const pause = useCallback(() => {
-		if (state !== "PLAYING") return;
-		dispatch({ type: "PAUSE_REQUESTED" });
-		vodPlayer.pause();
-	}, [dispatch, state, vodPlayer]);
-
-	const play = useCallback(() => {
-		if (state !== "PAUSED_USER") return;
-		dispatch({ type: "PLAY_REQUESTED" });
-		vodPlayer.play();
-	}, [dispatch, state, vodPlayer]);
-
-	const replayContext = useCallback(() => {
-		if (state !== "SCENARIO_ACTIVE" || !currentScenario) return;
-		dispatch({ type: "REPLAY_CONTEXT" });
-		vodPlayer.seekTo(Math.max(0, currentScenario.timestampSeconds - 10), true);
-		vodPlayer.play();
-	}, [currentScenario, dispatch, state, vodPlayer]);
-
-	const resumePlayback = useCallback(() => {
-		if (state !== "FEEDBACK") return;
-		dispatch({ type: "RESUME_PLAYBACK" });
-		vodPlayer.play();
-	}, [dispatch, state, vodPlayer]);
-
 	const skipUnsupportedInput = useCallback(() => {
-		if (
-			state === "SCENARIO_ACTIVE" &&
-			currentScenario?.input.kind === "unsupported"
-		) {
-			dispatch({ type: "UNSUPPORTED_INPUT_SKIPPED" });
-			vodPlayer.play();
-		}
-	}, [currentScenario?.input.kind, dispatch, state, vodPlayer]);
-
-	const retrySession = useCallback(() => {
-		dispatch({ type: "RETRY_SESSION" });
-		vodPlayer.seekTo(0, true);
-		vodPlayer.play();
-	}, [dispatch, vodPlayer]);
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			type: "UNSUPPORTED_INPUT_SKIPPED",
+		});
+	}, [coordinatorRef, dispatch]);
 
 	const exitSession = useCallback(() => {
 		window.location.href = `/vods/${vodId}`;
@@ -324,68 +298,101 @@ function useSessionActionCallbacks({
 		replayContext,
 		resumePlayback,
 		retrySession,
+		selectOption,
 		skipUnsupportedInput,
 	};
 }
 
-function useSessionPlaybackAdapter(
-	autoplay: boolean,
-	vod: ManifestVod | null,
-	dispatch: React.Dispatch<SessionPlayerAction>,
-	onTimeUpdate: (time: number) => void,
-) {
-	const onReady = useCallback(() => {
-		dispatch({ autoplay, type: "PLAYER_READY" });
-	}, [autoplay, dispatch]);
+interface SessionPlayerRuntimeOptions {
+	activeScenarios: ScenarioItem[];
+	autoplay: boolean;
+	onSessionComplete?: (summary: SessionSummaryReport) => void;
+	vod: ManifestVod | null;
+}
 
-	const onStatusChange = useCallback(
-		(status: PlaybackStatus) => {
-			dispatch({ status, type: "PLAYBACK_STATUS_CHANGED" });
-		},
-		[dispatch],
+function useSessionPlayerRuntime({
+	activeScenarios,
+	autoplay,
+	onSessionComplete,
+	vod,
+}: SessionPlayerRuntimeOptions) {
+	const coordinatorScenarios = activeScenarios as readonly SessionScenario[];
+	const [coordinator, dispatch] = useReducer(
+		sessionPlaythroughReducer,
+		coordinatorScenarios,
+		createSessionPlaythroughState,
 	);
-
-	return useVodPlayer({
+	const coordinatorRef = useRef<SessionPlaythroughState>(coordinator);
+	coordinatorRef.current = coordinator;
+	const generationRef = useRef(coordinator.generation);
+	generationRef.current = coordinator.generation;
+	const onSessionCompleteRef = useRef(onSessionComplete);
+	onSessionCompleteRef.current = onSessionComplete;
+	const currentScenario =
+		(activeScenarios[
+			coordinator.session.activeScenarioIndex
+		] as ScenarioItem) ?? null;
+	const onTimeUpdate = useCallback((time: number) => {
+		if (coordinatorRef.current.session.state !== "PLAYING") return;
+		dispatch({
+			generation: generationRef.current,
+			nowMs: Date.now(),
+			time,
+			type: "TIME_UPDATED",
+		});
+	}, []);
+	const vodPlayer = useSessionPlaybackAdapter(
 		autoplay,
-		onReady,
-		onStatusChange,
+		vod,
+		dispatch,
+		generationRef,
 		onTimeUpdate,
-		videoId: vod?.youtubeVideoId ?? "",
-	});
-}
-
-function useSessionSummaryTracker(
-	state: SessionPlayerState,
-	attempts: SessionAttempt[],
-	onSessionComplete?: (summary: SessionSummaryReport) => void,
-) {
-	const summary = useMemo(() => {
-		return state === "COMPLETED" ? calculateSessionSummary(attempts) : null;
-	}, [state, attempts]);
-
-	useEffect(() => {
-		if (state === "COMPLETED" && summary) onSessionComplete?.(summary);
-	}, [state, summary, onSessionComplete]);
-
-	return summary;
-}
-
-function useScenarioTimeTrigger(
-	stateRef: React.RefObject<SessionPlayerState>,
-	currentScenarioRef: React.RefObject<ScenarioItem | null>,
-	onScenarioTriggered: (scenario: ScenarioItem) => void,
-	pauseRef: React.RefObject<(() => void) | null>,
-) {
-	return useCallback(
-		(time: number) => {
-			if (stateRef.current !== "PLAYING") return;
-			const scenario = currentScenarioRef.current;
-			if (!scenario || time < scenario.timestampSeconds) return;
-			onScenarioTriggered(scenario);
-			pauseRef.current?.();
-		},
-		[stateRef, currentScenarioRef, onScenarioTriggered, pauseRef],
 	);
+	const recordAttempt = useRecordAttemptMutation();
+	const manifestKey = getManifestKey(vod);
+	const previousManifestKeyRef = useRef(manifestKey);
+	useEffect(() => {
+		if (previousManifestKeyRef.current === manifestKey) return;
+		previousManifestKeyRef.current = manifestKey;
+		dispatch({
+			autoplay,
+			scenarios: coordinatorScenarios,
+			type: "MANIFEST_CHANGED",
+		});
+	}, [autoplay, coordinatorScenarios, manifestKey]);
+	const onTimeout = useCallback((deadlineAtMs: number) => {
+		const state = coordinatorRef.current;
+		const scenario = state.scenarios[state.session.activeScenarioIndex];
+		// c8 ignore next -- a deadline is only created with an active Scenario.
+		if (!scenario) return;
+		dispatch({
+			deadlineAtMs,
+			generation: state.generation,
+			nowMs: Date.now(),
+			scenarioId: scenario.id,
+			type: "TIMEOUT_REQUESTED",
+		});
+	}, []);
+	const remainingMs = useScenarioCountdown(
+		coordinator.deadlineAtMs,
+		coordinator.session.overlayState?.status === "unanswered",
+		onTimeout,
+	);
+	useSessionEffects(
+		coordinator.effects,
+		dispatch,
+		vodPlayer,
+		recordAttempt,
+		onSessionCompleteRef,
+	);
+	return {
+		coordinator,
+		coordinatorRef,
+		currentScenario,
+		dispatch,
+		remainingMs,
+		vodPlayer,
+	};
 }
 
 export function useSessionPlayer({
@@ -396,88 +403,51 @@ export function useSessionPlayer({
 }: UseSessionPlayerOptions): UseSessionPlayerResult {
 	const vod = initialManifest ?? null;
 	const activeScenarios = useSessionScenarios(vod);
-	const [session, dispatch] = useReducer(
-		sessionPlayerReducer,
-		initialSessionPlayerSession,
-	);
-	const startTimeRef = useRef<number>(0);
-	const pauseRef = useRef<(() => void) | null>(null);
-	const stateRef = useRef(session.state);
-	const currentScenario = activeScenarios[session.activeScenarioIndex] ?? null;
-	const currentScenarioRef = useRef(currentScenario);
-	stateRef.current = session.state;
-	currentScenarioRef.current = currentScenario;
-
-	const onScenarioTriggered = useCallback((scenario: ScenarioItem) => {
-		startTimeRef.current = Date.now();
-		dispatch({
-			totalMs: getScenarioLimitMs(scenario),
-			type: "SCENARIO_TRIGGERED",
-		});
-	}, []);
-
-	const { handleTimeout, selectOption } = useSessionAttemptCallbacks({
-		currentScenarioRef,
-		dispatch,
-		overlayState: session.overlayState,
-		startTimeRef,
-		state: session.state,
-		totalMs: session.totalMs,
-	});
-
-	const remainingMs = useScenarioCountdown(
-		session.state,
-		session.totalMs,
-		session.overlayState?.status === "unanswered",
-		handleTimeout,
-	);
-
-	const onTimeUpdate = useScenarioTimeTrigger(
-		stateRef,
-		currentScenarioRef,
-		onScenarioTriggered,
-		pauseRef,
-	);
-
-	const vodPlayer = useSessionPlaybackAdapter(
+	const runtime = useSessionPlayerRuntime({
+		activeScenarios,
 		autoplay,
-		vod,
-		dispatch,
-		onTimeUpdate,
-	);
-	pauseRef.current = vodPlayer.pause;
-
-	const actions = useSessionActionCallbacks({
-		currentScenario,
-		dispatch,
-		state: session.state,
-		vodId,
-		vodPlayer,
-	});
-
-	const summary = useSessionSummaryTracker(
-		session.state,
-		session.attempts,
 		onSessionComplete,
+		vod,
+	});
+	const {
+		coordinator,
+		coordinatorRef,
+		currentScenario,
+		remainingMs,
+		vodPlayer,
+	} = runtime;
+	const actions = useSessionPlayerActions(
+		runtime.dispatch,
+		coordinatorRef,
+		vodId,
+	);
+
+	const summary = useMemo(
+		() =>
+			coordinator.session.state === "COMPLETED"
+				? calculateSessionSummary(coordinator.session.attempts)
+				: null,
+		[coordinator.session.attempts, coordinator.session.state],
 	);
 
 	return {
-		activeScenarioIndex: session.activeScenarioIndex,
+		activeScenarioIndex: coordinator.session.activeScenarioIndex,
 		activeScenarios,
-		attempts: session.attempts,
+		attempts: coordinator.session.attempts,
 		containerRef: vodPlayer.containerRef,
 		currentScenario,
 		currentTime: vodPlayer.currentTime,
 		duration: vodPlayer.duration,
+		...actions,
 		isReady: vodPlayer.isReady,
-		overlayState: session.overlayState,
+		overlayState: coordinator.session.overlayState,
 		playbackStatus: vodPlayer.status,
 		remainingMs,
-		selectOption,
-		state: session.state,
+		state: coordinator.session.state,
 		summary,
-		totalMs: session.totalMs,
+		totalMs: coordinator.session.totalMs,
 		vod,
-		...actions,
 	};
 }
+
+export { getScenarioLimitMs };
