@@ -55,6 +55,7 @@ export {
 	ModuleFilterPills,
 	type ModuleFilterPillsProps,
 } from "./ui/module-filter-pills";
+export { VodModuleFilterPrototype } from "./ui/prototype-vod-module-filter";
 export {
 	ScenarioOverlay,
 	type ScenarioOverlayProps,

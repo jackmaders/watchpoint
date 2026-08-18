@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrototypeVodModuleFilterRouteImport } from './routes/prototype/vod-module-filter'
 import { Route as VodsIndexRouteImport } from './routes/vods/index'
 import { Route as VodsIdRouteImport } from './routes/vods/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -22,6 +23,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrototypeVodModuleFilterRoute =
+  PrototypeVodModuleFilterRouteImport.update({
+    id: '/prototype/vod-module-filter',
+    path: '/prototype/vod-module-filter',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const VodsIndexRoute = VodsIndexRouteImport.update({
   id: '/vods/',
   path: '/vods/',
@@ -55,6 +62,7 @@ const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prototype/vod-module-filter': typeof PrototypeVodModuleFilterRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -64,6 +72,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prototype/vod-module-filter': typeof PrototypeVodModuleFilterRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,6 +83,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prototype/vod-module-filter': typeof PrototypeVodModuleFilterRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/prototype/vod-module-filter'
     | '/vods/$id'
     | '/vods/'
     | '/api/auth/$'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/prototype/vod-module-filter'
     | '/vods/$id'
     | '/vods'
     | '/api/auth/$'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/prototype/vod-module-filter'
     | '/vods/$id'
     | '/vods/'
     | '/api/auth/$'
@@ -113,6 +126,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrototypeVodModuleFilterRoute: typeof PrototypeVodModuleFilterRoute
   VodsIdRoute: typeof VodsIdRouteWithChildren
   VodsIndexRoute: typeof VodsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -127,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/vod-module-filter': {
+      id: '/prototype/vod-module-filter'
+      path: '/prototype/vod-module-filter'
+      fullPath: '/prototype/vod-module-filter'
+      preLoaderRoute: typeof PrototypeVodModuleFilterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vods/': {
@@ -187,6 +208,7 @@ const VodsIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrototypeVodModuleFilterRoute: PrototypeVodModuleFilterRoute,
   VodsIdRoute: VodsIdRouteWithChildren,
   VodsIndexRoute: VodsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
