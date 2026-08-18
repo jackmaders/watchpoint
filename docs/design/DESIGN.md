@@ -7,9 +7,9 @@ This document is the canonical design system specification for Watchpoint and AI
 ## 1. Visual Philosophy & Core Aesthetics
 
 - **Style**: Modern, high-density observability & video player interface. Minimalist, uncluttered, utilitarian.
-- **Theme Default**: Dark mode by default with balanced contrast and crisp separation.
+- **Theme Default**: Solar Dusk dark mode by default with warm-paper light mode when the system prefers light.
 - **Spacing**: 4px baseline grid (`p-1`, `p-2`, `p-3`, `p-4`, `p-6`, `gap-2`, `gap-4`).
-- **Surface Elevation**: Subtle border borders (`border-border` / `border-input`) over heavy box-shadows.
+- **Surface Elevation**: Subtle `border-border` / `border-input` separation with restrained Solar Dusk shadows (`shadow-sm` through `shadow-2xl`).
 
 ---
 
@@ -19,7 +19,7 @@ All codebase components must use these semantic tokens. Arbitrary hard-coded hex
 
 | Token | Tailwind Class | Semantic Usage |
 | :--- | :--- | :--- |
-| `accent` | `bg-accent` | Hover states, active dropdown items |
+| `accent` | `bg-accent` | Cool-blue contextual highlights, hover states, active dropdown items |
 | `accent-foreground` | `text-accent-foreground` | Text on hovered items |
 | `background` | `bg-background` | Application canvas / base background |
 | `border` | `border-border` | Component borders and separators |
@@ -31,10 +31,10 @@ All codebase components must use these semantic tokens. Arbitrary hard-coded hex
 | `input` | `border-input` | Input outlines |
 | `muted` | `bg-muted` | Recessed backgrounds, table headers, track bars |
 | `muted-foreground` | `text-muted-foreground` | Timestamps, helper copy, subtitles, metadata |
-| `primary` | `bg-primary, text-primary` | Primary actions, active highlights, key metrics |
+| `primary` | `bg-primary, text-primary` | Orange primary actions, active highlights, key metrics |
 | `primary-foreground` | `text-primary-foreground` | Text on primary buttons |
 | `ring` | `ring-ring` | Keyboard focus rings |
-| `secondary` | `bg-secondary` | Secondary buttons, subtle badges, inactive tabs |
+| `secondary` | `bg-secondary` | Secondary buttons, warm neutral badges, inactive tabs |
 | `secondary-foreground` | `text-secondary-foreground` | Text on secondary buttons |
 
 ---
@@ -42,8 +42,11 @@ All codebase components must use these semantic tokens. Arbitrary hard-coded hex
 ## 3. Typography & Hierarchy
 
 - **Font Family**:
-  - Sans: `font-sans` (`Geist Sans`, `Inter`, `Arial`, system-ui)
-  - Mono: `font-mono` (`Geist Mono`, `JetBrains Mono`, monospace) — used for timestamps, video frame numbers, error codes, and log outputs.
+  - Sans: `font-sans` (`Oxanium`, ui-sans-serif, system-ui) — the primary interface voice.
+  - Serif: `font-serif` (`Merriweather`, ui-serif, Georgia) — reserved for rare editorial emphasis.
+  - Mono: `font-mono` (`Fira Code`, ui-monospace, monospace) — used for timestamps, video frame numbers, error codes, and log outputs.
+
+The agreed weights are self-hosted in `public/fonts`: Oxanium 400/500/600/700, Merriweather 400/700, and Fira Code 400/500/600. Do not add an external font runtime or package.
 - **Hierarchy Scale**:
   - `text-xs` (12px, tracking-tight): Timestamps, badge labels, metadata pills, keyboard shortcuts.
   - `text-sm` (14px, leading-5): Standard body copy, table cells, form labels, button labels.

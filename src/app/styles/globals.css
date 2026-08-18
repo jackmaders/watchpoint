@@ -1,23 +1,173 @@
 @import "tailwindcss";
 
+@font-face {
+	font-family: "Oxanium";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/oxanium-400.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Oxanium";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("/fonts/oxanium-500.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Oxanium";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("/fonts/oxanium-600.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Oxanium";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("/fonts/oxanium-700.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Merriweather";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/merriweather-400.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Merriweather";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("/fonts/merriweather-700.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Fira Code";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/fira-code-400.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Fira Code";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("/fonts/fira-code-500.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Fira Code";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("/fonts/fira-code-600.ttf") format("truetype");
+}
+
 :root {
-	--background: #ffffff;
-	--foreground: #171717;
-	--card: #f9f9f9;
-	--card-foreground: #171717;
-	--primary: #2563eb;
-	--primary-foreground: #ffffff;
-	--secondary: #f4f4f5;
-	--secondary-foreground: #18181b;
-	--muted: #f4f4f5;
-	--muted-foreground: #71717a;
-	--accent: #f4f4f5;
-	--accent-foreground: #09090b;
-	--destructive: #dc2626;
-	--destructive-foreground: #ffffff;
-	--border: #e4e4e7;
-	--input: #e4e4e7;
-	--ring: #2563eb;
+	--background: oklch(0.22 0.01 56.04);
+	--foreground: oklch(0.97 0 106.42);
+	--card: oklch(0.27 0.01 34.3);
+	--card-foreground: oklch(0.97 0 106.42);
+	--popover: oklch(0.27 0.01 34.3);
+	--popover-foreground: oklch(0.97 0 106.42);
+	--primary: oklch(0.7 0.19 47.6);
+	--primary-foreground: oklch(1 0 0);
+	--secondary: oklch(0.44 0.01 73.64);
+	--secondary-foreground: oklch(0.92 0 48.72);
+	--muted: oklch(0.27 0.01 34.3);
+	--muted-foreground: oklch(0.72 0.01 56.26);
+	--accent: oklch(0.36 0.05 229.32);
+	--accent-foreground: oklch(0.92 0 48.72);
+	--destructive: oklch(0.58 0.22 27.33);
+	--destructive-foreground: oklch(1 0 0);
+	--border: oklch(0.37 0.01 67.56);
+	--input: oklch(0.37 0.01 67.56);
+	--ring: oklch(0.7 0.19 47.6);
+	--chart-1: oklch(0.7 0.19 47.6);
+	--chart-2: oklch(0.68 0.15 237.32);
+	--chart-3: oklch(0.8 0.16 86.05);
+	--chart-4: oklch(0.72 0.01 56.26);
+	--chart-5: oklch(0.55 0.01 58.07);
+	--sidebar: oklch(0.27 0.01 34.3);
+	--sidebar-foreground: oklch(0.97 0 106.42);
+	--sidebar-primary: oklch(0.7 0.19 47.6);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.68 0.15 237.32);
+	--sidebar-accent-foreground: oklch(0.28 0.07 254.54);
+	--sidebar-border: oklch(0.37 0.01 67.56);
+	--sidebar-ring: oklch(0.7 0.19 47.6);
+	--radius: 0.3rem;
+	--tracking-normal: 0em;
+	--shadow-color: hsl(0 0% 5%);
+	--shadow-opacity: 0.18;
+	--shadow-2xs-value: 0 2px 3px 0 hsl(0 0% 5% / 0.09);
+	--shadow-xs-value: 0 2px 3px 0 hsl(0 0% 5% / 0.09);
+	--shadow-sm-value:
+		0 2px 3px 0 hsl(0 0% 5% / 0.18), 0 1px 2px -1px hsl(0 0% 5% / 0.18);
+	--shadow-md-value:
+		0 2px 3px 0 hsl(0 0% 5% / 0.18), 0 2px 4px -1px hsl(0 0% 5% / 0.18);
+	--shadow-lg-value:
+		0 2px 3px 0 hsl(0 0% 5% / 0.18), 0 4px 6px -1px hsl(0 0% 5% / 0.18);
+	--shadow-xl-value:
+		0 2px 3px 0 hsl(0 0% 5% / 0.18), 0 8px 10px -1px hsl(0 0% 5% / 0.18);
+	--shadow-2xl-value: 0 2px 3px 0 hsl(0 0% 5% / 0.45);
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--background: oklch(0.99 0.01 84.57);
+		--foreground: oklch(0.37 0.03 49.61);
+		--card: oklch(0.97 0.01 78.28);
+		--card-foreground: oklch(0.37 0.03 49.61);
+		--popover: oklch(0.97 0.01 78.28);
+		--popover-foreground: oklch(0.37 0.03 49.61);
+		--primary: oklch(0.56 0.15 49);
+		--primary-foreground: oklch(1 0 0);
+		--secondary: oklch(0.83 0.08 74.44);
+		--secondary-foreground: oklch(0.44 0.01 73.64);
+		--muted: oklch(0.94 0.02 83.26);
+		--muted-foreground: oklch(0.55 0.01 58.07);
+		--accent: oklch(0.9 0.05 74.99);
+		--accent-foreground: oklch(0.44 0.01 73.64);
+		--destructive: oklch(0.44 0.16 26.9);
+		--border: oklch(0.89 0.04 89.7);
+		--input: oklch(0.89 0.04 89.7);
+		--ring: oklch(0.56 0.15 49);
+		--chart-1: oklch(0.56 0.15 49);
+		--chart-2: oklch(0.55 0.01 58.07);
+		--chart-3: oklch(0.55 0.12 66.44);
+		--chart-4: oklch(0.55 0.01 58.07);
+		--chart-5: oklch(0.68 0.14 75.83);
+		--sidebar: oklch(0.94 0.02 83.26);
+		--sidebar-foreground: oklch(0.37 0.03 49.61);
+		--sidebar-primary: oklch(0.56 0.15 49);
+		--sidebar-primary-foreground: oklch(1 0 0);
+		--sidebar-accent: oklch(0.55 0.12 66.44);
+		--sidebar-accent-foreground: oklch(1 0 0);
+		--sidebar-border: oklch(0.89 0.04 89.7);
+		--sidebar-ring: oklch(0.56 0.15 49);
+		--shadow-color: hsl(28 18% 25%);
+		--shadow-2xs-value: 0 2px 3px 0 hsl(28 18% 25% / 0.09);
+		--shadow-xs-value: 0 2px 3px 0 hsl(28 18% 25% / 0.09);
+		--shadow-sm-value:
+			0 2px 3px 0 hsl(28 18% 25% / 0.18), 0 1px 2px -1px hsl(28 18% 25% / 0.18);
+		--shadow-md-value:
+			0 2px 3px 0 hsl(28 18% 25% / 0.18), 0 2px 4px -1px hsl(28 18% 25% / 0.18);
+		--shadow-lg-value:
+			0 2px 3px 0 hsl(28 18% 25% / 0.18), 0 4px 6px -1px hsl(28 18% 25% / 0.18);
+		--shadow-xl-value:
+			0 2px 3px 0 hsl(28 18% 25% / 0.18), 0 8px 10px -1px hsl(28 18% 25% / 0.18);
+		--shadow-2xl-value: 0 2px 3px 0 hsl(28 18% 25% / 0.45);
+	}
 }
 
 @theme inline {
@@ -25,6 +175,8 @@
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);
 	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
 	--color-primary: var(--primary);
 	--color-primary-foreground: var(--primary-foreground);
 	--color-secondary: var(--secondary);
@@ -38,34 +190,43 @@
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
-	--font-sans: var(--font-geist-sans);
-	--font-mono: var(--font-geist-mono);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--font-sans: "Oxanium", ui-sans-serif, system-ui, sans-serif;
+	--font-serif: "Merriweather", ui-serif, Georgia, serif;
+	--font-mono: "Fira Code", ui-monospace, SFMono-Regular, monospace;
+	--radius-sm: calc(var(--radius) - 0.125rem);
+	--radius-md: var(--radius);
+	--radius-lg: calc(var(--radius) + 0.125rem);
+	--radius-xl: calc(var(--radius) + 0.25rem);
+	--spacing: 0.25rem;
+	--shadow-2xs: var(--shadow-2xs-value);
+	--shadow-xs: var(--shadow-xs-value);
+	--shadow-sm: var(--shadow-sm-value);
+	--shadow-md: var(--shadow-md-value);
+	--shadow-lg: var(--shadow-lg-value);
+	--shadow-xl: var(--shadow-xl-value);
+	--shadow-2xl: var(--shadow-2xl-value);
 }
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
-		--card: #121212;
-		--card-foreground: #ededed;
-		--primary: #3b82f6;
-		--primary-foreground: #ffffff;
-		--secondary: #262626;
-		--secondary-foreground: #f4f4f5;
-		--muted: #27272a;
-		--muted-foreground: #a1a1aa;
-		--accent: #27272a;
-		--accent-foreground: #fafafa;
-		--destructive: #ef4444;
-		--destructive-foreground: #ffffff;
-		--border: #27272a;
-		--input: #27272a;
-		--ring: #3b82f6;
+@layer base {
+	* {
+		@apply border-border;
 	}
-}
 
-body {
-	font-family: Arial, Helvetica, sans-serif;
-	color: var(--foreground);
-	background: var(--background);
+	body {
+		letter-spacing: var(--tracking-normal);
+		@apply bg-background text-foreground font-sans antialiased;
+	}
 }
