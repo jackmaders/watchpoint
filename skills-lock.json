@@ -30,12 +30,6 @@
 			"source": "mattpocock/skills",
 			"sourceType": "github"
 		},
-		"design-md": {
-			"computedHash": "d3a4c7d2f2715a33662c8b06ffc16035d01965a8b4ed81c2958fb22ae94760f8",
-			"skillPath": "plugins/stitch-utilities/skills/design-md/SKILL.md",
-			"source": "google-labs-code/stitch-skills",
-			"sourceType": "github"
-		},
 		"diagnosing-bugs": {
 			"computedHash": "c86c725ad271ba57d7e9ffd86122b898438314ef9c20ec1dbe03f3e8f149c3b2",
 			"skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
@@ -64,12 +58,6 @@
 			"computedHash": "72efa2277fea08f43b393c74abaacc9fa575e20bc63bdc9d46829b8a39352852",
 			"skillPath": "skills/durable-objects/SKILL.md",
 			"source": "cloudflare/skills",
-			"sourceType": "github"
-		},
-		"enhance-prompt": {
-			"computedHash": "71cc23e9ec5fc6361e12453495fa8c683f6cf26f3efaf9b230b0f43e0a32cc96",
-			"skillPath": "plugins/stitch-utilities/skills/enhance-prompt/SKILL.md",
-			"source": "google-labs-code/stitch-skills",
 			"sourceType": "github"
 		},
 		"feature-sliced-design": {
@@ -150,12 +138,6 @@
 			"source": "shadcn/ui",
 			"sourceType": "github"
 		},
-		"stitch-loop": {
-			"computedHash": "e04912a9719b855afa733cc928d30dde0b8a5b91707ca27b98f0efcb8d9310a9",
-			"skillPath": "plugins/stitch-utilities/skills/stitch-loop/SKILL.md",
-			"source": "google-labs-code/stitch-skills",
-			"sourceType": "github"
-		},
 		"tailwind-4-docs": {
 			"computedHash": "de756f5f03cc20a029983875b00b9dfef9d0ba8567d242c5cbb0262037d0a134",
 			"skillPath": "skills/tailwind-4-docs/SKILL.md",
@@ -184,12 +166,6 @@
 			"computedHash": "8b073187405a10f9997158f9139a9664cc801595d2fe63d542a0bac9bf2152f5",
 			"skillPath": "skills/tanstack-start/SKILL.md",
 			"source": "deckardger/tanstack-agent-skills",
-			"sourceType": "github"
-		},
-		"taste-design": {
-			"computedHash": "1891625787d6f0f3bc45d4a9437c187277af66c219e3ec799b1b4e67822b6146",
-			"skillPath": "plugins/stitch-utilities/skills/taste-design/SKILL.md",
-			"source": "google-labs-code/stitch-skills",
 			"sourceType": "github"
 		},
 		"tdd": {
