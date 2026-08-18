@@ -74,33 +74,11 @@
 .auth-tabs [data-slot="tabs-trigger"] {
 	padding-top: 0.2rem;
 	padding-bottom: 0.2rem;
+	border-bottom: 1px solid var(--border);
 	border-radius: 0;
 }
 .auth-tabs [data-slot="tabs-trigger"]::after {
 	display: none;
-}
-.auth-dialog-b .auth-tabs [data-slot="tabs-list"] {
-	border-bottom: 0;
-}
-.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"] {
-	border-bottom: 1px solid var(--border);
-	border-radius: 0;
-}
-.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"]::after {
-	display: none;
-}
-.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"][data-state="active"] {
-	border-bottom-color: var(--border);
-}
-.auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
-	padding: 0.2rem;
-	background: var(--muted);
-	border: 1px solid var(--border);
-	border-radius: var(--radius-md);
-	box-shadow: var(--shadow-xs);
-}
-.auth-dialog-c .auth-tabs [data-slot="tabs-trigger"] {
-	border-radius: var(--radius-sm);
 }
 .auth-tabs .registration-tab[data-disabled] {
 	color: var(--muted-foreground);
