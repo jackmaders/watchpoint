@@ -90,7 +90,7 @@
 	display: none;
 }
 .auth-dialog-b .auth-tabs [data-slot="tabs-trigger"][data-state="active"] {
-	border-bottom-color: var(--primary);
+	border-bottom-color: var(--border);
 }
 .auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
 	padding: 0.2rem;
