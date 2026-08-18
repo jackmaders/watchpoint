@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { useEffect, useId, useState } from "react";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import {
 	Dialog,
@@ -8,6 +9,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/ui/dialog";
+import {
+	Field,
+	FieldDescription,
+	FieldGroup,
+	FieldLabel,
+} from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import "./auth-prototype.css";
 
@@ -237,10 +245,12 @@ function AuthModal({
 					</TabsContent>
 				</Tabs>
 				{!registrationEnabled && (
-					<p aria-live="polite" className="registration-note">
-						Registration is currently unavailable. Existing players can still
-						sign in.
-					</p>
+					<Alert aria-live="polite" className="registration-note" role="status">
+						<AlertDescription className="col-start-1">
+							Registration is currently unavailable. Existing players can still
+							sign in.
+						</AlertDescription>
+					</Alert>
 				)}
 			</DialogContent>
 		</Dialog>
@@ -261,50 +271,62 @@ function AuthForm({
 	const fieldIds = useId();
 	return (
 		<form className={`auth-form auth-form-${variant}`} onSubmit={onSubmit}>
-			{mode === "register" && (
-				<label htmlFor={`${fieldIds}-display-name`}>
-					Display name
-					<input
-						id={`${fieldIds}-display-name`}
-						name="display-name"
-						placeholder="How should we call you?"
+			<FieldGroup className="auth-fields">
+				{mode === "register" && (
+					<Field>
+						<FieldLabel htmlFor={`${fieldIds}-display-name`}>
+							Display name
+						</FieldLabel>
+						<Input
+							id={`${fieldIds}-display-name`}
+							name="display-name"
+							placeholder="How should we call you?"
+							required
+						/>
+					</Field>
+				)}
+				<Field>
+					<FieldLabel htmlFor={`${fieldIds}-email`}>Email</FieldLabel>
+					<Input
+						id={`${fieldIds}-email`}
+						name="email"
+						placeholder="you@example.com"
 						required
+						type="email"
 					/>
-				</label>
-			)}
-			<label htmlFor={`${fieldIds}-email`}>
-				Email
-				<input
-					id={`${fieldIds}-email`}
-					name="email"
-					placeholder="you@example.com"
-					required
-					type="email"
-				/>
-			</label>
-			<label htmlFor={`${fieldIds}-password`}>
-				Password
-				<input
-					id={`${fieldIds}-password`}
-					minLength={8}
-					name="password"
-					placeholder="At least 8 characters"
-					required
-					type="password"
-				/>
-			</label>
-			{mode === "register" && (
-				<p className="field-hint">Use at least 8 characters.</p>
-			)}
+				</Field>
+				<Field>
+					<FieldLabel htmlFor={`${fieldIds}-password`}>Password</FieldLabel>
+					<Input
+						id={`${fieldIds}-password`}
+						minLength={8}
+						name="password"
+						placeholder="At least 8 characters"
+						required
+						type="password"
+					/>
+					{mode === "register" && (
+						<FieldDescription>Use at least 8 characters.</FieldDescription>
+					)}
+				</Field>
+			</FieldGroup>
 			{status === "error" && (
-				<div aria-live="assertive" className="form-alert">
-					Invalid email or password.
-				</div>
+				<Alert
+					aria-live="assertive"
+					className="form-alert"
+					variant="destructive"
+				>
+					<AlertDescription className="col-start-1">
+						Invalid email or password.
+					</AlertDescription>
+				</Alert>
 			)}
 			{status === "expired" && (
-				<div aria-live="polite" className="form-alert">
-					Your session expired. Sign in again to continue.
-				</div>
+				<Alert aria-live="polite" className="form-alert" role="status">
+					<AlertDescription className="col-start-1">
+						Your session expired. Sign in again to continue.
+					</AlertDescription>
+				</Alert>
 			)}
 			<Button className="auth-cta" type="submit">
 				{mode === "register" ? "Create account" : "Sign in"}

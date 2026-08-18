@@ -125,27 +125,13 @@
 	gap: 1rem;
 	padding-top: 0.5rem;
 }
-.auth-form label {
-	display: grid;
-	gap: 0.45rem;
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: var(--foreground);
+.auth-fields {
+	gap: 1rem;
 }
-.auth-form input {
-	width: 100%;
-	padding: 0.7rem 0.8rem;
-	color: var(--foreground);
-	background: var(--background);
-	border: 1px solid var(--input);
-	border-radius: var(--radius-sm);
-}
-.auth-form input:focus-visible,
 .prototype-controls input:focus-visible {
 	outline: 2px solid var(--ring);
 	outline-offset: 3px;
 }
-.field-hint,
 .registration-note {
 	font-size: 0.75rem;
 	color: var(--muted-foreground);
@@ -187,6 +173,9 @@
 	color: var(--destructive-foreground);
 	background: var(--destructive);
 	border-color: var(--destructive);
+}
+.auth-form-a .form-alert [data-slot="alert-description"] {
+	color: var(--destructive-foreground);
 }
 .prototype-controls {
 	position: fixed;
