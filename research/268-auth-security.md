@@ -19,6 +19,10 @@
 - Account identity must be derived from the verified server session, never from a client-supplied user ID. Attempt/history ownership filters must be applied in the repository or server boundary.
 - The `is_test_account` marker should be server-controlled and excluded from production player analytics/history according to the existing repository policy; it must not be writable from public registration input.
 
+## WCAG 2.2 error contrast check
+
+W3C WCAG 2.2 SC 1.4.3 requires at least 4.5:1 for normal-size text. The existing red destructive text measured approximately 3.12:1 against the dark-theme tinted error background, so it does not pass AA. It measured approximately 6.24:1 in the light theme. Variant A therefore uses the destructive background with white destructive-foreground text; the measured ratios are approximately 4.78:1 in dark mode and 8.44:1 in light mode.
+
 ## Remaining UX/UI decisions for grilling
 
 - Where should sign-in and registration live in the public navigation?

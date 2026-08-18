@@ -183,6 +183,11 @@
 	border-color: var(--border);
 	border-left: 3px solid var(--primary);
 }
+.auth-form-a .form-alert {
+	color: var(--destructive-foreground);
+	background: var(--destructive);
+	border-color: var(--destructive);
+}
 .prototype-controls {
 	position: fixed;
 	bottom: 4.5rem;
