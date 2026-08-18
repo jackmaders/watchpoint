@@ -10,6 +10,15 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
+Design routing labels supplement the category/state roles:
+
+| Label | Meaning |
+| ----- | ------- |
+| `needs-design` | Functionality is understood, but visual design or interaction presentation needs exploration. |
+| `needs-prototype` | Behaviour or state is fundamentally unknown and needs a `/prototype` exploration. |
+
+When both apply, resolve behaviour with `needs-prototype` before visual presentation with `needs-design`.
+
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.

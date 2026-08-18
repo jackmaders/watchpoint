@@ -11,4 +11,5 @@ Please select and apply the appropriate template for this Pull Request:
 ### Default Checklist
 
 - [ ] I have selected the appropriate template for this PR (`feature.md`, `refactor.md`, or `bugfix.md`).
+- [ ] This PR links to the originating issue/spec.
 - [ ] All code passes `bun run validate` with 100% test coverage and zero architectural or lint warnings.

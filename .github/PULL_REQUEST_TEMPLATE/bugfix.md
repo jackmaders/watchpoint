@@ -4,6 +4,10 @@
 - **Severity Level:** Low | Medium | High | P0 Critical
 - **Issue / Incident Link:** Closes #
 
+### Design Handoff (UI changes)
+- **Prototype branch / contract evidence:** `N/A — no user-visible UI change` |
+- [ ] Content-only or bug-fix path; no material UI decision was introduced.
+
 ---
 
 ## 🔍 Root Cause Analysis (RCA)

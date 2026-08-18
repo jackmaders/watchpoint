@@ -4,6 +4,10 @@
 - **Target Slice / Subsystem:** `src/_pages/<slice-name>/`
 - **Issue / Ticket Link:** Closes #
 
+### Design Handoff (UI changes)
+- **Prototype branch / contract evidence:** `N/A — no user-visible UI change` |
+- [ ] No material UI change; the lighter path applies.
+
 ---
 
 ## ⚖️ Behavioral Invariance Guarantee
