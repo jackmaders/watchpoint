@@ -95,6 +95,9 @@
 	gap: 1rem;
 	padding-top: 0.5rem;
 }
+.auth-dialog-b .auth-form {
+	padding-top: 1rem;
+}
 .auth-fields {
 	gap: 1rem;
 }
