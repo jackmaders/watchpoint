@@ -11,6 +11,10 @@ This document is the canonical design system specification for Watchpoint and AI
 - **Spacing**: 4px baseline grid (`p-1`, `p-2`, `p-3`, `p-4`, `p-6`, `gap-2`, `gap-4`).
 - **Surface Elevation**: Subtle `border-border` / `border-input` separation with restrained Solar Dusk shadows (`shadow-sm` through `shadow-2xl`).
 
+### Catalogue Alignment
+
+The VOD catalogue follows the prototype's compact dispatch language: border-led `bg-card` surfaces, `font-mono` metadata, cool-blue contextual map badges, and orange primary launch actions. Preserve the existing catalogue hierarchy and controls while keeping the grid usable from one column through three columns without horizontal overflow.
+
 ---
 
 ## 2. Color Palette & Semantic Tokens

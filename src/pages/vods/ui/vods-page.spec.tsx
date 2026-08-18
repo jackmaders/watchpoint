@@ -13,6 +13,8 @@ describe("VodsPage catalog component", () => {
 		expect(
 			screen.getByText(/no training vods currently available/i),
 		).toBeDefined();
+		expect(screen.getByRole("main").className).toContain("bg-background");
+		expect(screen.getByRole("main").className).toContain("text-foreground");
 	});
 
 	it("renders VOD cards with map name, rank tier, duration, and Start Training action", () => {
@@ -52,6 +54,9 @@ describe("VodsPage catalog component", () => {
 		const startButton = screen.getByRole("link", { name: /start training/i });
 		expect(startButton).toBeDefined();
 		expect(startButton.getAttribute("href")).toBe("/vods/vod_1");
+		expect(startButton.className).toContain("bg-primary");
+		expect(startButton.className).toContain("text-primary-foreground");
+		expect(startButton.className).toContain("focus-visible:ring-ring");
 	});
 
 	it("formats duration correctly when under 1 minute or with remaining seconds", () => {

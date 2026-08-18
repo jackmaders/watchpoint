@@ -9,52 +9,52 @@ export function VodsPage(props?: { vods?: PublishedVodItem[] }) {
 	const vods = props?.vods ?? [];
 
 	return (
-		<main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-12">
-			<div className="max-w-6xl mx-auto space-y-8">
-				<header className="border-b border-slate-800 pb-6 space-y-2">
-					<div className="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider rounded-full">
+		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+			<div className="mx-auto max-w-6xl space-y-8">
+				<header className="space-y-3 border-b border-border pb-6">
+					<div className="inline-flex rounded-sm border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
 						Interactive Training Engine
 					</div>
-					<h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+					<h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
 						VOD Training Catalog
 					</h1>
-					<p className="text-slate-400 text-base max-w-2xl">
+					<p className="max-w-2xl text-base text-muted-foreground">
 						Select a high-level Overwatch 2 ranked VOD to practice real-time
 						scenario decision making, ultimate tracking, and tactical execution.
 					</p>
 				</header>
 
 				{vods.length === 0 ? (
-					<div className="p-12 text-center border border-dashed border-slate-800 rounded-xl bg-slate-900/50">
-						<p className="text-slate-400 text-lg font-medium">
+					<div className="rounded-lg border border-dashed border-border bg-muted/50 p-8 text-center sm:p-12">
+						<p className="text-lg font-medium text-muted-foreground">
 							No training VODs currently available.
 						</p>
-						<p className="text-slate-500 text-sm mt-1">
+						<p className="mt-1 text-sm text-muted-foreground/80">
 							Check back soon for new Grandmaster and Top 500 session uploads.
 						</p>
 					</div>
 				) : (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						{vods.map((vod) => (
 							<div
-								className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg hover:border-slate-700 transition-all duration-200"
+								className="flex flex-col justify-between rounded-lg border border-border bg-card p-5 text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/60 hover:shadow-md motion-reduce:transition-none"
 								key={vod.id}
 							>
 								<div className="space-y-4">
 									<div className="flex items-center justify-between gap-2 flex-wrap">
-										<span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+										<span className="rounded-sm border border-accent bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
 											{vod.mapName}
 										</span>
-										<span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+										<span className="rounded-sm border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
 											{vod.rankTier}
 										</span>
 									</div>
 
-									<h2 className="text-xl font-bold text-slate-100 line-clamp-2">
+									<h2 className="line-clamp-2 text-xl font-semibold text-card-foreground">
 										{vod.title}
 									</h2>
 
-									<div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+									<div className="flex items-center justify-between gap-2 border-t border-border pt-3 font-mono text-xs text-muted-foreground">
 										<span>Duration: {formatDuration(vod.durationSeconds)}</span>
 										<span>{vod.scenarios.length} Scenarios</span>
 									</div>
@@ -62,7 +62,7 @@ export function VodsPage(props?: { vods?: PublishedVodItem[] }) {
 
 								<div className="mt-6">
 									<Link
-										className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-500 active:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20"
+										className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card active:bg-primary/80 motion-reduce:transition-none"
 										params={{ id: vod.id }}
 										to="/vods/$id"
 									>
