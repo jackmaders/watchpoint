@@ -17,8 +17,10 @@ export const RecordAttemptInputSchema = z.object({
 	inputValue: z.custom<Record<string, JsonValue>>().optional(),
 	isCorrect: z.boolean(),
 	isTimedOut: z.boolean().default(false),
+	playthroughId: z.string().min(1).optional(),
 	responseTimeMs: z.number().int().nonnegative(),
 	scenarioId: z.string().uuid(),
+	scenarioSnapshotId: z.string().min(1).optional(),
 	selectedOptionId: z.string().optional().nullable(),
 });
 

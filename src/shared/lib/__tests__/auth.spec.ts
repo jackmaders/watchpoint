@@ -3,13 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../db/client/client");
 vi.mock("@tanstack/react-start/server");
 
-import {
-	GUEST_USER,
-	GUEST_USER_ID,
-	getAuth,
-	getAuthConfig,
-	getCurrentUser,
-} from "../auth";
+import { getAuth, getAuthConfig, getCurrentUser } from "../auth";
 
 describe("auth", () => {
 	beforeEach(() => {
@@ -61,24 +55,6 @@ describe("auth", () => {
 		// Assert
 		expect(config.baseURL).toBe("https://watchpoint.example.com");
 		expect(config.secret).toBe("custom-secret-key-12345678901234567890");
-	});
-
-	it("defines deterministic guest user constant details", () => {
-		// Arrange
-		const expectedId = "usr_guest_demo";
-		const expectedUser = {
-			email: "guest@watchpoint.gg",
-			id: "usr_guest_demo",
-			name: "Guest Cadet",
-		};
-
-		// Act
-		const id = GUEST_USER_ID;
-		const user = GUEST_USER;
-
-		// Assert
-		expect(id).toBe(expectedId);
-		expect(user).toEqual(expectedUser);
 	});
 
 	it("resolves authenticated user ID when session exists with passed Headers", async () => {

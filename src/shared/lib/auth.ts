@@ -3,14 +3,6 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { type DbContext, getDb } from "../db/client/client";
 import * as schema from "../db/schema";
 
-export const GUEST_USER_ID = "usr_guest_demo";
-
-export const GUEST_USER = {
-	email: "guest@watchpoint.gg",
-	id: GUEST_USER_ID,
-	name: "Guest Cadet",
-} as const;
-
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
 ) {
