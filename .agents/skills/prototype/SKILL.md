@@ -7,6 +7,8 @@ description: Build a throwaway prototype to answer a design question. Use when t
 
 A prototype is **throwaway code that answers a question**. The question decides the shape.
 
+For UI prototypes, rely on the repository's global styles and existing components. On completion, try to summarise the UI changes in the ticket so implementation and review can align with the selected result.
+
 ## Pick a branch
 
 Identify which question is being answered — from the user's prompt, the surrounding code, or by asking if the user is around:
