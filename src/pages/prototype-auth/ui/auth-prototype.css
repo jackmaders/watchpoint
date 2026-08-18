@@ -89,6 +89,11 @@
 	display: block;
 	height: 1px;
 }
+.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"][data-state="active"] {
+	position: relative;
+	z-index: 1;
+	margin-bottom: -1px;
+}
 .auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
 	padding: 0.2rem;
 	background: var(--muted);
