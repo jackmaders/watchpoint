@@ -1,0 +1,13 @@
+engine biome(1.0)
+language js(typescript,jsx)
+
+or {
+	JsxElement(),
+	JsxSelfClosingElement()
+} as $element where {
+	$element <: contains r"data-testid",
+	register_diagnostic(
+		span=$element,
+		message="Do not use `data-testid` in production components. Query the user-facing interface instead."
+	)
+}

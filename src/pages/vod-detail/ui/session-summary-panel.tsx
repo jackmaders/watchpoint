@@ -78,7 +78,6 @@ export function SessionSummaryPanel({
 			aria-label="Session Performance Summary"
 			aria-live="polite"
 			className="rounded-lg border border-border bg-card p-4 sm:p-6 md:p-8 shadow-lg space-y-8 max-w-3xl mx-auto text-card-foreground outline-none"
-			data-testid="session-summary-panel"
 			ref={containerRef}
 			tabIndex={-1}
 		>
@@ -101,10 +100,7 @@ export function SessionSummaryPanel({
 			</header>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<div
-					className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2"
-					data-testid="summary-accuracy"
-				>
+				<div className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2">
 					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 						Overall Accuracy
 					</span>
@@ -118,10 +114,7 @@ export function SessionSummaryPanel({
 					</div>
 				</div>
 
-				<div
-					className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2"
-					data-testid="summary-latency"
-				>
+				<div className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2">
 					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 						Avg Response Latency
 					</span>
@@ -150,7 +143,6 @@ export function SessionSummaryPanel({
 							return (
 								<div
 									className="p-4 rounded-lg border border-border bg-background/40 flex flex-col justify-between space-y-3"
-									data-testid={`module-summary-${moduleKey}`}
 									key={moduleKey}
 								>
 									<div className="flex items-center justify-between">
@@ -179,7 +171,6 @@ export function SessionSummaryPanel({
 			<footer className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-end gap-3">
 				<button
 					className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-					data-testid="exit-session-button"
 					onClick={onExit}
 					type="button"
 				>
@@ -187,7 +178,6 @@ export function SessionSummaryPanel({
 				</button>
 				<button
 					className="w-full sm:w-auto px-6 py-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-					data-testid="retry-session-button"
 					onClick={onRetry}
 					type="button"
 				>

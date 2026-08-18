@@ -127,7 +127,6 @@ function SessionPlayerControls({
 					<button
 						aria-label={isPlaying ? "Pause Video" : "Play Video"}
 						className="px-4 py-2 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-						data-testid="play-pause-button"
 						onClick={isPlaying ? onPause : onPlay}
 						type="button"
 					>
@@ -136,7 +135,6 @@ function SessionPlayerControls({
 
 					<button
 						className="px-3.5 py-2 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						data-testid="replay-context-button"
 						onClick={onReplayContext}
 						type="button"
 					>
@@ -196,7 +194,7 @@ function SessionPlayerViewport({
 			{isLoading ? (
 				<div
 					className="absolute inset-0 bg-background flex flex-col items-center justify-center space-y-4 z-20"
-					data-testid="player-loading"
+					role="status"
 				>
 					<div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin motion-reduce:animate-none" />
 					<p className="text-sm font-semibold text-muted-foreground">

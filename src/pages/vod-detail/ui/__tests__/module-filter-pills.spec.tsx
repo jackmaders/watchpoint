@@ -60,7 +60,7 @@ describe("ModuleFilterPills", () => {
 				selectedModules={["STRATEGY", "TACTICS"]}
 			/>,
 		);
-		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
+		const strategyBtn = screen.getByRole("button", { name: /strategy/i });
 		fireEvent.click(strategyBtn);
 
 		// Assert
@@ -75,7 +75,7 @@ describe("ModuleFilterPills", () => {
 		render(
 			<ModuleFilterPills onChange={onChange} selectedModules={["TACTICS"]} />,
 		);
-		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
+		const strategyBtn = screen.getByRole("button", { name: /strategy/i });
 		fireEvent.click(strategyBtn);
 
 		// Assert
@@ -135,8 +135,8 @@ describe("ModuleFilterPills", () => {
 		render(
 			<ModuleFilterPills onChange={onChange} selectedModules={["STRATEGY"]} />,
 		);
-		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
-		const tacticsBtn = screen.getByTestId("module-filter-TACTICS");
+		const strategyBtn = screen.getByRole("button", { name: /strategy/i });
+		const tacticsBtn = screen.getByRole("button", { name: /tactics/i });
 
 		// Assert
 		expect(strategyBtn.getAttribute("aria-pressed")).toBe("true");

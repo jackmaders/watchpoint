@@ -83,11 +83,9 @@ describe("SessionSummaryPanel", () => {
 		);
 
 		// Assert
-		expect(screen.getByTestId("module-summary-STRATEGY")).toBeDefined();
-		expect(screen.getByTestId("module-summary-TACTICS")).toBeDefined();
-		expect(screen.queryByTestId("module-summary-ULTIMATE")).toBeNull();
 		expect(screen.getByText("Strategy")).toBeDefined();
 		expect(screen.getByText("Tactics")).toBeDefined();
+		expect(screen.queryByText("Ultimate")).toBeNull();
 		expect(screen.getByText("2 / 2 (100%)")).toBeDefined();
 		expect(screen.getByText("2 / 3 (67%)")).toBeDefined();
 		expect(screen.getByText("2100 ms avg")).toBeDefined();

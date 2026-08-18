@@ -55,7 +55,6 @@ function MultipleChoiceOptionButton({
 			aria-disabled={!isUnanswered}
 			aria-keyshortcuts={shortcut}
 			className={`w-full flex items-center justify-between p-4 rounded-md border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${buttonStyle}`}
-			data-testid={`scenario-option-${option.id}`}
 			disabled={!isUnanswered}
 			onClick={handleClick}
 			type="button"
