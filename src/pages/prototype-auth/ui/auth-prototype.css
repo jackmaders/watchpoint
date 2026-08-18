@@ -98,15 +98,6 @@ h2 {
 	margin-bottom: 2rem;
 	border-bottom: 1px solid var(--border);
 }
-button {
-	padding: 0.75rem 1rem;
-	font-weight: 600;
-	color: var(--primary-foreground);
-	cursor: pointer;
-	background: var(--primary);
-	border: 1px solid var(--primary);
-	border-radius: var(--radius-sm);
-}
 .auth-tabs button,
 .link-button {
 	padding: 0.6rem 0;
@@ -138,9 +129,6 @@ input:focus-visible,
 button:focus-visible {
 	outline: 2px solid var(--ring);
 	outline-offset: 3px;
-}
-button:hover {
-	filter: brightness(1.08);
 }
 .training-preview {
 	position: relative;
@@ -276,5 +264,182 @@ button:hover {
 		scroll-behavior: auto;
 		transition-duration: 0.01ms;
 		animation-duration: 0.01ms;
+	}
+}
+
+.public-shell {
+	width: min(74rem, 100%);
+	min-height: 37rem;
+	margin: auto;
+}
+.public-shell header,
+.public-shell-b aside,
+.catalog-list header {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: space-between;
+}
+.shell-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+.shell-hero {
+	display: grid;
+	grid-template-columns: 1fr minmax(16rem, 24rem);
+	gap: 4rem;
+	align-items: end;
+	min-height: 32rem;
+	padding: clamp(1rem, 4vw, 4rem) 0;
+}
+.shell-hero p,
+.public-shell-b aside p,
+.catalog-list header p {
+	max-width: 34rem;
+	margin: 1.5rem 0 2rem;
+	line-height: 1.6;
+	color: var(--muted-foreground);
+}
+.catalog-card,
+.public-shell-b aside,
+.catalog-row {
+	padding: 1.5rem;
+	background: var(--card);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-lg);
+}
+.catalog-card h2,
+.public-shell-b aside h2,
+.catalog-list h2 {
+	font-size: 1.4rem;
+}
+.catalog-card p {
+	margin: 0.5rem 0 1.5rem;
+}
+.public-shell-b {
+	display: grid;
+	grid-template-columns: minmax(20rem, 1fr) minmax(18rem, 24rem);
+	gap: 2rem;
+	align-items: stretch;
+}
+.public-shell-b aside {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	justify-content: end;
+}
+.public-shell-b aside p {
+	margin: 0 0 1rem;
+}
+.public-shell-c {
+	display: grid;
+	grid-template-columns: 0.7fr 1.3fr;
+	gap: 2rem;
+	align-items: stretch;
+}
+.catalog-list {
+	padding: clamp(1rem, 4vw, 3rem);
+	background: color-mix(in oklab, var(--card) 75%, transparent);
+	border: 1px solid var(--border);
+}
+.catalog-list header {
+	align-items: end;
+	margin-bottom: 2rem;
+}
+.catalog-list h2 {
+	margin-top: 0.5rem;
+}
+.catalog-row {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 1rem;
+	box-shadow: none;
+}
+.catalog-row div {
+	display: grid;
+	gap: 0.5rem;
+}
+.catalog-row span {
+	font: 0.7rem var(--font-mono);
+	color: var(--muted-foreground);
+}
+.auth-dialog {
+	max-height: calc(100vh - 2rem);
+	overflow-y: auto;
+}
+.auth-tabs {
+	display: flex;
+	gap: 0.5rem;
+	margin: 1.5rem 0;
+}
+.auth-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.auth-form label {
+	display: grid;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+.auth-form input {
+	margin-top: 0;
+}
+.field-hint,
+.registration-note {
+	font-size: 0.75rem;
+	color: var(--muted-foreground);
+}
+.registration-note {
+	padding: 0.75rem;
+	background: var(--muted);
+	border: 1px solid var(--border);
+}
+.form-alert {
+	padding: 0.75rem;
+	font-size: 0.875rem;
+	color: var(--destructive);
+	background: color-mix(in oklab, var(--destructive) 10%, transparent);
+	border: 1px solid color-mix(in oklab, var(--destructive) 50%, transparent);
+}
+.prototype-controls {
+	align-items: center;
+}
+.prototype-controls label {
+	display: grid;
+	gap: 0.3rem;
+	min-width: 15rem;
+	font-size: 0.75rem;
+}
+.prototype-controls input {
+	padding: 0.45rem;
+}
+.prototype-switcher button {
+	border-color: var(--primary);
+}
+@media (max-width: 720px) {
+	.public-shell,
+	.public-shell-a,
+	.public-shell-b,
+	.public-shell-c,
+	.shell-hero {
+		grid-template-columns: 1fr;
+		min-height: auto;
+	}
+	.public-shell header,
+	.catalog-list header,
+	.catalog-row {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.public-shell-b aside {
+		padding: 1.5rem;
+	}
+	.command-rail {
+		border-right: 0;
+		border-bottom: 1px solid var(--border);
 	}
 }
