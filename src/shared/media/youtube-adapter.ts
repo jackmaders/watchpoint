@@ -1,4 +1,8 @@
-import { PlaybackStatus } from "./types";
+import {
+	type MediaFailure,
+	MediaFailureCategory,
+	PlaybackStatus,
+} from "./types";
 
 const YOUTUBE_IFRAME_API_URL = "https://www.youtube.com/iframe_api";
 
@@ -51,8 +55,14 @@ export interface YouTubePlayerStateChangeEvent {
 	target: YouTubePlayer;
 }
 
+export interface YouTubePlayerErrorEvent {
+	data: number;
+	target: YouTubePlayer;
+}
+
 export interface YouTubePlayerOptions {
 	events?: {
+		onError?: (event: YouTubePlayerErrorEvent) => void;
 		onReady?: (event: YouTubePlayerEvent) => void;
 		onStateChange?: (event: YouTubePlayerStateChangeEvent) => void;
 	};
@@ -152,6 +162,7 @@ export interface CreatePlayerOptions {
 	autoplay: boolean;
 	container: HTMLDivElement;
 	handleReady: (event: YouTubePlayerEvent) => void;
+	handleError?: (event: YouTubePlayerErrorEvent) => void;
 	handleStateChange: (event: YouTubePlayerStateChangeEvent) => void;
 	videoId: string;
 	youtube: YouTubeNamespace;
@@ -160,6 +171,7 @@ export interface CreatePlayerOptions {
 export function createYouTubePlayerInstance({
 	autoplay,
 	container,
+	handleError,
 	handleReady,
 	handleStateChange,
 	videoId,
@@ -167,6 +179,7 @@ export function createYouTubePlayerInstance({
 }: CreatePlayerOptions): YouTubePlayer {
 	return new youtube.Player(container, {
 		events: {
+			onError: handleError,
 			onReady: handleReady,
 			onStateChange: handleStateChange,
 		},
@@ -182,13 +195,33 @@ export function loadAndMountPlayer(
 	options: Omit<CreatePlayerOptions, "youtube">,
 	isActiveGeneration: () => boolean,
 	onCreated: (player: YouTubePlayer) => void,
+	onError?: (failure: MediaFailure) => void,
 ) {
 	void loadYouTubeIframeApi()
 		.then((youtube) => {
 			if (!isActiveGeneration()) {
 				return;
 			}
-			onCreated(createYouTubePlayerInstance({ ...options, youtube }));
+			try {
+				onCreated(createYouTubePlayerInstance({ ...options, youtube }));
+			} catch (error) {
+				onError?.({
+					category: MediaFailureCategory.PLAYER_CONSTRUCTION,
+					message:
+						error instanceof Error
+							? error.message
+							: "The media player could not be created.",
+				});
+			}
 		})
-		.catch(() => undefined);
+		.catch((error: unknown) => {
+			if (!isActiveGeneration()) return;
+			onError?.({
+				category: MediaFailureCategory.API_LOAD,
+				message:
+					error instanceof Error
+						? error.message
+						: "The YouTube IFrame API failed to load.",
+			});
+		});
 }

@@ -636,6 +636,65 @@ describe("session playthrough coordinator", () => {
 		expect(inert).toBe(consumed);
 	});
 
+	it("attempts one player recovery while preserving the active scenario", () => {
+		// Arrange
+		const state = readyPlayingState([timedScenario]);
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 60,
+			type: "TIME_UPDATED",
+		});
+
+		// Act
+		const recovering = sessionPlaythroughReducer(active, {
+			failure: {
+				category: "buffering",
+				message: "buffering threshold exceeded",
+			},
+			generation: active.generation,
+			nowMs: 2000,
+			type: "MEDIA_FAILURE",
+		});
+		const recovered = sessionPlaythroughReducer(recovering, {
+			generation: active.generation,
+			nowMs: 5000,
+			retryCount: 1,
+			type: "RECOVERY_SUCCEEDED",
+		});
+
+		// Assert
+		expect(recovering.mediaHealth).toBe("recovering");
+		expect(recovering.session.state).toBe("SCENARIO_ACTIVE");
+		expect(recovering.session.attempts).toHaveLength(0);
+		expect(recovering.effects.at(-1)?.type).toBe("MEDIA_RECOVER");
+		expect(recovered.mediaHealth).toBe("ready");
+		expect(recovered.deadlineAtMs).toBe(6000);
+	});
+
+	it("exposes terminal failure after automatic recovery has already been attempted", () => {
+		// Arrange
+		const state = readyPlayingState();
+		const recovering = sessionPlaythroughReducer(state, {
+			failure: { category: "api-load", message: "provider unavailable" },
+			generation: state.generation,
+			nowMs: 100,
+			type: "MEDIA_FAILURE",
+		});
+
+		// Act
+		const terminal = sessionPlaythroughReducer(recovering, {
+			failure: { category: "readiness", message: "player not ready" },
+			generation: state.generation,
+			nowMs: 200,
+			type: "MEDIA_FAILURE",
+		});
+
+		// Assert
+		expect(terminal.mediaHealth).toBe("failed");
+		expect(terminal.session.attempts).toHaveLength(0);
+	});
+
 	it("returns the configured and default scenario limits", () => {
 		// Arrange
 		const untimed = { ...scenario, moduleType: "STRATEGY" as const };

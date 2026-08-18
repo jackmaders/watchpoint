@@ -1,5 +1,5 @@
 import type { ModuleType } from "@/shared/db";
-import { PlaybackStatus } from "@/shared/media";
+import { type MediaFailure, PlaybackStatus } from "@/shared/media";
 import type { AttemptOutcome } from "./attempt";
 import type { ScenarioInput, ScenarioOverlayState } from "./session-contract";
 import { calculateSessionSummary, type SessionSummaryReport } from "./summary";
@@ -11,6 +11,13 @@ export type SessionPlayerState =
 	| "SCENARIO_ACTIVE"
 	| "FEEDBACK"
 	| "COMPLETED";
+
+export type MediaHealth =
+	| "loading"
+	| "ready"
+	| "buffering"
+	| "recovering"
+	| "failed";
 
 export interface SessionPlayerSession {
 	activeScenarioIndex: number;
@@ -59,6 +66,7 @@ export type SessionAttemptOutcome = AttemptOutcome;
 
 export type SessionPlaythroughEffect =
 	| { generation: number; type: "MEDIA_PAUSE" }
+	| { autoplay: boolean; generation: number; type: "MEDIA_RECOVER" }
 	| {
 			generation: number;
 			reason: "play" | "resume" | "skip";
@@ -93,12 +101,16 @@ export interface SessionPlaythroughState {
 	session: SessionPlayerSession;
 	summary: SessionSummaryReport | null;
 	effects: readonly SessionPlaythroughEffect[];
+	mediaHealth: MediaHealth;
+	mediaPausedAtMs?: number;
+	recoveryAttempted: boolean;
 }
 
 export type SessionPlaythroughAction =
 	| { autoplay: boolean; generation: number; type: "PLAYER_READY" }
 	| {
 			generation: number;
+			nowMs?: number;
 			status: PlaybackStatus;
 			type: "PLAYBACK_STATUS_CHANGED";
 	  }
@@ -125,7 +137,20 @@ export type SessionPlaythroughAction =
 			type: "TIMEOUT_REQUESTED";
 	  }
 	| { generation: number; type: "REPLAY_CONTEXT" }
+	| { generation: number; nowMs: number; type: "RETRY_MEDIA" }
 	| { generation: number; type: "RESUME_PLAYBACK" }
+	| {
+			failure: MediaFailure;
+			generation: number;
+			nowMs: number;
+			type: "MEDIA_FAILURE";
+	  }
+	| {
+			generation: number;
+			nowMs: number;
+			retryCount: number;
+			type: "RECOVERY_SUCCEEDED";
+	  }
 	| { generation: number; type: "UNSUPPORTED_INPUT_SKIPPED" }
 	| { autoplay: boolean; type: "RETRY_SESSION" }
 	| {
@@ -150,6 +175,8 @@ export function createSessionPlaythroughState(
 		effects: [],
 		generation: 1,
 		lastTriggeredScenarioId: null,
+		mediaHealth: "loading",
+		recoveryAttempted: false,
 		replayAwaitingSeek: false,
 		restartPending: false,
 		scenarios,
@@ -400,6 +427,39 @@ function handleTimeoutRequested(
 	);
 }
 
+function handleMediaHealthStatus(
+	state: SessionPlaythroughState,
+	action: Extract<
+		SessionPlaythroughAction,
+		{ type: "PLAYBACK_STATUS_CHANGED" }
+	>,
+): SessionPlaythroughState | null {
+	if (action.status === PlaybackStatus.BUFFERING) {
+		return withEffects(state, {
+			mediaHealth: "buffering",
+			mediaPausedAtMs: state.mediaPausedAtMs ?? action.nowMs ?? Date.now(),
+		});
+	}
+	if (
+		action.status === PlaybackStatus.PLAYING &&
+		!state.restartPending &&
+		(state.mediaHealth === "loading" || state.mediaHealth === "buffering")
+	) {
+		const pauseDuration = state.mediaPausedAtMs
+			? Math.max(0, (action.nowMs ?? Date.now()) - state.mediaPausedAtMs)
+			: 0;
+		return withEffects(state, {
+			deadlineAtMs:
+				state.deadlineAtMs === undefined
+					? undefined
+					: state.deadlineAtMs + pauseDuration,
+			mediaHealth: "ready",
+			mediaPausedAtMs: undefined,
+		});
+	}
+	return null;
+}
+
 function handlePlaybackStatusChanged(
 	state: SessionPlaythroughState,
 	action: Extract<
@@ -416,6 +476,8 @@ function handlePlaybackStatusChanged(
 	if (state.restartPending && action.status === PlaybackStatus.ENDED) {
 		return state;
 	}
+	const mediaHealthState = handleMediaHealthStatus(state, action);
+	if (mediaHealthState) return mediaHealthState;
 	const nextState = resolveNewStatusState(state.session.state, action.status);
 	if (!nextState) return state;
 	const session = { ...state.session, state: nextState };
@@ -591,9 +653,36 @@ function handleRetrySession(
 	};
 }
 
+function handleRetryMedia(
+	state: SessionPlaythroughState,
+	action: Extract<SessionPlaythroughAction, { type: "RETRY_MEDIA" }>,
+): SessionPlaythroughState {
+	if (!isCurrentGeneration(state, action) || state.mediaHealth !== "failed") {
+		return state;
+	}
+	return withEffects(
+		state,
+		{ mediaHealth: "recovering", mediaPausedAtMs: action.nowMs },
+		[
+			{
+				autoplay: state.session.state === "PLAYING",
+				generation: state.generation,
+				type: "MEDIA_RECOVER",
+			},
+		],
+	);
+}
+
 type MediaAction = Extract<
 	SessionPlaythroughAction,
-	{ type: "PLAYER_READY" | "PLAYBACK_STATUS_CHANGED" | "TIME_UPDATED" }
+	{
+		type:
+			| "PLAYER_READY"
+			| "PLAYBACK_STATUS_CHANGED"
+			| "TIME_UPDATED"
+			| "MEDIA_FAILURE"
+			| "RECOVERY_SUCCEEDED";
+	}
 >;
 
 function handlePlayerReady(
@@ -612,8 +701,54 @@ function handlePlayerReady(
 			...state.session,
 			state: action.autoplay ? "PLAYING" : "PAUSED_USER",
 		},
-		{ restartPending: false },
+		{ mediaHealth: "ready", restartPending: false },
 	);
+}
+
+function handleMediaFailure(
+	state: SessionPlaythroughState,
+	action: Extract<SessionPlaythroughAction, { type: "MEDIA_FAILURE" }>,
+): SessionPlaythroughState {
+	if (!isCurrentGeneration(state, action)) return state;
+	if (state.recoveryAttempted) {
+		return withEffects(state, {
+			mediaHealth: "failed",
+			mediaPausedAtMs: state.mediaPausedAtMs ?? action.nowMs,
+		});
+	}
+	return withEffects(
+		state,
+		{
+			mediaHealth: "recovering",
+			mediaPausedAtMs: state.mediaPausedAtMs ?? action.nowMs,
+			recoveryAttempted: true,
+		},
+		[
+			{
+				autoplay: state.session.state === "PLAYING",
+				generation: state.generation,
+				type: "MEDIA_RECOVER",
+			},
+		],
+	);
+}
+
+function handleRecoverySucceeded(
+	state: SessionPlaythroughState,
+	action: Extract<SessionPlaythroughAction, { type: "RECOVERY_SUCCEEDED" }>,
+): SessionPlaythroughState {
+	if (!isCurrentGeneration(state, action)) return state;
+	const pauseDuration = state.mediaPausedAtMs
+		? Math.max(0, action.nowMs - state.mediaPausedAtMs)
+		: 0;
+	return withEffects(state, {
+		deadlineAtMs:
+			state.deadlineAtMs === undefined
+				? undefined
+				: state.deadlineAtMs + pauseDuration,
+		mediaHealth: "ready",
+		mediaPausedAtMs: undefined,
+	});
 }
 
 function handleMediaAction(
@@ -629,12 +764,25 @@ function handleMediaAction(
 			return state.restartPending
 				? handleRestartPendingTime(state, action)
 				: handleTimeUpdated(state, action);
+		case "MEDIA_FAILURE":
+			return handleMediaFailure(state, action);
+		case "RECOVERY_SUCCEEDED":
+			return handleRecoverySucceeded(state, action);
 	}
 }
 
 type ScenarioAction = Exclude<
 	SessionPlaythroughAction,
-	MediaAction | { type: "EFFECTS_CONSUMED" | "MANIFEST_CHANGED" }
+	{
+		type:
+			| "PLAYER_READY"
+			| "PLAYBACK_STATUS_CHANGED"
+			| "TIME_UPDATED"
+			| "MEDIA_FAILURE"
+			| "RECOVERY_SUCCEEDED"
+			| "EFFECTS_CONSUMED"
+			| "MANIFEST_CHANGED";
+	}
 >;
 
 function handleScenarioAction(
@@ -652,6 +800,8 @@ function handleScenarioAction(
 			return handlePlayRequested(state, action);
 		case "REPLAY_CONTEXT":
 			return handleReplayContext(state, action);
+		case "RETRY_MEDIA":
+			return handleRetryMedia(state, action);
 		case "RESUME_PLAYBACK":
 			return handleResumePlayback(state, action);
 		case "UNSUPPORTED_INPUT_SKIPPED":
@@ -676,7 +826,9 @@ export function sessionPlaythroughReducer(
 	if (
 		action.type === "PLAYER_READY" ||
 		action.type === "PLAYBACK_STATUS_CHANGED" ||
-		action.type === "TIME_UPDATED"
+		action.type === "TIME_UPDATED" ||
+		action.type === "MEDIA_FAILURE" ||
+		action.type === "RECOVERY_SUCCEEDED"
 	) {
 		return handleMediaAction(state, action);
 	}

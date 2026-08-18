@@ -159,4 +159,55 @@ describe("session media adapter", () => {
 		// Assert
 		expect(player.pauseVideo).toHaveBeenCalledTimes(1);
 	});
+
+	it("recreates a player for recovery and emits sanitized diagnostics", async () => {
+		// Arrange
+		const youtube = createYouTubeMock(142);
+		setYouTubeNamespace(youtube.namespace);
+		const onEvent = vi.fn();
+		const onDiagnostics = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useSessionMediaAdapter({
+				generation: 4,
+				onDiagnostics,
+				onEvent,
+				videoId: "recovery-video",
+			}),
+		);
+		act(() => result.current.containerRef(container));
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const firstPlayer = youtube.players[0];
+		act(() => firstPlayer.triggerReady());
+
+		// Act
+		act(() => result.current.execute({ autoplay: false, type: "RECOVER" }));
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const recoveredPlayer = youtube.players[1];
+		act(() => recoveredPlayer.triggerReady());
+
+		// Assert
+		expect(firstPlayer.destroy).toHaveBeenCalledTimes(1);
+		expect(recoveredPlayer.seekTo).toHaveBeenCalledWith(0, true);
+		expect(recoveredPlayer.playVideo).not.toHaveBeenCalled();
+		expect(onEvent).toHaveBeenCalledWith({
+			generation: 4,
+			retryCount: 1,
+			type: "RECOVERY_SUCCEEDED",
+		});
+		expect(onDiagnostics).toHaveBeenCalledWith(
+			expect.objectContaining({
+				eventType: "recovery",
+				generation: 4,
+				outcome: "recovered",
+				videoId: "recovery-video",
+			}),
+		);
+	});
 });

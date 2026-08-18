@@ -9,6 +9,7 @@ describe("useVodPlayer loader failure boundary", () => {
 	});
 
 	afterEach(() => {
+		vi.useRealTimers();
 		vi.restoreAllMocks();
 		setYouTubeNamespace(undefined);
 		document.head.replaceChildren();
@@ -73,5 +74,69 @@ describe("useVodPlayer loader failure boundary", () => {
 
 		// Assert
 		expect(youtube.players).toHaveLength(0);
+	});
+
+	it("reports readiness and prolonged buffering failures", async () => {
+		// Arrange
+		vi.useFakeTimers();
+		const { useVodPlayer } = await import("../use-vod-player");
+		const youtube = createYouTubeMock();
+		setYouTubeNamespace(youtube.namespace);
+		const onError = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useVodPlayer({ onError, videoId: "failure-video" }),
+		);
+		act(() => result.current.containerRef(container));
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+
+		// Act
+		act(() => vi.advanceTimersByTime(5000));
+		act(() => player.triggerReady());
+		act(() => player.triggerStateChange(3));
+		act(() => vi.advanceTimersByTime(5000));
+
+		// Assert
+		expect(onError).toHaveBeenNthCalledWith(1, {
+			category: "readiness",
+			message: "The media player did not become ready.",
+		});
+		expect(onError).toHaveBeenNthCalledWith(2, {
+			category: "buffering",
+			message: "The media player has been buffering for too long.",
+		});
+	});
+
+	it("translates provider error callbacks into typed failures", async () => {
+		// Arrange
+		const { useVodPlayer } = await import("../use-vod-player");
+		const youtube = createYouTubeMock();
+		setYouTubeNamespace(youtube.namespace);
+		const onError = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useVodPlayer({ onError, videoId: "provider-error-video" }),
+		);
+		act(() => result.current.containerRef(container));
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Act
+		act(() => player.options.events?.onError?.({ data: 150, target: player }));
+
+		// Assert
+		expect(onError).toHaveBeenCalledWith({
+			category: "provider",
+			code: "150",
+			message: "The media provider reported a playback error.",
+		});
 	});
 });

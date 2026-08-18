@@ -50,6 +50,9 @@ export interface UseSessionPlayerOptions {
 	autoplay?: boolean;
 	initialManifest?: ManifestVod | null;
 	onSessionComplete?: (summary: SessionSummaryReport) => void;
+	onMediaDiagnostics?: (
+		diagnostic: import("@/shared/media").MediaDiagnostic,
+	) => void;
 	vodId: string;
 }
 
@@ -67,10 +70,12 @@ export interface UseSessionPlayerResult {
 	pause: () => void;
 	play: () => void;
 	playbackStatus: PlaybackStatus;
+	mediaHealth: "loading" | "ready" | "buffering" | "recovering" | "failed";
 	remainingMs?: number;
 	replayContext: () => void;
 	resumePlayback: () => void;
 	retrySession: () => void;
+	retryMedia: () => void;
 	selectOption: (optionId: string) => void;
 	skipUnsupportedInput: () => void;
 	state: SessionPlayerState;
@@ -135,6 +140,9 @@ function executeSessionEffect(
 		case "MEDIA_PAUSE":
 			media.execute({ type: "PAUSE" });
 			return;
+		case "MEDIA_RECOVER":
+			media.execute({ autoplay: effect.autoplay, type: "RECOVER" });
+			return;
 		case "MEDIA_PLAY":
 			media.execute({ type: "PLAY" });
 			return;
@@ -181,6 +189,9 @@ function useSessionMedia(
 	vod: ManifestVod | null,
 	coordinatorRef: React.RefObject<SessionPlaythroughState>,
 	dispatch: React.Dispatch<SessionPlaythroughAction>,
+	onMediaDiagnostics?: (
+		diagnostic: import("@/shared/media").MediaDiagnostic,
+	) => void,
 ) {
 	const onTimeUpdate = useCallback(
 		(time: number, eventGeneration?: number) => {
@@ -207,8 +218,25 @@ function useSessionMedia(
 				case "PLAYBACK_STATUS_CHANGED":
 					dispatch({
 						generation: event.generation as number,
+						nowMs: Date.now(),
 						status: event.status,
 						type: "PLAYBACK_STATUS_CHANGED",
+					});
+					return;
+				case "MEDIA_FAILURE":
+					dispatch({
+						failure: event.failure,
+						generation: event.generation as number,
+						nowMs: Date.now(),
+						type: "MEDIA_FAILURE",
+					});
+					return;
+				case "RECOVERY_SUCCEEDED":
+					dispatch({
+						generation: event.generation as number,
+						nowMs: Date.now(),
+						retryCount: event.retryCount,
+						type: "RECOVERY_SUCCEEDED",
 					});
 					return;
 				case "TIME_UPDATED":
@@ -221,6 +249,7 @@ function useSessionMedia(
 	return useSessionMediaAdapter({
 		autoplay,
 		generation,
+		onDiagnostics: onMediaDiagnostics,
 		onEvent: onMediaEvent,
 		videoId: vod?.youtubeVideoId ?? "",
 	});
@@ -268,6 +297,14 @@ function useSessionPlayerActions(
 		dispatch({ autoplay: true, type: "RETRY_SESSION" });
 	}, [dispatch]);
 
+	const retryMedia = useCallback(() => {
+		dispatch({
+			generation: coordinatorRef.current.generation,
+			nowMs: Date.now(),
+			type: "RETRY_MEDIA",
+		});
+	}, [coordinatorRef, dispatch]);
+
 	const selectOption = useCallback(
 		(optionId: string) => {
 			const state = coordinatorRef.current;
@@ -301,6 +338,7 @@ function useSessionPlayerActions(
 		play,
 		replayContext,
 		resumePlayback,
+		retryMedia,
 		retrySession,
 		selectOption,
 		skipUnsupportedInput,
@@ -312,12 +350,16 @@ interface SessionPlayerRuntimeOptions {
 	autoplay: boolean;
 	onSessionComplete?: (summary: SessionSummaryReport) => void;
 	vod: ManifestVod | null;
+	onMediaDiagnostics?: (
+		diagnostic: import("@/shared/media").MediaDiagnostic,
+	) => void;
 }
 
 function useSessionPlayerRuntime({
 	activeScenarios,
 	autoplay,
 	onSessionComplete,
+	onMediaDiagnostics,
 	vod,
 }: SessionPlayerRuntimeOptions) {
 	const coordinatorScenarios = activeScenarios as readonly SessionScenario[];
@@ -340,6 +382,7 @@ function useSessionPlayerRuntime({
 		vod,
 		coordinatorRef,
 		dispatch,
+		onMediaDiagnostics,
 	);
 	const recordAttempt = useRecordAttemptMutation();
 	const manifestKey = getManifestKey(vod);
@@ -368,7 +411,8 @@ function useSessionPlayerRuntime({
 	}, []);
 	const remainingMs = useScenarioCountdown(
 		coordinator.deadlineAtMs,
-		coordinator.session.overlayState?.status === "unanswered",
+		coordinator.session.overlayState?.status === "unanswered" &&
+			coordinator.mediaHealth === "ready",
 		onTimeout,
 	);
 	useSessionEffects(
@@ -392,6 +436,7 @@ export function useSessionPlayer({
 	autoplay = true,
 	initialManifest,
 	onSessionComplete,
+	onMediaDiagnostics,
 	vodId,
 }: UseSessionPlayerOptions): UseSessionPlayerResult {
 	const vod = initialManifest ?? null;
@@ -399,6 +444,7 @@ export function useSessionPlayer({
 	const runtime = useSessionPlayerRuntime({
 		activeScenarios,
 		autoplay,
+		onMediaDiagnostics,
 		onSessionComplete,
 		vod,
 	});
@@ -420,6 +466,7 @@ export function useSessionPlayer({
 		duration: media.duration,
 		...actions,
 		isReady: media.isReady,
+		mediaHealth: coordinator.mediaHealth,
 		overlayState: coordinator.session.overlayState,
 		playbackStatus: media.status,
 		remainingMs,

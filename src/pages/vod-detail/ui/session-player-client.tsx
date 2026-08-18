@@ -157,6 +157,9 @@ interface SessionPlayerViewportProps {
 	isCompleted: boolean;
 	isLoading: boolean;
 	isOverlayVisible: boolean;
+	mediaHealth: "loading" | "ready" | "buffering" | "recovering" | "failed";
+	onRetryMedia: () => void;
+	onRestartSession: () => void;
 	onReplayContext: () => void;
 	onResume: () => void;
 	onSkipUnsupportedInput: () => void;
@@ -167,11 +170,15 @@ interface SessionPlayerViewportProps {
 	totalMs?: number;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the viewport owns the layered player states at the established UI seam.
 function SessionPlayerViewport({
 	containerRef,
 	isCompleted,
 	isLoading,
 	isOverlayVisible,
+	mediaHealth,
+	onRetryMedia,
+	onRestartSession,
 	onReplayContext,
 	onResume,
 	onSkipUnsupportedInput,
@@ -200,6 +207,54 @@ function SessionPlayerViewport({
 					<p className="text-sm font-semibold text-muted-foreground">
 						Initializing Video Stream...
 					</p>
+				</div>
+			) : null}
+
+			{mediaHealth === "buffering" ? (
+				<div
+					className="absolute left-3 top-3 z-20 rounded-md bg-background/85 px-3 py-2 text-xs font-semibold text-foreground shadow-sm"
+					role="status"
+				>
+					Buffering…
+				</div>
+			) : null}
+
+			{mediaHealth === "recovering" || mediaHealth === "failed" ? (
+				<div
+					aria-live="assertive"
+					className="absolute inset-0 z-40 flex items-center justify-center bg-background/95 p-6 text-center"
+					role="alert"
+				>
+					<div className="max-w-sm space-y-4">
+						<h2 className="text-lg font-bold text-foreground">
+							{mediaHealth === "recovering"
+								? "Recovering video…"
+								: "Video playback is unavailable"}
+						</h2>
+						<p className="text-sm text-muted-foreground">
+							{mediaHealth === "recovering"
+								? "Your session and scenario progress are preserved."
+								: "Playback could not continue, but your training context is preserved."}
+						</p>
+						{mediaHealth === "failed" ? (
+							<div className="flex flex-wrap justify-center gap-3">
+								<button
+									className="rounded-md bg-primary px-4 py-2 text-xs font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+									onClick={onRetryMedia}
+									type="button"
+								>
+									Try again
+								</button>
+								<button
+									className="rounded-md border border-input px-4 py-2 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+									onClick={onRestartSession}
+									type="button"
+								>
+									Restart session
+								</button>
+							</div>
+						) : null}
+					</div>
 				</div>
 			) : null}
 
@@ -235,10 +290,12 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 		overlayState,
 		pause,
 		play,
+		mediaHealth,
 		remainingMs,
 		replayContext,
 		resumePlayback,
 		retrySession,
+		retryMedia,
 		selectOption,
 		skipUnsupportedInput,
 		state,
@@ -284,8 +341,11 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 				isCompleted={isCompleted}
 				isLoading={state === "LOADING"}
 				isOverlayVisible={isOverlayVisible}
+				mediaHealth={mediaHealth}
 				onReplayContext={replayContext}
+				onRestartSession={retrySession}
 				onResume={resumePlayback}
+				onRetryMedia={retryMedia}
 				onSelectOption={selectOption}
 				onSkipUnsupportedInput={skipUnsupportedInput}
 				overlayScenarioData={overlayScenarioData}
