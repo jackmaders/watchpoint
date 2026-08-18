@@ -1,6 +1,6 @@
 # Design System: Watchpoint
 
-This document is the canonical design system specification for Watchpoint, compatible with Google Stitch and AI coding agents. It defines the visual tokens, typography, component primitives, and styling constraints for all user interface generation and refinement.
+This document is the canonical design system specification for Watchpoint and AI coding agents. It defines the visual tokens, typography, component primitives, and styling constraints for all user interface work.
 
 ---
 
@@ -15,7 +15,7 @@ This document is the canonical design system specification for Watchpoint, compa
 
 ## 2. Color Palette & Semantic Tokens
 
-All styling in Google Stitch and codebase components must use these semantic tokens. Arbitrary hard-coded hex colors are forbidden.
+All codebase components must use these semantic tokens. Arbitrary hard-coded hex colors are forbidden.
 
 | Token | Dark Mode Value | Light Mode Value | Tailwind Class | Semantic Usage |
 | :--- | :--- | :--- | :--- | :--- |
@@ -54,7 +54,7 @@ All styling in Google Stitch and codebase components must use these semantic tok
 
 ## 4. Component Primitive Catalog (`shared/ui`)
 
-When generating interfaces in Google Stitch, strictly compose screens from these standardized atomic components:
+When building interfaces, strictly compose screens from these standardized atomic components:
 
 ### Button (`shared/ui/button.tsx`)
 - **Sizes**:
@@ -90,9 +90,8 @@ When generating interfaces in Google Stitch, strictly compose screens from these
 
 ---
 
-## 6. Stitch Generation Guidelines
+## 6. Implementation Guidance
 
-When prompting Google Stitch:
-1. **Always reference this `DESIGN.md`** as the design context anchor.
-2. **Require Semantic Tailwind Classes**: Instruct Stitch to use Tailwind v4 utility classes and token names.
-3. **Include Interactive States**: Ensure screens demonstrate `Default`, `Hover`, `Loading`, `Active`, and `Error/Empty` states.
+1. **Use this `DESIGN.md`** as the design context anchor.
+2. **Use semantic Tailwind classes** and the token names defined here.
+3. **Include interactive states** such as `Default`, `Hover`, `Loading`, `Active`, and `Error/Empty` where they apply.
