@@ -53,33 +53,15 @@
 	max-height: calc(100vh - 2rem);
 	overflow-y: auto;
 }
-.auth-dialog-b {
-	max-width: 34rem;
-}
-.auth-dialog-b::before {
-	display: block;
-	padding: 0.65rem 0.8rem;
-	font: 0.65rem var(--font-mono);
-	color: var(--primary);
-	letter-spacing: 0.1em;
-	content: "LIVE TRAINING / PLAYER IDENTITY";
-	background: var(--muted);
-	border: 1px solid var(--border);
-}
-.auth-dialog-a,
-.auth-dialog-b,
-.auth-dialog-c {
+.auth-dialog {
 	border-top: 3px solid var(--primary);
-	border-radius: 0.25rem;
-}
-.auth-dialog-c {
 	border-radius: 0.25rem;
 }
 .auth-tabs {
 	display: flex;
 	flex-direction: column;
 	gap: 0;
-	margin-top: 0.5rem;
+	margin-top: 0.75rem;
 }
 .auth-tabs [data-slot="tabs-list"] {
 	justify-content: flex-start;
@@ -105,15 +87,6 @@
 }
 .auth-tabs [data-slot="tabs-content"] {
 	margin-top: 0;
-}
-.auth-dialog-a .auth-tabs {
-	margin-top: 0.75rem;
-}
-.auth-dialog-b .auth-tabs [data-slot="tabs-list"] {
-	padding-bottom: 0.15rem;
-}
-.auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
-	padding-top: 0.15rem;
 }
 .auth-form {
 	display: flex;
@@ -142,35 +115,15 @@
 	padding: 0.75rem;
 	font-size: 0.875rem;
 	font-weight: 600;
-	color: var(--foreground);
-	background: color-mix(in oklab, var(--destructive) 16%, var(--background));
+	color: var(--destructive-foreground);
+	background: var(--destructive);
 	border: 1px solid var(--destructive);
 }
 .auth-cta {
 	margin-top: 0.75rem;
 }
-.auth-form-b .auth-cta {
-	margin-top: 0.5rem;
-}
-.auth-form-c .auth-cta {
-	margin-top: 0.35rem;
-}
-.auth-form-b .form-alert {
-	color: var(--destructive);
-	background: color-mix(in oklab, var(--destructive) 12%, var(--background));
-}
-.auth-form-c .form-alert {
-	color: var(--foreground);
-	background: var(--muted);
-	border-color: var(--border);
-	border-left: 3px solid var(--primary);
-}
-.auth-form-a .form-alert {
-	color: var(--destructive-foreground);
-	background: var(--destructive);
-	border-color: var(--destructive);
-}
-.auth-form-a .form-alert [data-slot="alert-description"] {
+
+.form-alert [data-slot="alert-description"] {
 	color: var(--destructive-foreground);
 }
 .prototype-controls {

@@ -30,14 +30,14 @@ const variants = [
 		name: "Current",
 	},
 	{
-		description: "Current layout with a stronger destructive error treatment.",
+		description: "The selected layout with the top border and current spacing.",
 		key: "b" as const,
-		name: "Signal error",
+		name: "Current",
 	},
 	{
-		description: "Current layout with a quieter neutral error treatment.",
+		description: "The selected layout with the top border and current spacing.",
 		key: "c" as const,
-		name: "Quiet error",
+		name: "Current",
 	},
 ];
 
