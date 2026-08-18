@@ -35,7 +35,6 @@ function ModulePillCard({
 					? "bg-card border-primary/60 shadow-sm ring-1 ring-primary/40"
 					: "bg-background border-border opacity-60 hover:opacity-100 hover:border-input"
 			}`}
-			data-testid={`module-filter-${moduleDef.key}`}
 			onClick={handleClick}
 			type="button"
 		>

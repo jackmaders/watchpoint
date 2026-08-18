@@ -72,18 +72,18 @@ describe("SessionPlayerClient", () => {
 		});
 
 		// Assert controls and zero progress
-		expect(screen.getByTestId("play-pause-button")).toBeDefined();
-		expect(screen.getByTestId("replay-context-button")).toBeDefined();
+		expect(screen.getByRole("button", { name: /play video/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /replay 10s/i })).toBeDefined();
 		expect(screen.getByText("0m 00s / 0m 00s")).toBeDefined();
 
 		// Act: click Play button
 		act(() => {
-			fireEvent.click(screen.getByTestId("play-pause-button"));
+			fireEvent.click(screen.getByRole("button", { name: /play video/i }));
 		});
 
 		// Act: click Replay button
 		act(() => {
-			fireEvent.click(screen.getByTestId("replay-context-button"));
+			fireEvent.click(screen.getByRole("button", { name: /replay 10s/i }));
 		});
 	});
 
@@ -110,7 +110,7 @@ describe("SessionPlayerClient", () => {
 		});
 
 		// Assert pause button is visible when playing
-		const pauseBtn = screen.getByTestId("play-pause-button");
+		const pauseBtn = screen.getByRole("button", { name: /pause video/i });
 		expect(pauseBtn.textContent).toContain("Pause");
 
 		// Act: click Pause
@@ -119,7 +119,7 @@ describe("SessionPlayerClient", () => {
 		});
 
 		// Assert play button is visible when paused
-		const playBtn = screen.getByTestId("play-pause-button");
+		const playBtn = screen.getByRole("button", { name: /play video/i });
 		expect(playBtn.textContent).toContain("Play");
 
 		// Act: click Play

@@ -127,11 +127,11 @@ describe("VodDetailPage", () => {
 		render(ui);
 
 		// Assert
-		expect(screen.getByTestId("module-filter-STRATEGY")).toBeDefined();
-		expect(screen.getByTestId("module-filter-TACTICS")).toBeDefined();
-		expect(screen.getByTestId("module-filter-ULTIMATE")).toBeDefined();
-		expect(screen.getByTestId("module-filter-COOLDOWN")).toBeDefined();
-		expect(screen.getByTestId("module-filter-SPATIAL")).toBeDefined();
+		expect(screen.getByRole("button", { name: /strategy/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /tactics/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /ultimate/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /cooldown/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /spatial/i })).toBeDefined();
 	});
 
 	it("updates session launcher href when a module filter is toggled off", async () => {
@@ -141,7 +141,7 @@ describe("VodDetailPage", () => {
 			vod: mockVod,
 		});
 		render(ui);
-		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
+		const strategyBtn = screen.getByRole("button", { name: /strategy/i });
 
 		// Act
 		await act(async () => {
@@ -160,7 +160,7 @@ describe("VodDetailPage", () => {
 			vod: mockVod,
 		});
 		render(ui);
-		const strategyBtn = screen.getByTestId("module-filter-STRATEGY");
+		const strategyBtn = screen.getByRole("button", { name: /strategy/i });
 
 		// Act
 		await act(async () => {
@@ -192,7 +192,9 @@ describe("VodDetailPage", () => {
 		// Act
 		for (const mod of modulesToDisable) {
 			await act(async () => {
-				fireEvent.click(screen.getByTestId(`module-filter-${mod}`));
+				fireEvent.click(
+					screen.getByRole("button", { name: new RegExp(mod, "i") }),
+				);
 			});
 		}
 

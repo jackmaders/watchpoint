@@ -95,7 +95,21 @@
 	],
 	"plugins": [
 		"./plugins/enforce-automocking.grit",
-		"./plugins/enforce-aaa-assertions.grit"
+		"./plugins/enforce-aaa-assertions.grit",
+		{
+			"includes": [
+				"**/*.jsx",
+				"**/*.tsx",
+				"!**/__mocks__/**",
+				"!**/__tests__/**",
+				"!**/*.test.jsx",
+				"!**/*.test.tsx",
+				"!**/*.spec.jsx",
+				"!**/*.spec.tsx",
+				"!**/generated/**"
+			],
+			"path": "./plugins/enforce-no-production-testid.grit"
+		}
 	],
 	"vcs": {
 		"clientKind": "git",

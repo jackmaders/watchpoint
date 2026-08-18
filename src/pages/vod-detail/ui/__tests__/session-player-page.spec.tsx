@@ -104,8 +104,8 @@ describe("SessionPlayerPage", () => {
 		expect(screen.getByText("Grandmaster Ana VOD — King's Row")).toBeDefined();
 		expect(screen.getByText("King's Row")).toBeDefined();
 		expect(screen.getByText("Grandmaster")).toBeDefined();
-		expect(screen.getByTestId("player-loading")).toBeDefined();
-		expect(screen.getByTestId("play-pause-button")).toBeDefined();
+		expect(screen.getByRole("status")).toBeDefined();
+		expect(screen.getByRole("button", { name: /play video/i })).toBeDefined();
 	});
 
 	it("displays ScenarioOverlay when scenario triggers and handles answer feedback", async () => {
@@ -159,7 +159,9 @@ describe("SessionPlayerPage", () => {
 		expect(screen.getByRole("dialog").getAttribute("data-input-type")).toBe(
 			"MULTIPLE_CHOICE",
 		);
-		expect(screen.queryByTestId("play-pause-button")).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: /^(play|pause) video$/i }),
+		).toBeNull();
 
 		// Act: select option
 		await act(async () => {
@@ -170,7 +172,9 @@ describe("SessionPlayerPage", () => {
 		// Assert feedback is rendered
 		expect(screen.getByText("PASS")).toBeDefined();
 		expect(screen.getByText("Highground is optimal position.")).toBeDefined();
-		expect(screen.queryByTestId("play-pause-button")).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: /^(play|pause) video$/i }),
+		).toBeNull();
 		expect(serverFns.recordAttempt).toHaveBeenCalledWith({
 			data: {
 				idempotencyKey: expect.any(String),
@@ -184,7 +188,7 @@ describe("SessionPlayerPage", () => {
 
 		// Act: resume playback
 		act(() => {
-			fireEvent.click(screen.getByTestId("resume-playback-button"));
+			fireEvent.click(screen.getByRole("button", { name: /resume playback/i }));
 		});
 
 		// Assert next Scenario becomes active after resuming playback
@@ -236,12 +240,16 @@ describe("SessionPlayerPage", () => {
 		});
 
 		// Assert summary panel is rendered
-		expect(screen.getByTestId("session-summary-panel")).toBeDefined();
+		expect(
+			screen.getByRole("region", { name: /session performance summary/i }),
+		).toBeDefined();
 		expect(screen.getByText("Performance Summary")).toBeDefined();
 
 		// Act: click retry session
 		act(() => {
-			fireEvent.click(screen.getByTestId("retry-session-button"));
+			fireEvent.click(
+				screen.getByRole("button", { name: /retry training session/i }),
+			);
 		});
 		await act(async () => {
 			await Promise.resolve();
@@ -253,7 +261,9 @@ describe("SessionPlayerPage", () => {
 		});
 
 		// Assert summary panel is dismissed and player resets
-		expect(screen.queryByTestId("session-summary-panel")).toBeNull();
+		expect(
+			screen.queryByRole("region", { name: /session performance summary/i }),
+		).toBeNull();
 		expect(restartedPlayer.seekTo).toHaveBeenCalledWith(0, true);
 	});
 

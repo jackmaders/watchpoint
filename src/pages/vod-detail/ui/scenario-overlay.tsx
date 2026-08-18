@@ -36,12 +36,13 @@ function ScenarioTimerGauge({ remainingMs, totalMs }: ScenarioTimerGaugeProps) {
 
 	return (
 		<div
+			aria-label={`${timerSeconds} seconds remaining`}
 			className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors ${
 				isCritical
 					? "border-destructive/60 bg-destructive/10 text-destructive animate-pulse ring-1 ring-destructive/50 motion-reduce:animate-none"
 					: "border-border bg-muted text-muted-foreground"
 			}`}
-			data-testid="scenario-timer-gauge"
+			role="timer"
 		>
 			<svg
 				aria-hidden="true"
@@ -114,7 +115,6 @@ function ScenarioFeedbackPanel({
 
 			<button
 				className="w-full mt-2 py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 active:scale-[0.98] text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-				data-testid="resume-playback-button"
 				onClick={onResume}
 				type="button"
 			>
@@ -270,15 +270,11 @@ export function ScenarioOverlay({
 						/>
 					) : (
 						<>
-							<p
-								className="rounded-md border border-border bg-background/60 p-4 text-sm text-muted-foreground"
-								data-testid="unsupported-scenario-input"
-							>
+							<p className="rounded-md border border-border bg-background/60 p-4 text-sm text-muted-foreground">
 								This scenario input is not available yet.
 							</p>
 							<button
 								className="w-full rounded-md bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-								data-testid="skip-unsupported-input-button"
 								onClick={onSkipUnsupportedInput}
 								type="button"
 							>
@@ -291,11 +287,10 @@ export function ScenarioOverlay({
 				{isUnanswered && onReplayContext ? (
 					<button
 						className="w-full py-2.5 px-4 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						data-testid="replay-context-button"
 						onClick={onReplayContext}
 						type="button"
 					>
-						↺ Replay Context (-10s)
+						↺ Replay 10s
 					</button>
 				) : null}
 

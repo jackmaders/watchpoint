@@ -130,10 +130,12 @@ describe("ScenarioOverlay", () => {
 			/>,
 		);
 		fireEvent.keyDown(window, { key: "1" });
-		fireEvent.click(screen.getByTestId("skip-unsupported-input-button"));
+		fireEvent.click(screen.getByRole("button", { name: /continue playback/i }));
 
 		// Assert
-		expect(screen.getByTestId("unsupported-scenario-input")).toBeDefined();
+		expect(
+			screen.getByText(/this scenario input is not available yet/i),
+		).toBeDefined();
 		expect(screen.queryByRole("button", { name: /Dive Ana/i })).toBeNull();
 		expect(handleSelect).not.toHaveBeenCalled();
 		expect(handleResume).toHaveBeenCalledTimes(1);
@@ -194,9 +196,10 @@ describe("ScenarioOverlay", () => {
 		);
 
 		// Act
-		fireEvent.keyDown(screen.getByTestId("scenario-option-opt_2"), {
-			key: "2",
-		});
+		fireEvent.keyDown(
+			screen.getByRole("button", { name: /rotate to high ground/i }),
+			{ key: "2" },
+		);
 
 		// Assert
 		expect(handleSelect).toHaveBeenCalledWith("opt_2");
@@ -359,7 +362,9 @@ describe("ScenarioOverlay", () => {
 		fireEvent.keyDown(window, { key: "Numpad1" });
 
 		// Assert
-		expect(screen.queryByTestId("scenario-option-opt_5")).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: /wait for backup/i }),
+		).toBeNull();
 		expect(handleSelect).not.toHaveBeenCalled();
 	});
 
@@ -487,7 +492,9 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
-		const gauge = screen.getByTestId("scenario-timer-gauge");
+		const gauge = screen.getByRole("timer", {
+			name: /2\.5 seconds remaining/i,
+		});
 		const text = screen.getByText("2.5s");
 
 		// Assert
@@ -510,7 +517,9 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
-		const timerGauge = screen.getByTestId("scenario-timer-gauge");
+		const timerGauge = screen.getByRole("timer", {
+			name: /0\.8 seconds remaining/i,
+		});
 
 		// Assert
 		expect(timerGauge.className).toContain("animate-pulse");
@@ -536,7 +545,7 @@ describe("ScenarioOverlay", () => {
 				totalMs={3000}
 			/>,
 		);
-		const timerGauge = screen.queryByTestId("scenario-timer-gauge");
+		const timerGauge = screen.queryByRole("timer");
 
 		// Assert
 		expect(timerGauge).toBeNull();
@@ -555,7 +564,7 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
-		const timerGauge = screen.queryByTestId("scenario-timer-gauge");
+		const timerGauge = screen.queryByRole("timer");
 
 		// Assert
 		expect(timerGauge).toBeNull();
@@ -612,8 +621,12 @@ describe("ScenarioOverlay", () => {
 			/>,
 		);
 		const failBadge = screen.getByText("FAIL");
-		const wrongOption = screen.getByTestId("scenario-option-opt_2");
-		const correctOption = screen.getByTestId("scenario-option-opt_1");
+		const wrongOption = screen.getByRole("button", {
+			name: /rotate to high ground/i,
+		});
+		const correctOption = screen.getByRole("button", {
+			name: /dive ana immediately/i,
+		});
 
 		// Assert
 		expect(failBadge).toBeDefined();
@@ -639,8 +652,12 @@ describe("ScenarioOverlay", () => {
 			/>,
 		);
 		const timeoutBadge = screen.getByText("TIME EXPIRED");
-		const correctOption = screen.getByTestId("scenario-option-opt_1");
-		const otherOption = screen.getByTestId("scenario-option-opt_2");
+		const correctOption = screen.getByRole("button", {
+			name: /dive ana immediately/i,
+		});
+		const otherOption = screen.getByRole("button", {
+			name: /rotate to high ground/i,
+		});
 
 		// Assert
 		expect(timeoutBadge).toBeDefined();
@@ -687,7 +704,7 @@ describe("ScenarioOverlay", () => {
 				state={state}
 			/>,
 		);
-		const replayBtn = screen.getByTestId("replay-context-button");
+		const replayBtn = screen.getByRole("button", { name: /replay 10s/i });
 		fireEvent.click(replayBtn);
 
 		// Assert
