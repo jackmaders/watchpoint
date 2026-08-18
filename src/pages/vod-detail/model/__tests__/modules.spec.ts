@@ -21,8 +21,8 @@ describe("scenario module registry", () => {
 	it("defines accurate metadata for Strategy module", () => {
 		// Arrange
 		const expectedStrategy = {
-			badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-			color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+			badge: "bg-primary/10 text-primary border-primary/40",
+			color: "bg-primary/10 text-primary border-primary/40",
 			description: "Pre-fight positioning & composition win conditions",
 			key: "STRATEGY",
 			label: "Strategy",
@@ -39,8 +39,8 @@ describe("scenario module registry", () => {
 	it("defines accurate metadata for Tactics module", () => {
 		// Arrange
 		const expectedTactics = {
-			badge: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-			color: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+			badge: "bg-accent text-accent-foreground border-border",
+			color: "bg-accent text-accent-foreground border-border",
 			description: "Mid-fight execution & 3s rapid target selection",
 			key: "TACTICS",
 			label: "Tactics",
@@ -57,8 +57,8 @@ describe("scenario module registry", () => {
 	it("defines accurate metadata for Ultimate Tracking module", () => {
 		// Arrange
 		const expectedUltimate = {
-			badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-			color: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+			badge: "bg-secondary text-secondary-foreground border-border",
+			color: "bg-secondary text-secondary-foreground border-border",
 			description: "Enemy ultimate charge range estimation",
 			key: "ULTIMATE",
 			label: "Ultimate Tracking",
@@ -75,8 +75,8 @@ describe("scenario module registry", () => {
 	it("defines accurate metadata for Cooldown Tracking module", () => {
 		// Arrange
 		const expectedCooldown = {
-			badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-			color: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+			badge: "bg-muted text-muted-foreground border-border",
+			color: "bg-muted text-muted-foreground border-border",
 			description: "Ability availability & cooldown window tracking",
 			key: "COOLDOWN",
 			label: "Cooldown Tracking",
@@ -93,8 +93,8 @@ describe("scenario module registry", () => {
 	it("defines accurate metadata for Spatial Awareness module", () => {
 		// Arrange
 		const expectedSpatial = {
-			badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-			color: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+			badge: "bg-card text-card-foreground border-border",
+			color: "bg-card text-card-foreground border-border",
 			description: "Flank recognition & situational location assessment",
 			key: "SPATIAL",
 			label: "Spatial Awareness",

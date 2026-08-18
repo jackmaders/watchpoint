@@ -19,29 +19,29 @@ interface RankThreshold {
 
 const RANK_THRESHOLDS: RankThreshold[] = [
 	{
-		badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+		badgeClass: "bg-secondary text-secondary-foreground border-border",
 		label: "Grandmaster",
 		minAccuracy: 90,
 	},
 	{
-		badgeClass: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+		badgeClass: "bg-accent text-accent-foreground border-border",
 		label: "Master",
 		minAccuracy: 75,
 	},
 	{
-		badgeClass: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+		badgeClass: "bg-primary/10 text-primary border-primary/40",
 		label: "Diamond",
 		minAccuracy: 60,
 	},
 	{
-		badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+		badgeClass: "bg-accent text-accent-foreground border-border",
 		label: "Platinum",
 		minAccuracy: 40,
 	},
 ];
 
 const DEFAULT_RANK: RankThreshold = {
-	badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+	badgeClass: "bg-destructive/10 text-destructive border-destructive/40",
 	label: "Needs Practice",
 	minAccuracy: 0,
 };
@@ -77,15 +77,15 @@ export function SessionSummaryPanel({
 		<section
 			aria-label="Session Performance Summary"
 			aria-live="polite"
-			className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 md:p-8 backdrop-blur-md shadow-2xl space-y-8 max-w-3xl mx-auto text-slate-100 outline-none"
+			className="rounded-lg border border-border bg-card p-4 sm:p-6 md:p-8 shadow-lg space-y-8 max-w-3xl mx-auto text-card-foreground outline-none"
 			data-testid="session-summary-panel"
 			ref={containerRef}
 			tabIndex={-1}
 		>
-			<header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+			<header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
 				<div className="space-y-1">
 					<div className="flex items-center gap-2">
-						<span className="text-xs font-bold tracking-widest text-indigo-400 uppercase">
+						<span className="text-xs font-bold tracking-widest text-primary uppercase font-mono">
 							Session Complete
 						</span>
 						<span
@@ -94,7 +94,7 @@ export function SessionSummaryPanel({
 							{rank.label}
 						</span>
 					</div>
-					<h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+					<h2 className="text-2xl sm:text-3xl font-extrabold text-card-foreground tracking-tight">
 						Performance Summary
 					</h2>
 				</div>
@@ -102,31 +102,31 @@ export function SessionSummaryPanel({
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div
-					className="p-5 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col justify-between space-y-2"
+					className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2"
 					data-testid="summary-accuracy"
 				>
-					<span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 						Overall Accuracy
 					</span>
 					<div className="flex items-baseline gap-2">
-						<span className="text-4xl font-extrabold text-white font-mono">
+						<span className="text-4xl font-extrabold text-foreground font-mono">
 							{summary.accuracyPercentage}%
 						</span>
-						<span className="text-xs text-slate-400 font-medium">
+						<span className="text-xs text-muted-foreground font-medium">
 							{summary.correctCount} / {summary.totalScenarios} Correct
 						</span>
 					</div>
 				</div>
 
 				<div
-					className="p-5 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col justify-between space-y-2"
+					className="p-4 sm:p-5 rounded-lg border border-border bg-background/60 flex flex-col justify-between space-y-2"
 					data-testid="summary-latency"
 				>
-					<span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 						Avg Response Latency
 					</span>
 					<div className="flex items-baseline gap-2">
-						<span className="text-4xl font-extrabold text-white font-mono">
+						<span className="text-4xl font-extrabold text-foreground font-mono">
 							{summary.averageLatencyMs} ms
 						</span>
 					</div>
@@ -134,12 +134,12 @@ export function SessionSummaryPanel({
 			</div>
 
 			<div className="space-y-4">
-				<h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+				<h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
 					Module Breakdown
 				</h3>
 
 				{attemptedModules.length === 0 ? (
-					<div className="p-6 text-center text-sm text-slate-500 rounded-xl border border-slate-800/60 bg-slate-950/30">
+					<div className="p-6 text-center text-sm text-muted-foreground rounded-lg border border-border bg-background/30">
 						No scenario breakdown available
 					</div>
 				) : (
@@ -149,7 +149,7 @@ export function SessionSummaryPanel({
 
 							return (
 								<div
-									className="p-4 rounded-xl border border-slate-800/80 bg-slate-950/40 flex flex-col justify-between space-y-3"
+									className="p-4 rounded-lg border border-border bg-background/40 flex flex-col justify-between space-y-3"
 									data-testid={`module-summary-${moduleKey}`}
 									key={moduleKey}
 								>
@@ -159,13 +159,13 @@ export function SessionSummaryPanel({
 										>
 											{moduleDef.label}
 										</span>
-										<span className="text-xs font-mono font-semibold text-slate-300">
+										<span className="text-xs font-mono font-semibold text-muted-foreground">
 											{`${stats.correct} / ${stats.total} (${stats.accuracyPercentage}%)`}
 										</span>
 									</div>
-									<div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-900">
+									<div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border">
 										<span>Response speed:</span>
-										<span className="font-mono text-slate-300">
+										<span className="font-mono text-foreground">
 											{stats.averageLatencyMs} ms avg
 										</span>
 									</div>
@@ -176,9 +176,9 @@ export function SessionSummaryPanel({
 				)}
 			</div>
 
-			<footer className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-end gap-3">
+			<footer className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-end gap-3">
 				<button
-					className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition-colors cursor-pointer"
+					className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					data-testid="exit-session-button"
 					onClick={onExit}
 					type="button"
@@ -186,7 +186,7 @@ export function SessionSummaryPanel({
 					Return to VOD
 				</button>
 				<button
-					className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer"
+					className="w-full sm:w-auto px-6 py-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold shadow-sm transition-all active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 					data-testid="retry-session-button"
 					onClick={onRetry}
 					type="button"

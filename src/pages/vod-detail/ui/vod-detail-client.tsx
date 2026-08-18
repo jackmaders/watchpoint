@@ -36,27 +36,27 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 	);
 
 	return (
-		<div className="space-y-8">
-			<div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 backdrop-blur-sm shadow-xl space-y-6">
-				<div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800/80 pb-6">
+		<div className="space-y-6 sm:space-y-8">
+			<div className="rounded-lg border border-border bg-card p-4 sm:p-6 md:p-8 shadow-sm space-y-6">
+				<div className="flex items-center justify-between flex-wrap gap-4 border-b border-border pb-6">
 					<div>
-						<span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
+						<span className="text-xs font-semibold text-primary uppercase tracking-widest font-mono">
 							Pre-Session Setup
 						</span>
-						<h2 className="text-2xl font-bold text-white mt-1">
+						<h2 className="text-2xl font-bold text-card-foreground mt-1">
 							Configure Scenario Modules
 						</h2>
-						<p className="text-slate-400 text-sm mt-1">
+						<p className="text-muted-foreground text-sm mt-1">
 							Toggle target skills to customize your interactive training
 							timeline.
 						</p>
 					</div>
 
 					<div className="flex items-center gap-3">
-						<span className="text-xs font-medium text-slate-400">
+						<span className="text-xs font-medium text-muted-foreground">
 							Active Scenarios:
 						</span>
-						<span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold text-sm rounded-full">
+						<span className="px-3 py-1 bg-primary/10 border border-primary/40 text-primary font-bold text-sm rounded-md font-mono">
 							{matchingScenarioCount} / {vod.scenarios.length}
 						</span>
 					</div>
@@ -68,8 +68,8 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 					selectedModules={activeModules}
 				/>
 
-				<div className="pt-4 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-4">
-					<div className="text-xs text-slate-400">
+				<div className="pt-4 border-t border-border flex items-center justify-between flex-wrap gap-4">
+					<div className="text-xs text-muted-foreground">
 						<span>
 							{activeModules.length} module
 							{activeModules.length !== 1 ? "s" : ""} selected
@@ -77,10 +77,10 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 					</div>
 
 					<Link
-						className={`inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
+						className={`inline-flex items-center justify-center px-6 py-3 rounded-md font-bold text-sm transition-all shadow-sm ${
 							activeModules.length > 0
-								? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 active:scale-95 cursor-pointer"
-								: "bg-slate-800 text-slate-500 cursor-not-allowed pointer-events-none"
+								? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+								: "bg-muted text-muted-foreground cursor-not-allowed pointer-events-none"
 						}`}
 						href={startHref}
 						to={startHref}
