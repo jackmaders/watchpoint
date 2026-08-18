@@ -17,19 +17,19 @@ type Status = "idle" | "created" | "signed-in" | "error" | "expired";
 
 const variants = [
 	{
-		description: "A quiet, single-purpose auth moment.",
+		description: "The selected layout with the top border and current spacing.",
 		key: "a" as const,
-		name: "Focused",
+		name: "Current",
 	},
 	{
-		description: "A modal with a compact training context rail.",
+		description: "Current layout with a stronger destructive error treatment.",
 		key: "b" as const,
-		name: "Briefing",
+		name: "Signal error",
 	},
 	{
-		description: "A dense, utility-first account entry point.",
+		description: "Current layout with a quieter neutral error treatment.",
 		key: "c" as const,
-		name: "Command",
+		name: "Quiet error",
 	},
 ];
 
@@ -220,10 +220,20 @@ function AuthModal({
 						</TabsTrigger>
 					</TabsList>
 					<TabsContent value="sign-in">
-						<AuthForm mode="sign-in" onSubmit={onSubmit} status={status} />
+						<AuthForm
+							mode="sign-in"
+							onSubmit={onSubmit}
+							status={status}
+							variant={variant}
+						/>
 					</TabsContent>
 					<TabsContent value="register">
-						<AuthForm mode="register" onSubmit={onSubmit} status={status} />
+						<AuthForm
+							mode="register"
+							onSubmit={onSubmit}
+							status={status}
+							variant={variant}
+						/>
 					</TabsContent>
 				</Tabs>
 				{!registrationEnabled && (
@@ -241,14 +251,16 @@ function AuthForm({
 	mode,
 	onSubmit,
 	status,
+	variant,
 }: {
 	mode: Mode;
 	onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 	status: Status;
+	variant: Variant;
 }) {
 	const fieldIds = useId();
 	return (
-		<form className="auth-form" onSubmit={onSubmit}>
+		<form className={`auth-form auth-form-${variant}`} onSubmit={onSubmit}>
 			{mode === "register" && (
 				<label htmlFor={`${fieldIds}-display-name`}>
 					Display name
