@@ -15,26 +15,27 @@ This document is the canonical design system specification for Watchpoint and AI
 
 ## 2. Color Palette & Semantic Tokens
 
-All codebase components must use these semantic tokens. Arbitrary hard-coded hex colors are forbidden.
+All codebase components must use these semantic tokens. Arbitrary hard-coded hex colors are forbidden. The token values are defined canonically in `src/app/styles/globals.css`; this table documents their intent and usage.
 
-| Token | Dark Mode Value | Light Mode Value | Tailwind Class | Semantic Usage |
-| :--- | :--- | :--- | :--- | :--- |
-| `background` | `#0a0a0a` | `#ffffff` | `bg-background` | Application canvas / base background |
-| `foreground` | `#ededed` | `#171717` | `text-foreground` | Primary text and headers |
-| `card` | `#121212` | `#f9f9f9` | `bg-card` | Surface containers, sidebars, panels |
-| `card-foreground` | `#ededed` | `#171717` | `text-card-foreground` | Text on card surfaces |
-| `primary` | `#3b82f6` (Blue) | `#2563eb` | `bg-primary`, `text-primary` | Primary action buttons, active highlights, key metrics |
-| `primary-foreground` | `#ffffff` | `#ffffff` | `text-primary-foreground` | Text on primary buttons |
-| `secondary` | `#262626` | `#f4f4f5` | `bg-secondary` | Secondary buttons, subtle badges, inactive tabs |
-| `secondary-foreground` | `#f4f4f5` | `#18181b` | `text-secondary-foreground` | Text on secondary buttons |
-| `muted` | `#27272a` | `#f4f4f5` | `bg-muted` | Recessed backgrounds, table headers, track bars |
-| `muted-foreground` | `#a1a1aa` | `#71717a` | `text-muted-foreground` | Timestamps, helper copy, subtitles, metadata |
-| `accent` | `#27272a` | `#f4f4f5` | `bg-accent` | Hover states, active dropdown items |
-| `accent-foreground` | `#fafafa` | `#09090b` | `text-accent-foreground` | Text on hovered items |
-| `destructive` | `#ef4444` (Red) | `#dc2626` | `bg-destructive` | Error states, stop buttons, delete actions |
-| `destructive-foreground` | `#ffffff` | `#ffffff` | `text-destructive-foreground` | Text on destructive actions |
-| `border` / `input` | `#27272a` | `#e4e4e7` | `border-input`, `border-border` | Component borders, separators, input outlines |
-| `ring` | `#3b82f6` | `#2563eb` | `ring-ring` | Keyboard focus rings |
+| Token | Tailwind Class | Semantic Usage |
+| :--- | :--- | :--- |
+| `accent` | `bg-accent` | Hover states, active dropdown items |
+| `accent-foreground` | `text-accent-foreground` | Text on hovered items |
+| `background` | `bg-background` | Application canvas / base background |
+| `border` | `border-border` | Component borders and separators |
+| `card` | `bg-card` | Surface containers, sidebars, panels |
+| `card-foreground` | `text-card-foreground` | Text on card surfaces |
+| `destructive` | `bg-destructive` | Error states, stop buttons, delete actions |
+| `destructive-foreground` | `text-destructive-foreground` | Text on destructive buttons |
+| `foreground` | `text-foreground` | Primary text and headers |
+| `input` | `border-input` | Input outlines |
+| `muted` | `bg-muted` | Recessed backgrounds, table headers, track bars |
+| `muted-foreground` | `text-muted-foreground` | Timestamps, helper copy, subtitles, metadata |
+| `primary` | `bg-primary, text-primary` | Primary actions, active highlights, key metrics |
+| `primary-foreground` | `text-primary-foreground` | Text on primary buttons |
+| `ring` | `ring-ring` | Keyboard focus rings |
+| `secondary` | `bg-secondary` | Secondary buttons, subtle badges, inactive tabs |
+| `secondary-foreground` | `text-secondary-foreground` | Text on secondary buttons |
 
 ---
 
@@ -91,6 +92,8 @@ When building interfaces, strictly compose screens from these standardized atomi
 ---
 
 ## 6. Implementation Guidance
+
+The edited token source is the Tailwind v4 CSS in `src/app/styles/globals.css`. Keep semantic values and their `@theme` mappings together; this file documents their intent and usage.
 
 1. **Use this `DESIGN.md`** as the design context anchor.
 2. **Use semantic Tailwind classes** and the token names defined here.
