@@ -29,6 +29,7 @@
 			"!build",
 			"!cloudflare-env.d.ts",
 			"!app/routeTree.gen.ts",
+			"!drizzle/meta",
 			"!**/*.grit"
 		]
 	},

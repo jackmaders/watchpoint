@@ -12,9 +12,10 @@ describe("recordAttemptAction", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(getCurrentUser).mockResolvedValue({ id: "usr_auth_default" });
 	});
 
-	it("successfully records an attempt for unauthenticated guest user", async () => {
+	it("rejects an attempt for an unauthenticated user", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
 		const input = {
@@ -31,8 +32,8 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({
-			attemptId: "mock_attempt_id",
-			success: true,
+			error: "Authentication required",
+			success: false,
 		});
 	});
 
@@ -72,8 +73,8 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({
-			attemptId: "mock_attempt_id",
-			success: true,
+			error: "Authentication required",
+			success: false,
 		});
 	});
 
@@ -93,8 +94,8 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({
-			attemptId: "mock_attempt_id",
-			success: true,
+			error: "Authentication required",
+			success: false,
 		});
 	});
 
@@ -287,7 +288,84 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
+		});
+	});
+
+	it("persists playthrough and Scenario snapshot ownership when supplied", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [{ id: "snapshot_1" }],
+		} as never);
+		const values = vi.fn((_record: unknown) => ({
+			returning: vi.fn().mockResolvedValue([{ id: "attempt_2" }]),
+		}));
+		vi.mocked(db.insert).mockImplementationOnce(() => ({ values }) as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({ attemptId: "attempt_2", success: true });
+		expect(values).toHaveBeenCalledWith(
+			expect.objectContaining({
+				playthroughId: "playthrough_1",
+				scenarioSnapshotId: "snapshot_1",
+			}),
+		);
+	});
+
+	it("rejects playthrough identifiers that are not owned by the user", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(undefined);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "other_playthrough",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "other_snapshot",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+		expect(db.insert).not.toHaveBeenCalled();
+	});
+
+	it("rejects an attempt with only one persistence identifier", async () => {
+		// Arrange
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
 		});
 	});
 
@@ -310,7 +388,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -353,7 +431,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -394,7 +472,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 3000,
 			scenarioId: validScenarioId,
 			selectedOptionId: null,
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -432,7 +510,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -468,7 +546,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -504,7 +582,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
 			selectedOptionId: "opt_a",
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -554,7 +632,7 @@ describe("recordAttemptAction", () => {
 			responseTimeMs: 3000,
 			scenarioId: validScenarioId,
 			selectedOptionId: null,
-			userId: "usr_guest_demo",
+			userId: "usr_auth_default",
 		});
 	});
 });

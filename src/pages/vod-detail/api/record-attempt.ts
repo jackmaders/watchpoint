@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { JsonValue } from "@/shared/db";
 import { attemptRecords, type DbContext, getDb } from "@/shared/db";
-import { GUEST_USER_ID, getCurrentUser } from "@/shared/lib/auth";
+import { getCurrentUser } from "@/shared/lib/auth";
 import {
 	type RecordAttemptInput,
 	RecordAttemptInputSchema,
@@ -63,7 +63,9 @@ function isIdenticalAttempt(
 		isCorrect: boolean;
 		isTimedOut: boolean | null | undefined;
 		responseTimeMs: number;
+		playthroughId?: string | null;
 		scenarioId: string;
+		scenarioSnapshotId?: string | null;
 		selectedOptionId: string | null;
 		userId: string;
 	},
@@ -76,9 +78,32 @@ function isIdenticalAttempt(
 		existing.isCorrect === input.isCorrect &&
 		(existing.isTimedOut ?? false) === (input.isTimedOut ?? false) &&
 		existing.responseTimeMs === input.responseTimeMs &&
+		(existing.playthroughId ?? null) === (input.playthroughId ?? null) &&
+		(existing.scenarioSnapshotId ?? null) ===
+			(input.scenarioSnapshotId ?? null) &&
 		existing.selectedOptionId === (input.selectedOptionId ?? null) &&
 		areJsonValuesEqual(existing.inputValue, input.inputValue ?? null)
 	);
+}
+
+async function belongsToAuthenticatedPlaythrough(
+	db: AttemptDatabase,
+	playthroughId: string,
+	scenarioSnapshotId: string,
+	userId: string,
+): Promise<boolean> {
+	const playthrough = await db.query.playthroughs.findFirst({
+		where: (playthrough, { and, eq }) =>
+			and(eq(playthrough.id, playthroughId), eq(playthrough.userId, userId)),
+		with: {
+			scenarioSnapshots: {
+				columns: { id: true },
+				where: (snapshot, { eq }) => eq(snapshot.id, scenarioSnapshotId),
+			},
+		},
+	});
+
+	return (playthrough?.scenarioSnapshots.length ?? 0) === 1;
 }
 
 type AttemptDatabase = Awaited<ReturnType<typeof getDb>>;
@@ -138,7 +163,21 @@ export async function recordAttemptAction(
 
 	try {
 		const currentUser = await getCurrentUser(undefined, context);
-		const userId = currentUser?.id ?? GUEST_USER_ID;
+		if (!currentUser) {
+			return {
+				error: "Authentication required",
+				success: false,
+			};
+		}
+		const userId = currentUser.id;
+		const hasPlaythroughId = Boolean(parsed.data.playthroughId);
+		const hasScenarioSnapshotId = Boolean(parsed.data.scenarioSnapshotId);
+		if (hasPlaythroughId !== hasScenarioSnapshotId) {
+			return {
+				error: "Playthrough snapshot ownership is required",
+				success: false,
+			};
+		}
 		const values = {
 			idempotencyKey: parsed.data.idempotencyKey,
 			inputValue:
@@ -149,9 +188,30 @@ export async function recordAttemptAction(
 			scenarioId: parsed.data.scenarioId,
 			selectedOptionId: parsed.data.selectedOptionId ?? null,
 			userId,
+			...(parsed.data.playthroughId
+				? { playthroughId: parsed.data.playthroughId }
+				: {}),
+			...(parsed.data.scenarioSnapshotId
+				? { scenarioSnapshotId: parsed.data.scenarioSnapshotId }
+				: {}),
 		};
 
 		const db = await getDb(context);
+		if (
+			parsed.data.playthroughId &&
+			parsed.data.scenarioSnapshotId &&
+			!(await belongsToAuthenticatedPlaythrough(
+				db,
+				parsed.data.playthroughId,
+				parsed.data.scenarioSnapshotId,
+				userId,
+			))
+		) {
+			return {
+				error: "Playthrough snapshot ownership is required",
+				success: false,
+			};
+		}
 		return await insertAttempt(db, values, parsed.data);
 	} catch {
 		return {
