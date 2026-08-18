@@ -80,19 +80,17 @@
 	display: none;
 }
 .auth-dialog-b .auth-tabs [data-slot="tabs-list"] {
+	border-bottom: 0;
+}
+.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"] {
 	border-bottom: 1px solid var(--border);
+	border-radius: 0;
 }
 .auth-dialog-b .auth-tabs [data-slot="tabs-trigger"]::after {
-	right: 0;
-	bottom: -1px;
-	left: 0;
-	display: block;
-	height: 1px;
+	display: none;
 }
 .auth-dialog-b .auth-tabs [data-slot="tabs-trigger"][data-state="active"] {
-	position: relative;
-	z-index: 1;
-	margin-bottom: -1px;
+	border-bottom-color: var(--primary);
 }
 .auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
 	padding: 0.2rem;
