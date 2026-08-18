@@ -5,6 +5,12 @@
 - **Issue / Ticket Link:** Closes #
 - **FSD Target Slice:** `src/_pages/<slice-name>/`
 
+### Design Handoff (UI changes)
+- **Prototype branch:**
+- **Design Contract / prototype evidence:**
+- **UI changes and state expectations:**
+- [ ] No material UI change; the lighter path applies.
+
 ---
 
 ## 🛠️ Technical Implementation & Architecture

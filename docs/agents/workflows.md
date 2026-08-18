@@ -99,6 +99,8 @@ The skill ecosystem uses GitHub labels to track issue and PR lifecycle state acr
 | **Execution State** | `ready-for-agent` | Specification/acceptance criteria complete and the ticket is ready for `/implement`. |
 | **Execution State** | `ready-for-human` | Requires human judgment, external dashboard access, secrets, or manual UI signoff. |
 | **Resolution** | `wontfix` | Closed as out of scope, invalid, or already implemented. |
+| **Design Routing** | `needs-design` | Functionality is understood, but visual design or interaction presentation needs exploration. |
+| **Design Routing** | `needs-prototype` | Behaviour or state is unknown and needs `/prototype` exploration before specification. |
 | **Wayfinding** | `wayfinder:map` | Index issue representing a multi-ticket milestone map. |
 | **Wayfinding** | `wayfinder:research` | AFK research ticket executed via parallel `/research` subagents. |
 | **Wayfinding** | `wayfinder:prototype` | HITL prototyping ticket exploring UX or technical design spikes. |
