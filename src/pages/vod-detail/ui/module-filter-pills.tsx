@@ -30,10 +30,10 @@ function ModulePillCard({
 	return (
 		<button
 			aria-pressed={isActive}
-			className={`flex flex-col justify-between p-5 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+			className={`flex flex-col justify-between p-4 rounded-lg border text-left transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
 				isActive
-					? "bg-slate-900 border-indigo-500/60 shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500/40"
-					: "bg-slate-950/40 border-slate-800/60 opacity-60 hover:opacity-100 hover:border-slate-700"
+					? "bg-card border-primary/60 shadow-sm ring-1 ring-primary/40"
+					: "bg-background border-border opacity-60 hover:opacity-100 hover:border-input"
 			}`}
 			data-testid={`module-filter-${moduleDef.key}`}
 			onClick={handleClick}
@@ -48,22 +48,22 @@ function ModulePillCard({
 					</span>
 					<div className="flex items-center gap-2">
 						{count !== undefined && (
-							<span className="text-xs text-slate-400 font-medium">
+							<span className="text-xs text-muted-foreground font-medium">
 								{count} scenario{count !== 1 ? "s" : ""}
 							</span>
 						)}
 						<span
 							className={`text-xs font-semibold px-2 py-0.5 rounded ${
 								isActive
-									? "bg-emerald-500/20 text-emerald-300"
-									: "bg-slate-800 text-slate-400"
+									? "bg-accent text-accent-foreground"
+									: "bg-muted text-muted-foreground"
 							}`}
 						>
 							{isActive ? "ACTIVE" : "OFF"}
 						</span>
 					</div>
 				</div>
-				<p className="text-xs text-slate-400 leading-relaxed pt-1">
+				<p className="text-xs text-muted-foreground leading-relaxed pt-1">
 					{moduleDef.description}
 				</p>
 			</div>
@@ -98,9 +98,9 @@ export function ModuleFilterPills({
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between gap-3 flex-wrap">
-				<div className="text-xs text-slate-400 font-medium">
+				<div className="text-xs text-muted-foreground font-medium">
 					{selectedModules.length === 0 ? (
-						<span className="text-amber-400">
+						<span className="text-primary">
 							⚠️ Select at least one module to start training
 						</span>
 					) : (
@@ -113,14 +113,14 @@ export function ModuleFilterPills({
 
 				<div className="flex items-center gap-2">
 					<button
-						className="px-3 py-1 text-xs font-semibold rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+						className="px-3 py-1 text-xs font-semibold rounded-md bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						onClick={handleSelectAll}
 						type="button"
 					>
 						Select All
 					</button>
 					<button
-						className="px-3 py-1 text-xs font-semibold rounded-md bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-300 transition-colors"
+						className="px-3 py-1 text-xs font-semibold rounded-md bg-muted hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						onClick={handleDeselectAll}
 						type="button"
 					>

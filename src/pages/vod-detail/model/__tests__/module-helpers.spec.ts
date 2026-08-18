@@ -66,8 +66,8 @@ describe("scenario domain helpers", () => {
 
 			// Assert
 			expect(def).toEqual({
-				badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-				color: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+				badge: "bg-secondary text-secondary-foreground border-border",
+				color: "bg-secondary text-secondary-foreground border-border",
 				description: "Enemy ultimate charge range estimation",
 				key: "ULTIMATE",
 				label: "Ultimate Tracking",
@@ -141,9 +141,7 @@ describe("scenario domain helpers", () => {
 			const badge = getModuleBadge(moduleType);
 
 			// Assert
-			expect(badge).toBe(
-				"bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-			);
+			expect(badge).toBe("bg-accent text-accent-foreground border-border");
 		});
 
 		it("returns empty string if module type is not in registry", () => {

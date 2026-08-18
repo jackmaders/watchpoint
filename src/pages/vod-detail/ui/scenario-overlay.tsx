@@ -38,8 +38,8 @@ function ScenarioTimerGauge({ remainingMs, totalMs }: ScenarioTimerGaugeProps) {
 		<div
 			className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-colors ${
 				isCritical
-					? "border-rose-500/60 bg-rose-950/50 text-rose-400 animate-pulse ring-1 ring-rose-500/50"
-					: "border-slate-700 bg-slate-800/80 text-slate-300"
+					? "border-destructive/60 bg-destructive/10 text-destructive animate-pulse ring-1 ring-destructive/50 motion-reduce:animate-none"
+					: "border-border bg-muted text-muted-foreground"
 			}`}
 			data-testid="scenario-timer-gauge"
 		>
@@ -49,7 +49,7 @@ function ScenarioTimerGauge({ remainingMs, totalMs }: ScenarioTimerGaugeProps) {
 				viewBox="0 0 44 44"
 			>
 				<circle
-					className="text-slate-700"
+					className="text-border"
 					cx="22"
 					cy="22"
 					fill="transparent"
@@ -59,7 +59,7 @@ function ScenarioTimerGauge({ remainingMs, totalMs }: ScenarioTimerGaugeProps) {
 				/>
 				<circle
 					className={`transition-all duration-100 ${
-						isCritical ? "text-rose-500" : "text-indigo-400"
+						isCritical ? "text-destructive" : "text-primary"
 					}`}
 					cx="22"
 					cy="22"
@@ -95,25 +95,25 @@ function ScenarioFeedbackPanel({
 	return (
 		<div
 			aria-live="polite"
-			className={`p-4 rounded-xl border space-y-3 ${
+			className={`p-4 rounded-lg border space-y-3 ${
 				isPass
-					? "bg-emerald-950/40 border-emerald-500/40 text-emerald-300"
-					: "bg-rose-950/40 border-rose-500/40 text-rose-300"
+					? "bg-accent border-border text-accent-foreground"
+					: "bg-destructive/10 border-destructive/40 text-destructive"
 			}`}
 			role="status"
 		>
 			<div className="flex items-center justify-between">
-				<span className="text-xs font-black tracking-widest uppercase px-2.5 py-0.5 rounded bg-slate-950/60 border border-current">
+				<span className="text-xs font-black tracking-widest uppercase px-2.5 py-0.5 rounded bg-background/60 border border-current">
 					{label}
 				</span>
 			</div>
 
-			<p className="text-xs text-slate-300 leading-relaxed">
+			<p className="text-xs text-muted-foreground leading-relaxed">
 				{explanationText}
 			</p>
 
 			<button
-				className="w-full mt-2 py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+				className="w-full mt-2 py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 active:scale-[0.98] text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				data-testid="resume-playback-button"
 				onClick={onResume}
 				type="button"
@@ -218,11 +218,11 @@ export function ScenarioOverlay({
 		<div
 			aria-labelledby={promptId}
 			aria-modal="true"
-			className="relative flex flex-col lg:flex-row w-full h-full bg-slate-950/80 backdrop-blur-md border border-slate-800 rounded-2xl overflow-hidden shadow-2xl"
+			className="relative flex flex-col lg:flex-row w-full h-full bg-background/80 backdrop-blur-md border border-border rounded-lg overflow-hidden shadow-lg"
 			data-input-type={scenario.inputType}
 			role="dialog"
 		>
-			<div className="w-full lg:w-[35%] flex flex-col justify-between p-6 bg-slate-900/95 border-b lg:border-b-0 lg:border-l border-slate-800/80 overflow-y-auto space-y-6">
+			<div className="w-full lg:w-[35%] flex flex-col justify-between p-4 sm:p-6 bg-card/95 border-b lg:border-b-0 lg:border-l border-border overflow-y-auto space-y-6">
 				<div className="flex items-center justify-between gap-4">
 					<span
 						className={`text-xs font-bold px-2.5 py-1 rounded-md border ${moduleInfo.badge}`}
@@ -238,7 +238,7 @@ export function ScenarioOverlay({
 				</div>
 
 				{scenario.imageUrl ? (
-					<div className="rounded-xl overflow-hidden border border-slate-800 shadow-md">
+					<div className="rounded-lg overflow-hidden border border-border shadow-sm">
 						<img
 							alt="Scenario tactical diagram"
 							className="w-full h-auto object-cover max-h-48"
@@ -250,11 +250,11 @@ export function ScenarioOverlay({
 				) : null}
 
 				<div className="space-y-2">
-					<span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+					<span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider font-mono">
 						Tactical Decision Point
 					</span>
 					<h3
-						className="text-lg font-bold text-white leading-snug"
+						className="text-lg font-bold text-card-foreground leading-snug"
 						id={promptId}
 					>
 						{scenario.promptText}
@@ -271,13 +271,13 @@ export function ScenarioOverlay({
 					) : (
 						<>
 							<p
-								className="rounded-xl border border-slate-700 bg-slate-950/60 p-4 text-sm text-slate-400"
+								className="rounded-md border border-border bg-background/60 p-4 text-sm text-muted-foreground"
 								data-testid="unsupported-scenario-input"
 							>
 								This scenario input is not available yet.
 							</p>
 							<button
-								className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-indigo-500"
+								className="w-full rounded-md bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 								data-testid="skip-unsupported-input-button"
 								onClick={onSkipUnsupportedInput}
 								type="button"
@@ -290,7 +290,7 @@ export function ScenarioOverlay({
 
 				{isUnanswered && onReplayContext ? (
 					<button
-						className="w-full py-2.5 px-4 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+						className="w-full py-2.5 px-4 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						data-testid="replay-context-button"
 						onClick={onReplayContext}
 						type="button"

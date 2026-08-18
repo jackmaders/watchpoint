@@ -37,36 +37,38 @@ function SessionPlayerHeader({
 	vod,
 }: SessionPlayerHeaderProps) {
 	return (
-		<header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+		<header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
 			<div className="space-y-1">
 				<div className="flex items-center gap-2 flex-wrap">
 					<Link
-						className="text-xs font-semibold text-slate-400 hover:text-indigo-400 transition-colors mr-2 inline-flex items-center gap-1"
+						className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors mr-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						params={{ id: vod.id }}
 						to="/vods/$id"
 					>
 						← Exit Session
 					</Link>
-					<span className="px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+					<span className="px-2 py-0.5 rounded text-xs font-bold bg-accent text-accent-foreground border border-border">
 						{vod.mapName}
 					</span>
-					<span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+					<span className="px-2 py-0.5 rounded text-xs font-bold bg-secondary text-secondary-foreground border border-border">
 						{vod.rankTier}
 					</span>
 					{hero ? (
-						<span className="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+						<span className="px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary border border-primary/40">
 							Hero: {hero}
 						</span>
 					) : null}
 				</div>
-				<h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+				<h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
 					{vod.title}
 				</h1>
 			</div>
 
 			<div className="flex items-center gap-3 self-start sm:self-auto">
-				<span className="text-xs text-slate-400 font-medium">Progress:</span>
-				<span className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-200 font-mono font-bold text-xs rounded-full">
+				<span className="text-xs text-muted-foreground font-medium">
+					Progress:
+				</span>
+				<span className="px-3 py-1 bg-muted border border-border text-muted-foreground font-mono font-bold text-xs rounded-md">
 					Scenario {Math.min(currentIndex + 1, activeCount)} / {activeCount}
 				</span>
 			</div>
@@ -99,10 +101,10 @@ function SessionPlayerControls({
 			: 0;
 
 	return (
-		<div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 backdrop-blur-sm space-y-3">
-			<div className="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+		<div className="rounded-lg border border-border bg-card p-4 shadow-sm space-y-3">
+			<div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
 				<div
-					className="h-full bg-indigo-500 transition-all duration-100"
+					className="h-full bg-primary transition-all duration-100 motion-reduce:transition-none"
 					style={{ width: `${progressPercent}%` }}
 				/>
 				{activeScenarios.map((sc) => {
@@ -111,7 +113,7 @@ function SessionPlayerControls({
 					const modDef = MODULE_MAP[sc.moduleType];
 					return (
 						<div
-							className="absolute top-0 bottom-0 w-1 bg-amber-400 rounded-full -translate-x-1/2"
+							className="absolute top-0 bottom-0 w-1 bg-accent rounded-full -translate-x-1/2"
 							key={sc.id}
 							style={{ left: `${markerPos}%` }}
 							title={`${modDef.label} Scenario @ ${formatDuration(sc.timestampSeconds)}`}
@@ -124,7 +126,7 @@ function SessionPlayerControls({
 				<div className="flex items-center gap-3">
 					<button
 						aria-label={isPlaying ? "Pause Video" : "Play Video"}
-						className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95"
+						className="px-4 py-2 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 						data-testid="play-pause-button"
 						onClick={isPlaying ? onPause : onPlay}
 						type="button"
@@ -133,7 +135,7 @@ function SessionPlayerControls({
 					</button>
 
 					<button
-						className="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+						className="px-3.5 py-2 rounded-md border border-input bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						data-testid="replay-context-button"
 						onClick={onReplayContext}
 						type="button"
@@ -142,7 +144,7 @@ function SessionPlayerControls({
 					</button>
 				</div>
 
-				<div className="flex items-center gap-4 text-xs font-mono font-medium text-slate-400">
+				<div className="flex items-center gap-4 text-xs font-mono font-medium text-muted-foreground">
 					<span>
 						{formatDuration(currentTime)} / {formatDuration(duration)}
 					</span>
@@ -186,25 +188,25 @@ function SessionPlayerViewport({
 			className={
 				isCompleted
 					? "hidden"
-					: "relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl"
+					: "relative aspect-video w-full rounded-lg overflow-hidden bg-background border border-border shadow-lg"
 			}
 		>
 			<div className="w-full h-full" ref={containerRef} />
 
 			{isLoading ? (
 				<div
-					className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center space-y-4 z-20"
+					className="absolute inset-0 bg-background flex flex-col items-center justify-center space-y-4 z-20"
 					data-testid="player-loading"
 				>
-					<div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-					<p className="text-sm font-semibold text-slate-400">
+					<div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin motion-reduce:animate-none" />
+					<p className="text-sm font-semibold text-muted-foreground">
 						Initializing Video Stream...
 					</p>
 				</div>
 			) : null}
 
 			{isOverlayVisible && overlayScenarioData && overlayState ? (
-				<div className="absolute inset-0 z-30 p-3 sm:p-6 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
+				<div className="absolute inset-0 z-30 p-3 sm:p-6 bg-background/80 backdrop-blur-sm flex items-center justify-center">
 					<ScenarioOverlay
 						onReplayContext={onReplayContext}
 						onResume={onResume}

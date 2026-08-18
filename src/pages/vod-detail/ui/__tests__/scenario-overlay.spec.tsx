@@ -514,7 +514,7 @@ describe("ScenarioOverlay", () => {
 
 		// Assert
 		expect(timerGauge.className).toContain("animate-pulse");
-		expect(timerGauge.className).toContain("text-rose-400");
+		expect(timerGauge.className).toContain("text-destructive");
 	});
 
 	it("omits the countdown timer for STRATEGY module even if totalMs is provided", () => {
@@ -617,8 +617,8 @@ describe("ScenarioOverlay", () => {
 
 		// Assert
 		expect(failBadge).toBeDefined();
-		expect(wrongOption.className).toContain("border-rose-500");
-		expect(correctOption.className).toContain("border-emerald-500");
+		expect(wrongOption.className).toContain("border-destructive");
+		expect(correctOption.className).toContain("border-border");
 	});
 
 	it("renders TIME EXPIRED feedback banner and reveals correct option when timedOut", () => {
@@ -644,7 +644,7 @@ describe("ScenarioOverlay", () => {
 
 		// Assert
 		expect(timeoutBadge).toBeDefined();
-		expect(correctOption.className).toContain("border-emerald-500");
+		expect(correctOption.className).toContain("border-border");
 		expect(otherOption.className).toContain("opacity-50");
 	});
 

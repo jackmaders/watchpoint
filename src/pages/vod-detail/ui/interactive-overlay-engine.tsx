@@ -35,18 +35,18 @@ function MultipleChoiceOptionButton({
 	}, [onAnswer, option.id]);
 
 	let buttonStyle =
-		"border-slate-800 bg-slate-950/60 text-slate-200 hover:border-indigo-500 hover:bg-slate-800/80 cursor-pointer";
+		"border-border bg-background/60 text-foreground hover:border-primary hover:bg-accent cursor-pointer";
 
 	if (!isUnanswered) {
 		if (isCorrectOption) {
 			buttonStyle =
-				"border-emerald-500 bg-emerald-950/50 text-emerald-200 ring-1 ring-emerald-500/50";
+				"border-border bg-accent text-accent-foreground ring-1 ring-ring";
 		} else if (isWrongSelection) {
 			buttonStyle =
-				"border-rose-500 bg-rose-950/50 text-rose-200 ring-1 ring-rose-500/50";
+				"border-destructive bg-destructive/10 text-destructive ring-1 ring-destructive";
 		} else {
 			buttonStyle =
-				"border-slate-800/50 bg-slate-950/30 text-slate-500 opacity-50";
+				"border-border/50 bg-muted/30 text-muted-foreground opacity-50";
 		}
 	}
 
@@ -54,26 +54,26 @@ function MultipleChoiceOptionButton({
 		<button
 			aria-disabled={!isUnanswered}
 			aria-keyshortcuts={shortcut}
-			className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${buttonStyle}`}
+			className={`w-full flex items-center justify-between p-4 rounded-md border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${buttonStyle}`}
 			data-testid={`scenario-option-${option.id}`}
 			disabled={!isUnanswered}
 			onClick={handleClick}
 			type="button"
 		>
 			<div className="flex items-center gap-3">
-				<kbd className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-slate-300">
+				<kbd className="flex items-center justify-center w-6 h-6 rounded-md bg-muted border border-border text-xs font-mono font-bold text-muted-foreground">
 					{shortcut}
 				</kbd>
 				<span className="text-sm font-medium">{option.text}</span>
 			</div>
 
 			{isCorrectOption ? (
-				<span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+				<span className="text-xs font-bold text-accent-foreground uppercase tracking-wider">
 					✓ Correct
 				</span>
 			) : null}
 			{isWrongSelection ? (
-				<span className="text-xs font-bold text-rose-400 uppercase tracking-wider">
+				<span className="text-xs font-bold text-destructive uppercase tracking-wider">
 					✗ Selected
 				</span>
 			) : null}
