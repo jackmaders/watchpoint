@@ -79,6 +79,26 @@
 .auth-tabs [data-slot="tabs-trigger"]::after {
 	display: none;
 }
+.auth-dialog-b .auth-tabs [data-slot="tabs-list"] {
+	border-bottom: 1px solid var(--border);
+}
+.auth-dialog-b .auth-tabs [data-slot="tabs-trigger"]::after {
+	right: 0;
+	bottom: -1px;
+	left: 0;
+	display: block;
+	height: 1px;
+}
+.auth-dialog-c .auth-tabs [data-slot="tabs-list"] {
+	padding: 0.2rem;
+	background: var(--muted);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-xs);
+}
+.auth-dialog-c .auth-tabs [data-slot="tabs-trigger"] {
+	border-radius: var(--radius-sm);
+}
 .auth-tabs .registration-tab[data-disabled] {
 	color: var(--muted-foreground);
 	cursor: not-allowed;
