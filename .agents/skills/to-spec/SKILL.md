@@ -18,7 +18,11 @@ For any ticket with UI changes, require an existing prototype branch linked from
 
 Check with the user that these seams match their expectations.
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. Write the spec using the template below, then publish it to the project issue tracker.
+
+4. In `## Work Breakdown`, recommend either `One ticket` or `Multiple tickets`, with a concise rationale. Recommend multiple tickets only for independently valuable, testable slices or real dependency boundaries; multiple files, layers, or test types alone do not justify one. `/to-spec` only documents the recommendation; `/to-tickets` creates additional tickets when needed.
+
+5. Apply the triage label that matches the recommendation: `ready-for-agent` for `One ticket`; `needs-triage` for `Multiple tickets`. When recommending multiple tickets, remove `ready-for-agent` if it is already present on the parent issue.
 
 <spec-template>
 
@@ -69,6 +73,10 @@ A list of testing decisions that were made. Include:
 ## Out of Scope
 
 A description of the things that are out of scope for this spec.
+
+## Work Breakdown
+
+`One ticket` or `Multiple tickets`, followed by a concise rationale.
 
 ## Further Notes
 
