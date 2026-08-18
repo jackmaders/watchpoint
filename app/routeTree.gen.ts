@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrototypeAuthRouteImport } from './routes/prototype/auth'
 import { Route as VodsIndexRouteImport } from './routes/vods/index'
 import { Route as VodsIdRouteImport } from './routes/vods/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -20,6 +21,11 @@ import { Route as ApiVodsIdManifestRouteImport } from './routes/api/vods/$id/man
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeAuthRoute = PrototypeAuthRouteImport.update({
+  id: '/prototype/auth',
+  path: '/prototype/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VodsIndexRoute = VodsIndexRouteImport.update({
@@ -55,6 +61,7 @@ const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prototype/auth': typeof PrototypeAuthRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prototype/auth': typeof PrototypeAuthRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prototype/auth': typeof PrototypeAuthRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/prototype/auth'
     | '/vods/$id'
     | '/vods/'
     | '/api/auth/$'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/prototype/auth'
     | '/vods/$id'
     | '/vods'
     | '/api/auth/$'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/prototype/auth'
     | '/vods/$id'
     | '/vods/'
     | '/api/auth/$'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrototypeAuthRoute: typeof PrototypeAuthRoute
   VodsIdRoute: typeof VodsIdRouteWithChildren
   VodsIndexRoute: typeof VodsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -127,6 +140,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/auth': {
+      id: '/prototype/auth'
+      path: '/prototype/auth'
+      fullPath: '/prototype/auth'
+      preLoaderRoute: typeof PrototypeAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vods/': {
@@ -187,6 +207,7 @@ const VodsIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrototypeAuthRoute: PrototypeAuthRoute,
   VodsIdRoute: VodsIdRouteWithChildren,
   VodsIndexRoute: VodsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
