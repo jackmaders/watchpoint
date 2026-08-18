@@ -48,14 +48,20 @@ function NameInput({
 	const errorMessage = errors.map(formatError).join(", ");
 
 	return (
-		<div>
+		<div className="space-y-1">
 			<input
+				aria-invalid={errors.length > 0}
+				className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
 				name={name}
 				onChange={handleChange}
 				placeholder="Name"
 				value={value}
 			/>
-			{errors.length > 0 && <span>{errorMessage}</span>}
+			{errors.length > 0 && (
+				<span className="text-xs font-medium text-destructive">
+					{errorMessage}
+				</span>
+			)}
 		</div>
 	);
 }
@@ -81,14 +87,20 @@ function EmailInput({
 	const errorMessage = errors.map(formatError).join(", ");
 
 	return (
-		<div>
+		<div className="space-y-1">
 			<input
+				aria-invalid={errors.length > 0}
+				className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
 				name={name}
 				onChange={handleChange}
 				placeholder="Email"
 				value={value}
 			/>
-			{errors.length > 0 && <span>{errorMessage}</span>}
+			{errors.length > 0 && (
+				<span className="text-xs font-medium text-destructive">
+					{errorMessage}
+				</span>
+			)}
 		</div>
 	);
 }
@@ -118,7 +130,7 @@ export function UserForm({
 	);
 
 	return (
-		<form onSubmit={handleSubmitForm}>
+		<form className="space-y-3" onSubmit={handleSubmitForm}>
 			<form.Field name="name">
 				{(field) => (
 					<NameInput
@@ -139,7 +151,12 @@ export function UserForm({
 					/>
 				)}
 			</form.Field>
-			<button type="submit">Submit</button>
+			<button
+				className="h-10 w-full rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+				type="submit"
+			>
+				Submit
+			</button>
 		</form>
 	);
 }
