@@ -79,6 +79,13 @@ export function AuthPrototype() {
 		setStatus(mode === "register" ? "created" : "signed-in");
 	}
 
+	function toggleRegistration() {
+		setRegistrationEnabled((enabled) => {
+			if (enabled) setMode("sign-in");
+			return !enabled;
+		});
+	}
+
 	return (
 		<main className="prototype-shell">
 			<div aria-hidden="true" className="backdrop">
@@ -106,11 +113,7 @@ export function AuthPrototype() {
 				<Button onClick={() => setOpen(true)} size="sm">
 					Open modal
 				</Button>
-				<Button
-					onClick={() => setRegistrationEnabled((value) => !value)}
-					size="sm"
-					variant="outline"
-				>
+				<Button onClick={toggleRegistration} size="sm" variant="outline">
 					Registration {registrationEnabled ? "enabled" : "disabled"}
 				</Button>
 				<Button
@@ -208,7 +211,11 @@ function AuthModal({
 				>
 					<TabsList>
 						<TabsTrigger value="sign-in">Sign in</TabsTrigger>
-						<TabsTrigger disabled={!registrationEnabled} value="register">
+						<TabsTrigger
+							className="registration-tab"
+							disabled={!registrationEnabled}
+							value="register"
+						>
 							Register
 						</TabsTrigger>
 					</TabsList>

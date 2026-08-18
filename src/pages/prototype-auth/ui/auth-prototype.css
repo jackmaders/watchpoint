@@ -92,6 +92,12 @@
 .auth-tabs [data-slot="tabs-trigger"]::after {
 	display: none;
 }
+.auth-tabs .registration-tab[data-disabled] {
+	color: var(--muted-foreground);
+	cursor: not-allowed;
+	background: var(--muted);
+	opacity: 0.7;
+}
 .auth-tabs [data-slot="tabs-content"] {
 	margin-top: 0;
 }
