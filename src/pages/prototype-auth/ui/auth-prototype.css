@@ -93,10 +93,13 @@
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	padding-top: 0.75rem;
+	padding-top: 1rem;
 }
 .auth-fields {
 	gap: 1rem;
+}
+.auth-fields [data-slot="field"] {
+	gap: 0.5rem;
 }
 .prototype-controls input:focus-visible {
 	outline: 2px solid var(--ring);
@@ -108,7 +111,7 @@
 }
 .registration-note {
 	padding: 0.75rem;
-	margin-top: 1rem;
+	margin-top: 0;
 	background: var(--muted);
 	border: 1px solid var(--border);
 }
@@ -121,7 +124,7 @@
 	border: 1px solid var(--destructive);
 }
 .auth-cta {
-	margin-top: 0.75rem;
+	margin-top: 0;
 }
 
 .form-alert [data-slot="alert-description"] {
@@ -138,35 +141,12 @@
 	width: min(50rem, calc(100vw - 2rem));
 	transform: translateX(-50%);
 }
-.prototype-switcher {
-	position: fixed;
-	bottom: 1rem;
-	left: 50%;
-	z-index: 20;
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-	padding: 0.45rem;
-	font: 0.75rem var(--font-mono);
-	color: var(--background);
-	background: var(--foreground);
-	border: 1px solid var(--primary);
-	box-shadow: var(--shadow-xl);
-	transform: translateX(-50%);
-}
-.prototype-switcher button {
-	border-color: var(--primary);
-}
 @media (max-width: 520px) {
 	.prototype-shell {
 		padding-inline: 0.5rem;
 	}
 	.prototype-controls {
 		bottom: 5rem;
-	}
-	.prototype-switcher {
-		width: max-content;
-		max-width: calc(100vw - 1rem);
 	}
 }
 @media (prefers-reduced-motion: reduce) {
