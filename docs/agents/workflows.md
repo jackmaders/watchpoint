@@ -66,20 +66,14 @@ graph LR
 6. **Implementation**: Run `/implement` on unblocked tickets in dependency order.
 7. **Review**: Run `/code-review` on opened PRs.
 
-### Medium Feature Workflow (Multi-Ticket)
-1. **Triage**: Run `/triage` to classify as `[enhancement, needs-triage]`.
-2. **Grilling**: Run `/grill-me` (or `/grill-with-docs`) to settle trade-offs and edge cases.
-3. **Specification**: Run `/to-spec` to record the full specification in the issue.
-4. **Ticket Slicing**: Run `/to-tickets` to split into vertical tracer-bullet sub-issues labeled `ready-for-agent`.
-5. **Implementation**: Run `/implement` on unblocked child tickets in dependency order.
-6. **Review**: Run `/code-review` on opened PRs.
-
-### Small Feature Workflow (Single Session)
-1. **Triage**: Run `/triage` to classify as `[enhancement, needs-triage]`.
-2. **Grilling**: Run 1 quick round of `/grill-me`.
-3. **Specification**: Run `/to-spec` to record compact specification and apply `ready-for-agent`.
-4. **Implementation**: Run `/implement` (TDD, test seams, open PR).
-5. **Review**: Run `/code-review` on opened PRs.
+### Feature Workflow
+1. **Triage**: Run `/triage` to classify the feature as `[enhancement, needs-triage]`.
+2. **Grilling**: Run `/grill-me` (or `/grill-with-docs`) when trade-offs or edge cases need settling.
+3. **Prototyping**: For UI changes, run `/prototype` before `/to-spec` and retain its prototype branch on the ticket. This is optional for features without design elements.
+4. **Specification**: Run `/to-spec` to record the specification and apply `ready-for-agent`.
+5. **Ticket Slicing**: Optionally run `/to-tickets` when the feature needs multiple implementation tickets.
+6. **Implementation**: Run `/implement` on the ticket or its unblocked child tickets.
+7. **Review**: Run `/code-review` on opened PRs.
 
 ### Bug Fix Workflow
 1. **Triage**: Run `/triage` to verify bug against local code and tag `[bug, needs-triage]`.

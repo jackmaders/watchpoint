@@ -12,6 +12,8 @@ Both axes run as **parallel sub-agents** so they don't pollute each other's cont
 
 The issue tracker should have been provided to you — run `/setup-matt-pocock-skills` if `docs/agents/issue-tracker.md` is missing.
 
+For UI changes, include a spec check that the implementation aligns with the approved prototype.
+
 ## Process
 
 ### 1. Pin the fixed point
