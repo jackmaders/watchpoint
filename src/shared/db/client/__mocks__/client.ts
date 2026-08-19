@@ -78,6 +78,9 @@ const db = {
 		auditEntries: {
 			findMany: createMockQueryFn(),
 		},
+		playthroughCompletions: {
+			findFirst: createMockQueryFn(),
+		},
 		playthroughModuleSelections: {
 			findMany: createMockQueryFn(),
 		},

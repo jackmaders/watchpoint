@@ -178,7 +178,10 @@ describe("VodDetailPage", () => {
 		await waitFor(() =>
 			expect(navigate).toHaveBeenCalledWith({
 				params: { id: "vod_1" },
-				search: { modules: "STRATEGY,TACTICS,ULTIMATE,COOLDOWN,SPATIAL" },
+				search: {
+					modules: "STRATEGY,TACTICS,ULTIMATE,COOLDOWN,SPATIAL",
+					playthroughId: expect.any(String),
+				},
 				to: "/vods/$id/session",
 			}),
 		);

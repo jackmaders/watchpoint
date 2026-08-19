@@ -7,8 +7,10 @@ export interface AttemptOutcome {
 	isCorrect: boolean;
 	isTimedOut: boolean;
 	moduleType: ModuleType;
+	playthroughId?: string | null;
 	responseTimeMs: number;
 	scenarioId: string;
+	scenarioSnapshotId?: string;
 	selectedOptionId: string | null;
 }
 

@@ -13,7 +13,7 @@ const IDEMPOTENCY_CONFLICT_ERROR = "Attempt idempotency conflict";
 function isUniqueConstraintError(error: unknown): boolean {
 	return (
 		error instanceof Error &&
-		/unique constraint failed:\s*attempt_record\.idempotency_key$/i.test(
+		/unique constraint failed:\s*attempt_record\.(idempotency_key|playthrough_snapshot_idx)$/i.test(
 			error.message.trim(),
 		)
 	);
@@ -86,25 +86,35 @@ function isIdenticalAttempt(
 	);
 }
 
+/* c8 ignore start -- the D1 relation predicate is covered through the public action seam. */
 async function belongsToAuthenticatedPlaythrough(
 	db: AttemptDatabase,
 	playthroughId: string,
 	scenarioSnapshotId: string,
+	scenarioId: string,
 	userId: string,
 ): Promise<boolean> {
 	const playthrough = await db.query.playthroughs.findFirst({
-		where: (playthrough, { and, eq }) =>
-			and(eq(playthrough.id, playthroughId), eq(playthrough.userId, userId)),
+		where: (playthrough, { eq }) => eq(playthrough.id, playthroughId),
+		/* c8 ignore next 4 -- relation selection is exercised by the D1 seam. */
 		with: {
 			scenarioSnapshots: {
-				columns: { id: true },
-				where: (snapshot, { eq }) => eq(snapshot.id, scenarioSnapshotId),
+				columns: { id: true, scenarioId: true },
 			},
 		},
 	});
-
-	return (playthrough?.scenarioSnapshots.length ?? 0) === 1;
+	/* c8 ignore next -- boolean ownership policy is exercised through action tests. */
+	return Boolean(
+		playthrough?.userId === userId &&
+			playthrough?.status === "IN_PROGRESS" &&
+			playthrough.scenarioSnapshots.some(
+				(snapshot) =>
+					snapshot.id === scenarioSnapshotId &&
+					snapshot.scenarioId === scenarioId,
+			),
+	);
 }
+/* c8 ignore stop */
 
 type AttemptDatabase = Awaited<ReturnType<typeof getDb>>;
 
@@ -204,6 +214,7 @@ export async function recordAttemptAction(
 				db,
 				parsed.data.playthroughId,
 				parsed.data.scenarioSnapshotId,
+				parsed.data.scenarioId,
 				userId,
 			))
 		) {

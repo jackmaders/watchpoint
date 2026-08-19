@@ -36,6 +36,7 @@ export {
 	type ModuleType,
 	moduleTypeEnum,
 	type PlaythroughStatus,
+	playthroughCompletions,
 	playthroughModuleSelections,
 	playthroughStatusEnum,
 	playthroughs,

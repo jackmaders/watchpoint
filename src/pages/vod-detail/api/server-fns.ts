@@ -6,6 +6,11 @@ import {
 	RecordAttemptInputSchema,
 	type RecordAttemptResult,
 } from "../model/attempt";
+import {
+	completePlaythroughAction,
+	type StartPlaythroughInput,
+	startPlaythroughAction,
+} from "./playthrough";
 import { recordAttemptAction } from "./record-attempt";
 import {
 	normalizeSessionManifestQuery,
@@ -47,3 +52,11 @@ export const recordAttempt = createServerFn({ method: "POST" })
 	.handler(async ({ data }): Promise<RecordAttemptResult> => {
 		return recordAttemptAction(data);
 	});
+
+export const startPlaythrough = createServerFn({ method: "POST" })
+	.validator((payload: StartPlaythroughInput) => payload)
+	.handler(async ({ data }) => startPlaythroughAction(data));
+
+export const completePlaythrough = createServerFn({ method: "POST" })
+	.validator((payload: { playthroughId: string }) => payload)
+	.handler(async ({ data }) => completePlaythroughAction(data.playthroughId));

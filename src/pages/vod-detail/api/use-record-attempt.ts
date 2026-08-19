@@ -99,6 +99,12 @@ function mapOutcomeToRecordAttempt(
 		responseTimeMs: outcome.responseTimeMs,
 		scenarioId: outcome.scenarioId,
 		selectedOptionId: outcome.selectedOptionId,
+		...(outcome.playthroughId
+			? {
+					playthroughId: outcome.playthroughId,
+					scenarioSnapshotId: outcome.scenarioSnapshotId,
+				}
+			: {}),
 		...(outcome.inputValue === undefined
 			? {}
 			: { inputValue: outcome.inputValue }),

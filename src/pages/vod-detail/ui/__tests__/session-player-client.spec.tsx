@@ -7,6 +7,7 @@ import {
 	setYouTubeNamespace,
 	YouTubePlayerState,
 } from "@/shared/lib/testing";
+import * as serverFns from "../../api/server-fns";
 import {
 	SessionPlayerClient,
 	SessionPlayerViewport,
@@ -141,6 +142,33 @@ describe("SessionPlayerClient", () => {
 
 		// Assert
 		expect(screen.getByText("Scenario 0 / 0")).toBeDefined();
+	});
+
+	it("persists terminal completion for the authenticated playthrough", async () => {
+		// Arrange
+		const complete = vi
+			.spyOn(serverFns, "completePlaythrough")
+			.mockResolvedValueOnce({ success: true } as never);
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+
+		// Act
+		renderWithClient(
+			<SessionPlayerClient playthroughId="playthrough_1" vod={mockVod} />,
+		);
+		await act(async () => {
+			await Promise.resolve();
+		});
+		act(() => {
+			youtube.players[0]?.triggerReady();
+			youtube.players[0]?.triggerStateChange(YouTubePlayerState.PLAYING);
+			youtube.players[0]?.triggerStateChange(YouTubePlayerState.ENDED);
+		});
+
+		// Assert
+		expect(complete).toHaveBeenCalledWith({
+			data: { playthroughId: "playthrough_1" },
+		});
 	});
 
 	it("shows non-blocking buffering and blocking recovery actions", () => {

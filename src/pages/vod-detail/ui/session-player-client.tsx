@@ -1,9 +1,10 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDuration } from "@/shared/lib/utils";
 import type { VodContainerRef } from "@/shared/media";
+import { completePlaythrough } from "../api/server-fns";
 import { extractHeroFromTitle } from "../model/module-filter";
 import { MODULE_MAP } from "../model/modules";
 import {
@@ -20,6 +21,8 @@ import { ScenarioOverlay } from "./scenario-overlay";
 import { SessionSummaryPanel } from "./session-summary-panel";
 
 export interface SessionPlayerClientProps {
+	playthroughId?: string | null;
+	scenarioSnapshotIds?: readonly string[];
 	vod: ManifestVod;
 }
 
@@ -306,8 +309,17 @@ export function SessionPlayerViewport({
 	);
 }
 
-export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
+export function SessionPlayerClient({
+	playthroughId,
+	scenarioSnapshotIds,
+	vod,
+}: SessionPlayerClientProps) {
 	const hero = extractHeroFromTitle(vod.title);
+	const handleSessionComplete = useCallback(() => {
+		if (playthroughId) {
+			void completePlaythrough({ data: { playthroughId } });
+		}
+	}, [playthroughId]);
 
 	const {
 		activeScenarioIndex,
@@ -333,6 +345,9 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 		totalMs,
 	} = useSessionPlayer({
 		initialManifest: vod,
+		onSessionComplete: handleSessionComplete,
+		playthroughId,
+		scenarioSnapshotIds,
 		vodId: vod.id,
 	});
 

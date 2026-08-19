@@ -54,6 +54,8 @@ export interface UseSessionPlayerOptions {
 		diagnostic: import("@/shared/media").MediaDiagnostic,
 	) => void;
 	vodId: string;
+	playthroughId?: string | null;
+	scenarioSnapshotIds?: readonly string[];
 }
 
 export interface UseSessionPlayerResult {
@@ -129,13 +131,25 @@ export function toSessionPlaythroughMediaAction(
 	}
 }
 
-function useSessionScenarios(vod: ManifestVod | null): ScenarioItem[] {
+function useSessionScenarios(
+	vod: ManifestVod | null,
+	scenarioSnapshotIds: readonly string[] = [],
+): ScenarioItem[] {
 	return useMemo(() => {
 		if (!vod?.scenarios) return [];
+		const snapshotIdsByScenarioId = new Map(
+			vod.scenarios.map((scenario, index) => [
+				scenario.id,
+				scenarioSnapshotIds[index],
+			]),
+		);
 		return [...vod.scenarios]
-			.map(normalizeScenario)
+			.map((scenario) => ({
+				...normalizeScenario(scenario),
+				scenarioSnapshotId: snapshotIdsByScenarioId.get(scenario.id),
+			}))
 			.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
-	}, [vod]);
+	}, [vod, scenarioSnapshotIds]);
 }
 
 function useScenarioCountdown(
@@ -175,6 +189,7 @@ function executeSessionEffect(
 	effect: SessionPlaythroughEffect,
 	media: SessionMediaAdapterResult,
 	recordAttempt: ReturnType<typeof useRecordAttemptMutation>,
+	playthroughId: string | null | undefined,
 	onSessionCompleteRef: React.RefObject<
 		((summary: SessionSummaryReport) => void) | undefined
 	>,
@@ -199,7 +214,7 @@ function executeSessionEffect(
 			media.execute({ autoplay: effect.autoplay, type: "RESTART" });
 			return;
 		case "RECORD_ATTEMPT":
-			recordAttempt.mutate(effect.outcome);
+			recordAttempt.mutate({ ...effect.outcome, playthroughId });
 			return;
 		case "SESSION_COMPLETED":
 			onSessionCompleteRef.current?.(effect.summary);
@@ -214,16 +229,30 @@ function useSessionEffects(
 	onSessionCompleteRef: React.RefObject<
 		((summary: SessionSummaryReport) => void) | undefined
 	>,
+	playthroughId: string | null | undefined,
 ) {
 	useEffect(() => {
 		if (effects.length === 0) return;
 
 		effects.forEach((effect) => {
-			executeSessionEffect(effect, media, recordAttempt, onSessionCompleteRef);
+			executeSessionEffect(
+				effect,
+				media,
+				recordAttempt,
+				playthroughId,
+				onSessionCompleteRef,
+			);
 		});
 
 		dispatch({ type: "EFFECTS_CONSUMED" });
-	}, [dispatch, effects, media, onSessionCompleteRef, recordAttempt]);
+	}, [
+		dispatch,
+		effects,
+		media,
+		onSessionCompleteRef,
+		recordAttempt,
+		playthroughId,
+	]);
 }
 
 function useSessionMedia(
@@ -369,6 +398,7 @@ interface SessionPlayerRuntimeOptions {
 	autoplay: boolean;
 	onSessionComplete?: (summary: SessionSummaryReport) => void;
 	vod: ManifestVod | null;
+	playthroughId?: string | null;
 	onMediaDiagnostics?: (
 		diagnostic: import("@/shared/media").MediaDiagnostic,
 	) => void;
@@ -380,6 +410,7 @@ function useSessionPlayerRuntime({
 	onSessionComplete,
 	onMediaDiagnostics,
 	vod,
+	playthroughId,
 }: SessionPlayerRuntimeOptions) {
 	const coordinatorScenarios = activeScenarios as readonly SessionScenario[];
 	const [coordinator, dispatch] = useReducer(
@@ -440,6 +471,7 @@ function useSessionPlayerRuntime({
 		media,
 		recordAttempt,
 		onSessionCompleteRef,
+		playthroughId,
 	);
 	return {
 		coordinator,
@@ -457,14 +489,17 @@ export function useSessionPlayer({
 	onSessionComplete,
 	onMediaDiagnostics,
 	vodId,
+	playthroughId,
+	scenarioSnapshotIds,
 }: UseSessionPlayerOptions): UseSessionPlayerResult {
 	const vod = initialManifest ?? null;
-	const activeScenarios = useSessionScenarios(vod);
+	const activeScenarios = useSessionScenarios(vod, scenarioSnapshotIds);
 	const runtime = useSessionPlayerRuntime({
 		activeScenarios,
 		autoplay,
 		onMediaDiagnostics,
 		onSessionComplete,
+		playthroughId,
 		vod,
 	});
 	const { coordinator, coordinatorRef, currentScenario, remainingMs, media } =

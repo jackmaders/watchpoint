@@ -18,6 +18,7 @@ export interface VodDetailClientProps {
 }
 
 export function VodDetailClient({ vod }: VodDetailClientProps) {
+	const [playthroughId] = useState(() => crypto.randomUUID());
 	const [activeModules, setActiveModules] = useState<ModuleType[]>(() =>
 		MODULE_DEFINITIONS.map((def) => def.key),
 	);
@@ -36,10 +37,10 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 	const handleAuthenticated = useCallback(() => {
 		navigate({
 			params: { id: vod.id },
-			search: { modules: activeModules.join(",") },
+			search: { modules: activeModules.join(","), playthroughId },
 			to: "/vods/$id/session",
 		});
-	}, [activeModules, navigate, vod.id]);
+	}, [activeModules, navigate, playthroughId, vod.id]);
 
 	const availableCounts = useMemo(
 		() => calculateModuleCounts(vod.scenarios),
@@ -52,8 +53,8 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 	);
 
 	const startHref = useMemo(
-		() => buildSessionUrl(vod.id, activeModules),
-		[vod.id, activeModules],
+		() => buildSessionUrl(vod.id, activeModules, playthroughId),
+		[activeModules, playthroughId, vod.id],
 	);
 
 	return (

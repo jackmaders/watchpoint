@@ -72,11 +72,16 @@ export function serializeModulesParam(modules: ModuleType[]): string {
 	return modules.join(",");
 }
 
-export function buildSessionUrl(vodId: string, modules: ModuleType[]): string {
+export function buildSessionUrl(
+	vodId: string,
+	modules: ModuleType[],
+	playthroughId?: string,
+): string {
 	if (modules.length === 0) {
 		return "#";
 	}
 	const params = new URLSearchParams();
 	params.set("modules", serializeModulesParam(modules));
+	if (playthroughId) params.set("playthroughId", playthroughId);
 	return `/vods/${vodId}/session?${params.toString()}`;
 }

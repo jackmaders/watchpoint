@@ -1,10 +1,17 @@
 export { handleGetVodManifest } from "./api/manifest";
+export {
+	completePlaythroughAction,
+	startPlaythroughAction,
+} from "./api/playthrough";
 export { recordAttemptAction } from "./api/record-attempt";
 export {
+	completePlaythrough,
 	getProtectedSessionManifest,
 	getSessionManifest,
 	recordAttempt,
+	startPlaythrough,
 } from "./api/server-fns";
+export { normalizeSessionManifestModules } from "./api/session-manifest-query";
 export { useRecordAttemptMutation } from "./api/use-record-attempt";
 export {
 	type AttemptOutcome,
