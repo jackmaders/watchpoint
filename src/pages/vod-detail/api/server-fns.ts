@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
+import { getCurrentUser } from "@/shared/lib/auth";
 import {
 	type RecordAttemptInput,
 	RecordAttemptInputSchema,
@@ -16,6 +17,19 @@ export type GetSessionManifestPayload = SessionManifestTransportQuery;
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
 	.handler(async ({ data }) => {
+		return dbGetSessionManifest(data.vodId, {
+			modules: data.modules,
+			publishedOnly: data.publishedOnly,
+		});
+	});
+
+export const getProtectedSessionManifest = createServerFn({ method: "GET" })
+	.validator(normalizeSessionManifestQuery)
+	.handler(async ({ data }) => {
+		if (!(await getCurrentUser())) {
+			throw new Error("Authentication required");
+		}
+
 		return dbGetSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,

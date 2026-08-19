@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { z } from "zod";
 import {
-	getSessionManifest,
+	getProtectedSessionManifest,
 	type MediaRecoveryPrototypeVariant,
 	SessionPlayerMediaRecoveryPrototype,
 	SessionPlayerPage,
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/vods/$id/session")({
 		deps: SessionSearch;
 		params: { id: string };
 	}) => {
-		const vod = await getSessionManifest({
+		const vod = await getProtectedSessionManifest({
 			data: {
 				modules: deps.modules,
 				vodId: params.id,

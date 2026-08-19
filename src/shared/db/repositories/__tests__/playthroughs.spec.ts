@@ -117,7 +117,7 @@ describe("playthrough database accessors", () => {
 		).rejects.toThrow("Failed to create playthrough");
 	});
 
-	it("loads a playthrough without an ownership filter", async () => {
+	it("requires the authenticated owner when loading a playthrough", async () => {
 		// Arrange
 		const db = await getDb();
 		const expected = { attempts: [], id: "playthrough_1" };
@@ -126,10 +126,11 @@ describe("playthrough database accessors", () => {
 		);
 
 		// Act
-		const result = await getPlaythrough("playthrough_1");
+		const result = await getPlaythrough("playthrough_1", "player_1");
 
 		// Assert
 		expect(result).toEqual(expected);
+		expect(db.query.playthroughs.findFirst).toHaveBeenCalled();
 	});
 
 	it("returns only non-test accounts from player history", async () => {

@@ -1,15 +1,59 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
+import { getCurrentUser } from "@/shared/lib/auth";
 import * as recordAttemptModule from "../record-attempt";
-import { getSessionManifest, recordAttempt } from "../server-fns";
+import {
+	getProtectedSessionManifest,
+	getSessionManifest,
+	recordAttempt,
+} from "../server-fns";
 
 vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
+vi.mock("@/shared/lib/auth");
 vi.mock("../record-attempt");
 
 describe("server-fns", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_1" });
+	});
+
+	it("rejects anonymous protected manifest requests", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
+
+		// Act & Assert
+		await expect(
+			(
+				getProtectedSessionManifest as unknown as (ctx: {
+					data: { vodId: string };
+				}) => Promise<unknown>
+			)({ data: { vodId: "vod_123" } }),
+		).rejects.toThrow("Authentication required");
+		expect(dbGetSessionManifest).not.toHaveBeenCalled();
+	});
+
+	it("loads a protected manifest for an authenticated user", async () => {
+		// Arrange
+		const mockManifest = { id: "vod_123", scenarios: [] } as never;
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+
+		// Act
+		const result = await (
+			getProtectedSessionManifest as unknown as (ctx: {
+				data: { modules?: string[]; vodId: string };
+			}) => Promise<unknown>
+		)({
+			data: { modules: ["STRATEGY"], vodId: "vod_123" },
+		});
+
+		// Assert
+		expect(dbGetSessionManifest).toHaveBeenCalledWith("vod_123", {
+			modules: ["STRATEGY"],
+			publishedOnly: undefined,
+		});
+		expect(result).toBe(mockManifest);
 	});
 
 	it("executes getSessionManifest handler correctly with object payload", async () => {

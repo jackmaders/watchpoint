@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getSessionManifest } from "@/pages/vod-detail";
+import {
+	getProtectedSessionManifest,
+	getSessionManifest,
+} from "@/pages/vod-detail";
 import { Route as VodDetailRoute } from "../$id";
 import { Route as SessionRoute } from "../$id.session";
 
@@ -39,7 +42,7 @@ describe("VOD route manifest adapters", () => {
 		});
 
 		// Assert
-		expect(getSessionManifest).toHaveBeenCalledWith({
+		expect(getProtectedSessionManifest).toHaveBeenCalledWith({
 			data: { modules: "STRATEGY,TACTICS", vodId: "vod_123" },
 		});
 	});
