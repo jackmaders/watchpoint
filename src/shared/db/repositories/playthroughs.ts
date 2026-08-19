@@ -78,16 +78,14 @@ export async function createPlaythrough(
 
 export async function getPlaythrough(
 	id: string,
-	userId?: string,
+	userId: string,
 	context?: DbContext,
 ) {
 	const db = await getDb(context);
 
 	return db.query.playthroughs.findFirst({
-		where: userId
-			? (playthrough, { and, eq }) =>
-					and(eq(playthrough.id, id), eq(playthrough.userId, userId))
-			: (playthrough, { eq }) => eq(playthrough.id, id),
+		where: (playthrough, { and, eq }) =>
+			and(eq(playthrough.id, id), eq(playthrough.userId, userId)),
 		with: {
 			attempts: true,
 			moduleSelections: true,

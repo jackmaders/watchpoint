@@ -1,12 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSessionManifest } from "@/shared/db";
+import { getCurrentUser } from "@/shared/lib/auth";
 import { handleGetVodManifest } from "../manifest";
 
 vi.mock("@/shared/db");
+vi.mock("@/shared/lib/auth");
 
 describe("GET /api/vods/[id]/manifest handler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_1" });
+	});
+
+	it("rejects anonymous requests without querying protected data", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
+		const req = new Request("http://localhost/api/vods/vod_1/manifest");
+
+		// Act
+		const res = await handleGetVodManifest(req, {
+			params: Promise.resolve({ id: "vod_1" }),
+		});
+		const body = await res.json();
+
+		// Assert
+		expect(res.status).toBe(401);
+		expect(body).toEqual({ error: "Authentication required" });
+		expect(getSessionManifest).not.toHaveBeenCalled();
 	});
 
 	it("returns 200 JSON with VOD manifest when VOD exists", async () => {

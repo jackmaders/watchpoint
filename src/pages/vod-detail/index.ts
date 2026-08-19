@@ -1,6 +1,7 @@
 export { handleGetVodManifest } from "./api/manifest";
 export { recordAttemptAction } from "./api/record-attempt";
 export {
+	getProtectedSessionManifest,
 	getSessionManifest,
 	recordAttempt,
 } from "./api/server-fns";
