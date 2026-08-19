@@ -349,6 +349,32 @@ describe("recordAttemptAction", () => {
 		expect(db.insert).not.toHaveBeenCalled();
 	});
 
+	it("rejects a cross-user playthrough even when the requester is authenticated", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "usr_other" });
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(undefined);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "usr_owner_playthrough",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "usr_owner_snapshot",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+		expect(db.insert).not.toHaveBeenCalled();
+	});
+
 	it("rejects an attempt with only one persistence identifier", async () => {
 		// Arrange
 		const input = {

@@ -662,7 +662,10 @@ function handleRetryMedia(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "RETRY_MEDIA" }>,
 ): SessionPlaythroughState {
-	if (!isCurrentGeneration(state, action) || state.mediaHealth !== "failed") {
+	if (
+		!isCurrentGeneration(state, action) ||
+		(state.mediaHealth !== "failed" && state.mediaHealth !== "recovering")
+	) {
 		return state;
 	}
 	const generation = state.generation + 1;

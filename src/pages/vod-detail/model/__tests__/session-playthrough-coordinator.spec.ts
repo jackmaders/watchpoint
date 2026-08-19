@@ -729,6 +729,33 @@ describe("session playthrough coordinator", () => {
 		expect(retried.effects.at(-1)?.generation).toBe(retried.generation);
 	});
 
+	it("lets the learner manually retry while automatic recovery is in progress", () => {
+		// Arrange
+		const state = readyPlayingState();
+		const recovering = sessionPlaythroughReducer(state, {
+			failure: {
+				category: "buffering",
+				message: "buffering threshold exceeded",
+			},
+			generation: state.generation,
+			nowMs: 100,
+			type: "MEDIA_FAILURE",
+		});
+
+		// Act
+		const retried = sessionPlaythroughReducer(recovering, {
+			generation: recovering.generation,
+			nowMs: 200,
+			type: "RETRY_MEDIA",
+		});
+
+		// Assert
+		expect(retried.mediaHealth).toBe("recovering");
+		expect(retried.generation).toBe(recovering.generation + 1);
+		expect(retried.session.attempts).toHaveLength(0);
+		expect(retried.effects.at(-1)?.type).toBe("MEDIA_RECOVER");
+	});
+
 	it("keeps scenario timing and phase stable while recovery blocks playback", () => {
 		// Arrange
 		const state = readyPlayingState([timedScenario]);

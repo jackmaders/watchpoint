@@ -133,6 +133,18 @@ describe("playthrough database accessors", () => {
 		expect(db.query.playthroughs.findFirst).toHaveBeenCalled();
 	});
 
+	it("does not disclose a playthrough when the authenticated owner does not match", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(undefined);
+
+		// Act
+		const result = await getPlaythrough("owner_1", "other_user");
+
+		// Assert
+		expect(result).toBeUndefined();
+	});
+
 	it("returns only non-test accounts from player history", async () => {
 		// Arrange
 		const db = await getDb();
@@ -185,6 +197,24 @@ describe("playthrough database accessors", () => {
 
 		// Act
 		const result = await completePlaythrough("missing", "player_1");
+
+		// Assert
+		expect(result).toBeNull();
+	});
+
+	it("does not complete a playthrough owned by another user", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.update).mockReturnValueOnce({
+			set: vi.fn(() => ({
+				where: vi.fn(() => ({
+					returning: vi.fn().mockResolvedValueOnce([]),
+				})),
+			})),
+		} as never);
+
+		// Act
+		const result = await completePlaythrough("owner_1", "other_user");
 
 		// Assert
 		expect(result).toBeNull();
