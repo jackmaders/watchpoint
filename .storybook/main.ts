@@ -23,7 +23,8 @@ function withoutTanStackStart(plugins: PluginOption[]): PluginOption[] {
 }
 
 const config: StorybookConfig = {
-	addons: ["@storybook/addon-a11y"],
+	addons:
+		process.env.STORYBOOK_A11Y_TEST === "true" ? [] : ["@storybook/addon-a11y"],
 	framework: {
 		name: "@storybook/react-vite",
 		options: {},

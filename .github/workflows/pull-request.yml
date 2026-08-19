@@ -29,6 +29,8 @@ jobs:
         run: bun run storybook:check:completeness
 
       - name: 🏗️ Build Storybook
+        env:
+          STORYBOOK_A11Y_TEST: true
         run: bun run storybook:build
 
       - name: ♿ Run browser accessibility checks
