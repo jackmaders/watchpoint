@@ -236,6 +236,18 @@ describe("playthrough attempt accessors", () => {
 		expect(result).toEqual(expected);
 	});
 
+	it("returns no attempts when another user requests the playthrough", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.attemptRecords.findMany).mockResolvedValueOnce([]);
+
+		// Act
+		const result = await getPlaythroughAttempts("owner_1", "other_user");
+
+		// Assert
+		expect(result).toEqual([]);
+	});
+
 	it("finds an owned attempt by idempotency key", async () => {
 		// Arrange
 		const db = await getDb();
@@ -252,5 +264,22 @@ describe("playthrough attempt accessors", () => {
 
 		// Assert
 		expect(result).toEqual(expected);
+	});
+
+	it("does not disclose an attempt idempotency key across users", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce(
+			undefined,
+		);
+
+		// Act
+		const result = await getAttemptByIdempotencyKey(
+			"attempt-key-1",
+			"other_user",
+		);
+
+		// Assert
+		expect(result).toBeUndefined();
 	});
 });
