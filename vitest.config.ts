@@ -11,6 +11,7 @@ export default defineConfig({
 				"**/__mocks__/**",
 				"**/__stories__/**",
 				"**/*.d.ts",
+				"src/**/*.stories.{ts,tsx}",
 				"src/**/*.{spec,test}.{ts,tsx}",
 				"src/**/index.ts",
 				"src/**/index.client.ts",
