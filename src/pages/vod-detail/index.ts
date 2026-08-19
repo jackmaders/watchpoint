@@ -1,4 +1,11 @@
 export { handleGetVodManifest } from "./api/manifest";
+export {
+	completeOwnedPlaythrough,
+	createOwnedPlaythrough,
+	getOwnedPlayerHistory,
+	getOwnedPlaythrough,
+	getOwnedPlaythroughAttempts,
+} from "./api/owned-playthroughs";
 export { recordAttemptAction } from "./api/record-attempt";
 export {
 	getProtectedSessionManifest,
