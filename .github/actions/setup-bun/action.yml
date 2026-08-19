@@ -4,6 +4,16 @@ description: "Sets up Bun environment, caches the Bun store, and installs depend
 runs:
   using: "composite"
   steps:
+    - name: 📦 Ensure Bun bootstrap dependency
+      shell: bash
+      run: |
+        if command -v unzip >/dev/null 2>&1; then
+          exit 0
+        fi
+
+        apt-get update
+        apt-get install -y --no-install-recommends unzip
+
     - name: ⚡ Setup Bun
       uses: oven-sh/setup-bun@v2
       with:
