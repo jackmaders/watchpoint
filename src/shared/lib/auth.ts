@@ -34,15 +34,28 @@ function createAuthInstance(
 			schema,
 		}),
 		hooks: {
-			before: createAuthMiddleware(async (ctx) => {
-				if (ctx.path === "/sign-up/email" && !config.registrationEnabled) {
-					throw new APIError("FORBIDDEN", {
-						message: "Registration is currently unavailable",
-					});
-				}
-			}),
+			before: createAuthMiddleware(
+				createRegistrationHook(config.registrationEnabled),
+			),
 		},
 	});
+}
+
+export function createRegistrationHook(registrationEnabled: boolean) {
+	return async (ctx: { path: string }) => {
+		enforceRegistrationGate(ctx.path, registrationEnabled);
+	};
+}
+
+export function enforceRegistrationGate(
+	path: string,
+	registrationEnabled: boolean,
+) {
+	if (path === "/sign-up/email" && !registrationEnabled) {
+		throw new APIError("FORBIDDEN", {
+			message: "Registration is currently unavailable",
+		});
+	}
 }
 
 type AuthInstance = ReturnType<typeof createAuthInstance>;

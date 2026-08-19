@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../db/client/client");
 vi.mock("@tanstack/react-start/server");
 
-import { getAuth, getAuthConfig, getCurrentUser } from "../auth";
+import {
+	createRegistrationHook,
+	enforceRegistrationGate,
+	getAuth,
+	getAuthConfig,
+	getCurrentUser,
+} from "../auth";
 
 describe("auth", () => {
 	beforeEach(() => {
@@ -67,6 +73,36 @@ describe("auth", () => {
 
 		// Assert
 		expect(config.registrationEnabled).toBe(false);
+	});
+
+	it("rejects only the disabled registration endpoint", () => {
+		// Arrange & Act
+		const disabledRegistration = () =>
+			enforceRegistrationGate("/sign-up/email", false);
+		const unrelatedRequest = () =>
+			enforceRegistrationGate("/sign-in/email", false);
+
+		// Assert
+		expect(disabledRegistration).toThrow(
+			"Registration is currently unavailable",
+		);
+		expect(unrelatedRequest()).toBeUndefined();
+	});
+
+	it("runs the registration hook for enabled and disabled requests", async () => {
+		// Arrange
+		const disabledHook = createRegistrationHook(false);
+		const enabledHook = createRegistrationHook(true);
+
+		// Act
+		const disabledRequest = disabledHook({ path: "/sign-up/email" });
+		const enabledRequest = enabledHook({ path: "/sign-up/email" });
+
+		// Assert
+		await expect(disabledRequest).rejects.toThrow(
+			"Registration is currently unavailable",
+		);
+		expect(await enabledRequest).toBeUndefined();
 	});
 
 	it("resolves authenticated user ID when session exists with passed Headers", async () => {

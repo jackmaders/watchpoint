@@ -62,13 +62,14 @@ export function AuthModal({
 							password: String(values.password),
 						});
 			setBusy(false);
-			if (result.error) {
-				setError(
-					"Invalid email or password. Please check your details and try again.",
-				);
-				return;
-			}
-			onOpenChange(false);
+			resolveAuthResult(
+				result.error,
+				() =>
+					setError(
+						"Invalid email or password. Please check your details and try again.",
+					),
+				() => onOpenChange(false),
+			);
 		},
 		[mode, onOpenChange],
 	);
@@ -130,6 +131,18 @@ export function AuthModal({
 			</DialogContent>
 		</Dialog>
 	);
+}
+
+export function resolveAuthResult(
+	error: unknown,
+	onError: () => void,
+	onSuccess: () => void,
+) {
+	if (error) {
+		onError();
+		return;
+	}
+	onSuccess();
 }
 
 export function AccountControls() {
