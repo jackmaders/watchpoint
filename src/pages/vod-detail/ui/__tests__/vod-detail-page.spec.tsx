@@ -1,4 +1,11 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionManifest } from "@/shared/db";
 import { authClient } from "@/shared/lib/auth-client";
@@ -8,8 +15,11 @@ vi.mock("@tanstack/react-router");
 vi.mock("@/shared/lib/auth-client");
 
 describe("VodDetailPage", () => {
+	const navigate = vi.fn();
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(useNavigate).mockReturnValue(navigate);
 	});
 
 	const mockVod: SessionManifest = {
@@ -138,6 +148,40 @@ describe("VodDetailPage", () => {
 		expect(
 			screen.getByRole("heading", { name: "Welcome back, player" }),
 		).toBeDefined();
+	});
+
+	it("returns an authenticated player to the requested training destination", async () => {
+		// Arrange
+		const ui = await VodDetailPage({
+			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
+		});
+		render(ui);
+		fireEvent.click(
+			screen.getByRole("link", { name: "Start Training Session" }),
+		);
+
+		// Act
+		fireEvent.change(screen.getByLabelText("Email"), {
+			target: { value: "player@example.com" },
+		});
+		fireEvent.change(screen.getByLabelText("Password"), {
+			target: { value: "correct-password" },
+		});
+		fireEvent.submit(
+			screen
+				.getByRole("button", { name: "Sign in" })
+				.closest("form") as HTMLFormElement,
+		);
+
+		// Assert
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith({
+				params: { id: "vod_1" },
+				search: { modules: "STRATEGY,TACTICS,ULTIMATE,COOLDOWN,SPATIAL" },
+				to: "/vods/$id/session",
+			}),
+		);
 	});
 
 	it("allows an authenticated player to start training", async () => {
