@@ -9,7 +9,11 @@ import {
 	YouTubePlayerState,
 } from "@/shared/lib/testing";
 import * as serverFns from "../../api/server-fns";
-import { type ManifestVod, useSessionPlayer } from "../use-session-player";
+import {
+	type ManifestVod,
+	toSessionPlaythroughMediaAction,
+	useSessionPlayer,
+} from "../use-session-player";
 
 describe("useSessionPlayer", () => {
 	const mockManifest = {
@@ -107,6 +111,57 @@ describe("useSessionPlayer", () => {
 		);
 	};
 
+	it("maps every semantic media event to a generation-aware playthrough action", () => {
+		// Arrange
+		const failure = {
+			category: "provider" as const,
+			message: "provider failed",
+		};
+
+		// Act
+		const actions = [
+			toSessionPlaythroughMediaAction(
+				{ duration: 10, generation: 2, type: "READY" },
+				true,
+				100,
+			),
+			toSessionPlaythroughMediaAction(
+				{
+					generation: 2,
+					status: "buffering" as const,
+					type: "PLAYBACK_STATUS_CHANGED",
+				},
+				true,
+				100,
+			),
+			toSessionPlaythroughMediaAction(
+				{ failure, generation: 2, retryCount: 0, type: "MEDIA_FAILURE" },
+				true,
+				100,
+			),
+			toSessionPlaythroughMediaAction(
+				{ generation: 2, retryCount: 1, type: "RECOVERY_SUCCEEDED" },
+				true,
+				100,
+			),
+			toSessionPlaythroughMediaAction(
+				{ generation: 2, time: 4, type: "TIME_UPDATED" },
+				true,
+				100,
+			),
+		];
+
+		// Assert
+		expect(actions.map((action) => action?.type)).toEqual([
+			"PLAYER_READY",
+			"PLAYBACK_STATUS_CHANGED",
+			"MEDIA_FAILURE",
+			"RECOVERY_SUCCEEDED",
+			"TIME_UPDATED",
+		]);
+		expect(actions[2]).toMatchObject({ generation: 2, nowMs: 100 });
+	});
+
 	it("initializes in LOADING state and transitions to PLAYING when player fires ready with autoplay", async () => {
 		// Arrange
 		const youtube = createYouTubeMock(600);
@@ -137,6 +192,7 @@ describe("useSessionPlayer", () => {
 		act(() => {
 			player.triggerReady();
 			player.triggerStateChange(YouTubePlayerState.PLAYING);
+			result.current.retryMedia();
 		});
 
 		// Assert
@@ -144,6 +200,48 @@ describe("useSessionPlayer", () => {
 		expect(result.current.state).toBe("PLAYING");
 		expect(result.current.isReady).toBe(true);
 		expect(result.current.activeScenarios).toHaveLength(3);
+	});
+
+	it("recreates the player after a media failure without resetting the playthrough", async () => {
+		// Arrange
+		const youtube = createYouTubeMock(600);
+		setYouTubeNamespace(youtube.namespace);
+		const container = document.createElement("div");
+		const { result } = renderHook(
+			() =>
+				useSessionPlayer({
+					autoplay: true,
+					initialManifest: mockManifest,
+					vodId: "vod_gm_ana",
+				}),
+			{ wrapper: createWrapper() },
+		);
+		act(() => result.current.containerRef(container));
+		await act(async () => {
+			await Promise.resolve();
+		});
+		const firstPlayer = youtube.players[0];
+		act(() => {
+			firstPlayer.triggerReady();
+			firstPlayer.triggerStateChange(YouTubePlayerState.PLAYING);
+		});
+
+		// Act
+		act(() =>
+			firstPlayer.options.events?.onError?.({ data: 150, target: firstPlayer }),
+		);
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const recoveredPlayer = youtube.players[1];
+		act(() => recoveredPlayer.triggerReady());
+
+		// Assert
+		expect(result.current.mediaHealth).toBe("ready");
+		expect(result.current.activeScenarioIndex).toBe(0);
+		expect(result.current.attempts).toHaveLength(0);
+		expect(firstPlayer.destroy).toHaveBeenCalledTimes(1);
 	});
 
 	it("uses the manifest scenario set and sorts scenarios by timestampSeconds", () => {
