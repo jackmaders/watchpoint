@@ -10,8 +10,18 @@ This repository enforces strict technical, architectural, and quality standards 
 - **Package Manager**: Use `bun` exclusively for package management and task execution (`bun run <script>`, `bun add <pkg>`). Do not use `npm`, `pnpm`, or `yarn`.
 - **Scripts First**: Prefer defined `package.json` scripts (`bun run test:unit`, `bun run check:all`, `bun run validate`) over raw tool invocations.
 
-### 2. Conventional Commits & Branches
-- **Branch from Latest Main**: Always sync `main` (`git checkout main && git pull origin main`) and branch from latest `main` before starting new work. Never branch off unmerged feature branches unless managing a stacked PR.
+### 2. Worktrees, Branches & Commits
+- **Dedicated Worktree**: Every new piece of work MUST start in a dedicated git worktree. Fetch the latest `main`, then create the worktree from `origin/main`:
+
+  ```sh
+  git fetch origin main
+  git worktree add ../watchpoint-<branch-slug> \
+    -b <type>/<kebab-case-description> origin/main
+  cd ../watchpoint-<branch-slug>
+  ```
+
+  Continue work in the new worktree. If already inside an isolated task worktree, keep using it instead of creating a nested worktree.
+
 - **Branch Names**: Format branch names strictly as `<type>/<kebab-case-description>` (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`).
 - **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
 
