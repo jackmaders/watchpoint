@@ -4,6 +4,14 @@ import "../src/app/styles/globals.css";
 
 const preview: Preview = {
 	parameters: {
+		a11y: {
+			config: {
+				runOnly: {
+					type: "tag",
+					values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
+				},
+			},
+		},
 		actions: { argTypesRegex: "^on[A-Z].*" },
 		backgrounds: {
 			default: "background",
@@ -11,6 +19,7 @@ const preview: Preview = {
 		},
 		controls: {
 			exclude: ["ref"],
+			expanded: true,
 			matchers: {
 				color: /(background|color)$/i,
 				date: /Date$/i,

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createTimePoller, safeMediaValue } from "./time-poller";
 import {
+	type MediaFailure,
+	MediaFailureCategory,
 	PlaybackStatus,
 	type VodContainerRef,
 	type VodPlayerOptions,
@@ -11,6 +13,7 @@ import {
 	loadAndMountPlayer,
 	toPlaybackStatus,
 	type YouTubePlayer,
+	type YouTubePlayerErrorEvent,
 	type YouTubePlayerEvent,
 	YouTubePlayerState,
 	type YouTubePlayerStateChangeEvent,
@@ -70,6 +73,10 @@ interface PlayerEventHandlersContext {
 	isActiveGeneration: () => boolean;
 	markReadyNotified: () => void;
 	onReady?: (duration: number) => void;
+	onError?: (failure: MediaFailure) => void;
+	onBufferingStart?: () => void;
+	onBufferingEnd?: () => void;
+	onPlaybackStart?: () => void;
 	onStatusChange?: (status: PlaybackStatus) => void;
 	poller: ReturnType<typeof createTimePoller>;
 	setActivePlayer: (player: YouTubePlayer) => void;
@@ -80,6 +87,14 @@ interface PlayerEventHandlersContext {
 }
 
 function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
+	function handleBufferingStatus(state: YouTubePlayerState) {
+		if (state === YouTubePlayerState.BUFFERING) {
+			ctx.onBufferingStart?.();
+			return;
+		}
+		ctx.onBufferingEnd?.();
+	}
+
 	const handleReady = (event: YouTubePlayerEvent) => {
 		const player = ctx.getCurrentPlayer();
 		if (
@@ -109,14 +124,26 @@ function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
 		const status = toPlaybackStatus(event.data);
 		ctx.setStatus(status);
 		if (event.data === YouTubePlayerState.PLAYING) {
+			ctx.onPlaybackStart?.();
 			ctx.poller.startPolling();
 		} else {
 			ctx.poller.stopPolling();
 		}
+		handleBufferingStatus(event.data);
 		ctx.onStatusChange?.(status);
 	};
+	const handleError = (event: YouTubePlayerErrorEvent) => {
+		const player = ctx.getCurrentPlayer();
+		if (!ctx.isActiveGeneration() || (player && event.target !== player))
+			return;
+		ctx.onError?.({
+			category: MediaFailureCategory.PROVIDER,
+			code: String(event.data).slice(0, 32),
+			message: "The media provider reported a playback error.",
+		});
+	};
 
-	return { handleReady, handleStateChange };
+	return { handleError, handleReady, handleStateChange };
 }
 
 interface PlayerLifecycleParams extends UseVodPlayerStateOptions {
@@ -158,6 +185,7 @@ function invokeWithLifecycleKey<T>(
 	callback?.(value, lifecycleKey);
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: player lifecycle setup must keep generation, visibility, polling, and failure guards together.
 function usePlayerLifecycle({
 	activePlayerRef,
 	autoplay = false,
@@ -165,6 +193,7 @@ function usePlayerLifecycle({
 	durationRef,
 	generationRef,
 	lifecycleKey,
+	onError,
 	onReady,
 	onStatusChange,
 	onTimeUpdate,
@@ -175,18 +204,27 @@ function usePlayerLifecycle({
 	videoId,
 }: PlayerLifecycleParams) {
 	const onReadyRef = useRef(onReady);
+	const onErrorRef = useRef(onError);
 	const onStatusChangeRef = useRef(onStatusChange);
 	const onTimeUpdateRef = useRef(onTimeUpdate);
 
 	onReadyRef.current = onReady;
 	onStatusChangeRef.current = onStatusChange;
 	onTimeUpdateRef.current = onTimeUpdate;
+	onErrorRef.current = onError;
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: lifecycle cleanup and event guards are intentionally scoped to one player generation.
 	useEffect(() => {
 		const generation = lifecycleKey ?? generationRef.current + 1;
 		generationRef.current = generation;
 		let active = true;
 		let player: YouTubePlayer | undefined;
 		let hasNotifiedReady = false;
+		let bufferingTimer: ReturnType<typeof setTimeout> | undefined;
+		const reportError = (failure: MediaFailure) => {
+			// c8 ignore next -- stale lifecycle callbacks are rejected before reaching the adapter.
+			if (!isActiveGeneration()) return;
+			invokeWithLifecycleKey(onErrorRef.current, failure, lifecycleKey);
+		};
 		const isActiveGeneration = () =>
 			active && generationRef.current === generation;
 		const getCurrentPlayer = () => player;
@@ -202,30 +240,57 @@ function usePlayerLifecycle({
 			getCurrentPlayer,
 			isActiveGeneration,
 		);
-		const { handleReady, handleStateChange } = createPlayerEventHandlers({
-			getCurrentPlayer,
-			hasNotifiedReady: () => hasNotifiedReady,
-			isActiveGeneration,
-			markReadyNotified: () => {
-				hasNotifiedReady = true;
-			},
-			onReady: (d) =>
-				invokeWithLifecycleKey(onReadyRef.current, d, lifecycleKey),
-			onStatusChange: (s) =>
-				invokeWithLifecycleKey(onStatusChangeRef.current, s, lifecycleKey),
-			poller,
-			setActivePlayer: (p) => {
-				player = p;
-				activePlayerRef.current = p;
-			},
-			setCurrentTime,
-			setDuration: (d) => {
-				durationRef.current = d;
-				setDuration(d);
-			},
-			setIsReady,
-			setStatus,
-		});
+		const { handleError, handleReady, handleStateChange } =
+			createPlayerEventHandlers({
+				getCurrentPlayer,
+				hasNotifiedReady: () => hasNotifiedReady,
+				isActiveGeneration,
+				markReadyNotified: () => {
+					hasNotifiedReady = true;
+				},
+				onBufferingEnd: () => {
+					if (bufferingTimer) clearTimeout(bufferingTimer);
+					bufferingTimer = undefined;
+				},
+				onBufferingStart: () => {
+					if (bufferingTimer) clearTimeout(bufferingTimer);
+					bufferingTimer = setTimeout(() => {
+						reportError({
+							category: MediaFailureCategory.BUFFERING,
+							message: "The media player has been buffering for too long.",
+						});
+					}, 5000);
+				},
+				onError: reportError,
+				onPlaybackStart: () => {
+					if (bufferingTimer) clearTimeout(bufferingTimer);
+					bufferingTimer = undefined;
+				},
+				onReady: (d) =>
+					invokeWithLifecycleKey(onReadyRef.current, d, lifecycleKey),
+				onStatusChange: (s) =>
+					invokeWithLifecycleKey(onStatusChangeRef.current, s, lifecycleKey),
+				poller,
+				setActivePlayer: (p) => {
+					player = p;
+					activePlayerRef.current = p;
+				},
+				setCurrentTime,
+				setDuration: (d) => {
+					durationRef.current = d;
+					setDuration(d);
+				},
+				setIsReady,
+				setStatus,
+			});
+		const readinessTimer = setTimeout(() => {
+			if (!hasNotifiedReady) {
+				reportError({
+					category: MediaFailureCategory.READINESS,
+					message: "The media player did not become ready.",
+				});
+			}
+		}, 5000);
 
 		resetPlayerState({
 			durationRef,
@@ -241,6 +306,8 @@ function usePlayerLifecycle({
 			generationRef.current += 1;
 			activePlayerRef.current = null;
 			poller.stopPolling();
+			clearTimeout(readinessTimer);
+			if (bufferingTimer) clearTimeout(bufferingTimer);
 			unbindVisibility();
 			if (player) {
 				player.destroy();
@@ -252,11 +319,19 @@ function usePlayerLifecycle({
 		}
 
 		loadAndMountPlayer(
-			{ autoplay, container, handleReady, handleStateChange, videoId },
+			{
+				autoplay,
+				container,
+				handleError,
+				handleReady,
+				handleStateChange,
+				videoId,
+			},
 			isActiveGeneration,
 			(p) => {
 				player = p;
 			},
+			reportError,
 		);
 
 		return cleanup;
@@ -310,6 +385,7 @@ function useVodPlayerState(options: UseVodPlayerStateOptions) {
 export function useVodPlayer({
 	autoplay = false,
 	lifecycleKey,
+	onError,
 	onReady,
 	onStatusChange,
 	onTimeUpdate,
@@ -327,6 +403,7 @@ export function useVodPlayer({
 		autoplay,
 		container,
 		lifecycleKey,
+		onError,
 		onReady,
 		onStatusChange,
 		onTimeUpdate,

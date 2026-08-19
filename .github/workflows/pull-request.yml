@@ -10,6 +10,39 @@ concurrency:
 
 jobs:
 
+  storybook-a11y:
+    name: ♿ Storybook Accessibility Harness
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: 🎭 Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: 🧭 Check shared UI story completeness
+        run: bun run storybook:check:completeness
+
+      - name: 🏗️ Build Storybook
+        run: bun run storybook:build
+
+      - name: ♿ Run browser accessibility checks
+        run: bun run storybook:check:browser
+
+      - name: 📩 Upload Storybook accessibility artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: storybook-a11y-artifacts
+          path: |
+            storybook-static/
+            test-results/
+            playwright-report/
+          retention-days: 14
+
   e2e-tests:
     name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
