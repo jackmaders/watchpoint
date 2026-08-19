@@ -183,7 +183,6 @@ describe("useVodPlayer loader failure boundary", () => {
 		// Assert
 		expect(onError).not.toHaveBeenCalled();
 	});
-
 	it("reports player construction failures", async () => {
 		// Arrange
 		const { useVodPlayer } = await import("../use-vod-player");

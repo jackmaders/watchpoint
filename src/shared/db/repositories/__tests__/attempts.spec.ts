@@ -65,6 +65,162 @@ describe("playthrough attempt accessors", () => {
 		expect(result).toBeNull();
 	});
 
+	it("returns the existing Attempt Record for an identical idempotent retry", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockReturnValueOnce({
+			values: vi.fn(() => ({
+				returning: vi
+					.fn()
+					.mockRejectedValueOnce(
+						new Error(
+							"UNIQUE constraint failed: attempt_record.idempotency_key",
+						),
+					),
+			})),
+		} as never);
+		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
+			createdAt: new Date("2026-08-18T12:00:00Z"),
+			id: "attempt_1",
+			idempotencyKey: "attempt-key-3",
+			inputValue: { answer: ["correct", { confidence: 1 }] },
+			isCorrect: true,
+			isTimedOut: false,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 850,
+			scenarioId: "scenario_1",
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "correct",
+			userId: "player_1",
+		} as never);
+
+		// Act
+		const result = await recordPlaythroughAttempt({
+			idempotencyKey: "attempt-key-3",
+			inputValue: { answer: ["correct", { confidence: 1 }] },
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 850,
+			scenarioId: "scenario_1",
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "correct",
+			userId: "player_1",
+		});
+
+		// Assert
+		expect(result).toMatchObject({ id: "attempt_1" });
+	});
+
+	it("rejects an idempotency key reused for a different Attempt Record", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockReturnValueOnce({
+			values: vi.fn(() => ({
+				returning: vi
+					.fn()
+					.mockRejectedValueOnce(
+						new Error(
+							"UNIQUE constraint failed: attempt_record.idempotency_key",
+						),
+					),
+			})),
+		} as never);
+		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
+			id: "attempt_1",
+			idempotencyKey: "attempt-key-4",
+			inputValue: { answer: ["correct"] },
+			isCorrect: true,
+			isTimedOut: false,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 850,
+			scenarioId: "scenario_1",
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "correct",
+			userId: "player_1",
+		} as never);
+
+		// Act & Assert
+		await expect(
+			recordPlaythroughAttempt({
+				idempotencyKey: "attempt-key-4",
+				inputValue: { answer: "different" },
+				isCorrect: true,
+				playthroughId: "playthrough_1",
+				responseTimeMs: 850,
+				scenarioId: "scenario_1",
+				scenarioSnapshotId: "snapshot_1",
+				selectedOptionId: "correct",
+				userId: "player_1",
+			}),
+		).rejects.toThrow("Attempt idempotency conflict");
+	});
+
+	it("rejects a database error that is not an idempotency conflict", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockReturnValueOnce({
+			values: vi.fn(() => ({
+				returning: vi.fn().mockRejectedValueOnce(new Error("database offline")),
+			})),
+		} as never);
+
+		// Act & Assert
+		await expect(
+			recordPlaythroughAttempt({
+				idempotencyKey: "attempt-key-5",
+				isCorrect: true,
+				playthroughId: "playthrough_1",
+				responseTimeMs: 850,
+				scenarioId: "scenario_1",
+				scenarioSnapshotId: "snapshot_1",
+				userId: "player_1",
+			}),
+		).rejects.toThrow("database offline");
+	});
+
+	it("rejects a retry when the original payload had input data", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockReturnValueOnce({
+			values: vi.fn(() => ({
+				returning: vi
+					.fn()
+					.mockRejectedValueOnce(
+						new Error(
+							"UNIQUE constraint failed: attempt_record.idempotency_key",
+						),
+					),
+			})),
+		} as never);
+		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
+			id: "attempt_1",
+			idempotencyKey: "attempt-key-6",
+			inputValue: { answer: "correct" },
+			isCorrect: true,
+			isTimedOut: false,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 850,
+			scenarioId: "scenario_1",
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "correct",
+			userId: "player_1",
+		} as never);
+
+		// Act & Assert
+		await expect(
+			recordPlaythroughAttempt({
+				idempotencyKey: "attempt-key-6",
+				isCorrect: true,
+				playthroughId: "playthrough_1",
+				responseTimeMs: 850,
+				scenarioId: "scenario_1",
+				scenarioSnapshotId: "snapshot_1",
+				selectedOptionId: "correct",
+				userId: "player_1",
+			}),
+		).rejects.toThrow("Attempt idempotency conflict");
+	});
+
 	it("loads attempts only for the requested owned playthrough", async () => {
 		// Arrange
 		const db = await getDb();

@@ -63,6 +63,10 @@ export {
 	SessionPlayerClient,
 	type SessionPlayerClientProps,
 } from "./ui/session-player-client";
+export {
+	type MediaRecoveryPrototypeVariant,
+	SessionPlayerMediaRecoveryPrototype,
+} from "./ui/session-player-media-recovery-prototype";
 export { SessionPlayerPage } from "./ui/session-player-page";
 export {
 	SessionSummaryPanel,
