@@ -1,11 +1,11 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { HomePage } from "./home-page";
 
 vi.mock("@tanstack/react-router");
 
 describe("HomePage component", () => {
-	it("renders heading, description, and user form", () => {
+	it("renders heading, description, and account control", () => {
 		// Arrange & Act
 		render(<HomePage />);
 
@@ -16,9 +16,7 @@ describe("HomePage component", () => {
 		expect(
 			screen.getByText(/overwatch 2 interactive vod decision training/i),
 		).toBeDefined();
-		expect(screen.getByPlaceholderText("Name")).toBeDefined();
-		expect(screen.getByPlaceholderText("Email")).toBeDefined();
-		expect(screen.getByRole("button", { name: "Submit" })).toBeDefined();
+		expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
 	});
 
 	it("renders empty database state when no VODs are passed", () => {
@@ -63,21 +61,17 @@ describe("HomePage component", () => {
 		expect(screen.getByText(/5 scenarios/i)).toBeDefined();
 	});
 
-	it("handles form submission cleanly", async () => {
+	it("opens the modal auth flow from the account control", () => {
 		// Arrange
 		render(<HomePage />);
-		const nameInput = screen.getByPlaceholderText("Name");
-		const emailInput = screen.getByPlaceholderText("Email");
-		const submitButton = screen.getByRole("button", { name: "Submit" });
 
 		// Act
-		await act(async () => {
-			fireEvent.change(nameInput, { target: { value: "Alice" } });
-			fireEvent.change(emailInput, { target: { value: "alice@example.com" } });
-			fireEvent.click(submitButton);
-		});
+		fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
 		// Assert
-		expect(nameInput).toBeDefined();
+		expect(screen.getByRole("dialog")).toBeDefined();
+		expect(
+			screen.getByRole("heading", { name: "Welcome back, player" }),
+		).toBeDefined();
 	});
 });

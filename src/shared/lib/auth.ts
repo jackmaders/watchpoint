@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { type DbContext, getDb } from "../db/client/client";
 import * as schema from "../db/schema";
 
@@ -9,12 +10,14 @@ export function getAuthConfig(
 	const baseURL = env.BETTER_AUTH_URL || "http://localhost:3000";
 	const secret =
 		env.BETTER_AUTH_SECRET || "development-secret-key-at-least-32-chars-long";
+	const registrationEnabled = env.WATCHPOINT_REGISTRATION_ENABLED !== "false";
 
 	return {
 		baseURL,
 		emailAndPassword: {
 			enabled: true,
 		},
+		registrationEnabled,
 		secret,
 	};
 }
@@ -23,12 +26,22 @@ function createAuthInstance(
 	db: Parameters<typeof drizzleAdapter>[0],
 	config: ReturnType<typeof getAuthConfig>,
 ) {
+	const { registrationEnabled: _registrationEnabled, ...authConfig } = config;
 	return betterAuth({
-		...config,
+		...authConfig,
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
 			schema,
 		}),
+		hooks: {
+			before: createAuthMiddleware(async (ctx) => {
+				if (ctx.path === "/sign-up/email" && !config.registrationEnabled) {
+					throw new APIError("FORBIDDEN", {
+						message: "Registration is currently unavailable",
+					});
+				}
+			}),
+		},
 	});
 }
 

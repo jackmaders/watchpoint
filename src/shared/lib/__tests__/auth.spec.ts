@@ -55,6 +55,18 @@ describe("auth", () => {
 		// Assert
 		expect(config.baseURL).toBe("https://watchpoint.example.com");
 		expect(config.secret).toBe("custom-secret-key-12345678901234567890");
+		expect(config.registrationEnabled).toBe(true);
+	});
+
+	it("disables registration from the server-side gate", () => {
+		// Arrange
+		const env = { WATCHPOINT_REGISTRATION_ENABLED: "false" };
+
+		// Act
+		const config = getAuthConfig(env);
+
+		// Assert
+		expect(config.registrationEnabled).toBe(false);
 	});
 
 	it("resolves authenticated user ID when session exists with passed Headers", async () => {
