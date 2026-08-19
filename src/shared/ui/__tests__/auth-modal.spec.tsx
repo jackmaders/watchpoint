@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/shared/lib/auth-client");
@@ -79,10 +85,6 @@ describe("AuthModal", () => {
 			data: null,
 			error: { message: "bad credentials" },
 		});
-		vi.mocked(authClient.signIn.email).mockResolvedValueOnce({
-			data: null,
-			error: { message: "bad credentials" },
-		});
 		render(<AuthModal onOpenChange={onOpenChange} open />);
 
 		// Act
@@ -92,11 +94,13 @@ describe("AuthModal", () => {
 		fireEvent.change(screen.getByLabelText("Password"), {
 			target: { value: "wrong-password" },
 		});
-		fireEvent.submit(
-			screen
-				.getByRole("button", { name: "Sign in" })
-				.closest("form") as HTMLFormElement,
-		);
+		await act(async () => {
+			fireEvent.submit(
+				screen
+					.getByRole("button", { name: "Sign in" })
+					.closest("form") as HTMLFormElement,
+			);
+		});
 
 		// Assert
 		await waitFor(() => expect(signInEmail).toHaveBeenCalledTimes(1));
@@ -107,7 +111,10 @@ describe("AuthModal", () => {
 
 	it("submits registration and closes after success", async () => {
 		// Arrange
-		render(<AuthModal onOpenChange={onOpenChange} open />);
+		const onSuccess = vi.fn();
+		render(
+			<AuthModal onOpenChange={onOpenChange} onSuccess={onSuccess} open />,
+		);
 		fireEvent.mouseDown(screen.getByRole("tab", { name: "Register" }));
 
 		// Act
@@ -135,6 +142,37 @@ describe("AuthModal", () => {
 			}),
 		);
 		expect(onOpenChange).toHaveBeenCalledWith(false);
+		expect(onSuccess).toHaveBeenCalledTimes(1);
+	});
+
+	it("recovers from an authentication exception", async () => {
+		// Arrange
+		vi.mocked(signInEmail).mockImplementationOnce(async () => {
+			throw new Error("network down");
+		});
+		render(<AuthModal onOpenChange={onOpenChange} open />);
+
+		// Act
+		fireEvent.change(screen.getByLabelText("Email"), {
+			target: { value: "player@example.com" },
+		});
+		fireEvent.change(screen.getByLabelText("Password"), {
+			target: { value: "correct-password" },
+		});
+		await act(async () => {
+			fireEvent.submit(
+				screen
+					.getByRole("button", { name: "Sign in" })
+					.closest("form") as HTMLFormElement,
+			);
+			await Promise.resolve();
+		});
+
+		// Assert
+		expect(screen.getByRole("alert").textContent).toContain(
+			"Unable to complete authentication",
+		);
+		expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
 	});
 
 	it("shows a busy state while authentication is pending", async () => {

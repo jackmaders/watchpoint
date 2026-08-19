@@ -26,11 +26,13 @@ type AuthMode = "sign-in" | "register";
 export function AuthModal({
 	expired = false,
 	onOpenChange,
+	onSuccess,
 	open,
 	registrationEnabled = true,
 }: {
 	expired?: boolean;
 	onOpenChange: (open: boolean) => void;
+	onSuccess?: () => void;
 	open: boolean;
 	registrationEnabled?: boolean;
 }) {
@@ -50,28 +52,36 @@ export function AuthModal({
 			const values = Object.fromEntries(
 				new FormData(event.currentTarget).entries(),
 			);
-			const result =
-				mode === "register"
-					? await authClient.signUp.email({
-							email: String(values.email),
-							name: String(values.name),
-							password: String(values.password),
-						})
-					: await authClient.signIn.email({
-							email: String(values.email),
-							password: String(values.password),
-						});
-			setBusy(false);
-			resolveAuthResult(
-				result.error,
-				() =>
-					setError(
-						"Invalid email or password. Please check your details and try again.",
-					),
-				() => onOpenChange(false),
-			);
+			try {
+				const result =
+					mode === "register"
+						? await authClient.signUp.email({
+								email: String(values.email),
+								name: String(values.name),
+								password: String(values.password),
+							})
+						: await authClient.signIn.email({
+								email: String(values.email),
+								password: String(values.password),
+							});
+				resolveAuthResult(
+					result.error,
+					() =>
+						setError(
+							"Invalid email or password. Please check your details and try again.",
+						),
+					() => {
+						onSuccess?.();
+						onOpenChange(false);
+					},
+				);
+			} catch {
+				setError("Unable to complete authentication. Please try again.");
+			} finally {
+				setBusy(false);
+			}
 		},
-		[mode, onOpenChange],
+		[mode, onOpenChange, onSuccess],
 	);
 
 	return (
