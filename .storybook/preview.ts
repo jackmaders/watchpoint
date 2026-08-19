@@ -1,4 +1,5 @@
 import type { Preview } from "@storybook/react-vite";
+
 import "../src/app/styles/globals.css";
 
 const preview: Preview = {
@@ -11,7 +12,19 @@ const preview: Preview = {
 				},
 			},
 		},
-		controls: { expanded: true },
+		actions: { argTypesRegex: "^on[A-Z].*" },
+		backgrounds: {
+			default: "background",
+			values: [{ name: "background", value: "var(--background)" }],
+		},
+		controls: {
+			exclude: ["ref"],
+			expanded: true,
+			matchers: {
+				color: /(background|color)$/i,
+				date: /Date$/i,
+			},
+		},
 	},
 };
 

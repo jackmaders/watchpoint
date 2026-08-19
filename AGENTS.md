@@ -13,7 +13,8 @@ This repository enforces strict technical, architectural, and quality standards 
 ### 2. Conventional Commits & Branches
 - **Branch from Latest Main**: Always sync `main` (`git checkout main && git pull origin main`) and branch from latest `main` before starting new work. Never branch off unmerged feature branches unless managing a stacked PR.
 - **Branch Names**: Format branch names strictly as `<type>/<kebab-case-description>` (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`).
-- **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
+- **Commit Messages**: Format commit messages as `<type>(#<issue-number>): <emoji> <description>` when an issue number is provided, using the issue number as the only scope (e.g. `feat(#123): ✨ add amazing features`). When no issue number is provided, omit the scope entirely (e.g. `chore: 🧹 update documentation`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
+- **Pull Request Titles**: Use the same format as commit messages: `<type>(#<issue-number>): <emoji> <description>` when an issue number is provided, or `<type>: <emoji> <description>` when no issue number is provided. Do not use any scope other than the issue number (e.g. `feat(#123): ✨ add amazing features`).
 
 ### 3. Dedicated Tooling, Not Ad-Hoc Scripts
 - For services with dedicated tooling, use that CLI/MCP server (e.g. `gh` for GitHub, `sentry-cli` for error tracking) — never raw HTTP scripts or ad-hoc curls.

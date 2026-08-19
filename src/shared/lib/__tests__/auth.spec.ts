@@ -3,16 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../db/client/client");
 vi.mock("@tanstack/react-start/server");
 
-import {
-	createRegistrationHook,
-	enforceRegistrationGate,
-	getAuth,
-	getAuthConfig,
-	getCurrentUser,
-} from "../auth";
+import { getAuth, getAuthConfig, getCurrentUser } from "../auth";
 
 describe("auth", () => {
 	beforeEach(() => {
+		vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
+		vi.stubEnv(
+			"BETTER_AUTH_SECRET",
+			"test-secret-key-123456789012345678901234",
+		);
 		vi.clearAllMocks();
 	});
 
@@ -33,18 +32,12 @@ describe("auth", () => {
 			BETTER_AUTH_URL: "",
 		};
 
-		// Act
-		const configUndefined = getAuthConfig(emptyEnv);
-		const configEmpty = getAuthConfig(blankEnv);
-
 		// Assert
-		expect(configUndefined.baseURL).toBe("http://localhost:3000");
-		expect(configUndefined.secret).toBe(
-			"development-secret-key-at-least-32-chars-long",
+		expect(() => getAuthConfig(emptyEnv)).toThrow(
+			"BETTER_AUTH_URL must be configured",
 		);
-		expect(configEmpty.baseURL).toBe("http://localhost:3000");
-		expect(configEmpty.secret).toBe(
-			"development-secret-key-at-least-32-chars-long",
+		expect(() => getAuthConfig(blankEnv)).toThrow(
+			"BETTER_AUTH_URL must be configured",
 		);
 	});
 
@@ -61,48 +54,32 @@ describe("auth", () => {
 		// Assert
 		expect(config.baseURL).toBe("https://watchpoint.example.com");
 		expect(config.secret).toBe("custom-secret-key-12345678901234567890");
-		expect(config.registrationEnabled).toBe(true);
+		expect(config.emailAndPassword.disableSignUp).toBe(true);
 	});
 
-	it("disables registration from the server-side gate", () => {
+	it("requires the auth secret even when the base URL is configured", () => {
 		// Arrange
-		const env = { WATCHPOINT_REGISTRATION_ENABLED: "false" };
+		const env = { BETTER_AUTH_URL: "https://watchpoint.example.com" };
+
+		// Act & Assert
+		expect(() => getAuthConfig(env)).toThrow(
+			"BETTER_AUTH_SECRET must be configured",
+		);
+	});
+
+	it("enables registration only from the server environment", () => {
+		// Arrange
+		const env = {
+			BETTER_AUTH_ALLOW_REGISTRATION: "true",
+			BETTER_AUTH_SECRET: "custom-secret-key-12345678901234567890",
+			BETTER_AUTH_URL: "https://watchpoint.example.com",
+		};
 
 		// Act
 		const config = getAuthConfig(env);
 
 		// Assert
-		expect(config.registrationEnabled).toBe(false);
-	});
-
-	it("rejects only the disabled registration endpoint", () => {
-		// Arrange & Act
-		const disabledRegistration = () =>
-			enforceRegistrationGate("/sign-up/email", false);
-		const unrelatedRequest = () =>
-			enforceRegistrationGate("/sign-in/email", false);
-
-		// Assert
-		expect(disabledRegistration).toThrow(
-			"Registration is currently unavailable",
-		);
-		expect(unrelatedRequest()).toBeUndefined();
-	});
-
-	it("runs the registration hook for enabled and disabled requests", async () => {
-		// Arrange
-		const disabledHook = createRegistrationHook(false);
-		const enabledHook = createRegistrationHook(true);
-
-		// Act
-		const disabledRequest = disabledHook({ path: "/sign-up/email" });
-		const enabledRequest = enabledHook({ path: "/sign-up/email" });
-
-		// Assert
-		await expect(disabledRequest).rejects.toThrow(
-			"Registration is currently unavailable",
-		);
-		expect(await enabledRequest).toBeUndefined();
+		expect(config.emailAndPassword.disableSignUp).toBe(false);
 	});
 
 	it("resolves authenticated user ID when session exists with passed Headers", async () => {

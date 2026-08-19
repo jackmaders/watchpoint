@@ -1,24 +1,33 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError, createAuthMiddleware } from "better-auth/api";
 import { type DbContext, getDb } from "../db/client/client";
 import * as schema from "../db/schema";
 
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
 ) {
-	const baseURL = env.BETTER_AUTH_URL || "http://localhost:3000";
-	const secret =
-		env.BETTER_AUTH_SECRET || "development-secret-key-at-least-32-chars-long";
-	const registrationEnabled = env.WATCHPOINT_REGISTRATION_ENABLED !== "false";
+	const baseURL = env.BETTER_AUTH_URL;
+	const secret = env.BETTER_AUTH_SECRET;
+	const allowRegistration = env.BETTER_AUTH_ALLOW_REGISTRATION === "true";
+
+	if (!baseURL) {
+		throw new Error("BETTER_AUTH_URL must be configured");
+	}
+	if (!secret) {
+		throw new Error("BETTER_AUTH_SECRET must be configured");
+	}
 
 	return {
 		baseURL,
 		emailAndPassword: {
+			disableSignUp: !allowRegistration,
 			enabled: true,
 		},
-		registrationEnabled,
 		secret,
+		session: {
+			expiresIn: 60 * 60 * 24 * 7,
+			updateAge: 60 * 60 * 24,
+		},
 	};
 }
 
@@ -26,36 +35,13 @@ function createAuthInstance(
 	db: Parameters<typeof drizzleAdapter>[0],
 	config: ReturnType<typeof getAuthConfig>,
 ) {
-	const { registrationEnabled: _registrationEnabled, ...authConfig } = config;
 	return betterAuth({
-		...authConfig,
+		...config,
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
 			schema,
 		}),
-		hooks: {
-			before: createAuthMiddleware(
-				createRegistrationHook(config.registrationEnabled),
-			),
-		},
 	});
-}
-
-export function createRegistrationHook(registrationEnabled: boolean) {
-	return async (ctx: { path: string }) => {
-		enforceRegistrationGate(ctx.path, registrationEnabled);
-	};
-}
-
-export function enforceRegistrationGate(
-	path: string,
-	registrationEnabled: boolean,
-) {
-	if (path === "/sign-up/email" && !registrationEnabled) {
-		throw new APIError("FORBIDDEN", {
-			message: "Registration is currently unavailable",
-		});
-	}
 }
 
 type AuthInstance = ReturnType<typeof createAuthInstance>;
