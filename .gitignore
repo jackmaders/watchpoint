@@ -21,6 +21,7 @@
 /out/
 /dist
 /build
+/storybook-static
 
 # generated
 /generated

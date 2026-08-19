@@ -10,6 +10,7 @@ export default defineConfig({
 			exclude: [
 				"**/__mocks__/**",
 				"**/*.d.ts",
+				"src/**/*.stories.{ts,tsx}",
 				"src/**/*.{spec,test}.{ts,tsx}",
 				"src/**/index.ts",
 				"src/**/index.client.ts",

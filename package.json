@@ -23,6 +23,7 @@
 		"@cloudflare/workers-types": "^5.20260804.1",
 		"@feature-sliced/steiger-plugin": "^0.7.0",
 		"@playwright/test": "^1.62.1",
+		"@storybook/react-vite": "^10.5.9",
 		"@tailwindcss/postcss": "^4",
 		"@tailwindcss/vite": "^4.3.3",
 		"@testing-library/jest-dom": "^7.0.0",
@@ -53,6 +54,7 @@
 	"private": true,
 	"scripts": {
 		"build": "vite build",
+		"build-storybook": "storybook build",
 		"cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --include-runtime false --env-file .env.example",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",
@@ -75,6 +77,7 @@
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
 		"prepare": "lefthook install",
 		"preview": "vite preview",
+		"storybook": "storybook dev -p 6006",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:unit": "vitest run",
