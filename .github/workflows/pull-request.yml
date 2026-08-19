@@ -22,9 +22,6 @@ jobs:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
 
-      - name: 🔐 Trust checked-out repository
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
 
@@ -60,9 +57,6 @@ jobs:
     steps:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
-
-      - name: 🔐 Trust checked-out repository
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
