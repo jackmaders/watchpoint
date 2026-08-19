@@ -314,6 +314,7 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 	const isCompleted = state === "COMPLETED" && summary !== null;
 	const isOverlayVisible =
 		(state === "SCENARIO_ACTIVE" || state === "FEEDBACK") &&
+		mediaHealth === "ready" &&
 		currentScenario !== null &&
 		overlayState !== null;
 
