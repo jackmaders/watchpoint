@@ -478,6 +478,9 @@ function handlePlaybackStatusChanged(
 	if (state.restartPending && action.status === PlaybackStatus.ENDED) {
 		return state;
 	}
+	if (state.mediaHealth === "recovering" || state.mediaHealth === "failed") {
+		return state;
+	}
 	const mediaHealthState = handleMediaHealthStatus(state, action);
 	if (mediaHealthState) return mediaHealthState;
 	const nextState = resolveNewStatusState(state.session.state, action.status);
@@ -662,13 +665,19 @@ function handleRetryMedia(
 	if (!isCurrentGeneration(state, action) || state.mediaHealth !== "failed") {
 		return state;
 	}
+	const generation = state.generation + 1;
 	return withEffects(
 		state,
-		{ mediaHealth: "recovering", mediaPausedAtMs: action.nowMs },
+		{
+			generation,
+			mediaHealth: "recovering",
+			mediaPausedAtMs: action.nowMs,
+			recoveryAttempted: false,
+		},
 		[
 			{
 				autoplay: state.session.state === "PLAYING",
-				generation: state.generation,
+				generation,
 				type: "MEDIA_RECOVER",
 			},
 		],
@@ -740,7 +749,12 @@ function handleRecoverySucceeded(
 	state: SessionPlaythroughState,
 	action: Extract<SessionPlaythroughAction, { type: "RECOVERY_SUCCEEDED" }>,
 ): SessionPlaythroughState {
-	if (!isCurrentGeneration(state, action)) return state;
+	if (
+		!isCurrentGeneration(state, action) ||
+		state.mediaHealth !== "recovering"
+	) {
+		return state;
+	}
 	// c8 ignore next -- recovery success is emitted only for an active recovery.
 	const pauseDuration = state.mediaPausedAtMs
 		? Math.max(0, action.nowMs - state.mediaPausedAtMs)
