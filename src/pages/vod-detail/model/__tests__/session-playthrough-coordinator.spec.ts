@@ -636,6 +636,126 @@ describe("session playthrough coordinator", () => {
 		expect(inert).toBe(consumed);
 	});
 
+	it("attempts one player recovery while preserving the active scenario", () => {
+		// Arrange
+		const state = readyPlayingState([timedScenario]);
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 60,
+			type: "TIME_UPDATED",
+		});
+
+		// Act
+		const recovering = sessionPlaythroughReducer(active, {
+			failure: {
+				category: "buffering",
+				message: "buffering threshold exceeded",
+			},
+			generation: active.generation,
+			nowMs: 2000,
+			type: "MEDIA_FAILURE",
+		});
+		const recovered = sessionPlaythroughReducer(recovering, {
+			generation: active.generation,
+			nowMs: 5000,
+			retryCount: 1,
+			type: "RECOVERY_SUCCEEDED",
+		});
+
+		// Assert
+		expect(recovering.mediaHealth).toBe("recovering");
+		expect(recovering.session.state).toBe("SCENARIO_ACTIVE");
+		expect(recovering.session.attempts).toHaveLength(0);
+		expect(recovering.effects.at(-1)?.type).toBe("MEDIA_RECOVER");
+		expect(recovered.mediaHealth).toBe("ready");
+		expect(recovered.deadlineAtMs).toBe(6000);
+	});
+
+	it("exposes terminal failure after automatic recovery has already been attempted", () => {
+		// Arrange
+		const state = readyPlayingState();
+		const recovering = sessionPlaythroughReducer(state, {
+			failure: { category: "api-load", message: "provider unavailable" },
+			generation: state.generation,
+			nowMs: 100,
+			type: "MEDIA_FAILURE",
+		});
+
+		// Act
+		const terminal = sessionPlaythroughReducer(recovering, {
+			failure: { category: "readiness", message: "player not ready" },
+			generation: state.generation,
+			nowMs: 200,
+			type: "MEDIA_FAILURE",
+		});
+		const staleFailure = sessionPlaythroughReducer(terminal, {
+			failure: { category: "provider", message: "stale" },
+			generation: terminal.generation - 1,
+			nowMs: 250,
+			type: "MEDIA_FAILURE",
+		});
+		const staleRecovery = sessionPlaythroughReducer(terminal, {
+			generation: terminal.generation - 1,
+			nowMs: 250,
+			retryCount: 1,
+			type: "RECOVERY_SUCCEEDED",
+		});
+
+		// Assert
+		expect(terminal.mediaHealth).toBe("failed");
+		expect(terminal.session.attempts).toHaveLength(0);
+		expect(staleFailure).toBe(terminal);
+		expect(staleRecovery).toBe(terminal);
+
+		// Act
+		const ignoredRetry = sessionPlaythroughReducer(terminal, {
+			generation: terminal.generation - 1,
+			nowMs: 300,
+			type: "RETRY_MEDIA",
+		});
+		const retried = sessionPlaythroughReducer(terminal, {
+			generation: terminal.generation,
+			nowMs: 300,
+			type: "RETRY_MEDIA",
+		});
+
+		// Assert
+		expect(ignoredRetry).toBe(terminal);
+		expect(retried.mediaHealth).toBe("recovering");
+		expect(retried.effects.at(-1)?.type).toBe("MEDIA_RECOVER");
+	});
+
+	it("pauses and resumes countdown evaluation across a buffering status", () => {
+		// Arrange
+		const state = readyPlayingState([timedScenario]);
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 60,
+			type: "TIME_UPDATED",
+		});
+
+		// Act
+		const buffering = sessionPlaythroughReducer(active, {
+			generation: active.generation,
+			nowMs: 2000,
+			status: PlaybackStatus.BUFFERING,
+			type: "PLAYBACK_STATUS_CHANGED",
+		});
+		const playing = sessionPlaythroughReducer(buffering, {
+			generation: active.generation,
+			nowMs: 4000,
+			status: PlaybackStatus.PLAYING,
+			type: "PLAYBACK_STATUS_CHANGED",
+		});
+
+		// Assert
+		expect(buffering.mediaHealth).toBe("buffering");
+		expect(playing.mediaHealth).toBe("ready");
+		expect(playing.deadlineAtMs).toBe(5000);
+	});
+
 	it("returns the configured and default scenario limits", () => {
 		// Arrange
 		const untimed = { ...scenario, moduleType: "STRATEGY" as const };

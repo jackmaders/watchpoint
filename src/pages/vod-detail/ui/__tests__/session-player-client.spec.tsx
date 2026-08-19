@@ -7,7 +7,10 @@ import {
 	setYouTubeNamespace,
 	YouTubePlayerState,
 } from "@/shared/lib/testing";
-import { SessionPlayerClient } from "../session-player-client";
+import {
+	SessionPlayerClient,
+	SessionPlayerViewport,
+} from "../session-player-client";
 
 vi.mock("@tanstack/react-router");
 
@@ -138,5 +141,44 @@ describe("SessionPlayerClient", () => {
 
 		// Assert
 		expect(screen.getByText("Scenario 0 / 0")).toBeDefined();
+	});
+
+	it("shows non-blocking buffering and blocking recovery actions", () => {
+		// Arrange
+		const onRetryMedia = vi.fn();
+		const onRestartSession = vi.fn();
+		const baseProps = {
+			containerRef: vi.fn(),
+			isCompleted: false,
+			isLoading: false,
+			isOverlayVisible: false,
+			onReplayContext: vi.fn(),
+			onRestartSession,
+			onResume: vi.fn(),
+			onRetryMedia,
+			onSelectOption: vi.fn(),
+			onSkipUnsupportedInput: vi.fn(),
+			overlayScenarioData: null,
+			overlayState: null,
+		};
+
+		// Act
+		const { rerender } = render(
+			<SessionPlayerViewport {...baseProps} mediaHealth="buffering" />,
+		);
+		expect(screen.getByRole("status").textContent).toContain("Buffering");
+		rerender(<SessionPlayerViewport {...baseProps} mediaHealth="recovering" />);
+
+		// Assert
+		expect(screen.getByRole("alert").textContent).toContain("Recovering video");
+
+		// Act
+		rerender(<SessionPlayerViewport {...baseProps} mediaHealth="failed" />);
+		fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+		fireEvent.click(screen.getByRole("button", { name: "Restart session" }));
+
+		// Assert
+		expect(onRetryMedia).toHaveBeenCalledTimes(1);
+		expect(onRestartSession).toHaveBeenCalledTimes(1);
 	});
 });

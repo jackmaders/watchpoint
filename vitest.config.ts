@@ -9,6 +9,7 @@ export default defineConfig({
 		coverage: {
 			exclude: [
 				"**/__mocks__/**",
+				"**/__stories__/**",
 				"**/*.d.ts",
 				"src/**/*.{spec,test}.{ts,tsx}",
 				"src/**/index.ts",
@@ -16,6 +17,7 @@ export default defineConfig({
 				"src/**/index.server.ts",
 				"src/app/**",
 				"src/pages/prototype-*/**",
+				"src/pages/vod-detail/ui/session-player-media-recovery-prototype.tsx",
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			provider: "v8",
