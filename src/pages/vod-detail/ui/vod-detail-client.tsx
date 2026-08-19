@@ -14,10 +14,14 @@ import { MODULE_DEFINITIONS } from "../model/modules";
 import { ModuleFilterPills } from "./module-filter-pills";
 
 export interface VodDetailClientProps {
+	registrationEnabled?: boolean;
 	vod: NonNullable<Awaited<ReturnType<typeof getSessionManifest>>>;
 }
 
-export function VodDetailClient({ vod }: VodDetailClientProps) {
+export function VodDetailClient({
+	registrationEnabled = true,
+	vod,
+}: VodDetailClientProps) {
 	const [playthroughId] = useState(() => crypto.randomUUID());
 	const [activeModules, setActiveModules] = useState<ModuleType[]>(() =>
 		MODULE_DEFINITIONS.map((def) => def.key),
@@ -114,6 +118,7 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 						onOpenChange={setAuthOpen}
 						onSuccess={handleAuthenticated}
 						open={authOpen}
+						registrationEnabled={registrationEnabled}
 					/>
 				</div>
 			</div>

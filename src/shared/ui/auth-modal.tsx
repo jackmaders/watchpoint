@@ -155,7 +155,11 @@ export function resolveAuthResult(
 	onSuccess();
 }
 
-export function AccountControls() {
+export function AccountControls({
+	registrationEnabled = true,
+}: {
+	registrationEnabled?: boolean;
+} = {}) {
 	const session = authClient.useSession();
 	const [open, setOpen] = useState(false);
 	const openModal = useCallback(() => setOpen(true), []);
@@ -177,7 +181,11 @@ export function AccountControls() {
 			<Button onClick={openModal} size="sm">
 				Sign in
 			</Button>
-			<AuthModal onOpenChange={setOpen} open={open} />
+			<AuthModal
+				onOpenChange={setOpen}
+				open={open}
+				registrationEnabled={registrationEnabled}
+			/>
 		</>
 	);
 }

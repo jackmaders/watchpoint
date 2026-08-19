@@ -6,11 +6,15 @@ export const Route = createFileRoute("/")({
 	component: HomeRoute,
 	loader: async () => {
 		const vods = await getPublishedVods();
-		return { vods };
+		return {
+			registrationEnabled:
+				process.env.BETTER_AUTH_ALLOW_REGISTRATION === "true",
+			vods,
+		};
 	},
 });
 
 function HomeRoute() {
-	const { vods } = Route.useLoaderData();
-	return <HomePage vods={vods} />;
+	const { registrationEnabled, vods } = Route.useLoaderData();
+	return <HomePage registrationEnabled={registrationEnabled} vods={vods} />;
 }

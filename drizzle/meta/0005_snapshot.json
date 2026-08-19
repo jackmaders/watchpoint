@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "08ee2b8c-2d69-476d-9b8d-792ac4a100fa",
-  "prevId": "faed531e-73b4-4250-a148-3da92364d491",
+  "id": "c5402b72-36f8-4294-9729-b574edbe2b69",
+  "prevId": "08ee2b8c-2d69-476d-9b8d-792ac4a100fa",
   "tables": {
     "account": {
       "name": "account",
@@ -231,6 +231,14 @@
           ],
           "isUnique": false
         },
+        "attempt_record_playthrough_snapshot_idx": {
+          "name": "attempt_record_playthrough_snapshot_idx",
+          "columns": [
+            "playthrough_id",
+            "scenario_snapshot_id"
+          ],
+          "isUnique": true
+        },
         "attempt_record_user_idx": {
           "name": "attempt_record_user_idx",
           "columns": [
@@ -382,6 +390,87 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "playthrough_completion": {
+      "name": "playthrough_completion",
+      "columns": {
+        "completed_at": {
+          "name": "completed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "playthrough_id": {
+          "name": "playthrough_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "playthrough_completion_playthrough_id_unique": {
+          "name": "playthrough_completion_playthrough_id_unique",
+          "columns": [
+            "playthrough_id"
+          ],
+          "isUnique": true
+        },
+        "playthrough_completion_user_completed_at_idx": {
+          "name": "playthrough_completion_user_completed_at_idx",
+          "columns": [
+            "user_id",
+            "completed_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "playthrough_completion_playthrough_id_playthrough_id_fk": {
+          "name": "playthrough_completion_playthrough_id_playthrough_id_fk",
+          "tableFrom": "playthrough_completion",
+          "tableTo": "playthrough",
+          "columnsFrom": [
+            "playthrough_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "playthrough_completion_user_id_user_id_fk": {
+          "name": "playthrough_completion_user_id_user_id_fk",
+          "tableFrom": "playthrough_completion",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
