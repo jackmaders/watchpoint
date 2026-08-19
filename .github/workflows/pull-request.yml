@@ -13,15 +13,15 @@ jobs:
   storybook-a11y:
     name: ♿ Storybook Accessibility Harness
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
-
-      - name: 🎭 Install Playwright Chromium
-        run: bunx playwright install --with-deps chromium
 
       - name: 🧭 Check shared UI story completeness
         run: bun run storybook:check:completeness
@@ -46,6 +46,9 @@ jobs:
   e2e-tests:
     name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
 
     steps:
       - name: 🛒 Checkout
@@ -53,18 +56,6 @@ jobs:
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
-
-      - name: 💾 Restore Playwright Browsers Cache
-        uses: actions/cache@v5
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: 🎭 Install Playwright Browsers
-        run: bunx playwright install --with-deps chromium firefox
 
       - name: 🗄️ Run D1 Local Migrations
         run: bun run db:migrate:local
