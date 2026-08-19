@@ -13,5 +13,11 @@ export type {
 	VodPlayerOptions,
 	VodPlayerResult,
 } from "./types";
-export { PlaybackStatus } from "./types";
+export {
+	type MediaDiagnostic,
+	type MediaFailure,
+	MediaFailureCategory,
+	type MediaFailureOutcome,
+	PlaybackStatus,
+} from "./types";
 export { useVodPlayer } from "./use-vod-player";
