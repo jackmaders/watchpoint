@@ -20,6 +20,9 @@ jobs:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
 
+      - name: 📦 Install Bun bootstrap dependency
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
+
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
 
@@ -53,6 +56,9 @@ jobs:
     steps:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
+
+      - name: 📦 Install Bun bootstrap dependency
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
