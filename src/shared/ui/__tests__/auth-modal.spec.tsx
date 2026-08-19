@@ -203,7 +203,9 @@ describe("AuthModal", () => {
 			expect(screen.getByRole("button", { name: "Working…" })).toBeDefined(),
 		);
 		const resolvePending = finish as (value: unknown) => void;
-		resolvePending({ data: { user: { id: "user-1" } }, error: null });
+		await act(async () => {
+			resolvePending({ data: { user: { id: "user-1" } }, error: null });
+		});
 	});
 
 	it("renders signed-in account controls and signs out", () => {
