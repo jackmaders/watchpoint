@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDuration } from "@/shared/lib/utils";
 import type { VodContainerRef } from "@/shared/media";
 import { extractHeroFromTitle } from "../model/module-filter";
@@ -188,8 +188,30 @@ export function SessionPlayerViewport({
 	remainingMs,
 	totalMs,
 }: SessionPlayerViewportProps) {
+	const recoveryHeadingRef = useRef<HTMLHeadingElement>(null);
+	const previousMediaHealthRef = useRef<typeof mediaHealth | undefined>(
+		undefined,
+	);
+	const [announcement, setAnnouncement] = useState("");
+	const isBlockingRecovery =
+		mediaHealth === "recovering" || mediaHealth === "failed";
+
+	useEffect(() => {
+		if (isBlockingRecovery && previousMediaHealthRef.current !== mediaHealth) {
+			recoveryHeadingRef.current?.focus();
+		}
+		if (
+			previousMediaHealthRef.current === "recovering" &&
+			mediaHealth === "ready"
+		) {
+			setAnnouncement("Playback resumed. Your session progress is preserved.");
+		}
+		previousMediaHealthRef.current = mediaHealth;
+	}, [isBlockingRecovery, mediaHealth]);
+
 	return (
-		<div
+		<section
+			aria-label="Session media player"
 			className={
 				isCompleted
 					? "hidden"
@@ -197,6 +219,12 @@ export function SessionPlayerViewport({
 			}
 		>
 			<div className="w-full h-full" ref={containerRef} />
+
+			{announcement ? (
+				<div className="sr-only" role="status">
+					{announcement}
+				</div>
+			) : null}
 
 			{isLoading ? (
 				<div
@@ -219,14 +247,18 @@ export function SessionPlayerViewport({
 				</div>
 			) : null}
 
-			{mediaHealth === "recovering" || mediaHealth === "failed" ? (
+			{isBlockingRecovery ? (
 				<div
 					aria-live="assertive"
 					className="absolute inset-0 z-40 flex items-center justify-center bg-background/95 p-6 text-center"
 					role="alert"
 				>
 					<div className="max-w-sm space-y-4">
-						<h2 className="text-lg font-bold text-foreground">
+						<h2
+							className="text-lg font-bold text-foreground"
+							ref={recoveryHeadingRef}
+							tabIndex={-1}
+						>
 							{mediaHealth === "recovering"
 								? "Recovering video…"
 								: "Video playback is unavailable"}
@@ -236,24 +268,22 @@ export function SessionPlayerViewport({
 								? "Your session and scenario progress are preserved."
 								: "Playback could not continue, but your training context is preserved."}
 						</p>
-						{mediaHealth === "failed" ? (
-							<div className="flex flex-wrap justify-center gap-3">
-								<button
-									className="rounded-md bg-primary px-4 py-2 text-xs font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-									onClick={onRetryMedia}
-									type="button"
-								>
-									Try again
-								</button>
-								<button
-									className="rounded-md border border-input px-4 py-2 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-									onClick={onRestartSession}
-									type="button"
-								>
-									Restart session
-								</button>
-							</div>
-						) : null}
+						<div className="flex flex-wrap justify-center gap-3">
+							<button
+								className="rounded-md bg-primary px-4 py-2 text-xs font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								onClick={onRetryMedia}
+								type="button"
+							>
+								Try again
+							</button>
+							<button
+								className="rounded-md border border-input px-4 py-2 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								onClick={onRestartSession}
+								type="button"
+							>
+								Restart session
+							</button>
+						</div>
 					</div>
 				</div>
 			) : null}
@@ -272,7 +302,7 @@ export function SessionPlayerViewport({
 					/>
 				</div>
 			) : null}
-		</div>
+		</section>
 	);
 }
 

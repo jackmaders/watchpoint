@@ -181,4 +181,65 @@ describe("SessionPlayerClient", () => {
 		expect(onRetryMedia).toHaveBeenCalledTimes(1);
 		expect(onRestartSession).toHaveBeenCalledTimes(1);
 	});
+
+	it("names the player and moves focus into terminal recovery", () => {
+		// Arrange
+		const baseProps = {
+			containerRef: vi.fn(),
+			isCompleted: false,
+			isLoading: false,
+			isOverlayVisible: false,
+			onReplayContext: vi.fn(),
+			onRestartSession: vi.fn(),
+			onResume: vi.fn(),
+			onRetryMedia: vi.fn(),
+			onSelectOption: vi.fn(),
+			onSkipUnsupportedInput: vi.fn(),
+			overlayScenarioData: null,
+			overlayState: null,
+		};
+
+		// Act
+		const { rerender } = render(
+			<SessionPlayerViewport {...baseProps} mediaHealth="ready" />,
+		);
+		rerender(<SessionPlayerViewport {...baseProps} mediaHealth="failed" />);
+
+		// Assert
+		expect(
+			screen.getByRole("region", { name: "Session media player" }),
+		).toBeDefined();
+		expect(document.activeElement).toBe(
+			screen.getByRole("heading", { name: "Video playback is unavailable" }),
+		);
+	});
+
+	it("announces playback recovery after a blocking state", () => {
+		// Arrange
+		const baseProps = {
+			containerRef: vi.fn(),
+			isCompleted: false,
+			isLoading: false,
+			isOverlayVisible: false,
+			onReplayContext: vi.fn(),
+			onRestartSession: vi.fn(),
+			onResume: vi.fn(),
+			onRetryMedia: vi.fn(),
+			onSelectOption: vi.fn(),
+			onSkipUnsupportedInput: vi.fn(),
+			overlayScenarioData: null,
+			overlayState: null,
+		};
+
+		// Act
+		const { rerender } = render(
+			<SessionPlayerViewport {...baseProps} mediaHealth="recovering" />,
+		);
+		rerender(<SessionPlayerViewport {...baseProps} mediaHealth="ready" />);
+
+		// Assert
+		expect(screen.getByRole("status").textContent).toContain(
+			"Playback resumed",
+		);
+	});
 });
