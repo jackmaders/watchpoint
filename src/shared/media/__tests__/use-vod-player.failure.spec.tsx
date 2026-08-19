@@ -156,6 +156,33 @@ describe("useVodPlayer loader failure boundary", () => {
 		expect(onError).toHaveBeenCalledTimes(1);
 	});
 
+	it("does not escalate buffering that ends in a user pause", async () => {
+		// Arrange
+		vi.useFakeTimers();
+		const { useVodPlayer } = await import("../use-vod-player");
+		const youtube = createYouTubeMock();
+		setYouTubeNamespace(youtube.namespace);
+		const onError = vi.fn();
+		const container = document.createElement("div");
+		const { result } = renderHook(() =>
+			useVodPlayer({ onError, videoId: "paused-buffering-video" }),
+		);
+		act(() => result.current.containerRef(container));
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+		const player = youtube.players[0];
+		act(() => player.triggerReady());
+
+		// Act
+		act(() => player.triggerStateChange(3));
+		act(() => player.triggerStateChange(2));
+		act(() => vi.advanceTimersByTime(5000));
+
+		// Assert
+		expect(onError).not.toHaveBeenCalled();
+	});
 	it("reports player construction failures", async () => {
 		// Arrange
 		const { useVodPlayer } = await import("../use-vod-player");

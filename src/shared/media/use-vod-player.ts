@@ -75,6 +75,7 @@ interface PlayerEventHandlersContext {
 	onReady?: (duration: number) => void;
 	onError?: (failure: MediaFailure) => void;
 	onBufferingStart?: () => void;
+	onBufferingEnd?: () => void;
 	onPlaybackStart?: () => void;
 	onStatusChange?: (status: PlaybackStatus) => void;
 	poller: ReturnType<typeof createTimePoller>;
@@ -86,6 +87,14 @@ interface PlayerEventHandlersContext {
 }
 
 function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
+	function handleBufferingStatus(state: YouTubePlayerState) {
+		if (state === YouTubePlayerState.BUFFERING) {
+			ctx.onBufferingStart?.();
+			return;
+		}
+		ctx.onBufferingEnd?.();
+	}
+
 	const handleReady = (event: YouTubePlayerEvent) => {
 		const player = ctx.getCurrentPlayer();
 		if (
@@ -119,10 +128,8 @@ function createPlayerEventHandlers(ctx: PlayerEventHandlersContext) {
 			ctx.poller.startPolling();
 		} else {
 			ctx.poller.stopPolling();
-			if (event.data === YouTubePlayerState.BUFFERING) {
-				ctx.onBufferingStart?.();
-			}
 		}
+		handleBufferingStatus(event.data);
 		ctx.onStatusChange?.(status);
 	};
 	const handleError = (event: YouTubePlayerErrorEvent) => {
@@ -240,6 +247,10 @@ function usePlayerLifecycle({
 				isActiveGeneration,
 				markReadyNotified: () => {
 					hasNotifiedReady = true;
+				},
+				onBufferingEnd: () => {
+					if (bufferingTimer) clearTimeout(bufferingTimer);
+					bufferingTimer = undefined;
 				},
 				onBufferingStart: () => {
 					if (bufferingTimer) clearTimeout(bufferingTimer);
