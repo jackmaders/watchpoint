@@ -1,10 +1,14 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authClient } from "@/shared/lib/auth-client";
 import { HomePage } from "./home-page";
 
 vi.mock("@tanstack/react-router");
+vi.mock("@/shared/lib/auth-client");
 
 describe("HomePage component", () => {
+	beforeEach(() => vi.clearAllMocks());
+
 	it("renders heading, description, and user form", () => {
 		// Arrange & Act
 		render(<HomePage />);
@@ -16,9 +20,9 @@ describe("HomePage component", () => {
 		expect(
 			screen.getByText(/overwatch 2 interactive vod decision training/i),
 		).toBeDefined();
-		expect(screen.getByPlaceholderText("Name")).toBeDefined();
-		expect(screen.getByPlaceholderText("Email")).toBeDefined();
-		expect(screen.getByRole("button", { name: "Submit" })).toBeDefined();
+		expect(screen.getByPlaceholderText("you@example.com")).toBeDefined();
+		expect(screen.getByPlaceholderText("At least 8 characters")).toBeDefined();
+		expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
 	});
 
 	it("renders empty database state when no VODs are passed", () => {
@@ -66,18 +70,21 @@ describe("HomePage component", () => {
 	it("handles form submission cleanly", async () => {
 		// Arrange
 		render(<HomePage />);
-		const nameInput = screen.getByPlaceholderText("Name");
-		const emailInput = screen.getByPlaceholderText("Email");
-		const submitButton = screen.getByRole("button", { name: "Submit" });
+		const emailInput = screen.getByPlaceholderText("you@example.com");
+		const passwordInput = screen.getByPlaceholderText("At least 8 characters");
+		const submitButton = screen.getByRole("button", { name: "Sign in" });
 
 		// Act
 		await act(async () => {
-			fireEvent.change(nameInput, { target: { value: "Alice" } });
 			fireEvent.change(emailInput, { target: { value: "alice@example.com" } });
+			fireEvent.change(passwordInput, { target: { value: "password123" } });
 			fireEvent.click(submitButton);
 		});
 
 		// Assert
-		expect(nameInput).toBeDefined();
+		expect(authClient.signIn.email).toHaveBeenCalledWith({
+			email: "alice@example.com",
+			password: "password123",
+		});
 	});
 });
