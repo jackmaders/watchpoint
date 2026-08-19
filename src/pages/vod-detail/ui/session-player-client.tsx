@@ -12,6 +12,7 @@ import {
 	type ScenarioOverlayState,
 	toScenarioOverlayData,
 } from "../model/session-contract";
+import type { SessionSummaryReport } from "../model/summary";
 import {
 	type ManifestVod,
 	type ScenarioItem,
@@ -309,6 +310,43 @@ export function SessionPlayerViewport({
 	);
 }
 
+function SessionPlayerHeaderOrSummary({
+	activeCount,
+	currentIndex,
+	exitSession,
+	hero,
+	isCompleted,
+	onRetry,
+	summary,
+	vod,
+}: {
+	activeCount: number;
+	currentIndex: number;
+	exitSession: () => void;
+	hero: string | null;
+	isCompleted: boolean;
+	onRetry: () => void;
+	summary: SessionSummaryReport;
+	vod: ManifestVod;
+}) {
+	return isCompleted ? (
+		<div className="py-8 px-4 max-w-6xl mx-auto">
+			<SessionSummaryPanel
+				onExit={exitSession}
+				onRetry={onRetry}
+				summary={summary}
+			/>
+		</div>
+	) : (
+		<SessionPlayerHeader
+			activeCount={activeCount}
+			currentIndex={currentIndex}
+			hero={hero}
+			vod={vod}
+		/>
+	);
+}
+
 export function SessionPlayerClient({
 	playthroughId,
 	scenarioSnapshotIds,
@@ -365,22 +403,16 @@ export function SessionPlayerClient({
 
 	return (
 		<div className="space-y-6 max-w-6xl mx-auto">
-			{isCompleted ? (
-				<div className="py-8 px-4 max-w-6xl mx-auto">
-					<SessionSummaryPanel
-						onExit={exitSession}
-						onRetry={retrySession}
-						summary={summary}
-					/>
-				</div>
-			) : (
-				<SessionPlayerHeader
-					activeCount={activeScenarios.length}
-					currentIndex={activeScenarioIndex}
-					hero={hero}
-					vod={vod}
-				/>
-			)}
+			<SessionPlayerHeaderOrSummary
+				activeCount={activeScenarios.length}
+				currentIndex={activeScenarioIndex}
+				exitSession={exitSession}
+				hero={hero}
+				isCompleted={isCompleted}
+				onRetry={retrySession}
+				summary={summary as SessionSummaryReport}
+				vod={vod}
+			/>
 
 			<SessionPlayerViewport
 				containerRef={containerRef}

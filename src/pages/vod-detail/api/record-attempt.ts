@@ -86,7 +86,6 @@ function isIdenticalAttempt(
 	);
 }
 
-/* c8 ignore start -- the D1 relation predicate is covered through the public action seam. */
 async function belongsToAuthenticatedPlaythrough(
 	db: AttemptDatabase,
 	playthroughId: string,
@@ -96,25 +95,19 @@ async function belongsToAuthenticatedPlaythrough(
 ): Promise<boolean> {
 	const playthrough = await db.query.playthroughs.findFirst({
 		where: (playthrough, { eq }) => eq(playthrough.id, playthroughId),
-		/* c8 ignore next 4 -- relation selection is exercised by the D1 seam. */
 		with: {
-			scenarioSnapshots: {
-				columns: { id: true, scenarioId: true },
-			},
+			scenarioSnapshots: true,
 		},
 	});
-	/* c8 ignore next -- boolean ownership policy is exercised through action tests. */
-	return Boolean(
-		playthrough?.userId === userId &&
-			playthrough?.status === "IN_PROGRESS" &&
-			playthrough.scenarioSnapshots.some(
-				(snapshot) =>
-					snapshot.id === scenarioSnapshotId &&
-					snapshot.scenarioId === scenarioId,
-			),
-	);
+	if (playthrough === undefined) return false;
+	if (playthrough.userId !== userId) return false;
+	if (playthrough.status !== "IN_PROGRESS") return false;
+
+	return playthrough.scenarioSnapshots.some((snapshot) => {
+		if (snapshot.id !== scenarioSnapshotId) return false;
+		return snapshot.scenarioId === scenarioId;
+	});
 }
-/* c8 ignore stop */
 
 type AttemptDatabase = Awaited<ReturnType<typeof getDb>>;
 

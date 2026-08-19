@@ -463,6 +463,36 @@ describe("recordAttemptAction", () => {
 		});
 	});
 
+	it("rejects an owned playthrough with a different snapshot", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [
+				{ id: "other_snapshot", scenarioId: validScenarioId },
+			],
+			status: "IN_PROGRESS",
+			userId: "usr_auth_default",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+	});
+
 	it("rejects a cross-user playthrough even when the requester is authenticated", async () => {
 		// Arrange
 		const db = await getDb();
