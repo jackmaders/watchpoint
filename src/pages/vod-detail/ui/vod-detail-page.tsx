@@ -4,15 +4,15 @@ import { formatDuration } from "@/shared/lib/utils";
 import { extractHeroFromTitle } from "../model/module-filter";
 import { VodDetailClient } from "./vod-detail-client";
 
-export async function VodDetailPage({
-	params,
+export function VodDetailPage({
+	params: _params,
+	registrationEnabled,
 	vod,
 }: {
 	params: Promise<{ id: string }> | { id: string };
+	registrationEnabled?: boolean;
 	vod?: SessionManifest | null;
 }) {
-	await params;
-
 	if (!vod) {
 		return (
 			<main className="min-h-screen bg-background text-foreground px-4 py-8 sm:px-6 sm:py-12 flex items-center justify-center">
@@ -75,7 +75,7 @@ export async function VodDetailPage({
 					</header>
 				</div>
 
-				<VodDetailClient vod={vod} />
+				<VodDetailClient registrationEnabled={registrationEnabled} vod={vod} />
 			</div>
 		</main>
 	);

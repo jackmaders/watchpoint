@@ -2,14 +2,19 @@ import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
 import { AccountControls } from "@/shared/ui/auth-modal";
 
-export function HomePage(props?: { vods?: PublishedVodItem[] }) {
+export function HomePage(props?: {
+	registrationEnabled?: boolean;
+	vods?: PublishedVodItem[];
+}) {
 	const vods = props?.vods ?? [];
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground sm:p-12 lg:p-24">
 			<div className="w-full max-w-4xl space-y-12">
 				<div className="flex justify-end">
-					<AccountControls />
+					<AccountControls
+						registrationEnabled={props?.registrationEnabled ?? true}
+					/>
 				</div>
 				<div className="space-y-4 text-center">
 					<p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
