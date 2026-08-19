@@ -6,16 +6,28 @@ import * as schema from "../db/schema";
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
 ) {
-	const baseURL = env.BETTER_AUTH_URL || "http://localhost:3000";
-	const secret =
-		env.BETTER_AUTH_SECRET || "development-secret-key-at-least-32-chars-long";
+	const baseURL = env.BETTER_AUTH_URL;
+	const secret = env.BETTER_AUTH_SECRET;
+	const allowRegistration = env.BETTER_AUTH_ALLOW_REGISTRATION === "true";
+
+	if (!baseURL) {
+		throw new Error("BETTER_AUTH_URL must be configured");
+	}
+	if (!secret) {
+		throw new Error("BETTER_AUTH_SECRET must be configured");
+	}
 
 	return {
 		baseURL,
 		emailAndPassword: {
+			disableSignUp: !allowRegistration,
 			enabled: true,
 		},
 		secret,
+		session: {
+			expiresIn: 60 * 60 * 24 * 7,
+			updateAge: 60 * 60 * 24,
+		},
 	};
 }
 

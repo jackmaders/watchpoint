@@ -1,52 +1,186 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authClient } from "@/shared/lib/auth-client";
 import { formatError, UserForm } from "./user-form";
 
-describe("formatError helper", () => {
-	it("returns string input directly", () => {
-		expect(formatError("Direct error")).toBe("Direct error");
-	});
+vi.mock("@/shared/lib/auth-client");
 
-	it("extracts message from error object", () => {
-		expect(formatError({ message: "Object error" })).toBe("Object error");
+describe("formatError helper", () => {
+	it("formats strings and error-like objects", () => {
+		// Arrange
+		const error = { message: "Object error" };
+
+		// Act
+		const values = [
+			formatError("Direct error"),
+			formatError(error),
+			formatError(null),
+		];
+
+		// Assert
+		expect(values).toEqual([
+			"Direct error",
+			"Object error",
+			"Unable to complete authentication",
+		]);
 	});
 });
 
 describe("UserForm feature component", () => {
-	it("renders inputs and submit button", () => {
-		render(<UserForm onSubmit={vi.fn()} />);
-		expect(screen.getByPlaceholderText("Name")).toBeDefined();
-		expect(screen.getByPlaceholderText("Email")).toBeDefined();
-		expect(screen.getByRole("button", { name: "Submit" })).toBeDefined();
+	beforeEach(() => vi.clearAllMocks());
+
+	it("signs in with email and password", async () => {
+		// Arrange
+		render(<UserForm />);
+		fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+			target: { value: "john@example.com" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), {
+			target: { value: "password123" },
+		});
+
+		// Act
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Sign in" })),
+		);
+
+		// Assert
+		expect(authClient.signIn.email).toHaveBeenCalledWith({
+			email: "john@example.com",
+			password: "password123",
+		});
 	});
 
-	it("shows validation error for invalid inputs and submits valid form", async () => {
-		const handleSubmit = vi.fn();
-		render(<UserForm onSubmit={handleSubmit} />);
-
-		const nameInput = screen.getByPlaceholderText("Name");
-		const emailInput = screen.getByPlaceholderText("Email");
-		const submitButton = screen.getByRole("button", { name: "Submit" });
-
-		await act(async () => {
-			fireEvent.change(nameInput, { target: { value: "a" } });
-			fireEvent.change(emailInput, { target: { value: "invalid-email" } });
+	it("registers with display name, email, and password", async () => {
+		// Arrange
+		render(<UserForm />);
+		fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+		fireEvent.change(screen.getByPlaceholderText("How should we call you?"), {
+			target: { value: "John" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+			target: { value: "john@example.com" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), {
+			target: { value: "password123" },
 		});
 
-		expect(
-			screen.getByText("Name must be at least 2 characters"),
-		).toBeDefined();
-		expect(screen.getByText("Invalid email address")).toBeDefined();
+		// Act
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Create account" })),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-		await act(async () => {
-			fireEvent.change(nameInput, { target: { value: "John" } });
-			fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-			fireEvent.click(submitButton);
-		});
-
-		expect(handleSubmit).toHaveBeenCalledWith({
+		// Assert
+		expect(authClient.signUp.email).toHaveBeenCalledWith({
 			email: "john@example.com",
 			name: "John",
+			password: "password123",
 		});
+	});
+
+	it("shows progress while authentication is pending", async () => {
+		// Arrange
+		let resolve: (value: unknown) => void = () => undefined;
+		vi.mocked(authClient.signIn.email).mockReturnValueOnce(
+			new Promise((nextResolve) => {
+				resolve = nextResolve;
+			}) as never,
+		);
+		render(<UserForm />);
+		fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+			target: { value: "john@example.com" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), {
+			target: { value: "password123" },
+		});
+
+		// Act
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Sign in" })),
+		);
+
+		// Assert
+		expect(screen.getByRole("button", { name: "Working…" })).toBeDefined();
+		await act(async () => resolve({ data: {}, error: null }));
+	});
+
+	it("shows the current session and signs out the current device", async () => {
+		// Arrange
+		vi.mocked(authClient.useSession).mockReturnValue({
+			data: { user: { name: "John" } },
+			isPending: false,
+		} as never);
+		render(<UserForm />);
+
+		// Act
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Sign out" })),
+		);
+
+		// Assert
+		expect(screen.getByText("John")).toBeDefined();
+		expect(authClient.signOut).toHaveBeenCalledTimes(1);
+	});
+
+	it("handles pending sessions and invalid registration input", async () => {
+		// Arrange
+		vi.mocked(authClient.useSession).mockReturnValue({
+			data: null,
+			isPending: true,
+		} as never);
+		const pending = render(<UserForm />);
+
+		// Act
+		expect(screen.getByText("Checking session…")).toBeDefined();
+		pending.unmount();
+		vi.mocked(authClient.useSession).mockReturnValue({
+			data: null,
+			isPending: false,
+		} as never);
+		render(<UserForm />);
+		fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Create account" })),
+		);
+
+		// Assert
+		expect(screen.getByRole("alert").textContent).toContain(
+			"Name must be at least 2 characters",
+		);
+	});
+
+	it("shows generic errors for invalid credentials and server failures", async () => {
+		// Arrange
+		vi.mocked(authClient.signIn.email).mockResolvedValueOnce({
+			data: null,
+			error: { message: "failed" },
+		} as never);
+		render(<UserForm />);
+
+		// Act
+		fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+			target: { value: "john@example.com" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), {
+			target: { value: "short" },
+		});
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Sign in" })),
+		);
+		fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+			target: { value: "john@example.com" },
+		});
+		fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), {
+			target: { value: "password123" },
+		});
+		await act(async () =>
+			fireEvent.click(screen.getByRole("button", { name: "Sign in" })),
+		);
+
+		// Assert
+		expect(screen.getByRole("alert").textContent).toContain(
+			"Unable to authenticate with those details",
+		);
 	});
 });
