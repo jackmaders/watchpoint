@@ -1,5 +1,9 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { validateWaivers } from "../check-storybook-completeness";
+import {
+	discoverStoryFiles,
+	validateWaivers,
+} from "../check-storybook-completeness";
 
 describe("validateWaivers", () => {
 	it("rejects incomplete, malformed, and expired waivers", () => {
@@ -45,5 +49,18 @@ describe("validateWaivers", () => {
 
 		// Assert
 		expect(errors).toEqual([]);
+	});
+});
+
+describe("discoverStoryFiles", () => {
+	it("discovers every supported story below the shared UI root", () => {
+		// Arrange
+		const storyRoot = join(process.cwd(), "src/shared/ui/__stories__");
+
+		// Act
+		const stories = discoverStoryFiles(storyRoot);
+
+		// Assert
+		expect(stories).toEqual([`${storyRoot}/button.stories.tsx`]);
 	});
 });

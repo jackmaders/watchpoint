@@ -1,10 +1,24 @@
 import type { StorybookConfig } from "@storybook/react-vite";
-import type { PluginOption } from "vite";
+import type { Plugin, PluginOption } from "vite";
+
+const tanStackStartPluginPrefixes = [
+	"start-client-tree-plugin",
+	"tanstack-router",
+	"tanstack-start",
+	"tanstack:",
+] as const;
+
+function isTanStackStartPlugin(plugin: Plugin): boolean {
+	return tanStackStartPluginPrefixes.some((prefix) =>
+		plugin.name.startsWith(prefix),
+	);
+}
 
 function withoutTanStackStart(plugins: PluginOption[]): PluginOption[] {
 	return plugins.flatMap((plugin) => {
 		if (Array.isArray(plugin)) return withoutTanStackStart(plugin);
-		return plugin?.name?.includes("tanstack") ? [] : [plugin];
+		if (!plugin || typeof plugin !== "object") return [];
+		return isTanStackStartPlugin(plugin) ? [] : [plugin];
 	});
 }
 

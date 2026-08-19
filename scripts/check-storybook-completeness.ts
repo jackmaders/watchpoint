@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 export interface AccessibilityWaiver {
@@ -8,6 +8,16 @@ export interface AccessibilityWaiver {
 	reason: string;
 	ruleId: string;
 	story: string;
+}
+
+export function discoverStoryFiles(storyRoot: string): string[] {
+	return readdirSync(storyRoot, { withFileTypes: true }).flatMap(
+		(entry: Dirent) => {
+			const path = join(storyRoot, entry.name);
+			if (entry.isDirectory()) return discoverStoryFiles(path);
+			return /\.stories\.(ts|tsx)$/.test(entry.name) ? [path] : [];
+		},
+	);
 }
 
 const waiverFields = [
@@ -63,11 +73,9 @@ export function checkCompleteness(root = process.cwd()): string[] {
 	const uiRoot = join(root, "src/shared/ui");
 	const storyRoot = join(uiRoot, "__stories__");
 	const surface = readFileSync(join(uiRoot, "index.ts"), "utf8");
-	const stories = readdirSync(storyRoot).filter((file) =>
-		file.endsWith(".stories.tsx"),
-	);
-	const errors = validateVisualStories(surface, stories, storyRoot);
-	errors.push(...validateStoryMetadata(stories, storyRoot, root));
+	const stories = discoverStoryFiles(storyRoot);
+	const errors = validateVisualStories(surface, stories, root);
+	errors.push(...validateStoryMetadata(stories, root));
 	const waiverPath = join(root, "storybook/accessibility-waivers.json");
 	if (existsSync(waiverPath))
 		errors.push(
@@ -79,7 +87,7 @@ export function checkCompleteness(root = process.cwd()): string[] {
 function validateVisualStories(
 	surface: string,
 	stories: string[],
-	storyRoot: string,
+	root: string,
 ): string[] {
 	const visualExports = [...surface.matchAll(/export \{([^}]+)\}/g)]
 		.flatMap((match) =>
@@ -90,36 +98,30 @@ function validateVisualStories(
 		);
 	return visualExports.flatMap((component) => {
 		const matching = stories.filter((file) =>
-			readFileSync(join(storyRoot, file), "utf8").includes(
-				`component: ${component}`,
-			),
+			readFileSync(file, "utf8").includes(`component: ${component}`),
 		);
 		if (matching.length === 0)
 			return [`visual export ${component} has no matching story`];
 		return matching.flatMap((file) => {
-			const source = readFileSync(join(storyRoot, file), "utf8");
+			const source = readFileSync(file, "utf8");
 			const errors: string[] = [];
 			if (!source.includes(`title: "Shared UI / ${component}"`))
-				errors.push(`${file} must be grouped under Shared UI / ${component}`);
+				errors.push(
+					`${relative(root, file)} must be grouped under Shared UI / ${component}`,
+				);
 			if (!/export const Default\s*:\s*Story/.test(source))
-				errors.push(`${file} must expose a Default story`);
+				errors.push(`${relative(root, file)} must expose a Default story`);
 			return errors;
 		});
 	});
 }
 
-function validateStoryMetadata(
-	stories: string[],
-	storyRoot: string,
-	root: string,
-): string[] {
+function validateStoryMetadata(stories: string[], root: string): string[] {
 	return stories.flatMap((story) => {
-		const source = readFileSync(join(storyRoot, story), "utf8");
+		const source = readFileSync(story, "utf8");
 		return /export default meta;/.test(source) && /satisfies Meta</.test(source)
 			? []
-			: [
-					`${relative(root, join(storyRoot, story))} has invalid typed metadata`,
-				];
+			: [`${relative(root, story)} has invalid typed metadata`];
 	});
 }
 

@@ -13,7 +13,7 @@ test("every shared UI story has no WCAG 2.2 AA violations", async ({
 	const storyIds = Object.entries(index.entries)
 		.filter(([, entry]) => entry.type === "story")
 		.map(([id]) => id)
-		.filter((id) => id.startsWith("shared-ui-button--"));
+		.sort();
 	expect(storyIds.length).toBeGreaterThan(0);
 
 	for (const storyId of storyIds) {
