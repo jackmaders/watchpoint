@@ -10,6 +10,25 @@ export interface AccessibilityWaiver {
 	story: string;
 }
 
+export interface CompletenessOptions {
+	readFile?: (path: string) => string;
+	storyFiles?: string[];
+	waiverFile?: string;
+}
+
+const NON_VISUAL_EXPORTS = new Set(["buttonVariants"]);
+const waiverFields = [
+	"story",
+	"ruleId",
+	"reason",
+	"owner",
+	"issue",
+	"expires",
+] as const;
+const issueUrlPattern =
+	/^https:\/\/github\.com\/jackmaders\/watchpoint\/issues\/\d+$/;
+const expiryPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 export function discoverStoryFiles(storyRoot: string): string[] {
 	return readdirSync(storyRoot, { withFileTypes: true }).flatMap(
 		(entry: Dirent) => {
@@ -19,15 +38,6 @@ export function discoverStoryFiles(storyRoot: string): string[] {
 		},
 	);
 }
-
-const waiverFields = [
-	"story",
-	"ruleId",
-	"reason",
-	"owner",
-	"issue",
-	"expires",
-] as const;
 
 function validateWaiver(value: unknown, index: number, now: Date): string[] {
 	if (!value || typeof value !== "object")
@@ -39,21 +49,29 @@ function validateWaiver(value: unknown, index: number, now: Date): string[] {
 				typeof waiver[field] !== "string" || waiver[field].trim() === "",
 		)
 		.map((field) => `waiver ${index + 1} is missing ${field}`);
-	if (typeof waiver.expires === "string") {
-		const expiry = new Date(`${waiver.expires}T23:59:59.999Z`);
-		if (Number.isNaN(expiry.valueOf()))
-			errors.push(`waiver ${index + 1} has an invalid expiry date`);
-		else if (expiry < now) errors.push(`waiver ${index + 1} has expired`);
-	}
-	if (
-		typeof waiver.issue === "string" &&
-		!/^https:\/\/github\.com\/jackmaders\/watchpoint\/issues\/\d+$/.test(
-			waiver.issue,
-		)
-	) {
-		errors.push(`waiver ${index + 1} must link to a Watchpoint issue`);
-	}
+	if (typeof waiver.expires === "string")
+		errors.push(...validateExpiry(waiver.expires, index, now));
+	if (typeof waiver.issue === "string")
+		errors.push(...validateIssue(waiver.issue, index));
 	return errors;
+}
+
+function validateExpiry(expires: string, index: number, now: Date): string[] {
+	const match = expiryPattern.exec(expires);
+	const expiry = match ? new Date(`${expires}T23:59:59.999Z`) : null;
+	if (
+		!expiry ||
+		Number.isNaN(expiry.valueOf()) ||
+		expiry.toISOString().slice(0, 10) !== expires
+	)
+		return [`waiver ${index + 1} has an invalid expiry date`];
+	return expiry < now ? [`waiver ${index + 1} has expired`] : [];
+}
+
+function validateIssue(issue: string, index: number): string[] {
+	return issueUrlPattern.test(issue)
+		? []
+		: [`waiver ${index + 1} must link to a Watchpoint issue`];
 }
 
 export function validateWaivers(value: unknown, now = new Date()): string[] {
@@ -61,67 +79,110 @@ export function validateWaivers(value: unknown, now = new Date()): string[] {
 		!value ||
 		typeof value !== "object" ||
 		!Array.isArray((value as { waivers?: unknown }).waivers)
-	) {
+	)
 		return ["waiver file must contain a waivers array"];
-	}
 	return (value as { waivers: unknown[] }).waivers.flatMap((waiver, index) =>
 		validateWaiver(waiver, index, now),
 	);
 }
 
-export function checkCompleteness(root = process.cwd()): string[] {
+export function checkCompleteness(
+	root = process.cwd(),
+	options: CompletenessOptions = {},
+): string[] {
 	const uiRoot = join(root, "src/shared/ui");
-	const storyRoot = join(uiRoot, "__stories__");
-	const surface = readFileSync(join(uiRoot, "index.ts"), "utf8");
-	const stories = discoverStoryFiles(storyRoot);
-	const errors = validateVisualStories(surface, stories, root);
-	errors.push(...validateStoryMetadata(stories, root));
+	const readFile =
+		options.readFile ?? ((path: string) => readFileSync(path, "utf8"));
+	const surface = readFile(join(uiRoot, "index.ts"));
+	const storyFiles =
+		options.storyFiles ?? discoverStoryFiles(join(uiRoot, "__stories__"));
+	const errors = validateVisualStories(surface, storyFiles, readFile, root);
+	errors.push(...validateStoryMetadata(storyFiles, readFile, root));
 	const waiverPath = join(root, "storybook/accessibility-waivers.json");
-	if (existsSync(waiverPath))
-		errors.push(
-			...validateWaivers(JSON.parse(readFileSync(waiverPath, "utf8"))),
-		);
+	if (options.waiverFile !== undefined) {
+		errors.push(...parseWaivers(options.waiverFile));
+	} else if (existsSync(waiverPath)) {
+		errors.push(...parseWaivers(readFile(waiverPath)));
+	}
 	return errors;
+}
+
+function parseWaivers(source: string): string[] {
+	try {
+		return validateWaivers(JSON.parse(source));
+	} catch {
+		return ["accessibility waiver file contains invalid JSON"];
+	}
+}
+
+function publicValueExports(surface: string): string[] {
+	return [...surface.matchAll(/export\s*\{([^}]+)\}/g)]
+		.flatMap((match) => match[1].split(","))
+		.map((item) => item.trim().split(/\s+as\s+/)[0])
+		.filter(
+			(name) =>
+				/^[A-Z][A-Za-z0-9]*$/.test(name) && !NON_VISUAL_EXPORTS.has(name),
+		);
 }
 
 function validateVisualStories(
 	surface: string,
-	stories: string[],
+	storyFiles: string[],
+	readFile: (path: string) => string,
 	root: string,
 ): string[] {
-	const visualExports = [...surface.matchAll(/export \{([^}]+)\}/g)]
-		.flatMap((match) =>
-			match[1].split(",").map((item) => item.trim().split(" as ")[0]),
-		)
-		.filter(
-			(name) => /^[A-Z][A-Za-z0-9]*$/.test(name) && name !== "buttonVariants",
+	const visualExports = publicValueExports(surface);
+	const errors = visualExports.flatMap((component) => {
+		const matching = storyFiles.filter(
+			(file) => metadataComponent(readFile(file)) === component,
 		);
-	return visualExports.flatMap((component) => {
-		const matching = stories.filter((file) =>
-			readFileSync(file, "utf8").includes(`component: ${component}`),
-		);
-		if (matching.length === 0)
-			return [`visual export ${component} has no matching story`];
-		return matching.flatMap((file) => {
-			const source = readFileSync(file, "utf8");
-			const errors: string[] = [];
-			if (!source.includes(`title: "Shared UI / ${component}"`))
-				errors.push(
-					`${relative(root, file)} must be grouped under Shared UI / ${component}`,
-				);
-			if (!/export const Default\s*:\s*Story/.test(source))
-				errors.push(`${relative(root, file)} must expose a Default story`);
-			return errors;
-		});
+		return matching.length > 0
+			? []
+			: [`visual export ${component} has no matching story`];
 	});
+	for (const story of storyFiles) {
+		const source = readFile(story);
+		const referenced = visualExports.filter(
+			(component) => metadataComponent(source) === component,
+		);
+		if (referenced.length === 0)
+			errors.push(
+				`${relative(root, story)} must reference a visual shared UI export`,
+			);
+	}
+	return errors;
 }
 
-function validateStoryMetadata(stories: string[], root: string): string[] {
+function metadataComponent(source: string): string | undefined {
+	const metadata = source.match(
+		/const\s+meta\s*=\s*\{([\s\S]*?)\}\s*satisfies\s+Meta\s*</,
+	)?.[1];
+	return metadata?.match(/\bcomponent\s*:\s*([A-Z][A-Za-z0-9]*)\b/)?.[1];
+}
+
+function validateStoryMetadata(
+	stories: string[],
+	readFile: (path: string) => string,
+	root: string,
+): string[] {
 	return stories.flatMap((story) => {
-		const source = readFileSync(story, "utf8");
-		return /export default meta;/.test(source) && /satisfies Meta</.test(source)
-			? []
-			: [`${relative(root, story)} has invalid typed metadata`];
+		const source = readFile(story);
+		const path = relative(root, story);
+		const errors: string[] = [];
+		if (
+			!/export\s+default\s+meta\s*;/.test(source) ||
+			!/satisfies\s+Meta\s*</.test(source)
+		)
+			errors.push(`${path} must expose a valid default metadata export`);
+		const component = metadataComponent(source);
+		if (
+			component &&
+			!new RegExp(`title\\s*:\\s*["']Shared UI / ${component}["']`).test(source)
+		)
+			errors.push(`${path} must be grouped under Shared UI / ${component}`);
+		if (!/export\s+const\s+Default\s*:\s*Story\b/.test(source))
+			errors.push(`${path} must expose a Default story`);
+		return errors;
 	});
 }
 
