@@ -11,7 +11,7 @@ concurrency:
 jobs:
 
   storybook-a11y:
-    name: ♿ Storybook Accessibility Harness
+    name: ♿ Run Accessibility Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
