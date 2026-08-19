@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionManifest } from "@/shared/db";
+import { authClient } from "@/shared/lib/auth-client";
 import { VodDetailPage } from "../vod-detail-page";
 
 vi.mock("@tanstack/react-router");
+vi.mock("@/shared/lib/auth-client");
 
 describe("VodDetailPage", () => {
 	beforeEach(() => {
@@ -116,6 +118,46 @@ describe("VodDetailPage", () => {
 
 		// Assert
 		expect(screen.queryByText(/Hero:/)).toBeNull();
+	});
+
+	it("opens the authentication modal before anonymous training starts", async () => {
+		// Arrange
+		const ui = await VodDetailPage({
+			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
+		});
+		render(ui);
+
+		// Act
+		fireEvent.click(
+			screen.getByRole("link", { name: "Start Training Session" }),
+		);
+
+		// Assert
+		expect(screen.getByRole("dialog")).toBeDefined();
+		expect(
+			screen.getByRole("heading", { name: "Welcome back, player" }),
+		).toBeDefined();
+	});
+
+	it("allows an authenticated player to start training", async () => {
+		// Arrange
+		vi.mocked(authClient.useSession).mockReturnValue({
+			data: { user: { id: "user-1" } },
+		} as never);
+		const ui = await VodDetailPage({
+			params: Promise.resolve({ id: "vod_1" }),
+			vod: mockVod,
+		});
+		render(ui);
+
+		// Act
+		fireEvent.click(
+			screen.getByRole("link", { name: "Start Training Session" }),
+		);
+
+		// Assert
+		expect(screen.queryByRole("dialog")).toBeNull();
 	});
 
 	it("renders module filter controls for all 5 modules (STRATEGY, TACTICS, ULTIMATE, COOLDOWN, SPATIAL)", async () => {

@@ -723,7 +723,51 @@ describe("session playthrough coordinator", () => {
 		// Assert
 		expect(ignoredRetry).toBe(terminal);
 		expect(retried.mediaHealth).toBe("recovering");
+		expect(retried.generation).toBe(terminal.generation + 1);
+		expect(retried.recoveryAttempted).toBe(false);
 		expect(retried.effects.at(-1)?.type).toBe("MEDIA_RECOVER");
+		expect(retried.effects.at(-1)?.generation).toBe(retried.generation);
+	});
+
+	it("keeps scenario timing and phase stable while recovery blocks playback", () => {
+		// Arrange
+		const state = readyPlayingState([timedScenario]);
+		const active = sessionPlaythroughReducer(state, {
+			generation: state.generation,
+			nowMs: 1000,
+			time: 60,
+			type: "TIME_UPDATED",
+		});
+		const recovering = sessionPlaythroughReducer(active, {
+			failure: { category: "readiness", message: "not ready" },
+			generation: active.generation,
+			nowMs: 2000,
+			type: "MEDIA_FAILURE",
+		});
+
+		// Act
+		const underlyingPlayback = sessionPlaythroughReducer(recovering, {
+			generation: recovering.generation,
+			nowMs: 2500,
+			status: PlaybackStatus.PLAYING,
+			type: "PLAYBACK_STATUS_CHANGED",
+		});
+		const failed = { ...recovering, mediaHealth: "failed" as const };
+		const staleRecovery = sessionPlaythroughReducer(failed, {
+			generation: recovering.generation,
+			nowMs: 3000,
+			retryCount: 1,
+			type: "RECOVERY_SUCCEEDED",
+		});
+
+		// Assert
+		expect(underlyingPlayback).toBe(recovering);
+		expect(underlyingPlayback.session.state).toBe("SCENARIO_ACTIVE");
+		expect(underlyingPlayback.session.overlayState).toEqual({
+			status: "unanswered",
+		});
+		expect(underlyingPlayback.deadlineAtMs).toBe(active.deadlineAtMs);
+		expect(staleRecovery).toBe(failed);
 	});
 
 	it("pauses and resumes countdown evaluation across a buffering status", () => {

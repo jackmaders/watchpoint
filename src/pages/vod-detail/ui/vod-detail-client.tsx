@@ -1,8 +1,10 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import type { getSessionManifest, ModuleType } from "@/shared/db";
+import { authClient } from "@/shared/lib/auth-client";
+import { AuthModal } from "@/shared/ui/auth-modal";
 import { buildSessionUrl } from "../model/module-filter";
 import {
 	calculateModuleCounts,
@@ -18,6 +20,17 @@ export interface VodDetailClientProps {
 export function VodDetailClient({ vod }: VodDetailClientProps) {
 	const [activeModules, setActiveModules] = useState<ModuleType[]>(() =>
 		MODULE_DEFINITIONS.map((def) => def.key),
+	);
+	const [authOpen, setAuthOpen] = useState(false);
+	const session = authClient.useSession();
+	const handleStart = useCallback(
+		(event: MouseEvent<HTMLAnchorElement>) => {
+			if (!session.data?.user) {
+				event.preventDefault();
+				setAuthOpen(true);
+			}
+		},
+		[session.data?.user],
 	);
 
 	const availableCounts = useMemo(
@@ -83,10 +96,12 @@ export function VodDetailClient({ vod }: VodDetailClientProps) {
 								: "bg-muted text-muted-foreground cursor-not-allowed pointer-events-none"
 						}`}
 						href={startHref}
+						onClick={handleStart}
 						to={startHref}
 					>
 						Start Training Session
 					</Link>
+					<AuthModal onOpenChange={setAuthOpen} open={authOpen} />
 				</div>
 			</div>
 		</div>

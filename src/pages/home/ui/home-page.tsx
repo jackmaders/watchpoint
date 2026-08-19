@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
-import { UserForm } from "./user-form";
+import { AccountControls } from "@/shared/ui/auth-modal";
 
 export function HomePage(props?: { vods?: PublishedVodItem[] }) {
 	const vods = props?.vods ?? [];
@@ -8,6 +8,9 @@ export function HomePage(props?: { vods?: PublishedVodItem[] }) {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground sm:p-12 lg:p-24">
 			<div className="w-full max-w-4xl space-y-12">
+				<div className="flex justify-end">
+					<AccountControls />
+				</div>
 				<div className="space-y-4 text-center">
 					<p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
 						Watchpoint / Field Briefing
@@ -75,10 +78,6 @@ export function HomePage(props?: { vods?: PublishedVodItem[] }) {
 						</div>
 					)}
 				</section>
-
-				<div className="mx-auto w-full max-w-md border-t border-border pt-6">
-					<UserForm />
-				</div>
 			</div>
 		</main>
 	);
