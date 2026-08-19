@@ -2,9 +2,9 @@ import { Link } from "@tanstack/react-router";
 import type { SessionManifest } from "@/shared/db";
 import { SessionPlayerClient } from "./session-player-client";
 
-export async function SessionPlayerPage({
-	params,
-	searchParams,
+export function SessionPlayerPage({
+	params: _params,
+	searchParams: _searchParams,
 	vod,
 }: {
 	params: Promise<{ id: string }> | { id: string };
@@ -14,9 +14,6 @@ export async function SessionPlayerPage({
 		| undefined;
 	vod?: SessionManifest | null;
 }) {
-	await params;
-	await searchParams;
-
 	if (!vod) {
 		return (
 			<main className="min-h-screen bg-background text-foreground px-4 py-8 sm:px-6 sm:py-12 flex items-center justify-center">

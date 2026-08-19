@@ -39,7 +39,12 @@ function createAuthInstance(
 		...config,
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
-			schema,
+			schema: {
+				account: schema.accounts,
+				session: schema.sessions,
+				user: schema.users,
+				verification: schema.verifications,
+			},
 		}),
 	});
 }

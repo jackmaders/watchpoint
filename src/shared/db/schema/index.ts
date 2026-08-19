@@ -77,6 +77,7 @@ export const accounts = sqliteTable("account", {
 	createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 	id: text("id").primaryKey(),
 	idToken: text("idToken"),
+	issuer: text("issuer"),
 	password: text("password"),
 	providerId: text("providerId").notNull(),
 	refreshToken: text("refreshToken"),
