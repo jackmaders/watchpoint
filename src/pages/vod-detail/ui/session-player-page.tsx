@@ -5,14 +5,18 @@ import { SessionPlayerClient } from "./session-player-client";
 export function SessionPlayerPage({
 	params: _params,
 	searchParams: _searchParams,
+	playthroughId,
+	scenarioSnapshotIds,
 	vod,
 }: {
 	params: Promise<{ id: string }> | { id: string };
 	searchParams?:
-		| Promise<{ modules?: string }>
-		| { modules?: string }
+		| Promise<{ modules?: string; playthroughId?: string }>
+		| { modules?: string; playthroughId?: string }
 		| undefined;
 	vod?: SessionManifest | null;
+	playthroughId?: string | null;
+	scenarioSnapshotIds?: readonly string[];
 }) {
 	if (!vod) {
 		return (
@@ -38,7 +42,11 @@ export function SessionPlayerPage({
 
 	return (
 		<main className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-8">
-			<SessionPlayerClient vod={vod} />
+			<SessionPlayerClient
+				playthroughId={playthroughId}
+				scenarioSnapshotIds={scenarioSnapshotIds}
+				vod={vod}
+			/>
 		</main>
 	);
 }

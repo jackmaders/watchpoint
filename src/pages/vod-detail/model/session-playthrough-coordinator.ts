@@ -56,6 +56,7 @@ export function resolveNewStatusState(
 
 export interface SessionScenario {
 	id: string;
+	scenarioSnapshotId?: string;
 	input: ScenarioInput;
 	moduleType: ModuleType;
 	timestampSeconds: number;
@@ -321,6 +322,7 @@ function finalizeAttemptOutcome(
 		idempotencyKey: crypto.randomUUID(),
 		moduleType: scenario.moduleType,
 		scenarioId: scenario.id,
+		scenarioSnapshotId: scenario.scenarioSnapshotId,
 	};
 }
 

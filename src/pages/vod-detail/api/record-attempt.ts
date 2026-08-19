@@ -13,7 +13,7 @@ const IDEMPOTENCY_CONFLICT_ERROR = "Attempt idempotency conflict";
 function isUniqueConstraintError(error: unknown): boolean {
 	return (
 		error instanceof Error &&
-		/unique constraint failed:\s*attempt_record\.idempotency_key$/i.test(
+		/unique constraint failed:\s*attempt_record\.(idempotency_key|playthrough_snapshot_idx)$/i.test(
 			error.message.trim(),
 		)
 	);
@@ -90,20 +90,23 @@ async function belongsToAuthenticatedPlaythrough(
 	db: AttemptDatabase,
 	playthroughId: string,
 	scenarioSnapshotId: string,
+	scenarioId: string,
 	userId: string,
 ): Promise<boolean> {
 	const playthrough = await db.query.playthroughs.findFirst({
-		where: (playthrough, { and, eq }) =>
-			and(eq(playthrough.id, playthroughId), eq(playthrough.userId, userId)),
+		where: (playthrough, { eq }) => eq(playthrough.id, playthroughId),
 		with: {
-			scenarioSnapshots: {
-				columns: { id: true },
-				where: (snapshot, { eq }) => eq(snapshot.id, scenarioSnapshotId),
-			},
+			scenarioSnapshots: true,
 		},
 	});
+	if (playthrough === undefined) return false;
+	if (playthrough.userId !== userId) return false;
+	if (playthrough.status !== "IN_PROGRESS") return false;
 
-	return (playthrough?.scenarioSnapshots.length ?? 0) === 1;
+	return playthrough.scenarioSnapshots.some((snapshot) => {
+		if (snapshot.id !== scenarioSnapshotId) return false;
+		return snapshot.scenarioId === scenarioId;
+	});
 }
 
 type AttemptDatabase = Awaited<ReturnType<typeof getDb>>;
@@ -204,6 +207,7 @@ export async function recordAttemptAction(
 				db,
 				parsed.data.playthroughId,
 				parsed.data.scenarioSnapshotId,
+				parsed.data.scenarioId,
 				userId,
 			))
 		) {

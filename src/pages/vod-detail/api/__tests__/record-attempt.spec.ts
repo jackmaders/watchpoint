@@ -296,7 +296,9 @@ describe("recordAttemptAction", () => {
 		// Arrange
 		const db = await getDb();
 		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [{ id: "snapshot_1" }],
+			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+			status: "IN_PROGRESS",
+			userId: "usr_auth_default",
 		} as never);
 		const values = vi.fn((_record: unknown) => ({
 			returning: vi.fn().mockResolvedValue([{ id: "attempt_2" }]),
@@ -347,6 +349,148 @@ describe("recordAttemptAction", () => {
 			success: false,
 		});
 		expect(db.insert).not.toHaveBeenCalled();
+	});
+
+	it("rejects attempts after the playthrough is completed", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+			status: "COMPLETED",
+			userId: "usr_auth_default",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+	});
+
+	it("rejects a snapshot whose source Scenario does not match", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: "other_scenario" }],
+			status: "IN_PROGRESS",
+			userId: "usr_auth_default",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+	});
+
+	it("rejects a playthrough owned by another authenticated user", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+			status: "IN_PROGRESS",
+			userId: "usr_other",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+	});
+
+	it("rejects an owned playthrough without the requested snapshot", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [],
+			status: "IN_PROGRESS",
+			userId: "usr_auth_default",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
+	});
+
+	it("rejects an owned playthrough with a different snapshot", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			scenarioSnapshots: [
+				{ id: "other_snapshot", scenarioId: validScenarioId },
+			],
+			status: "IN_PROGRESS",
+			userId: "usr_auth_default",
+		} as never);
+		const input = {
+			idempotencyKey: validIdempotencyKey,
+			isCorrect: true,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 1500,
+			scenarioId: validScenarioId,
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "opt_a",
+		};
+
+		// Act
+		const result = await recordAttemptAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error: "Playthrough snapshot ownership is required",
+			success: false,
+		});
 	});
 
 	it("rejects a cross-user playthrough even when the requester is authenticated", async () => {

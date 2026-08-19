@@ -3,9 +3,11 @@ import { getSessionManifest as dbGetSessionManifest } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import * as recordAttemptModule from "../record-attempt";
 import {
+	completePlaythrough,
 	getProtectedSessionManifest,
 	getSessionManifest,
 	recordAttempt,
+	startPlaythrough,
 } from "../server-fns";
 
 vi.mock("@tanstack/react-start");
@@ -146,5 +148,27 @@ describe("server-fns", () => {
 				recordAttempt as unknown as (ctx: { data: unknown }) => Promise<unknown>
 			)({ data: invalidPayload }),
 		).rejects.toThrow("Invalid attempt payload");
+	});
+
+	it("runs the playthrough lifecycle server handlers", async () => {
+		// Arrange
+		const start = startPlaythrough as unknown as (ctx: {
+			data: unknown;
+		}) => Promise<unknown>;
+		const complete = completePlaythrough as unknown as (ctx: {
+			data: { playthroughId: string };
+		}) => Promise<unknown>;
+
+		// Act
+		const started = await start({
+			data: { id: "playthrough_1", modules: [], scenarios: [], vodId: "vod_1" },
+		});
+		const completed = await complete({
+			data: { playthroughId: "playthrough_1" },
+		});
+
+		// Assert
+		expect(started).toBeDefined();
+		expect(completed).toBeDefined();
 	});
 });

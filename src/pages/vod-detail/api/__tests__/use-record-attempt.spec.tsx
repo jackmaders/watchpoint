@@ -99,6 +99,44 @@ describe("useRecordAttemptMutation", () => {
 		});
 	});
 
+	it("includes playthrough snapshot identifiers when recording a persisted attempt", async () => {
+		// Arrange
+		const payload = {
+			idempotencyKey: "0b4b8b0b-1c4e-4c7f-8f33-7a6d9d8e4b21",
+			isCorrect: true,
+			isTimedOut: false,
+			moduleType: "STRATEGY" as const,
+			playthroughId: "playthrough_1",
+			responseTimeMs: 200,
+			scenarioId: "a0000000-0000-0000-0000-000000000001",
+			scenarioSnapshotId: "snapshot_1",
+			selectedOptionId: "option-1",
+		};
+		const recordAttempt = vi
+			.spyOn(serverFns, "recordAttempt")
+			.mockResolvedValueOnce({
+				attemptId: "att_persisted",
+				success: true,
+			} as never);
+
+		// Act
+		await executeRecordAttempt(payload);
+
+		// Assert
+		expect(recordAttempt).toHaveBeenCalledWith({
+			data: {
+				idempotencyKey: payload.idempotencyKey,
+				isCorrect: true,
+				isTimedOut: false,
+				playthroughId: payload.playthroughId,
+				responseTimeMs: 200,
+				scenarioId: payload.scenarioId,
+				scenarioSnapshotId: payload.scenarioSnapshotId,
+				selectedOptionId: "option-1",
+			},
+		});
+	});
+
 	it("throws error in executeRecordAttempt when server function returns unsuccessful result", async () => {
 		// Arrange
 		const payload = {

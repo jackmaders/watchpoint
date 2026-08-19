@@ -44,6 +44,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
 	attempts: many(attemptRecords),
 	auditEntries: many(auditEntries),
+	playthroughCompletions: many(playthroughCompletions),
 	playthroughs: many(playthroughs),
 	sessions: many(sessions),
 }));
@@ -231,6 +232,9 @@ export const attemptRecords = sqliteTable(
 			table.playthroughId,
 			table.createdAt,
 		),
+		playthroughSnapshotIdx: uniqueIndex(
+			"attempt_record_playthrough_snapshot_idx",
+		).on(table.playthroughId, table.scenarioSnapshotId),
 		userIdx: index("attempt_record_user_idx").on(table.userId, table.createdAt),
 	}),
 );
@@ -286,6 +290,7 @@ export const playthroughsRelations = relations(
 	playthroughs,
 	({ many, one }) => ({
 		attempts: many(attemptRecords),
+		completion: one(playthroughCompletions),
 		moduleSelections: many(playthroughModuleSelections),
 		scenarioSnapshots: many(scenarioSnapshots),
 		user: one(users, {
@@ -295,6 +300,44 @@ export const playthroughsRelations = relations(
 		vod: one(vods, {
 			fields: [playthroughs.vodId],
 			references: [vods.id],
+		}),
+	}),
+);
+
+export const playthroughCompletions = sqliteTable(
+	"playthrough_completion",
+	{
+		completedAt: integer("completed_at", { mode: "timestamp" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		playthroughId: text("playthrough_id")
+			.notNull()
+			.references(() => playthroughs.id, { onDelete: "cascade" })
+			.unique(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+	},
+	(table) => ({
+		userCompletedAtIdx: index(
+			"playthrough_completion_user_completed_at_idx",
+		).on(table.userId, table.completedAt),
+	}),
+);
+
+export const playthroughCompletionsRelations = relations(
+	playthroughCompletions,
+	({ one }) => ({
+		playthrough: one(playthroughs, {
+			fields: [playthroughCompletions.playthroughId],
+			references: [playthroughs.id],
+		}),
+		user: one(users, {
+			fields: [playthroughCompletions.userId],
+			references: [users.id],
 		}),
 	}),
 );

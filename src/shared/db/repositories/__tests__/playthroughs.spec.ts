@@ -38,7 +38,7 @@ describe("playthrough database accessors", () => {
 
 		// Assert
 		expect(result.id).toBe("mock_attempt_id");
-		expect(db.insert).toHaveBeenCalledTimes(3);
+		expect(db.insert).toHaveBeenCalledTimes(4);
 	});
 
 	it("loads a playthrough with its selections, snapshots, and attempts", async () => {
@@ -76,7 +76,7 @@ describe("playthrough database accessors", () => {
 
 		// Assert
 		expect(result.id).toBe("mock_attempt_id");
-		expect(db.insert).toHaveBeenCalledTimes(1);
+		expect(db.insert).toHaveBeenCalledTimes(2);
 	});
 
 	it("accepts a stable playthrough identifier when provided", async () => {
@@ -94,7 +94,7 @@ describe("playthrough database accessors", () => {
 
 		// Assert
 		expect(result.id).toBe("mock_attempt_id");
-		expect(db.insert).toHaveBeenCalledTimes(1);
+		expect(db.insert).toHaveBeenCalledTimes(2);
 	});
 
 	it("throws when a playthrough cannot be returned after insertion", async () => {
@@ -181,7 +181,7 @@ describe("playthrough database accessors", () => {
 		const result = await completePlaythrough("playthrough_1", "player_1");
 
 		// Assert
-		expect(result).toEqual({ id: "playthrough_1", status: "COMPLETED" });
+		expect(result).toEqual({ id: "mock_attempt_id" });
 	});
 
 	it("returns null when completion updates no playthrough", async () => {
@@ -218,5 +218,205 @@ describe("playthrough database accessors", () => {
 
 		// Assert
 		expect(result).toBeNull();
+	});
+
+	it("returns an identical playthrough for a duplicate start identity", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.transaction).mockRejectedValueOnce(
+			new Error("UNIQUE constraint failed: playthrough.id"),
+		);
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			id: "stable_playthrough_1",
+			moduleSelections: [{ moduleType: "STRATEGY" }],
+			scenarioSnapshots: [],
+			userId: "player_1",
+			vodId: "vod_1",
+		} as never);
+
+		// Act
+		const result = await createPlaythrough({
+			id: "stable_playthrough_1",
+			modules: ["STRATEGY"],
+			scenarios: [],
+			userId: "player_1",
+			vodId: "vod_1",
+		});
+
+		// Assert
+		expect(result.id).toBe("stable_playthrough_1");
+	});
+
+	it("matches all snapshot content for a duplicate start identity", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.transaction).mockRejectedValueOnce(
+			new Error("UNIQUE constraint failed: playthrough.id"),
+		);
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			id: "stable_playthrough_1",
+			moduleSelections: [{ moduleType: "STRATEGY" }],
+			scenarioSnapshots: [
+				{
+					explanationText: "Explain",
+					imageUrl: null,
+					inputConfig: { options: [] },
+					inputType: "MULTIPLE_CHOICE",
+					moduleType: "STRATEGY",
+					position: 0,
+					promptText: "Prompt",
+					scenarioId: "scenario_1",
+					timeLimitSeconds: null,
+					timestampSeconds: 12,
+				},
+			],
+			userId: "player_1",
+			vodId: "vod_1",
+		} as never);
+
+		// Act
+		const result = await createPlaythrough({
+			id: "stable_playthrough_1",
+			modules: ["STRATEGY"],
+			scenarios: [
+				{
+					explanationText: "Explain",
+					inputConfig: { options: [] },
+					inputType: "MULTIPLE_CHOICE",
+					moduleType: "STRATEGY",
+					promptText: "Prompt",
+					scenarioId: "scenario_1",
+					timeLimitSeconds: null,
+					timestampSeconds: 12,
+				},
+			],
+			userId: "player_1",
+			vodId: "vod_1",
+		});
+
+		// Assert
+		expect(result.id).toBe("stable_playthrough_1");
+	});
+
+	it("preserves a caller supplied snapshot identity", async () => {
+		// Arrange
+		const db = await getDb();
+
+		// Act
+		await createPlaythrough({
+			modules: [],
+			scenarios: [
+				{
+					explanationText: "Explain",
+					id: "snapshot_1",
+					inputConfig: {},
+					inputType: "MULTIPLE_CHOICE",
+					moduleType: "STRATEGY",
+					promptText: "Prompt",
+					scenarioId: "scenario_1",
+					timestampSeconds: 1,
+				},
+			],
+			userId: "player_1",
+			vodId: "vod_1",
+		});
+
+		// Assert
+		expect(db.insert).toHaveBeenCalled();
+	});
+
+	it("rejects a duplicate start identity with changed content", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.transaction).mockRejectedValueOnce(
+			new Error("UNIQUE constraint failed: playthrough.id"),
+		);
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			id: "stable_playthrough_1",
+			moduleSelections: [],
+			scenarioSnapshots: [],
+			userId: "player_1",
+			vodId: "other_vod",
+		} as never);
+
+		// Act & Assert
+		await expect(
+			createPlaythrough({
+				id: "stable_playthrough_1",
+				modules: [],
+				scenarios: [],
+				userId: "player_1",
+				vodId: "vod_1",
+			}),
+		).rejects.toThrow("Playthrough start conflict");
+	});
+
+	it("returns the canonical completion after a concurrent completion", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.transaction).mockRejectedValueOnce(
+			new Error(
+				"UNIQUE constraint failed: playthrough_completion.playthrough_id",
+			),
+		);
+		vi.mocked(db.query.playthroughCompletions.findFirst).mockResolvedValueOnce({
+			id: "completion_1",
+		} as never);
+
+		// Act
+		const result = await completePlaythrough("playthrough_1", "player_1");
+
+		// Assert
+		expect(result).toEqual({ id: "completion_1" });
+	});
+
+	it("returns null when completion creation returns no row", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.insert).mockImplementationOnce(
+			() =>
+				({
+					values: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+				}) as never,
+		);
+
+		// Act
+		const result = await completePlaythrough("playthrough_1", "player_1");
+
+		// Assert
+		expect(result).toBeNull();
+	});
+
+	it("returns the existing completion for a sequential duplicate", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.update).mockReturnValueOnce({
+			set: vi.fn(() => ({
+				where: vi.fn(() => ({
+					returning: vi.fn().mockResolvedValueOnce([]),
+				})),
+			})),
+		} as never);
+		vi.mocked(db.query.playthroughCompletions.findFirst).mockResolvedValueOnce({
+			completedAt: new Date("2026-01-01T00:00:00.000Z"),
+			id: "completion_1",
+		} as never);
+
+		// Act
+		const result = await completePlaythrough("playthrough_1", "player_1");
+
+		// Assert
+		expect(result).toMatchObject({ id: "completion_1" });
+	});
+
+	it("rethrows non-unique completion failures", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.transaction).mockRejectedValueOnce(new Error("D1 offline"));
+
+		// Act & Assert
+		await expect(
+			completePlaythrough("playthrough_1", "player_1"),
+		).rejects.toThrow("D1 offline");
 	});
 });

@@ -1,9 +1,10 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDuration } from "@/shared/lib/utils";
 import type { VodContainerRef } from "@/shared/media";
+import { completePlaythrough } from "../api/server-fns";
 import { extractHeroFromTitle } from "../model/module-filter";
 import { MODULE_MAP } from "../model/modules";
 import {
@@ -11,6 +12,7 @@ import {
 	type ScenarioOverlayState,
 	toScenarioOverlayData,
 } from "../model/session-contract";
+import type { SessionSummaryReport } from "../model/summary";
 import {
 	type ManifestVod,
 	type ScenarioItem,
@@ -20,6 +22,8 @@ import { ScenarioOverlay } from "./scenario-overlay";
 import { SessionSummaryPanel } from "./session-summary-panel";
 
 export interface SessionPlayerClientProps {
+	playthroughId?: string | null;
+	scenarioSnapshotIds?: readonly string[];
 	vod: ManifestVod;
 }
 
@@ -306,8 +310,54 @@ export function SessionPlayerViewport({
 	);
 }
 
-export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
+function SessionPlayerHeaderOrSummary({
+	activeCount,
+	currentIndex,
+	exitSession,
+	hero,
+	isCompleted,
+	onRetry,
+	summary,
+	vod,
+}: {
+	activeCount: number;
+	currentIndex: number;
+	exitSession: () => void;
+	hero: string | null;
+	isCompleted: boolean;
+	onRetry: () => void;
+	summary: SessionSummaryReport;
+	vod: ManifestVod;
+}) {
+	return isCompleted ? (
+		<div className="py-8 px-4 max-w-6xl mx-auto">
+			<SessionSummaryPanel
+				onExit={exitSession}
+				onRetry={onRetry}
+				summary={summary}
+			/>
+		</div>
+	) : (
+		<SessionPlayerHeader
+			activeCount={activeCount}
+			currentIndex={currentIndex}
+			hero={hero}
+			vod={vod}
+		/>
+	);
+}
+
+export function SessionPlayerClient({
+	playthroughId,
+	scenarioSnapshotIds,
+	vod,
+}: SessionPlayerClientProps) {
 	const hero = extractHeroFromTitle(vod.title);
+	const handleSessionComplete = useCallback(() => {
+		if (playthroughId) {
+			void completePlaythrough({ data: { playthroughId } });
+		}
+	}, [playthroughId]);
 
 	const {
 		activeScenarioIndex,
@@ -333,6 +383,9 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 		totalMs,
 	} = useSessionPlayer({
 		initialManifest: vod,
+		onSessionComplete: handleSessionComplete,
+		playthroughId,
+		scenarioSnapshotIds,
 		vodId: vod.id,
 	});
 
@@ -350,22 +403,16 @@ export function SessionPlayerClient({ vod }: SessionPlayerClientProps) {
 
 	return (
 		<div className="space-y-6 max-w-6xl mx-auto">
-			{isCompleted ? (
-				<div className="py-8 px-4 max-w-6xl mx-auto">
-					<SessionSummaryPanel
-						onExit={exitSession}
-						onRetry={retrySession}
-						summary={summary}
-					/>
-				</div>
-			) : (
-				<SessionPlayerHeader
-					activeCount={activeScenarios.length}
-					currentIndex={activeScenarioIndex}
-					hero={hero}
-					vod={vod}
-				/>
-			)}
+			<SessionPlayerHeaderOrSummary
+				activeCount={activeScenarios.length}
+				currentIndex={activeScenarioIndex}
+				exitSession={exitSession}
+				hero={hero}
+				isCompleted={isCompleted}
+				onRetry={retrySession}
+				summary={summary as SessionSummaryReport}
+				vod={vod}
+			/>
 
 			<SessionPlayerViewport
 				containerRef={containerRef}

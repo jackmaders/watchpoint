@@ -35,6 +35,13 @@
       "when": 1787156108008,
       "tag": "0004_friendly_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787157673513,
+      "tag": "0005_easy_frightful_four",
+      "breakpoints": true
     }
   ],
   "version": "7"
