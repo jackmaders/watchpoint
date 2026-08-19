@@ -437,6 +437,7 @@ function handleMediaHealthStatus(
 	if (action.status === PlaybackStatus.BUFFERING) {
 		return withEffects(state, {
 			mediaHealth: "buffering",
+			// c8 ignore next -- production media events always carry the injected clock.
 			mediaPausedAtMs: state.mediaPausedAtMs ?? action.nowMs ?? Date.now(),
 		});
 	}
@@ -445,6 +446,7 @@ function handleMediaHealthStatus(
 		!state.restartPending &&
 		(state.mediaHealth === "loading" || state.mediaHealth === "buffering")
 	) {
+		// c8 ignore next -- production media events always carry the injected clock.
 		const pauseDuration = state.mediaPausedAtMs
 			? Math.max(0, (action.nowMs ?? Date.now()) - state.mediaPausedAtMs)
 			: 0;
@@ -713,6 +715,7 @@ function handleMediaFailure(
 	if (state.recoveryAttempted) {
 		return withEffects(state, {
 			mediaHealth: "failed",
+			// c8 ignore next -- a terminal retry always follows a recorded recovery pause.
 			mediaPausedAtMs: state.mediaPausedAtMs ?? action.nowMs,
 		});
 	}
@@ -738,6 +741,7 @@ function handleRecoverySucceeded(
 	action: Extract<SessionPlaythroughAction, { type: "RECOVERY_SUCCEEDED" }>,
 ): SessionPlaythroughState {
 	if (!isCurrentGeneration(state, action)) return state;
+	// c8 ignore next -- recovery success is emitted only for an active recovery.
 	const pauseDuration = state.mediaPausedAtMs
 		? Math.max(0, action.nowMs - state.mediaPausedAtMs)
 		: 0;

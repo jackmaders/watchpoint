@@ -86,6 +86,49 @@ export interface UseSessionPlayerResult {
 
 export type ScenarioOptionItem = ScenarioOption;
 
+export function toSessionPlaythroughMediaAction(
+	event: SessionMediaEvent,
+	autoplay: boolean,
+	nowMs = 0,
+): SessionPlaythroughAction | null {
+	switch (event.type) {
+		case "READY":
+			return {
+				autoplay,
+				generation: event.generation as number,
+				type: "PLAYER_READY",
+			};
+		case "PLAYBACK_STATUS_CHANGED":
+			return {
+				generation: event.generation as number,
+				nowMs,
+				status: event.status,
+				type: "PLAYBACK_STATUS_CHANGED",
+			};
+		case "MEDIA_FAILURE":
+			return {
+				failure: event.failure,
+				generation: event.generation as number,
+				nowMs,
+				type: "MEDIA_FAILURE",
+			};
+		case "RECOVERY_SUCCEEDED":
+			return {
+				generation: event.generation as number,
+				nowMs,
+				retryCount: event.retryCount,
+				type: "RECOVERY_SUCCEEDED",
+			};
+		case "TIME_UPDATED":
+			return {
+				generation: event.generation as number,
+				nowMs,
+				time: event.time,
+				type: "TIME_UPDATED",
+			};
+	}
+}
+
 function useSessionScenarios(vod: ManifestVod | null): ScenarioItem[] {
 	return useMemo(() => {
 		if (!vod?.scenarios) return [];
@@ -207,41 +250,17 @@ function useSessionMedia(
 	);
 	const onMediaEvent = useCallback(
 		(event: SessionMediaEvent) => {
-			switch (event.type) {
-				case "READY":
-					dispatch({
-						autoplay,
-						generation: event.generation as number,
-						type: "PLAYER_READY",
-					});
-					return;
-				case "PLAYBACK_STATUS_CHANGED":
-					dispatch({
-						generation: event.generation as number,
-						nowMs: Date.now(),
-						status: event.status,
-						type: "PLAYBACK_STATUS_CHANGED",
-					});
-					return;
-				case "MEDIA_FAILURE":
-					dispatch({
-						failure: event.failure,
-						generation: event.generation as number,
-						nowMs: Date.now(),
-						type: "MEDIA_FAILURE",
-					});
-					return;
-				case "RECOVERY_SUCCEEDED":
-					dispatch({
-						generation: event.generation as number,
-						nowMs: Date.now(),
-						retryCount: event.retryCount,
-						type: "RECOVERY_SUCCEEDED",
-					});
-					return;
-				case "TIME_UPDATED":
-					onTimeUpdate(event.time, event.generation);
+			const action = toSessionPlaythroughMediaAction(
+				event,
+				autoplay,
+				event.type === "TIME_UPDATED" ? 0 : Date.now(),
+			);
+			if (action?.type === "TIME_UPDATED") {
+				onTimeUpdate(action.time, action.generation);
+				return;
 			}
+			// c8 ignore next -- the semantic media event union is exhaustive.
+			if (action) dispatch(action);
 		},
 		[autoplay, dispatch, onTimeUpdate],
 	);

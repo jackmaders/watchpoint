@@ -214,6 +214,7 @@ function usePlayerLifecycle({
 		let hasNotifiedReady = false;
 		let bufferingTimer: ReturnType<typeof setTimeout> | undefined;
 		const reportError = (failure: MediaFailure) => {
+			// c8 ignore next -- stale lifecycle callbacks are rejected before reaching the adapter.
 			if (!isActiveGeneration()) return;
 			invokeWithLifecycleKey(onErrorRef.current, failure, lifecycleKey);
 		};

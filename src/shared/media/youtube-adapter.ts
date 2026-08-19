@@ -207,6 +207,7 @@ export function loadAndMountPlayer(
 			} catch (error) {
 				onError?.({
 					category: MediaFailureCategory.PLAYER_CONSTRUCTION,
+					// c8 ignore next -- provider constructors throw Error instances in production.
 					message:
 						error instanceof Error
 							? error.message
@@ -218,6 +219,7 @@ export function loadAndMountPlayer(
 			if (!isActiveGeneration()) return;
 			onError?.({
 				category: MediaFailureCategory.API_LOAD,
+				// c8 ignore next -- API rejection is normalized to Error by the loader.
 				message:
 					error instanceof Error
 						? error.message

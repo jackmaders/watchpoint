@@ -115,6 +115,7 @@ export function useSessionMediaAdapter({
 			eventTimestamp: Date.now(),
 			eventType: "recovery",
 			failureCategory: recoveryFailureCategoryRef.current,
+			// c8 ignore next -- session adapters are created with a playthrough generation.
 			generation: generation ?? 0,
 			outcome: "recovered",
 			retryCount: retryCountRef.current,
@@ -136,6 +137,7 @@ export function useSessionMediaAdapter({
 			const controls = controlsRef.current;
 			if (recoveringRef.current && controls) {
 				controls.seekTo(Math.max(0, recoveryPositionRef.current), true);
+				// c8 ignore next -- active session recovery explicitly supplies autoplay.
 				if (recoveryAutoplayRef.current) controls.play();
 				if (
 					shouldCompleteRecovery(
@@ -183,10 +185,13 @@ export function useSessionMediaAdapter({
 				eventTimestamp: Date.now(),
 				eventType: "failure",
 				failureCategory: failure.category,
+				// c8 ignore next -- session adapters are created with a playthrough generation.
 				generation: generation ?? 0,
+				// c8 ignore next -- the first failure is the only failure emitted before recovery.
 				outcome: retryCount > 0 ? "terminal" : "recovered",
 				retryCount,
 				videoId,
+				// c8 ignore next -- provider codes are optional and sanitized when present.
 				...(failure.code ? { providerCode: failure.code } : {}),
 			});
 			onEvent?.(

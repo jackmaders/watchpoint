@@ -171,7 +171,7 @@ interface SessionPlayerViewportProps {
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the viewport owns the layered player states at the established UI seam.
-function SessionPlayerViewport({
+export function SessionPlayerViewport({
 	containerRef,
 	isCompleted,
 	isLoading,

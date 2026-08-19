@@ -16,6 +16,7 @@ import { YouTubePlayerState } from "../youtube-adapter";
 
 describe("session media adapter", () => {
 	afterEach(() => {
+		vi.useRealTimers();
 		vi.restoreAllMocks();
 		setYouTubeNamespace(undefined);
 		document.head.replaceChildren();
@@ -32,6 +33,7 @@ describe("session media adapter", () => {
 
 		// Act
 		executeSessionMediaCommand({ type: "PAUSE" }, controls);
+		executeSessionMediaCommand({ autoplay: true, type: "RECOVER" }, controls);
 		executeSessionMediaCommand({ type: "PLAY" }, controls);
 		executeSessionMediaCommand(
 			{ timestampSeconds: 5, type: "REPLAY_CONTEXT" },
@@ -162,6 +164,8 @@ describe("session media adapter", () => {
 
 	it("recreates a player for recovery and emits sanitized diagnostics", async () => {
 		// Arrange
+		vi.useFakeTimers();
+		const frameController = installMockFrames();
 		const youtube = createYouTubeMock(142);
 		setYouTubeNamespace(youtube.namespace);
 		const onEvent = vi.fn();
@@ -182,20 +186,28 @@ describe("session media adapter", () => {
 		});
 		const firstPlayer = youtube.players[0];
 		act(() => firstPlayer.triggerReady());
+		act(() => firstPlayer.triggerStateChange(YouTubePlayerState.BUFFERING));
+		act(() => firstPlayer.triggerStateChange(YouTubePlayerState.BUFFERING));
+		act(() => vi.advanceTimersByTime(5000));
 
 		// Act
-		act(() => result.current.execute({ autoplay: false, type: "RECOVER" }));
+		act(() => result.current.execute({ autoplay: true, type: "RECOVER" }));
 		await act(async () => {
 			await Promise.resolve();
 			await Promise.resolve();
 		});
 		const recoveredPlayer = youtube.players[1];
 		act(() => recoveredPlayer.triggerReady());
+		recoveredPlayer.getCurrentTime = vi.fn(() => 1);
+		act(() => {
+			recoveredPlayer.triggerStateChange(YouTubePlayerState.PLAYING);
+			frameController.flush();
+		});
 
 		// Assert
 		expect(firstPlayer.destroy).toHaveBeenCalledTimes(1);
 		expect(recoveredPlayer.seekTo).toHaveBeenCalledWith(0, true);
-		expect(recoveredPlayer.playVideo).not.toHaveBeenCalled();
+		expect(recoveredPlayer.playVideo).toHaveBeenCalled();
 		expect(onEvent).toHaveBeenCalledWith({
 			generation: 4,
 			retryCount: 1,
@@ -207,6 +219,12 @@ describe("session media adapter", () => {
 				generation: 4,
 				outcome: "recovered",
 				videoId: "recovery-video",
+			}),
+		);
+		expect(onDiagnostics).toHaveBeenCalledWith(
+			expect.objectContaining({
+				eventType: "failure",
+				failureCategory: "buffering",
 			}),
 		);
 	});
