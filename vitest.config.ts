@@ -9,6 +9,7 @@ export default defineConfig({
 		coverage: {
 			exclude: [
 				"**/__mocks__/**",
+				"**/__stories__/**",
 				"**/*.d.ts",
 				"src/**/*.{spec,test}.{ts,tsx}",
 				"src/**/index.ts",
