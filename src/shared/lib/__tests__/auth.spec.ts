@@ -55,6 +55,28 @@ describe("auth", () => {
 		expect(config.baseURL).toBe("https://watchpoint.example.com");
 		expect(config.secret).toBe("custom-secret-key-12345678901234567890");
 		expect(config.emailAndPassword.disableSignUp).toBe(true);
+		expect(config.session).toEqual({
+			expiresIn: 60 * 60 * 24 * 7,
+			updateAge: 60 * 60 * 24,
+		});
+	});
+
+	it("keeps sign-in available while the server registration gate is closed", () => {
+		// Arrange
+		const env = {
+			BETTER_AUTH_ALLOW_REGISTRATION: "false",
+			BETTER_AUTH_SECRET: "custom-secret-key-12345678901234567890",
+			BETTER_AUTH_URL: "https://watchpoint.example.com",
+		};
+
+		// Act
+		const config = getAuthConfig(env);
+
+		// Assert
+		expect(config.emailAndPassword).toEqual({
+			disableSignUp: true,
+			enabled: true,
+		});
 	});
 
 	it("requires the auth secret even when the base URL is configured", () => {
@@ -140,6 +162,18 @@ describe("auth", () => {
 
 		// Act
 		const user = await getCurrentUser(mockHeaders);
+
+		// Assert
+		expect(user).toBeNull();
+	});
+
+	it("treats an expired session as anonymous", async () => {
+		// Arrange
+		const auth = await getAuth();
+		vi.spyOn(auth.api, "getSession").mockResolvedValueOnce(null as never);
+
+		// Act
+		const user = await getCurrentUser(new Headers());
 
 		// Assert
 		expect(user).toBeNull();
