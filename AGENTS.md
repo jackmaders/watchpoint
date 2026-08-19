@@ -11,7 +11,7 @@ This repository enforces strict technical, architectural, and quality standards 
 - **Scripts First**: Prefer defined `package.json` scripts (`bun run test:unit`, `bun run check:all`, `bun run validate`) over raw tool invocations.
 
 ### 2. Worktrees, Branches & Commits
-- **Dedicated Worktree**: Every new piece of work MUST start in a dedicated git worktree. Fetch the latest `main`, then create the worktree from `origin/main`:
+- **Dedicated Worktree**: Before changing files, identify the current worktree's provenance. When starting from the `main` checkout, a shared worktree, or a worktree already used for another task, fetch the latest `main` and create a new dedicated worktree from `origin/main`:
 
   ```sh
   git fetch origin main
@@ -20,7 +20,7 @@ This repository enforces strict technical, architectural, and quality standards 
   cd ../watchpoint-<branch-slug>
   ```
 
-  Continue work in the new worktree. If already inside an isolated task worktree, keep using it instead of creating a nested worktree.
+  Continue work in the new worktree. If already inside a dedicated task worktree, continue there instead of creating a nested worktree.
 
 - **Branch Names**: Format branch names strictly as `<type>/<kebab-case-description>` (e.g. `feat/user-profiles`, `fix/manifest-decoding`, `refactor/video-player-component`).
 - **Commit Messages**: Format commit messages strictly as `<type>(<scope>): <emoji> <description>` (e.g. `feat(auth): 🔑 setup authentication`, `fix(player): 🐛 resolve timestamp precision in timeline`). Commits in this repo are not signed; do not attempt GPG/SSH signing.
