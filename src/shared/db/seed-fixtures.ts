@@ -1,10 +1,29 @@
-import type { ModuleType } from "./schema";
+import type { HeroRole, ModuleType } from "./schema";
 
 export const FIXTURE_IDS = {
 	adminUser: "usr_local_admin",
 	playerUser: "usr_local_player",
 	vod: "vod_local_fixture",
 } as const;
+
+export const FIXTURE_VOD = {
+	durationSeconds: 600,
+	heroName: "Ana",
+	id: FIXTURE_IDS.vod,
+	isPublished: true,
+	mapName: "Local Test Map",
+	rankTier: "Synthetic",
+	role: "SUPPORT" as HeroRole,
+	title: "Local Synthetic VOD Fixture",
+	youtubeVideoId: "local-fixture-video",
+} as const;
+
+export function getLocalFixtureVod() {
+	return {
+		...FIXTURE_VOD,
+		createdAt: new Date(),
+	};
+}
 
 const FIXTURE_SCENARIOS: ReadonlyArray<{
 	explanationText: string;

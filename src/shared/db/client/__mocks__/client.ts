@@ -18,7 +18,10 @@ const createMockQueryFn = () => {
 	const mockFn = vi.fn();
 	const fn = vi.fn((options?: QueryOptions) => {
 		if (typeof options?.where === "function") {
-			options.where({}, { and: vi.fn(), eq: vi.fn() });
+			options.where(
+				{},
+				{ and: vi.fn(), eq: vi.fn(), like: vi.fn(), or: vi.fn() },
+			);
 		}
 		if (typeof options?.with?.scenarios?.orderBy === "function") {
 			options.with.scenarios.orderBy({}, { asc: vi.fn(), desc: vi.fn() });
@@ -68,6 +71,15 @@ const createMockUpdateFn = () => {
 	return vi.fn((_table: unknown) => ({ set: setFn }));
 };
 
+const createMockDeleteFn = () => {
+	const returningFn = vi.fn().mockResolvedValue([]);
+	const whereFn = vi.fn(() => ({ returning: returningFn }));
+	return vi.fn((_table: unknown) => ({
+		returning: returningFn,
+		where: whereFn,
+	}));
+};
+
 const createMockSelectFn = () => {
 	const whereFn = vi.fn().mockResolvedValue([{ value: 0 }]);
 	const fromFn = vi.fn((_table: unknown) => ({
@@ -80,6 +92,7 @@ const createMockSelectFn = () => {
 };
 
 const db = {
+	delete: createMockDeleteFn(),
 	insert: createMockInsertFn(),
 	query: {
 		attemptRecords: {
@@ -87,6 +100,7 @@ const db = {
 			findMany: createMockQueryFn(),
 		},
 		auditEntries: {
+			findFirst: createMockQueryFn(),
 			findMany: createMockQueryFn(),
 		},
 		playthroughCompletions: {

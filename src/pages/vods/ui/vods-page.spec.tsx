@@ -24,10 +24,12 @@ describe("VodsPage catalog component", () => {
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 1080,
+				heroName: "Ana",
 				id: "vod_1",
 				isPublished: true,
 				mapName: "King's Row",
 				rankTier: "Grandmaster",
+				role: "SUPPORT" as const,
 				scenarios: [
 					{ id: "1" },
 					{ id: "2" },
@@ -66,10 +68,12 @@ describe("VodsPage catalog component", () => {
 			{
 				createdAt: new Date("2026-08-06T10:00:00Z"),
 				durationSeconds: 45,
+				heroName: "Reinhardt",
 				id: "vod_short",
 				isPublished: true,
 				mapName: "Eichenwalde",
 				rankTier: "Master",
+				role: "TANK" as const,
 				scenarios: [{ id: "1" }, { id: "2" }],
 				title: "Short VOD",
 				youtubeVideoId: "abc12345",

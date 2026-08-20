@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../client/client";
-import { createAuditEntry, getAuditEntries } from "../audit";
+import { createAuditEntry, getAuditEntries, getAuditLogs } from "../audit";
 
 vi.mock("../../client/client");
 
@@ -63,6 +63,60 @@ describe("audit database accessors", () => {
 
 		// Act
 		const result = await getAuditEntries("VOD", "vod_1");
+
+		// Assert
+		expect(result).toEqual(expected);
+	});
+
+	it("loads audit logs with all filter parameters", async () => {
+		// Arrange
+		const db = await getDb();
+		const expected = [
+			{
+				action: "VOD_CREATED",
+				actor: { email: "admin@example.com", id: "admin_1" },
+				actorUserId: "admin_1",
+				entityId: "vod_1",
+				entityType: "VOD",
+				id: "audit_1",
+			},
+		];
+		vi.mocked(db.query.auditEntries.findMany).mockResolvedValueOnce(
+			expected as never,
+		);
+
+		// Act
+		const result = await getAuditLogs({
+			actorUserId: "admin_1",
+			entityId: "vod_1",
+			entityType: "VOD",
+			limit: 10,
+			offset: 0,
+		});
+
+		// Assert
+		expect(result).toEqual(expected);
+	});
+
+	it("loads audit logs with default options", async () => {
+		// Arrange
+		const db = await getDb();
+		const expected = [
+			{
+				action: "VOD_CREATED",
+				actor: null,
+				actorUserId: null,
+				entityId: "vod_1",
+				entityType: "VOD",
+				id: "audit_1",
+			},
+		];
+		vi.mocked(db.query.auditEntries.findMany).mockResolvedValueOnce(
+			expected as never,
+		);
+
+		// Act
+		const result = await getAuditLogs();
 
 		// Assert
 		expect(result).toEqual(expected);

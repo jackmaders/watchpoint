@@ -25,10 +25,12 @@ describe("VodDetailPage", () => {
 	const mockVod: SessionManifest = {
 		createdAt: new Date("2026-08-06T10:00:00Z"),
 		durationSeconds: 1080,
+		heroName: "Ana",
 		id: "vod_1",
 		isPublished: true,
 		mapName: "King's Row",
 		rankTier: "Grandmaster",
+		role: "SUPPORT",
 		scenarios: [
 			{
 				explanationText: "Strategy explanation",

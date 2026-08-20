@@ -86,10 +86,12 @@ async function main() {
 		await db.insert(schema.vods).values({
 			createdAt: now,
 			durationSeconds: 600,
+			heroName: "Ana",
 			id: FIXTURE_IDS.vod,
 			isPublished: true,
 			mapName: "Local Test Map",
 			rankTier: "Synthetic",
+			role: "SUPPORT",
 			title: "Local Synthetic VOD Fixture",
 			youtubeVideoId: "local-fixture-video",
 		});

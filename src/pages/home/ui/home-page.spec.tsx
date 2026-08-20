@@ -36,10 +36,12 @@ describe("HomePage component", () => {
 			{
 				createdAt: new Date(),
 				durationSeconds: 100,
+				heroName: "Ana",
 				id: "1",
 				isPublished: true,
 				mapName: "King's Row",
 				rankTier: "Grandmaster",
+				role: "SUPPORT" as const,
 				scenarios: [
 					{ id: "1" },
 					{ id: "2" },
