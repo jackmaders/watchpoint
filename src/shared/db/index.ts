@@ -18,6 +18,18 @@ export {
 	getPlaythrough,
 } from "./repositories/playthroughs";
 export type {
+	GetUsersOptions,
+	UpdateUserRoleParams,
+	UpdateUserRoleResult,
+	UserItem,
+} from "./repositories/users";
+export {
+	getUserById,
+	getUserCount,
+	getUsers,
+	updateUserRole,
+} from "./repositories/users";
+export type {
 	GetSessionManifestOptions,
 	PublishedVodItem,
 	SessionManifest,
