@@ -29,6 +29,7 @@ export const Link = function MockLink({
 
 export const createFileRoute = vi.fn(
 	(path: string) => (config: Record<string, unknown>) => ({
+		options: config,
 		path,
 		useLoaderData: vi.fn(() => ({})),
 		useParams: vi.fn(() => ({})),

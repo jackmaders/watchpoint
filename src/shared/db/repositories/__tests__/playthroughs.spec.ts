@@ -5,6 +5,8 @@ import {
 	createPlaythrough,
 	getPlayerHistory,
 	getPlaythrough,
+	getPlaythroughHistoryDetail,
+	queryPlayerHistory,
 } from "../playthroughs";
 
 vi.mock("../../client/client");
@@ -418,5 +420,255 @@ describe("playthrough database accessors", () => {
 		await expect(
 			completePlaythrough("playthrough_1", "player_1"),
 		).rejects.toThrow("D1 offline");
+	});
+
+	it("queries player history with filtering, pagination, and calculated metrics", async () => {
+		// Arrange
+		const db = await getDb();
+		const mockPlaythroughs = [
+			{
+				attempts: [
+					{
+						id: "a1",
+						isCorrect: true,
+						isTimedOut: false,
+						responseTimeMs: 1000,
+					},
+					{
+						id: "a2",
+						isCorrect: false,
+						isTimedOut: false,
+						responseTimeMs: 2000,
+					},
+				],
+				completedAt: new Date("2026-01-01T12:00:00.000Z"),
+				createdAt: new Date("2026-01-01T11:00:00.000Z"),
+				id: "run_1",
+				moduleSelections: [{ moduleType: "STRATEGY" }],
+				scenarioSnapshots: [{ id: "s1" }, { id: "s2" }],
+				status: "COMPLETED",
+				user: { isTestAccount: false },
+				userId: "player_1",
+				vod: { id: "vod_1", mapName: "King's Row", title: "GM VOD" },
+				vodId: "vod_1",
+			},
+			{
+				attempts: [],
+				completedAt: null,
+				createdAt: new Date("2026-01-02T11:00:00.000Z"),
+				id: "run_2",
+				moduleSelections: [{ moduleType: "TACTICS" }],
+				scenarioSnapshots: [{ id: "s3" }],
+				status: "IN_PROGRESS",
+				user: { isTestAccount: false },
+				userId: "player_1",
+				vod: { id: "vod_2", mapName: "Ilios", title: "Master VOD" },
+				vodId: "vod_2",
+			},
+			{
+				attempts: [],
+				completedAt: null,
+				createdAt: new Date("2026-01-03T11:00:00.000Z"),
+				id: "run_test_account",
+				moduleSelections: [],
+				scenarioSnapshots: [],
+				status: "COMPLETED",
+				user: { isTestAccount: true },
+				userId: "player_1",
+				vod: { id: "vod_1" },
+				vodId: "vod_1",
+			},
+		];
+		vi.mocked(db.query.playthroughs.findMany).mockResolvedValueOnce(
+			mockPlaythroughs as never,
+		);
+
+		// Act
+		const result = await queryPlayerHistory("player_1", {
+			modules: ["STRATEGY"],
+			page: 1,
+			pageSize: 10,
+			status: "COMPLETED",
+			vodId: "vod_1",
+		});
+
+		// Assert
+		expect(result.total).toBe(1);
+		expect(result.page).toBe(1);
+		expect(result.pageSize).toBe(10);
+		expect(result.totalPages).toBe(1);
+		expect(result.items[0]).toMatchObject({
+			accuracy: 50,
+			id: "run_1",
+			medianLatencyMs: 1500,
+		});
+	});
+
+	it("filters out playthroughs when vod or module do not match, or when default options are used", async () => {
+		// Arrange
+		const db = await getDb();
+		const mockPlaythroughs = [
+			{
+				attempts: [],
+				completedAt: new Date("2026-01-01T12:00:00.000Z"),
+				createdAt: new Date("2026-01-01T11:00:00.000Z"),
+				id: "run_1",
+				moduleSelections: [{ moduleType: "STRATEGY" }],
+				scenarioSnapshots: [],
+				status: "COMPLETED",
+				user: { isTestAccount: false },
+				userId: "player_1",
+				vod: { id: "vod_1" },
+				vodId: "vod_1",
+			},
+		];
+		vi.mocked(db.query.playthroughs.findMany).mockResolvedValueOnce(
+			mockPlaythroughs as never,
+		);
+
+		// Act - query with non matching VOD and non matching module
+		const resultNoMatch = await queryPlayerHistory("player_1", {
+			modules: ["COOLDOWN"],
+			vodId: "vod_999",
+		});
+
+		// Assert
+		expect(resultNoMatch.total).toBe(0);
+
+		// Act - query with default options
+		vi.mocked(db.query.playthroughs.findMany).mockResolvedValueOnce(
+			mockPlaythroughs as never,
+		);
+		const resultDefault = await queryPlayerHistory("player_1");
+		expect(resultDefault.total).toBe(1);
+	});
+
+	it("returns empty result when page exceeds total pages", async () => {
+		// Arrange
+		const db = await getDb();
+		const mockPlaythroughs = [
+			{
+				attempts: [],
+				completedAt: new Date("2026-01-01T12:00:00.000Z"),
+				createdAt: new Date("2026-01-01T11:00:00.000Z"),
+				id: "run_1",
+				moduleSelections: [],
+				scenarioSnapshots: [],
+				status: "COMPLETED",
+				user: { isTestAccount: false },
+				userId: "player_1",
+				vod: { id: "vod_1" },
+				vodId: "vod_1",
+			},
+		];
+		vi.mocked(db.query.playthroughs.findMany).mockResolvedValueOnce(
+			mockPlaythroughs as never,
+		);
+
+		// Act
+		const result = await queryPlayerHistory("player_1", {
+			page: 5,
+			pageSize: 10,
+		});
+
+		// Assert
+		expect(result.total).toBe(1);
+		expect(result.items).toHaveLength(0);
+	});
+
+	it("loads full history detail for owned playthrough when not test account", async () => {
+		// Arrange
+		const db = await getDb();
+		const detail = {
+			attempts: [
+				{
+					id: "a1",
+					inputValue: null,
+					isCorrect: true,
+					isTimedOut: false,
+					responseTimeMs: 1200,
+					scenarioSnapshotId: "snap_1",
+					selectedOptionId: "opt_1",
+				},
+			],
+			completedAt: new Date("2026-01-01T12:00:00.000Z"),
+			completion: {
+				completedAt: new Date("2026-01-01T12:00:00.000Z"),
+				id: "comp_1",
+			},
+			createdAt: new Date("2026-01-01T11:00:00.000Z"),
+			id: "run_1",
+			moduleSelections: [{ moduleType: "STRATEGY" }],
+			scenarioSnapshots: [
+				{
+					explanationText: "High ground gives safety.",
+					id: "snap_1",
+					imageUrl: null,
+					inputConfig: {},
+					inputType: "MULTIPLE_CHOICE",
+					moduleType: "STRATEGY",
+					position: 0,
+					promptText: "Where to hold?",
+					scenarioId: "scen_1",
+					timeLimitSeconds: 15,
+					timestampSeconds: 60,
+				},
+			],
+			status: "COMPLETED",
+			user: { isTestAccount: false },
+			userId: "player_1",
+			vod: {
+				durationSeconds: 1200,
+				id: "vod_1",
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				title: "GM Ana Gameplay",
+				youtubeVideoId: "yt123",
+			},
+			vodId: "vod_1",
+		};
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(
+			detail as never,
+		);
+
+		// Act
+		const result = await getPlaythroughHistoryDetail("run_1", "player_1");
+
+		// Assert
+		expect(result).toMatchObject({
+			accuracy: 100,
+			id: "run_1",
+			medianLatencyMs: 1200,
+			vod: { title: "GM Ana Gameplay" },
+		});
+	});
+
+	it("returns null when detail playthrough is not found or owned by another user", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(
+			null as never,
+		);
+
+		// Act
+		const result = await getPlaythroughHistoryDetail("unowned_run", "player_1");
+
+		// Assert
+		expect(result).toBeNull();
+	});
+
+	it("returns null when detail playthrough belongs to a test account", async () => {
+		// Arrange
+		const db = await getDb();
+		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
+			id: "test_run",
+			user: { isTestAccount: true },
+		} as never);
+
+		// Act
+		const result = await getPlaythroughHistoryDetail("test_run", "player_1");
+
+		// Assert
+		expect(result).toBeNull();
 	});
 });
