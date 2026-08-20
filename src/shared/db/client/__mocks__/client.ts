@@ -68,6 +68,17 @@ const createMockUpdateFn = () => {
 	return vi.fn((_table: unknown) => ({ set: setFn }));
 };
 
+const createMockSelectFn = () => {
+	const whereFn = vi.fn().mockResolvedValue([{ value: 0 }]);
+	const fromFn = vi.fn((_table: unknown) => ({
+		where: whereFn,
+	}));
+	const selectFn = vi.fn((_fields: unknown) => ({
+		from: fromFn,
+	}));
+	return selectFn;
+};
+
 const db = {
 	insert: createMockInsertFn(),
 	query: {
@@ -95,11 +106,16 @@ const db = {
 			findFirst: createMockQueryFn(),
 			findMany: createMockQueryFn(),
 		},
+		users: {
+			findFirst: createMockQueryFn(),
+			findMany: createMockQueryFn(),
+		},
 		vods: {
 			findFirst: createMockQueryFn(),
 			findMany: createMockQueryFn(),
 		},
 	},
+	select: createMockSelectFn(),
 	update: createMockUpdateFn(),
 };
 
