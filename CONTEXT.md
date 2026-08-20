@@ -101,5 +101,12 @@ This document defines the core domain terminology used across product discussion
 * **Semantic Session Media Adapter**
   The infrastructure seam that translates the media provider into normalized ready, playback-status, and time-update events and executes play, pause, context-replay, and restart commands. Context replay seeks back ten seconds and clamps at the beginning of the VOD.
 
-* **Attempt Outcome Idempotency Key**
+* **Attempt Outcome Idempotency Key**  
   The client-generated UUID attached to one accepted Attempt Outcome. The key remains stable across persistence retries and is enforced as unique by Attempt Record storage so a retry cannot create a duplicate record.
+
+* **Performance History**  
+  A player's durable chronological record of interactive training playthroughs across sessions, containing completion status, accuracy, median active-response latency, module selections, and snapshot-level drill-down.
+
+* **Median Active-Response Latency**  
+  The median response time in milliseconds computed strictly for active (non-timeout) answered scenario attempts within a training playthrough.
+
