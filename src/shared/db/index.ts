@@ -9,6 +9,9 @@ export type { CreateAuditEntryInput } from "./repositories/audit";
 export { createAuditEntry, getAuditEntries } from "./repositories/audit";
 export type {
 	CreatePlaythroughInput,
+	GetPlayerHistoryOptions,
+	PlayerHistoryItem,
+	PlayerHistoryResult,
 	ScenarioSnapshotInput,
 } from "./repositories/playthroughs";
 export {
@@ -16,6 +19,8 @@ export {
 	createPlaythrough,
 	getPlayerHistory,
 	getPlaythrough,
+	getPlaythroughHistoryDetail,
+	queryPlayerHistory,
 } from "./repositories/playthroughs";
 export type {
 	GetUsersOptions,
