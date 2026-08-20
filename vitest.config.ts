@@ -55,6 +55,7 @@ export default defineConfig({
 			);
 		},
 		reporters: ["dot"],
+		setupFiles: ["./vitest.setup.ts"],
 		testTimeout: 500,
 	},
 });
