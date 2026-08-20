@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HistoryIndexRouteImport } from './routes/history/index'
+import { Route as HistoryPlaythroughIdRouteImport } from './routes/history/$playthroughId'
 import { Route as VodsIndexRouteImport } from './routes/vods/index'
 import { Route as VodsIdRouteImport } from './routes/vods/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -20,6 +22,16 @@ import { Route as ApiVodsIdManifestRouteImport } from './routes/api/vods/$id/man
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryIndexRoute = HistoryIndexRouteImport.update({
+  id: '/history/',
+  path: '/history/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryPlaythroughIdRoute = HistoryPlaythroughIdRouteImport.update({
+  id: '/history/$playthroughId',
+  path: '/history/$playthroughId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VodsIndexRoute = VodsIndexRouteImport.update({
@@ -55,7 +67,9 @@ const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
+  '/history/': typeof HistoryIndexRoute
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -64,7 +78,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
+  '/history': typeof HistoryIndexRoute
   '/vods': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -74,7 +90,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
+  '/history/': typeof HistoryIndexRoute
   '/vods/': typeof VodsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -85,7 +103,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/history/$playthroughId'
     | '/vods/$id'
+    | '/history/'
     | '/vods/'
     | '/api/auth/$'
     | '/api/media/$'
@@ -94,7 +114,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/history/$playthroughId'
     | '/vods/$id'
+    | '/history'
     | '/vods'
     | '/api/auth/$'
     | '/api/media/$'
@@ -103,7 +125,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/history/$playthroughId'
     | '/vods/$id'
+    | '/history/'
     | '/vods/'
     | '/api/auth/$'
     | '/api/media/$'
@@ -113,7 +137,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoryPlaythroughIdRoute: typeof HistoryPlaythroughIdRoute
   VodsIdRoute: typeof VodsIdRouteWithChildren
+  HistoryIndexRoute: typeof HistoryIndexRoute
   VodsIndexRoute: typeof VodsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
@@ -127,6 +153,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history/': {
+      id: '/history/'
+      path: '/history'
+      fullPath: '/history/'
+      preLoaderRoute: typeof HistoryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history/$playthroughId': {
+      id: '/history/$playthroughId'
+      path: '/history/$playthroughId'
+      fullPath: '/history/$playthroughId'
+      preLoaderRoute: typeof HistoryPlaythroughIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vods/': {
@@ -187,7 +227,9 @@ const VodsIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoryPlaythroughIdRoute: HistoryPlaythroughIdRoute,
   VodsIdRoute: VodsIdRouteWithChildren,
+  HistoryIndexRoute: HistoryIndexRoute,
   VodsIndexRoute: VodsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMediaSplatRoute: ApiMediaSplatRoute,

@@ -11,6 +11,20 @@ export function VodsPage(props?: { vods?: PublishedVodItem[] }) {
 	return (
 		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div className="mx-auto max-w-6xl space-y-8">
+				<div className="flex items-center justify-between">
+					<Link
+						className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
+						to="/"
+					>
+						&larr; Home
+					</Link>
+					<Link
+						className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
+						to="/history"
+					>
+						Training History &rarr;
+					</Link>
+				</div>
 				<header className="space-y-3 border-b border-border pb-6">
 					<div className="inline-flex rounded-sm border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
 						Interactive Training Engine
