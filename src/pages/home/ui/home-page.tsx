@@ -11,7 +11,13 @@ export function HomePage(props?: {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground sm:p-12 lg:p-24">
 			<div className="w-full max-w-4xl space-y-12">
-				<div className="flex justify-end">
+				<div className="flex items-center justify-between">
+					<Link
+						className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
+						to="/history"
+					>
+						Training History &rarr;
+					</Link>
 					<AccountControls
 						registrationEnabled={props?.registrationEnabled ?? true}
 					/>
