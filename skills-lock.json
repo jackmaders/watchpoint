@@ -66,6 +66,12 @@
 			"source": "feature-sliced/skills",
 			"sourceType": "github"
 		},
+		"gh-stack": {
+			"computedHash": "213d3fe0b3dc87b453912b5a5947fd189a884e4a82ce41fe8ce6c16fb93cd8b3",
+			"skillPath": "skills/gh-stack/SKILL.md",
+			"source": "github/gh-stack",
+			"sourceType": "github"
+		},
 		"grill-me": {
 			"computedHash": "f361db4e15e6bfd562a9282b1dccda513910a50061f9e838ce017be9c69dde3f",
 			"skillPath": "skills/productivity/grill-me/SKILL.md",
