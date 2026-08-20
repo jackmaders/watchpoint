@@ -5,8 +5,15 @@ export {
 	getPlaythroughAttempts,
 	recordPlaythroughAttempt,
 } from "./repositories/attempts";
-export type { CreateAuditEntryInput } from "./repositories/audit";
-export { createAuditEntry, getAuditEntries } from "./repositories/audit";
+export type {
+	CreateAuditEntryInput,
+	GetAuditLogsOptions,
+} from "./repositories/audit";
+export {
+	createAuditEntry,
+	getAuditEntries,
+	getAuditLogs,
+} from "./repositories/audit";
 export type {
 	CreatePlaythroughInput,
 	GetPlayerHistoryOptions,
@@ -35,17 +42,54 @@ export {
 	updateUserRole,
 } from "./repositories/users";
 export type {
+	AdminVodItem,
+	BulkOperationResult,
+	CreateScenarioInput,
+	CreateScenarioResult,
+	CreateVodInput,
+	CreateVodResult,
+	DeleteScenarioInput,
+	DeleteScenarioResult,
+	DeleteVodInput,
+	DeleteVodResult,
+	GetAdminVodsOptions,
 	GetSessionManifestOptions,
 	PublishedVodItem,
+	ReorderScenariosInput,
+	ReorderScenariosResult,
 	SessionManifest,
+	SetVodPublicationStatusInput,
+	SetVodPublicationStatusResult,
+	UpdateScenarioInput,
+	UpdateScenarioResult,
+	UpdateVodInput,
+	UpdateVodResult,
 } from "./repositories/vods";
 export {
+	bulkDeleteVods,
+	bulkPublishVods,
+	createScenario,
+	createVod,
+	deleteScenario,
+	deleteVod,
+	getAdminVods,
 	getPublishedVods,
+	getScenarioById,
+	getScenariosByVodId,
 	getSessionManifest,
+	getVodById,
+	reorderScenarios,
+	setVodPublicationStatus,
+	updateScenario,
+	updateVod,
+	validateScenarioConfig,
+	validateVodForPublishing,
 } from "./repositories/vods";
 export {
 	attemptRecords,
 	auditEntries,
+	type HeroRole,
+	heroRoleEnum,
 	type InputType,
 	inputTypeEnum,
 	type JsonPrimitive,
@@ -60,4 +104,5 @@ export {
 	scenarioSnapshots,
 	type UserRole,
 	userRoleEnum,
+	vods,
 } from "./schema";

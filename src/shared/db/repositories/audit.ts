@@ -42,3 +42,41 @@ export async function getAuditEntries(
 			and(eq(entry.entityType, entityType), eq(entry.entityId, entityId)),
 	});
 }
+
+export interface GetAuditLogsOptions {
+	actorUserId?: string;
+	entityId?: string;
+	entityType?: string;
+	limit?: number;
+	offset?: number;
+}
+
+export async function getAuditLogs(
+	options: GetAuditLogsOptions = {},
+	context?: DbContext,
+) {
+	const db = await getDb(context);
+	const { actorUserId, entityId, entityType, limit, offset } = options;
+
+	return db.query.auditEntries.findMany({
+		limit,
+		offset,
+		orderBy: [desc(auditEntries.createdAt)],
+		where: (entry, { and, eq }) => {
+			const conditions = [];
+			if (entityType) {
+				conditions.push(eq(entry.entityType, entityType));
+			}
+			if (entityId) {
+				conditions.push(eq(entry.entityId, entityId));
+			}
+			if (actorUserId) {
+				conditions.push(eq(entry.actorUserId, actorUserId));
+			}
+			return conditions.length > 0 ? and(...conditions) : undefined;
+		},
+		with: {
+			actor: true,
+		},
+	});
+}

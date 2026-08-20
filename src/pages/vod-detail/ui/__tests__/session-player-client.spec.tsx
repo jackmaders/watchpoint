@@ -40,10 +40,12 @@ describe("SessionPlayerClient", () => {
 	const mockVod = {
 		createdAt: new Date(),
 		durationSeconds: 0,
+		heroName: "Ana",
 		id: "vod_zero_duration",
 		isPublished: true,
 		mapName: "Oasis",
 		rankTier: "Diamond",
+		role: "SUPPORT" as const,
 		scenarios: [
 			{
 				explanationText: "No options scenario",

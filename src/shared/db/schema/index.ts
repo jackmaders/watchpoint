@@ -108,6 +108,9 @@ export const verifications = sqliteTable("verification", {
 	value: text("value").notNull(),
 });
 
+export const heroRoleEnum = ["TANK", "DAMAGE", "SUPPORT"] as const;
+export type HeroRole = (typeof heroRoleEnum)[number];
+
 export const vods = sqliteTable(
 	"vod",
 	{
@@ -115,6 +118,7 @@ export const vods = sqliteTable(
 			.notNull()
 			.$defaultFn(() => new Date()),
 		durationSeconds: integer("duration_seconds").notNull(),
+		heroName: text("hero_name").notNull(),
 		id: text("id")
 			.primaryKey()
 			.$defaultFn(() => crypto.randomUUID()),
@@ -123,6 +127,7 @@ export const vods = sqliteTable(
 			.default(false),
 		mapName: text("map_name").notNull(),
 		rankTier: text("rank_tier").notNull(),
+		role: text("role", { enum: heroRoleEnum }).notNull(),
 		title: text("title").notNull(),
 		youtubeVideoId: text("youtube_video_id").notNull(),
 	},
@@ -130,6 +135,10 @@ export const vods = sqliteTable(
 		publishedCreatedAtIdx: index("vod_published_created_at_idx").on(
 			table.isPublished,
 			table.createdAt,
+		),
+		publishedRoleIdx: index("vod_published_role_idx").on(
+			table.isPublished,
+			table.role,
 		),
 	}),
 );

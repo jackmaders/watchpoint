@@ -17,10 +17,12 @@ describe("SessionPlayerPage", () => {
 	const mockVod = {
 		createdAt: new Date(),
 		durationSeconds: 600,
+		heroName: "Ana",
 		id: "vod_gm_ana",
 		isPublished: true,
 		mapName: "King's Row",
 		rankTier: "Grandmaster",
+		role: "SUPPORT" as const,
 		scenarios: [
 			{
 				explanationText: "Highground is optimal position.",

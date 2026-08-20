@@ -12,10 +12,12 @@ vi.mock("@tanstack/react-router");
 const mockVod: PublishedVodItem = {
 	createdAt: new Date("2026-01-01"),
 	durationSeconds: 1200,
+	heroName: "Ana",
 	id: "vod_1",
 	isPublished: true,
 	mapName: "King's Row",
 	rankTier: "Grandmaster",
+	role: "SUPPORT",
 	scenarios: [],
 	title: "GM Ana Gameplay",
 	youtubeVideoId: "yt123",

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { FIXTURE_IDS, getLocalFixtureScenarios } from "../seed-fixtures";
+import {
+	FIXTURE_IDS,
+	getLocalFixtureScenarios,
+	getLocalFixtureVod,
+} from "../seed-fixtures";
 
 describe("local seed fixtures", () => {
 	it("defines stable local identifiers", () => {
@@ -14,6 +18,19 @@ describe("local seed fixtures", () => {
 			playerUser: "usr_local_player",
 			vod: "vod_local_fixture",
 		});
+	});
+
+	it("defines deterministic VOD fixture with hero and role attributes", () => {
+		// Arrange
+
+		// Act
+		const vod = getLocalFixtureVod();
+
+		// Assert
+		expect(vod.id).toBe(FIXTURE_IDS.vod);
+		expect(vod.heroName).toBe("Ana");
+		expect(vod.role).toBe("SUPPORT");
+		expect(vod.isPublished).toBe(true);
 	});
 
 	it("covers every V1 module with synthetic scenarios", () => {

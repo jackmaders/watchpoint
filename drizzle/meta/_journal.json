@@ -42,6 +42,13 @@
       "when": 1787157673513,
       "tag": "0005_easy_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787254423133,
+      "tag": "0006_damp_night_nurse",
+      "breakpoints": true
     }
   ],
   "version": "7"
