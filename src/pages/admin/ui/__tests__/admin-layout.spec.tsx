@@ -23,7 +23,9 @@ describe("AdminLayout", () => {
 
 		// Assert
 		expect(screen.getByText("Watchpoint Admin")).toBeDefined();
-		expect(screen.getByRole("link", { name: /users/i })).toBeDefined();
+		expect(screen.getByRole("link", { name: /^content$/i })).toBeDefined();
+		expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
+		expect(screen.getByRole("link", { name: /^audit log$/i })).toBeDefined();
 		expect(screen.getByRole("link", { name: /view site/i })).toBeDefined();
 		expect(screen.getByTestId("admin-child")).toBeDefined();
 		expect(screen.getByText("ADMIN")).toBeDefined();

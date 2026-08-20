@@ -29,9 +29,27 @@ export function AdminLayout({
 									className: "text-foreground font-semibold",
 								}}
 								className="text-muted-foreground transition-colors hover:text-foreground"
+								to="/admin/content"
+							>
+								Content
+							</Link>
+							<Link
+								activeProps={{
+									className: "text-foreground font-semibold",
+								}}
+								className="text-muted-foreground transition-colors hover:text-foreground"
 								to="/admin/users"
 							>
 								Users
+							</Link>
+							<Link
+								activeProps={{
+									className: "text-foreground font-semibold",
+								}}
+								className="text-muted-foreground transition-colors hover:text-foreground"
+								to="/admin/audit"
+							>
+								Audit Log
 							</Link>
 						</nav>
 					</div>

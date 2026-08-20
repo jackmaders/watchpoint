@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as HistoryIndexRouteImport } from './routes/history/index'
 import { Route as HistoryPlaythroughIdRouteImport } from './routes/history/$playthroughId'
@@ -35,6 +37,16 @@ const AdminRoute = AdminRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -86,6 +98,8 @@ const ApiVodsIdManifestRoute = ApiVodsIdManifestRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/users': typeof AdminUsersRoute
   '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
@@ -99,6 +113,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/users': typeof AdminUsersRoute
   '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
@@ -114,6 +130,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/users': typeof AdminUsersRoute
   '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
@@ -130,6 +148,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin/audit'
+    | '/admin/content'
     | '/admin/users'
     | '/history/$playthroughId'
     | '/vods/$id'
@@ -143,6 +163,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin/audit'
+    | '/admin/content'
     | '/admin/users'
     | '/history/$playthroughId'
     | '/vods/$id'
@@ -157,6 +179,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin/audit'
+    | '/admin/content'
     | '/admin/users'
     | '/history/$playthroughId'
     | '/vods/$id'
@@ -202,6 +226,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/users': {
@@ -271,11 +309,15 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminContentRoute: typeof AdminContentRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminContentRoute: AdminContentRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
