@@ -2,6 +2,7 @@ import type React from "react";
 import { vi } from "vitest";
 
 export const Link = function MockLink({
+	activeProps: _activeProps,
 	children,
 	to,
 	href,
@@ -9,6 +10,7 @@ export const Link = function MockLink({
 	ref,
 	...props
 }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+	activeProps?: Record<string, unknown>;
 	href?: string;
 	params?: Record<string, string>;
 	ref?: React.Ref<HTMLAnchorElement>;
@@ -29,9 +31,11 @@ export const Link = function MockLink({
 
 export const createFileRoute = vi.fn(
 	(path: string) => (config: Record<string, unknown>) => ({
+		options: config,
 		path,
 		useLoaderData: vi.fn(() => ({})),
 		useParams: vi.fn(() => ({})),
+		useRouteContext: vi.fn(() => ({})),
 		useSearch: vi.fn(() => ({})),
 		...config,
 	}),
@@ -50,6 +54,12 @@ export const ScrollRestoration = () => null;
 export const HeadContent = () => null;
 export const Meta = () => null;
 export const Scripts = () => null;
+export const redirect = vi.fn((opts: { to: string }) => {
+	const err = new Error(`Redirect to ${opts.to}`);
+	Object.assign(err, { isRedirect: true, ...opts });
+	return err;
+});
 export const useNavigate = vi.fn(() => vi.fn());
 export const useParams = vi.fn(() => ({}));
+export const useRouteContext = vi.fn(() => ({}));
 export const useSearch = vi.fn(() => ({}));

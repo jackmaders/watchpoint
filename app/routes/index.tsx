@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomePage } from "@/pages/home";
 import { getPublishedVods } from "@/pages/vods";
+import { isRegistrationOpen } from "@/shared/lib/auth";
 
 export const Route = createFileRoute("/")({
 	component: HomeRoute,
 	loader: async () => {
-		const vods = await getPublishedVods();
+		const [vods, registrationEnabled] = await Promise.all([
+			getPublishedVods(),
+			isRegistrationOpen(),
+		]);
 		return {
-			registrationEnabled:
-				process.env.BETTER_AUTH_ALLOW_REGISTRATION === "true",
+			registrationEnabled,
 			vods,
 		};
 	},

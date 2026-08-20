@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { formatDuration, VodsPage } from "./vods-page";
 
 vi.mock("@tanstack/react-router");
+vi.mock("@/shared/lib/auth-client");
 
 describe("VodsPage catalog component", () => {
 	it("renders empty state message when no VODs are provided", () => {
