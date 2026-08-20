@@ -16,12 +16,20 @@ export function VodsPage(props?: {
 		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div className="mx-auto max-w-6xl space-y-8">
 				<div className="flex items-center justify-between">
-					<Link
-						className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-						to="/"
-					>
-						&larr; Home
-					</Link>
+					<div className="flex items-center gap-4">
+						<Link
+							className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+							to="/"
+						>
+							&larr; Home
+						</Link>
+						<Link
+							className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
+							to="/history"
+						>
+							Training History &rarr;
+						</Link>
+					</div>
 					<AccountControls
 						registrationEnabled={props?.registrationEnabled ?? true}
 					/>
