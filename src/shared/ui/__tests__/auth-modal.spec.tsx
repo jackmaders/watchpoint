@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@tanstack/react-router");
 vi.mock("@/shared/lib/auth-client");
 
 import { authClient } from "@/shared/lib/auth-client";
@@ -208,10 +209,10 @@ describe("AuthModal", () => {
 		});
 	});
 
-	it("renders signed-in account controls and signs out", () => {
+	it("renders signed-in account controls without Admin link for ordinary player", () => {
 		// Arrange
 		vi.mocked(useSession).mockReturnValue({
-			data: { user: { name: "Player One" } },
+			data: { user: { name: "Player One", role: "PLAYER" } },
 		} as never);
 
 		// Act
@@ -220,7 +221,22 @@ describe("AuthModal", () => {
 
 		// Assert
 		expect(screen.getByText("Player One")).toBeDefined();
+		expect(screen.queryByRole("link", { name: "Admin" })).toBeNull();
 		expect(signOut).toHaveBeenCalledTimes(1);
+	});
+
+	it("renders signed-in account controls with Admin link for administrator", () => {
+		// Arrange
+		vi.mocked(useSession).mockReturnValue({
+			data: { user: { name: "Admin Boss", role: "ADMIN" } },
+		} as never);
+
+		// Act
+		render(<AccountControls />);
+
+		// Assert
+		expect(screen.getByText("Admin Boss")).toBeDefined();
+		expect(screen.getByRole("link", { name: "Admin" })).toBeDefined();
 	});
 
 	it("resolves successful and failed auth results", () => {

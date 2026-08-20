@@ -1,16 +1,31 @@
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import { AccountControls } from "@/shared/ui/auth-modal";
 
 export type VodItem = PublishedVodItem;
 export { formatDuration };
 
-export function VodsPage(props?: { vods?: PublishedVodItem[] }) {
+export function VodsPage(props?: {
+	registrationEnabled?: boolean;
+	vods?: PublishedVodItem[];
+}) {
 	const vods = props?.vods ?? [];
 
 	return (
 		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div className="mx-auto max-w-6xl space-y-8">
+				<div className="flex items-center justify-between">
+					<Link
+						className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+						to="/"
+					>
+						&larr; Home
+					</Link>
+					<AccountControls
+						registrationEnabled={props?.registrationEnabled ?? true}
+					/>
+				</div>
 				<header className="space-y-3 border-b border-border pb-6">
 					<div className="inline-flex rounded-sm border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
 						Interactive Training Engine
