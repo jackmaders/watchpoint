@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { HomePage } from "./home-page";
 
 vi.mock("@tanstack/react-router");
+vi.mock("@/shared/lib/auth-client");
 
 describe("HomePage component", () => {
 	it("renders heading, description, and account control", () => {

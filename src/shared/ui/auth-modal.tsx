@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useCallback, useId, useState } from "react";
 import { authClient } from "@/shared/lib/auth-client";
@@ -165,8 +166,17 @@ export function AccountControls({
 	const openModal = useCallback(() => setOpen(true), []);
 	const signOut = useCallback(() => authClient.signOut(), []);
 	if (session.data?.user) {
+		const isAdmin = (session.data.user as { role?: string }).role === "ADMIN";
 		return (
 			<div className="flex items-center gap-3">
+				{isAdmin ? (
+					<Link
+						className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+						to="/admin"
+					>
+						Admin
+					</Link>
+				) : null}
 				<span className="text-sm text-muted-foreground">
 					{session.data.user.name}
 				</span>
