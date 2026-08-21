@@ -16,13 +16,13 @@ Closes #
 
 ## Verify Guardrails
 <!-- Diff must be under 300 total lines and under 150 active lines (excluding database migrations, snapshots, and unit tests). If larger, split into a stack. -->
-- [ ] Diff is atomic and sized for rapid review
+- [ ] **Atomic PR:** Sized under 300 lines for rapid review
 
 <!-- Tests must verify observable behavior with independent expected literals. Tautological mock assertions are prohibited. -->
-- [ ] Tests assert real behavior without tautological mocks
+- [ ] **Meaningful Tests:** Real behavior verified without tautological mocks
 
 <!-- Logic and UI must reside in src/pages/<slice-name>/ with thin app/routes/ re-exports. Do not extract to other layers unless reused. -->
-- [ ] Architecture follows pages-first FSD
+- [ ] **Pages-First FSD:** Slices self-contained without premature extraction
 
 <!-- Changes must remain strictly within ticket scope. Log potential future cleanups separately rather than bundling them here. -->
-- [ ] Scope is strictly contained without opportunistic refactoring
+- [ ] **Strict Scope:** Zero opportunistic refactoring or creep
