@@ -10,8 +10,8 @@ Closes #
 <!-- Provide a numbered list (1-4 items) of major changes to guide the reviewer. Link to key files/symbols where helpful. -->
 1. 
 
-## Document Trade-offs
-<!-- Explain any non-obvious decisions, trade-offs, or discarded alternatives. If none, write "None — standard implementation". -->
+## Document Trade-offs & Future Work
+<!-- Explain non-obvious decisions, trade-offs, discarded alternatives, and any deferred improvements or future refactors. If none, write "None — standard implementation". -->
 - 
 
 ## Verify Guardrails
