@@ -1,3 +1,10 @@
+<!--
+MASTER GUIDELINE FOR PR AUTHORING:
+- Prioritize extreme conciseness, simplicity, and human readability above all else.
+- Write in Simplified Technical English (STE-1000 style): active voice, short sentences, and zero jargon.
+- Avoid low-level code dumping, file list repetition, or boilerplate filler text.
+-->
+
 ## Link Issue
 Closes #
 
@@ -10,8 +17,12 @@ Closes #
 <!-- Provide a numbered list (1-4 items) of major changes to guide the reviewer. Link to key files/symbols where helpful. -->
 1. 
 
-## Document Trade-offs & Future Work
-<!-- Explain non-obvious decisions, trade-offs, discarded alternatives, and any deferred improvements or future refactors. If none, write "None — standard implementation". -->
+## Document Trade-offs
+<!-- Explain any non-obvious decisions, trade-offs, or discarded alternatives. If none, write "None — standard implementation". -->
+- 
+
+## Note Future Improvements
+<!-- List any deferred cleanups, follow-up tickets, or potential future refactors identified during this work. If none, write "None". -->
 - 
 
 ## Verify Guardrails
