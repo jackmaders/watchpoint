@@ -68,6 +68,8 @@
 		"check:drizzle-sync": "bun run db:generate && git diff --exit-code -- drizzle",
 		"check:format": "biome format --error-on-warnings .",
 		"check:lint": "biome lint --error-on-warnings .",
+		"check:perf-budgets": "bun scripts/check-perf-budgets.ts",
+		"check:routes": "bun scripts/check-routes.ts",
 		"check:seed": "bun scripts/seed.ts",
 		"check:types": "tsc --noEmit",
 		"db:generate": "drizzle-kit generate",

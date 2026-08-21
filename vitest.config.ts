@@ -21,7 +21,7 @@ export default defineConfig({
 				"src/pages/vod-detail/ui/session-player-media-recovery-prototype.tsx",
 			],
 			include: ["src/**/*.{ts,tsx}"],
-			provider: "v8",
+			reporter: ["text-summary", "text"],
 			thresholds: {
 				branches: 100,
 				functions: 100,

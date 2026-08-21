@@ -83,7 +83,7 @@ describe("AdminContentPage", () => {
 		expect(screen.getByText("GM Rein Guide")).toBeDefined();
 		expect(screen.getByText("Tracer Dive")).toBeDefined();
 		expect(screen.getByText("Ana Positioning")).toBeDefined();
-	});
+	}, 2000);
 
 	it("filters items by free-text search across title, hero, and map", () => {
 		// Arrange

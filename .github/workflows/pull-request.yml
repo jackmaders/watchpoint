@@ -93,6 +93,9 @@ jobs:
       - name: 🚨 Verify Cloudflare Types
         run: bun run check:cf-sync
 
+      - name: 🧭 Verify Route Inventory Exhaustiveness
+        run: bun run check:routes
+
       - name: 🦺 Check Type Safety
         run: bun run check:types
 
@@ -101,6 +104,42 @@ jobs:
 
       - name: ✨ Check Linting and Formatting
         run: bun run check:all
+
+  perf-budgets:
+    name: ⚡ Enforce Performance Budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+    env:
+      HOME: /root
+
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: 🗄️ Run D1 Local Migrations
+        run: bun run db:migrate:local
+
+      - name: 🌱 Seed D1 Local Database
+        run: bun run check:seed
+
+      - name: 🚀 Start Local Web Server
+        run: |
+          bun run dev --host --port 3000 &
+          for i in $(seq 1 30); do
+            if curl -s http://127.0.0.1:3000/ > /dev/null; then
+              echo "Server is ready on port 3000"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: ⏱️ Run Performance Budget Audit Suite
+        run: bun run check:perf-budgets
 
   unit-tests:
     name: 🧪 Run Unit Tests
