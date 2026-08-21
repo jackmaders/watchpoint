@@ -22,7 +22,6 @@ export default defineConfig({
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			provider: "v8",
-			reporter: ["text-summary"],
 			thresholds: {
 				branches: 100,
 				functions: 100,
@@ -54,7 +53,6 @@ export default defineConfig({
 				`Unexpected console output detected during test execution (${type}):\n${log}`,
 			);
 		},
-		reporters: ["dot"],
 		testTimeout: 500,
 	},
 });
