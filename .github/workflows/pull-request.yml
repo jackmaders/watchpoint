@@ -21,16 +21,10 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 💾 Cache Playwright Browsers
-        uses: actions/cache@v5
-        id: playwright-cache
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
-
-      - name: 🌐 Install Playwright Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: bunx playwright install --with-deps chromium
+          browsers: "chromium"
 
       - name: 🧭 Check Story Completeness
         run: bun run storybook:check:completeness
@@ -64,16 +58,10 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 💾 Cache Playwright Browsers
-        uses: actions/cache@v5
-        id: playwright-cache
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
-
-      - name: 🌐 Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: bunx playwright install --with-deps chromium firefox
+          browsers: "chromium firefox"
 
       - name: 🗄️ Apply Local Migrations
         run: bun run db:migrate:local
@@ -138,16 +126,10 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 💾 Cache Playwright Browsers
-        uses: actions/cache@v5
-        id: playwright-cache
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
-
-      - name: 🌐 Install Playwright Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: bunx playwright install --with-deps chromium
+          browsers: "chromium"
 
       - name: 🗄️ Apply Local Migrations
         run: bun run db:migrate:local
