@@ -59,6 +59,7 @@
 	"private": true,
 	"scripts": {
 		"build": "vite build",
+		"build-preview": "bun scripts/serve-build-preview.ts",
 		"build-storybook": "storybook build",
 		"cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --include-runtime false --env-file .env.example",
 		"check:all": "biome check --error-on-warnings .",
@@ -83,7 +84,7 @@
 		"dev": "vite dev",
 		"fix:all": "biome check --write --unsafe --error-on-warnings .",
 		"prepare": "lefthook install",
-		"preview": "vite preview",
+		"preview": "bun scripts/serve-build-preview.ts",
 		"storybook": "storybook dev -p 6006",
 		"storybook:build": "storybook build",
 		"storybook:check": "bun run storybook:build && bun run storybook:check:browser",

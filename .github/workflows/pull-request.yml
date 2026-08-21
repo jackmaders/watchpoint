@@ -13,27 +13,29 @@ jobs:
     name: ♿ Run Accessibility Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
-    env:
-      HOME: /root
+
     steps:
-      - name: 🛒 Checkout
+      - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: ⚡ Setup Bun
+      - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🧭 Check shared UI story completeness
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
+        with:
+          browsers: "chromium"
+
+      - name: 🧭 Check Story Completeness
         run: bun run storybook:check:completeness
 
-      - name: 🏗️ Build Storybook
+      - name: 🏗️ Build Storybook App
         run: bun run storybook:build
 
-      - name: ♿ Run browser accessibility checks
+      - name: ♿ Run Accessibility Checks
         run: bun run storybook:check:browser
 
-      - name: 📩 Upload Storybook accessibility artifacts on failure
+      - name: 📩 Upload Failure Artifacts
         if: failure()
         uses: actions/upload-artifact@v5
         with:
@@ -48,28 +50,29 @@ jobs:
     name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
-    env:
-      HOME: /root
 
     steps:
-      - name: 🛒 Checkout
+      - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: ⚡ Setup Bun
+      - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🗄️ Run D1 Local Migrations
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
+        with:
+          browsers: "chromium firefox"
+
+      - name: 🗄️ Apply Local Migrations
         run: bun run db:migrate:local
 
-      - name: 🌱 Seed D1 Local Database
+      - name: 🌱 Seed Local Database
         run: bun run check:seed
 
-      - name: 🧪 Run E2E Tests
+      - name: 🧪 Run Browser Tests
         run: bun run test:e2e
 
-      - name: 📩 Upload Playwright Report on Failure
+      - name: 📩 Upload Failure Report
         if: failure()
         uses: actions/upload-artifact@v5
         with:
@@ -81,19 +84,19 @@ jobs:
     name: ✨ Check Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: 🛒 Checkout
+      - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: ⚡ Setup Bun
+      - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🚨 Verify Drizzle Migrations Sync
+      - name: 🚨 Verify Drizzle Sync
         run: bun run check:drizzle-sync
 
       - name: 🚨 Verify Cloudflare Types
         run: bun run check:cf-sync
 
-      - name: 🧭 Verify Route Inventory Exhaustiveness
+      - name: 🧭 Verify Route Inventory
         run: bun run check:routes
 
       - name: 🦺 Check Type Safety
@@ -102,103 +105,72 @@ jobs:
       - name: 📐 Check FSD Architecture
         run: bun run check:architecture
 
-      - name: ✨ Check Linting and Formatting
+      - name: ✨ Check Code Formatting
         run: bun run check:all
 
   perf-budgets:
-    name: ⚡ Enforce Performance Budgets
+    name: ⚡ Check Performance Budgets
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
     env:
-      HOME: /root
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
     steps:
-      - name: 🛒 Checkout
+      - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: ⚡ Setup Bun
+      - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🗄️ Run D1 Local Migrations
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
+        with:
+          browsers: "chromium"
+
+      - name: 🗄️ Apply Local Migrations
         run: bun run db:migrate:local
 
-      - name: 🌱 Seed D1 Local Database
+      - name: 🌱 Seed Local Database
         run: bun run check:seed
 
-      - name: 🚀 Start Local Web Server
+      - name: 🏗️ Build Web Application
+        run: bun run build
+
+      - name: 🚀 Validate Worker Deploy
+        run: bun run deploy --dry-run
+
+      - name: 🛈 Check Bundle Size
+        run: bun run check:bundle-size
+
+      - name: 🚀 Start Preview Server
         run: |
-          bun run dev --host --port 3000 &
+          bun run build-preview &
           for i in $(seq 1 30); do
             if curl -s http://127.0.0.1:3000/ > /dev/null; then
-              echo "Server is ready on port 3000"
+              echo "Preview server is ready on port 3000"
               break
             fi
             sleep 1
           done
 
-      - name: ⏱️ Run Performance Budget Audit Suite
+      - name: ⏱️ Run Performance Audit
+        env:
+          BASE_URL: "http://127.0.0.1:3000"
         run: bun run check:perf-budgets
 
   unit-tests:
     name: 🧪 Run Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - name: 🛒 Checkout
+      - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
 
-      - name: ⚡ Setup Bun
+      - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🧪 Run Unit Tests with Coverage
+      - name: 🧪 Run Test Coverage
         run: bun run test:coverage
-
-  database:
-    name: 🛢 Check Database Schema
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🛒 Checkout
-        uses: actions/checkout@v5
-
-      - name: ⚡ Setup Bun
-        uses: ./.github/actions/setup-bun
-
-      - name: 🗄️ Verify Cloudflare D1 Migrations
-        run: bun run db:migrate:local
-
-      - name: 🌱 Run Seed Script Check
-        run: bun run check:seed
-
-  build:
-    name: 🏗️ Build Web App
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🛒 Checkout
-        uses: actions/checkout@v5
-
-      - name: ⚡ Setup Bun
-        uses: ./.github/actions/setup-bun
-
-      - name: 🗄️ Run D1 Local Migrations
-        run: bun run db:migrate:local
-
-      - name: 🌱 Seed D1 Local Database
-        run: bun run check:seed
-
-      - name: 🏗️ Build TanStack Start Application
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-        run: bun run build
-
-      - name: 🚀 Validate Cloudflare Worker Deployment Artifacts
-        run: bun run deploy --dry-run
-
-      - name: 🛈 Check Cloudflare Worker Bundle Size Limits
-        run: bun run check:bundle-size

@@ -45,6 +45,7 @@ export default defineConfig({
 		],
 		globals: true,
 		include: ["**/*.spec.{ts,tsx}"],
+		maxWorkers: 2,
 		// Console output during a test run is a failure, not a warning
 		// (CODING_STANDARDS.md — "No console output in tests").
 		onConsoleLog(log, type) {

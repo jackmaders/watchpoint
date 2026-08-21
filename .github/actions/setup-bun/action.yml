@@ -4,26 +4,12 @@ description: "Sets up Bun environment, caches the Bun store, and installs depend
 runs:
   using: "composite"
   steps:
-    - name: 📦 Ensure Bun bootstrap dependency
-      shell: bash
-      run: |
-        if command -v unzip >/dev/null 2>&1; then
-          exit 0
-        fi
-
-        apt-get update
-        apt-get install -y --no-install-recommends unzip
-
-    - name: 🔐 Trust checked-out repository
-      shell: bash
-      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-    - name: ⚡ Setup Bun
+    - name: ⚡ Setup Bun Runtime
       uses: oven-sh/setup-bun@v2
       with:
         bun-version-file: ".bun-version"
 
-    - name: 💾 Cache Bun store
+    - name: 💾 Cache Bun Store
       uses: actions/cache@v5
       with:
         path: ~/.bun/install/cache
@@ -31,6 +17,6 @@ runs:
         restore-keys: |
           ${{ runner.os }}-bun-
 
-    - name: 📦 Install Dependencies
+    - name: 📦 Install Project Dependencies
       shell: bash
       run: bun install --frozen-lockfile
