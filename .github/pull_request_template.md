@@ -1,5 +1,4 @@
 <!--
-MASTER GUIDELINE FOR PR AUTHORING:
 - Prioritize extreme conciseness, simplicity, and human readability above all else.
 - Write in Simplified Technical English (STE-1000 style): active voice, short sentences, and zero jargon.
 - Avoid low-level code dumping, file list repetition, or boilerplate filler text.
@@ -9,7 +8,7 @@ MASTER GUIDELINE FOR PR AUTHORING:
 Closes #
 
 ## Summarize Purpose
-<!-- Write exactly ONE sentence in Simplified Technical English (STE-1000 style: active voice, short, zero jargon) explaining what this PR achieves and why. -->
+<!-- Write exactly ONE sentence in STE-1000 style explaining what this PR achieves and why. -->
 <!-- RULE: If you cannot convey the full technical change in one sentence without using the word "and", split this work into multiple PRs. -->
 
 
@@ -18,7 +17,7 @@ Closes #
 1. 
 
 ## Document Trade-offs
-<!-- Explain any non-obvious decisions, trade-offs, or discarded alternatives. If none, write "None — standard implementation". -->
+<!-- Explain any non-obvious decisions, trade-offs, or discarded alternatives. Include any coverage exceptions in the test suite. If none, write "None — standard implementation". -->
 - 
 
 ## Note Future Improvements
@@ -26,14 +25,11 @@ Closes #
 - 
 
 ## Verify Guardrails
-<!-- Diff must be under 300 total lines and under 150 active lines (excluding database migrations, snapshots, and unit tests). If larger, split into a stack. -->
-- [ ] **Atomic PR:** Sized under 300 lines for rapid review
+<!-- Diff must be under under 150 active lines (excluding database migrations, snapshots, and unit tests). If larger, split into a stack. -->
+- [ ] **Atomic PR:** Sized under 150 lines for rapid review
 
 <!-- Tests must verify observable behavior with independent expected literals. Tautological mock assertions are prohibited. -->
 - [ ] **Meaningful Tests:** Real behavior verified without tautological mocks
 
-<!-- Logic and UI must reside in src/pages/<slice-name>/ with thin app/routes/ re-exports. Do not extract to other layers unless reused. -->
+<!-- All single-use Logic and UI must reside in src/pages/<slice-name>/ with thin app/routes/ re-exports. Do not extract to other layers unless reused. -->
 - [ ] **Pages-First FSD:** Slices self-contained without premature extraction
-
-<!-- Changes must remain strictly within ticket scope. Log potential future cleanups separately rather than bundling them here. -->
-- [ ] **Strict Scope:** Zero opportunistic refactoring or creep
