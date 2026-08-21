@@ -1,10 +1,3 @@
----
-name: Task / Developer Ticket
-about: Standard developer task ticket for a feature vertical slice or bugfix
-title: "task: "
-labels: ["wayfinder:task"]
----
-
 <!-- Parent spec or map issue (e.g. "Parent: #123") -->
 Parent: #
 
