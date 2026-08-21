@@ -1,17 +1,17 @@
 ## Parent
-<!-- A reference to the parent spec or map issue (e.g. #123), or omit if not applicable. -->
+<!-- Reference the parent issue (e.g. "Parent: #123"), or omit if not applicable. -->
 Parent: #
 
 ## What to build
-<!-- The end-to-end behavior this ticket makes work, from the user's perspective — not a layer-by-layer implementation. -->
+<!-- Explain what to build in 1-2 simple sentences using plain, easy-to-understand language. Focus on what the user experiences, not low-level code mechanics or jargon. -->
 
 
 ## Acceptance criteria
-<!-- What observable behaviors and quality gates must be true for this ticket to be complete? -->
+<!-- List clear, testable requirements in plain, everyday language. -->
 - [ ] 
 - [ ] Tests adhere to Arrange-Act-Assert (AAA) and pass under 50ms
 - [ ] `bun run validate` passes (100% coverage, 0 lint/arch errors)
 
 ## Blocked by
-<!-- References to each blocking ticket (e.g. #124), or "None — can start immediately". -->
+<!-- List any tickets that must finish before this can start (e.g. #124), or write "None — can start immediately". -->
 - None — can start immediately

@@ -1,24 +1,23 @@
 ## Summary
-<!-- Provide a concise 1-3 sentence summary of what this PR does and why. -->
+<!-- Exactly ONE sentence in plain, simple English explaining what this PR achieves and why. -->
 
 - **Issue:** Closes #
-<!-- - **Type:** Feature | Bug Fix | Refactor | Chore -->
 
 ---
 
-## Changes Made
-<!-- List the key changes in simple, clear bullet points. -->
-- 
+## Major Changes
+<!-- A numbered list of the major steps/changes made to implement this. Keep it high-level, clear, and easy to follow (avoid dumping file paths or raw code diffs). -->
+1. 
 
 <!--
 ### Bug Fix Details (Only for bug fixes)
-- **Root Cause:** Explain the underlying cause (symptom masking or silent fallbacks are prohibited).
-- **Resolution:** How this change permanently fixes the issue.
+- **Root Cause:** Plain-English explanation of why it broke (symptom masking is prohibited).
+- **Resolution:** How this change resolves it permanently.
 -->
 
 <!--
 ### UI Changes (Only for user-visible changes)
-- Attach screenshot/recording (Light/Dark mode if applicable) or note "N/A — no UI change".
+- Attach screenshot / video or note "N/A — no UI change".
 -->
 
 ---
