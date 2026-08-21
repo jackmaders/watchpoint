@@ -4,20 +4,6 @@ description: "Sets up Bun environment, caches the Bun store, and installs depend
 runs:
   using: "composite"
   steps:
-    - name: 📦 Ensure Unzip Dependency
-      shell: bash
-      run: |
-        if command -v unzip >/dev/null 2>&1; then
-          exit 0
-        fi
-
-        apt-get update
-        apt-get install -y --no-install-recommends unzip
-
-    - name: 🔐 Trust Repository Directory
-      shell: bash
-      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
     - name: ⚡ Setup Bun Runtime
       uses: oven-sh/setup-bun@v2
       with:
