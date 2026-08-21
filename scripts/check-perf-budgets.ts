@@ -407,7 +407,7 @@ if (import.meta.main) {
 	const startTime = Date.now();
 	console.log("Starting performance budget audit across route inventory...");
 
-	const targetUrl = process.env.BASE_URL || "http://localhost:3000";
+	const targetUrl = process.env.BASE_URL || "http://127.0.0.1:3000";
 	let spawnedServer: ChildProcess | null = null;
 
 	ensureServerRunning(targetUrl)

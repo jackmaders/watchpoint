@@ -13,16 +13,16 @@ jobs:
     name: ♿ Run Accessibility Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
-    env:
-      HOME: /root
+
     steps:
       - name: 🛒 Checkout
         uses: actions/checkout@v5
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
+
+      - name: 🌐 Install Playwright Chromium with OS Dependencies
+        run: bunx playwright install --with-deps chromium
 
       - name: 🧭 Check shared UI story completeness
         run: bun run storybook:check:completeness
@@ -45,40 +45,7 @@ jobs:
           retention-days: 14
 
   e2e-tests:
-    name: 🎭 Run E2E Tests (Container)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
-    env:
-      HOME: /root
-
-    steps:
-      - name: 🛒 Checkout
-        uses: actions/checkout@v5
-
-      - name: ⚡ Setup Bun
-        uses: ./.github/actions/setup-bun
-
-      - name: 🗄️ Run D1 Local Migrations
-        run: bun run db:migrate:local
-
-      - name: 🌱 Seed D1 Local Database
-        run: bun run check:seed
-
-      - name: 🧪 Run E2E Tests
-        run: bun run test:e2e
-
-      - name: 📩 Upload Playwright Report on Failure
-        if: failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-report-container
-          path: playwright-report/
-          retention-days: 7
-
-  e2e-benchmark-native:
-    name: ⏱️ Run E2E Tests (Native Benchmark)
+    name: 🎭 Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -89,7 +56,7 @@ jobs:
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
 
-      - name: 🌐 Install Playwright Chromium with OS Dependencies
+      - name: 🌐 Install Playwright Browsers with OS Dependencies
         run: bunx playwright install --with-deps chromium firefox
 
       - name: 🗄️ Run D1 Local Migrations
@@ -105,7 +72,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v5
         with:
-          name: playwright-report-native
+          name: playwright-report
           path: playwright-report/
           retention-days: 7
 
@@ -141,10 +108,7 @@ jobs:
     name: ⚡ Enforce Performance Budgets & Build Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.1-noble
     env:
-      HOME: /root
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -157,6 +121,9 @@ jobs:
 
       - name: ⚡ Setup Bun
         uses: ./.github/actions/setup-bun
+
+      - name: 🌐 Install Playwright Chromium with OS Dependencies
+        run: bunx playwright install --with-deps chromium
 
       - name: 🗄️ Run D1 Local Migrations
         run: bun run db:migrate:local
@@ -175,7 +142,7 @@ jobs:
 
       - name: 🚀 Start Production Preview Server
         run: |
-          bun run preview --port 3000 &
+          bun run preview --host 0.0.0.0 --port 3000 &
           for i in $(seq 1 30); do
             if curl -s http://127.0.0.1:3000/ > /dev/null; then
               echo "Preview server is ready on port 3000"
@@ -185,6 +152,8 @@ jobs:
           done
 
       - name: ⏱️ Run Performance Budget Audit Suite
+        env:
+          BASE_URL: "http://127.0.0.1:3000"
         run: bun run check:perf-budgets
 
   unit-tests:
