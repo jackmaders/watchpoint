@@ -53,6 +53,7 @@ export default defineConfig({
 				`Unexpected console output detected during test execution (${type}):\n${log}`,
 			);
 		},
+		setupFiles: ["./vitest.setup.ts"],
 		testTimeout: 500,
 	},
 });
