@@ -1,12 +1,12 @@
 ## Summary
-<!-- Exactly ONE sentence in plain, simple English explaining what this PR achieves and why. -->
+<!-- Exactly ONE sentence in Simplified Technical English (STE-1000 style: active voice, short sentences, zero jargon) explaining what this PR achieves and why. -->
 
 - **Issue:** Closes #
 
 ---
 
 ## Major Changes
-<!-- A numbered list of the major steps/changes made to implement this. Keep it high-level, clear, and easy to follow (avoid dumping file paths or raw code diffs). -->
+<!-- A numbered list of the major steps/changes made to implement this in STE-1000 style. Keep it high-level, clear, and easy to follow (avoid dumping file paths or raw code diffs). -->
 1. 
 
 <!--
