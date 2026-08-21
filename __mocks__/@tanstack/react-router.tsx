@@ -34,6 +34,7 @@ export const createFileRoute = vi.fn(
 		options: config,
 		path,
 		useLoaderData: vi.fn(() => ({})),
+		useNavigate: vi.fn(() => vi.fn()),
 		useParams: vi.fn(() => ({})),
 		useRouteContext: vi.fn(() => ({})),
 		useSearch: vi.fn(() => ({})),
