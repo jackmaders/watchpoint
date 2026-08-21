@@ -1,7 +1,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getPlatformProxy } from "wrangler";
-import server from "../dist/server/server.js";
+
+interface ServerBundle {
+	default?: { fetch: (req: Request, envCtx?: unknown) => Promise<Response> };
+	fetch?: (req: Request, envCtx?: unknown) => Promise<Response>;
+}
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "127.0.0.1";
@@ -11,13 +15,27 @@ const proxy = await getPlatformProxy<{ DB: unknown; MEDIA: unknown }>();
 // Attach bindings to global scope for local database client
 (
 	globalThis as unknown as {
-		__env__: typeof proxy.env;
 		DB: typeof proxy.env.DB;
+		__env__: typeof proxy.env;
 	}
 ).__env__ = proxy.env;
 (globalThis as unknown as { DB: typeof proxy.env.DB }).DB = proxy.env.DB;
 
 const clientDist = join(process.cwd(), "dist/client");
+const serverDistPath = join(process.cwd(), "dist/server/server.js");
+
+const serverModule = (await import(
+	/* @vite-ignore */ serverDistPath
+)) as ServerBundle;
+
+const fetchHandler =
+	serverModule.default?.fetch ??
+	serverModule.fetch ??
+	(
+		serverModule as unknown as {
+			fetch: (req: Request, envCtx?: unknown) => Promise<Response>;
+		}
+	).fetch;
 
 const bunServer = Bun.serve({
 	async fetch(request) {
@@ -33,7 +51,7 @@ const bunServer = Bun.serve({
 		}
 
 		// 2. Delegate SSR routes to compiled server bundle
-		return server.fetch(request, {
+		return fetchHandler(request, {
 			ctx: {
 				passThroughOnException: () => {},
 				waitUntil: (promise: Promise<unknown>) => {
