@@ -348,8 +348,8 @@ async function ensureServerRunning(
 	}
 
 	console.log(`Starting server at ${baseUrl}...`);
-	const server = spawn("bun", ["run", "dev", "--port", "3000", "--host"], {
-		env: { ...process.env, PORT: "3000" },
+	const server = spawn("bun", ["run", "build-preview"], {
+		env: { ...process.env, HOST: "127.0.0.1", PORT: "3000" },
 		stdio: "ignore",
 	});
 
