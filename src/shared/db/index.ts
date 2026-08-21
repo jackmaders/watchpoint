@@ -102,6 +102,7 @@ export {
 	playthroughStatusEnum,
 	playthroughs,
 	scenarioSnapshots,
+	scenarios,
 	type UserRole,
 	userRoleEnum,
 	vods,
