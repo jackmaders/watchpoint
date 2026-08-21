@@ -21,7 +21,15 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
+      - name: 💾 Cache Playwright Browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
+
       - name: 🌐 Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium
 
       - name: 🧭 Check Story Completeness
@@ -56,7 +64,15 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
+      - name: 💾 Cache Playwright Browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
+
       - name: 🌐 Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium firefox
 
       - name: 🗄️ Apply Local Migrations
@@ -122,7 +138,15 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
+      - name: 💾 Cache Playwright Browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package.json') }}
+
       - name: 🌐 Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium
 
       - name: 🗄️ Apply Local Migrations

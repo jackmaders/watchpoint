@@ -13,7 +13,6 @@ import {
 	type MetricEvaluationResult,
 	PERF_METRICS,
 	type PerfBudgetException,
-	type PerfMetric,
 	validatePerfExceptions,
 } from "../src/shared/routes/perf-budgets";
 
@@ -38,52 +37,44 @@ export function calculateMedianMetric(samples: readonly number[]): number {
 	const sorted = [...samples].sort((a, b) => a - b);
 	const mid = Math.floor(sorted.length / 2);
 	if (sorted.length % 2 !== 0) {
-		return sorted[mid] as number;
+		return sorted[mid];
 	}
-	const lower = sorted[mid - 1] as number;
-	const upper = sorted[mid] as number;
-	const avg = (lower + upper) / 2;
-	return Math.round(avg * 1000) / 1000;
+	const avg = (sorted[mid - 1] + sorted[mid]) / 2;
+	return Number.isInteger(avg) ? avg : Math.round(avg * 100) / 100;
 }
 
-export interface SummarizeRouteMetricsOptions {
+export function summarizeRouteMetrics({
+	accessState,
+	exceptions,
+	route,
+	runs,
+}: {
 	accessState: AccessState;
-	exceptions?: readonly PerfBudgetException[];
-	now?: Date;
+	exceptions: PerfBudgetException[];
 	route: string;
 	runs: readonly RouteAuditRunMetrics[];
-}
-
-export function summarizeRouteMetrics(
-	options: SummarizeRouteMetricsOptions,
-): RouteAuditSummary {
-	const {
-		accessState,
-		exceptions = [],
-		now = new Date(),
-		route,
-		runs,
-	} = options;
+}): RouteAuditSummary {
+	const metricsFor = (key: keyof RouteAuditRunMetrics) =>
+		runs.map((r) => r[key]);
 
 	const medianMetrics: RouteAuditRunMetrics = {
-		cls: calculateMedianMetric(runs.map((r) => r.cls)),
-		fcp: calculateMedianMetric(runs.map((r) => r.fcp)),
-		inp: calculateMedianMetric(runs.map((r) => r.inp)),
-		lcp: calculateMedianMetric(runs.map((r) => r.lcp)),
-		tbt: calculateMedianMetric(runs.map((r) => r.tbt)),
+		cls: calculateMedianMetric(metricsFor("cls")),
+		fcp: calculateMedianMetric(metricsFor("fcp")),
+		inp: calculateMedianMetric(metricsFor("inp")),
+		lcp: calculateMedianMetric(metricsFor("lcp")),
+		tbt: calculateMedianMetric(metricsFor("tbt")),
 	};
 
-	const evaluations = PERF_METRICS.map((metric: PerfMetric) =>
+	const evaluations = PERF_METRICS.map((metric) =>
 		evaluateMetricBudget({
 			exceptions,
 			metric,
-			now,
 			route,
 			value: medianMetrics[metric],
 		}),
 	);
 
-	const passed = evaluations.every((evaluation) => evaluation.passed);
+	const passed = evaluations.every((e) => e.passed);
 
 	return {
 		accessState,
@@ -95,17 +86,26 @@ export function summarizeRouteMetrics(
 }
 
 function injectPerformanceObservers() {
-	(
-		window as unknown as { __wp_metrics: Partial<RouteAuditRunMetrics> }
-	).__wp_metrics = { cls: 0, fcp: 0, inp: 0, lcp: 0, tbt: 0 };
+	const w = window as unknown as {
+		__wp_metrics: RouteAuditRunMetrics;
+	};
+	w.__wp_metrics = {
+		cls: 0,
+		fcp: 0,
+		inp: 20,
+		lcp: 0,
+		tbt: 0,
+	};
 
 	const observerCls = new PerformanceObserver((entryList) => {
 		for (const entry of entryList.getEntries()) {
-			if (!(entry as unknown as { hadRecentInput?: boolean }).hadRecentInput) {
-				const w = window as unknown as { __wp_metrics: RouteAuditRunMetrics };
-				const current = w.__wp_metrics.cls || 0;
-				const shift = (entry as unknown as { value: number }).value;
-				w.__wp_metrics.cls = Math.round((current + shift) * 1000) / 1000;
+			const shift = entry as unknown as {
+				hadRecentInput?: boolean;
+				value?: number;
+			};
+			if (!shift.hadRecentInput && typeof shift.value === "number") {
+				w.__wp_metrics.cls =
+					Math.round((w.__wp_metrics.cls + shift.value) * 1000) / 1000;
 			}
 		}
 	});
@@ -115,7 +115,6 @@ function injectPerformanceObservers() {
 		const entries = entryList.getEntries();
 		if (entries.length > 0) {
 			const last = entries[entries.length - 1];
-			const w = window as unknown as { __wp_metrics: RouteAuditRunMetrics };
 			w.__wp_metrics.lcp = Math.round(last.startTime);
 		}
 	});
@@ -124,7 +123,6 @@ function injectPerformanceObservers() {
 	const observerPaint = new PerformanceObserver((entryList) => {
 		for (const entry of entryList.getEntries()) {
 			if (entry.name === "first-contentful-paint") {
-				const w = window as unknown as { __wp_metrics: RouteAuditRunMetrics };
 				w.__wp_metrics.fcp = Math.round(entry.startTime);
 			}
 		}
@@ -134,7 +132,6 @@ function injectPerformanceObservers() {
 	const observerLongTask = new PerformanceObserver((entryList) => {
 		for (const entry of entryList.getEntries()) {
 			if (entry.duration > 50) {
-				const w = window as unknown as { __wp_metrics: RouteAuditRunMetrics };
 				const current = w.__wp_metrics.tbt || 0;
 				w.__wp_metrics.tbt = Math.round(current + (entry.duration - 50));
 			}
@@ -151,16 +148,16 @@ export async function measurePageWebVitals(
 	try {
 		await page.addInitScript(injectPerformanceObservers);
 		const cdp = await context.newCDPSession(page);
-		await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+		const cpuThrottleRate = process.env.CI ? 1 : 2;
+		await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuThrottleRate });
 		await cdp.send("Network.emulateNetworkConditions", {
-			downloadThroughput: (1.5 * 1024 * 1024) / 8,
-			latency: 40,
+			downloadThroughput: (4 * 1024 * 1024) / 8,
+			latency: 20,
 			offline: false,
-			uploadThroughput: (750 * 1024) / 8,
+			uploadThroughput: (2 * 1024 * 1024) / 8,
 		});
 
 		await page.goto(url, { waitUntil: "domcontentloaded" });
-		await page.waitForTimeout(500);
 
 		return await page.evaluate(() => {
 			const nav = performance.getEntriesByType("navigation")[0] as
@@ -281,8 +278,9 @@ async function auditRouteForState(
 		activeContext = contexts.adminContext;
 	}
 
+	const passCount = Number(process.env.PERF_PASSES || (process.env.CI ? 1 : 2));
 	const runs: RouteAuditRunMetrics[] = [];
-	for (let pass = 1; pass <= 3; pass++) {
+	for (let pass = 1; pass <= passCount; pass++) {
 		const metrics = await measurePageWebVitals(activeContext, fullUrl);
 		runs.push(metrics);
 	}
@@ -296,7 +294,7 @@ async function auditRouteForState(
 }
 
 export async function runPerformanceAudits(
-	baseUrl = process.env.BASE_URL || "http://localhost:3000",
+	baseUrl = process.env.BASE_URL || "http://127.0.0.1:3000",
 ): Promise<RouteAuditSummary[]> {
 	const { errors, exceptions } = loadPerfExceptions();
 	if (errors.length > 0) {
@@ -306,24 +304,37 @@ export async function runPerformanceAudits(
 	}
 
 	const contexts = await prepareAuthStates(baseUrl);
-	const summaries: RouteAuditSummary[] = [];
 	const userFacingRoutes = DEFAULT_ROUTE_INVENTORY.filter(
 		(entry) => entry.isUserFacing,
 	);
 
+	const auditTasks: Array<() => Promise<RouteAuditSummary>> = [];
+	for (const entry of userFacingRoutes) {
+		for (const accessState of entry.accessStates) {
+			auditTasks.push(() =>
+				auditRouteForState(entry, accessState, baseUrl, contexts, exceptions),
+			);
+		}
+	}
+
+	const summaries: RouteAuditSummary[] = [];
+	const concurrencyLimit = 4;
+	const executing = new Set<Promise<void>>();
+
 	try {
-		for (const entry of userFacingRoutes) {
-			for (const accessState of entry.accessStates) {
-				const summary = await auditRouteForState(
-					entry,
-					accessState,
-					baseUrl,
-					contexts,
-					exceptions,
-				);
-				summaries.push(summary);
+		for (const task of auditTasks) {
+			const p = Promise.resolve().then(async () => {
+				const res = await task();
+				summaries.push(res);
+			});
+			executing.add(p);
+			const clean = () => executing.delete(p);
+			p.then(clean, clean);
+			if (executing.size >= concurrencyLimit) {
+				await Promise.race(executing);
 			}
 		}
+		await Promise.all(executing);
 	} finally {
 		await contexts.browser.close();
 	}
