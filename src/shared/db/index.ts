@@ -107,3 +107,15 @@ export {
 	userRoleEnum,
 	vods,
 } from "./schema";
+export {
+	FIXTURE_IDS,
+	FIXTURE_VOD,
+	getLocalFixtureScenarios,
+	getLocalFixtureVod,
+} from "./seed-fixtures";
+export {
+	assertLocalSeedTarget,
+	getSeedCredentials,
+	type SeedCredentials,
+	type SeedEnvironment,
+} from "./seed-policy";

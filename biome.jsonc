@@ -28,6 +28,8 @@
 			"!dist",
 			"!build",
 			"!storybook-static",
+			"!a11y-report",
+			"!.auth",
 			"!cloudflare-env.d.ts",
 			"!app/routeTree.gen.ts",
 			"!drizzle/meta",

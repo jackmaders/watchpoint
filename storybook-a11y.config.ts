@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const port = Number(process.env.STORYBOOK_A11Y_PORT ?? 6106);
 
 export default defineConfig({
+	reporter: [["list"], ["html", { open: "never" }]],
 	testDir: "./storybook",
 	testMatch: "**/*.a11y.test.ts",
 	use: {

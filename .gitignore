@@ -9,6 +9,8 @@
 !.yarn/versions
 
 # testing
+/a11y-report
+/.auth
 /coverage
 /playwright-report
 /test-results
