@@ -15,8 +15,14 @@ Closes #
 - 
 
 ## Verify Guardrails
-<!-- Verify all non-CI guardrails before submitting. -->
-- [ ] **Atomic PR:** Diff is under 300 total lines and under 150 active lines (excluding database migrations, snapshots, and unit tests). If larger, split into a stack.
-- [ ] **Meaningful Tests:** Tests verify real observable behavior with independent expected literals; zero tautological mock assertions.
-- [ ] **Pages-First FSD:** Code starts in `src/pages/<slice-name>/` with thin `app/routes/` re-exports; no premature extraction to other layers unless reused.
-- [ ] **Scope & Future Cleanups:** Zero unsolicited scope creep; potential future improvements are logged as follow-up notes rather than bundled here.
+<!-- Diff must be under 300 total lines and under 150 active lines (excluding database migrations, snapshots, and unit tests). If larger, split into a stack. -->
+- [ ] Diff is atomic and sized for rapid review
+
+<!-- Tests must verify observable behavior with independent expected literals. Tautological mock assertions are prohibited. -->
+- [ ] Tests assert real behavior without tautological mocks
+
+<!-- Logic and UI must reside in src/pages/<slice-name>/ with thin app/routes/ re-exports. Do not extract to other layers unless reused. -->
+- [ ] Architecture follows pages-first FSD
+
+<!-- Changes must remain strictly within ticket scope. Log potential future cleanups separately rather than bundling them here. -->
+- [ ] Scope is strictly contained without opportunistic refactoring
