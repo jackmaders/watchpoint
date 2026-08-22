@@ -1,26 +1,7 @@
 import type { StorybookConfig } from "@storybook/react-vite";
-import type { Plugin, PluginOption } from "vite";
 
-const tanStackStartPluginPrefixes = [
-	"start-client-tree-plugin",
-	"tanstack-router",
-	"tanstack-start",
-	"tanstack:",
-] as const;
-
-function isTanStackStartPlugin(plugin: Plugin): boolean {
-	return tanStackStartPluginPrefixes.some((prefix) =>
-		plugin.name.startsWith(prefix),
-	);
-}
-
-function withoutTanStackStart(plugins: PluginOption[]): PluginOption[] {
-	return plugins.flatMap((plugin) => {
-		if (Array.isArray(plugin)) return withoutTanStackStart(plugin);
-		if (!plugin || typeof plugin !== "object") return [];
-		return isTanStackStartPlugin(plugin) ? [] : [plugin];
-	});
-}
+const isTanStackPlugin = (name?: string) =>
+	/^start-client-tree-plugin|^tanstack(-|:)/.test(name ?? "");
 
 const config: StorybookConfig = {
 	addons: ["@storybook/addon-a11y"],
@@ -31,9 +12,9 @@ const config: StorybookConfig = {
 	stories: ["../src/shared/ui/__stories__/**/*.stories.@(ts|tsx)"],
 	viteFinal: async (config) => ({
 		...config,
-		plugins: config.plugins
-			? withoutTanStackStart(config.plugins)
-			: config.plugins,
+		plugins: (config.plugins ?? [])
+			.flat(Infinity)
+			.filter((p) => p && typeof p === "object" && !isTanStackPlugin(p.name)),
 	}),
 };
 
