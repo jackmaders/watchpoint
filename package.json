@@ -60,7 +60,6 @@
 	"scripts": {
 		"build": "vite build",
 		"build-preview": "bun scripts/serve-build-preview.ts",
-		"build-storybook": "storybook build",
 		"cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --include-runtime false --env-file .env.example",
 		"check:all": "biome check --error-on-warnings .",
 		"check:architecture": "steiger ./src",

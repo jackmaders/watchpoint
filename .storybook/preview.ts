@@ -17,7 +17,6 @@ const preview: Preview = {
 				},
 			},
 		},
-		actions: { argTypesRegex: "^on[A-Z].*" },
 		backgrounds: {
 			default: "background",
 			values: [{ name: "background", value: "var(--background)" }],
