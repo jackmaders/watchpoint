@@ -1,7 +1,5 @@
 import type { StorybookConfig } from "@storybook/react-vite";
-
-const isTanStackPlugin = (name?: string) =>
-	/^start-client-tree-plugin|^tanstack(-|:)/.test(name ?? "");
+import { filterTanStackPlugins } from "./tanstack-plugin-filter.ts";
 
 const config: StorybookConfig = {
 	addons: ["@storybook/addon-a11y"],
@@ -12,9 +10,7 @@ const config: StorybookConfig = {
 	stories: ["../src/shared/ui/__stories__/**/*.stories.@(ts|tsx)"],
 	viteFinal: async (config) => ({
 		...config,
-		plugins: (config.plugins ?? [])
-			.flat(Infinity)
-			.filter((p) => p && typeof p === "object" && !isTanStackPlugin(p.name)),
+		plugins: filterTanStackPlugins(config.plugins),
 	}),
 };
 
