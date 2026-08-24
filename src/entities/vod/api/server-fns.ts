@@ -4,6 +4,7 @@ import {
 	getSessionManifest as dbGetSessionManifest,
 	getVodById as dbGetVodById,
 	type PublishedVodItem,
+	type SessionManifest,
 } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
@@ -26,36 +27,52 @@ export type GetSessionManifestPayload = SessionManifestTransportQuery;
 
 export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 	async (): Promise<PublishedVodItem[]> => {
-		return dbGetPublishedVods();
+		const result = await dbGetPublishedVods();
+		if (!result.success) {
+			throw new Error(result.error);
+		}
+		return result.data;
 	},
 );
 
 export const getVodById = createServerFn({ method: "GET" })
 	.validator((data: { id: string }) => data)
-	.handler(async ({ data }) => {
-		return dbGetVodById(data.id);
+	.handler(async ({ data }): Promise<SessionManifest | null> => {
+		const result = await dbGetVodById(data.id);
+		if (!result.success) {
+			throw new Error(result.error);
+		}
+		return result.data;
 	});
 
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
-	.handler(async ({ data }) => {
-		return dbGetSessionManifest(data.vodId, {
+	.handler(async ({ data }): Promise<SessionManifest | null> => {
+		const result = await dbGetSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});
+		if (!result.success) {
+			throw new Error(result.error);
+		}
+		return result.data;
 	});
 
 export const getProtectedSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
-	.handler(async ({ data }) => {
+	.handler(async ({ data }): Promise<SessionManifest | null> => {
 		if (!(await getCurrentUser())) {
 			throw new Error("Authentication required");
 		}
 
-		return dbGetSessionManifest(data.vodId, {
+		const result = await dbGetSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});
+		if (!result.success) {
+			throw new Error(result.error);
+		}
+		return result.data;
 	});
 
 export const recordAttempt = createServerFn({ method: "POST" })

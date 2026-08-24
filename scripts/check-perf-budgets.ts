@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { type BrowserContext, chromium } from "@playwright/test";
-import { getSeedCredentials } from "../src/shared/db/seed-policy";
+import { getSeedCredentials } from "../src/shared/db/seed";
 import {
 	type AccessState,
 	DEFAULT_ROUTE_INVENTORY,

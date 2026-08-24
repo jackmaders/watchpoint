@@ -55,9 +55,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			youtubeVideoId: "dQw4w9WgXcQ",
 		};
 
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockManifest as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		} as never);
 
 		const req = new Request("http://localhost/api/vods/vod_1/manifest");
 
@@ -104,9 +105,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			scenarios: [],
 		};
 
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(
-			mockManifest as unknown as Awaited<ReturnType<typeof getSessionManifest>>,
-		);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		} as never);
 
 		const req = new Request(
 			"http://localhost/api/vods/vod_1/manifest?modules=STRATEGY,TACTICS",
@@ -126,7 +128,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 
 	it("returns 404 JSON response if VOD manifest is not found", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(null);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+			data: null,
+			success: true,
+		} as never);
 
 		const req = new Request("http://localhost/api/vods/non_existent/manifest");
 

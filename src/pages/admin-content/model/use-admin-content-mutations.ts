@@ -52,9 +52,17 @@ export function usePublicationMutations(
 			setOperationResult(null);
 			setIsOperating(true);
 			try {
-				const result = await bulkPublishVods({
+				const res = await bulkPublishVods({
 					data: { ids, isPublished },
 				});
+				if (!res.success) {
+					setError(
+						res.error ??
+							"Failed to perform bulk publication. Please try again.",
+					);
+					return;
+				}
+				const result = res.data;
 				setOperationResult({ label, result });
 				if (result.succeeded.length > 0) {
 					setVods((prev) =>
@@ -115,7 +123,12 @@ export function useDeletionMutations(
 
 	const executeDeleteBulk = useCallback(
 		async (ids: string[]) => {
-			const result = await bulkDeleteVods({ data: { ids } });
+			const res = await bulkDeleteVods({ data: { ids } });
+			if (!res.success) {
+				setError(res.error ?? "Failed to delete VOD");
+				return;
+			}
+			const result = res.data;
 			setOperationResult({ label: "Bulk Delete", result });
 			if (result.succeeded.length > 0) {
 				setVods((prev) => prev.filter((v) => !result.succeeded.includes(v.id)));
@@ -124,7 +137,7 @@ export function useDeletionMutations(
 				);
 			}
 		},
-		[setOperationResult, setSelectedIds, setVods],
+		[setError, setOperationResult, setSelectedIds, setVods],
 	);
 
 	const handleExecuteDelete = useCallback(

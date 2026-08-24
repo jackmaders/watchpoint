@@ -16,7 +16,7 @@ export const scenarioSnapshotInputSchema = createInsertSchema(
 	scenarioSnapshots,
 	{
 		explanationText: (s) => s.min(1, "Explanation text is required"),
-		inputConfig: z.record(z.unknown()),
+		inputConfig: z.record(z.string(), z.unknown()),
 		moduleType: z.enum(moduleTypeEnum),
 		promptText: (s) => s.min(1, "Prompt text is required"),
 		timestampSeconds: (s) => s.min(0, "Timestamp must be non-negative"),

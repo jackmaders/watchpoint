@@ -177,18 +177,21 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 		it("handles createVod, updateVod, deleteVod, and setVodPublicationStatus", async () => {
 			// Arrange
 			vi.mocked(createVod).mockResolvedValueOnce({
+				data: mockVod as never,
 				success: true,
-				vod: mockVod as never,
 			});
 			vi.mocked(updateVod).mockResolvedValueOnce({
+				data: { ...mockVod, title: "Updated GM Ana" } as never,
 				success: true,
-				vod: { ...mockVod, title: "Updated GM Ana" } as never,
 			});
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+				data: { ...mockVod, isPublished: true } as never,
 				success: true,
-				vod: { ...mockVod, isPublished: true } as never,
 			});
-			vi.mocked(deleteVod).mockResolvedValueOnce({ success: true });
+			vi.mocked(deleteVod).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 
 			const { result } = renderHook(() => useVodMutations(mockVod));
 
@@ -228,8 +231,8 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 
 			// Act: toggle publish false
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+				data: { ...mockVod, isPublished: false } as never,
 				success: true,
-				vod: { ...mockVod, isPublished: false } as never,
 			});
 			await act(async () => {
 				await result.current.handleTogglePublish(false);
@@ -242,7 +245,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			});
 
 			// Act: create failure without error field
-			vi.mocked(createVod).mockResolvedValueOnce({ success: false });
+			vi.mocked(createVod).mockResolvedValueOnce({
+				error: "Failed to create VOD",
+				success: false,
+			});
 			await act(async () => {
 				await result.current.handleCreateVod({
 					durationSeconds: 600,
@@ -257,7 +263,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			expect(result.current.error).toBe("Failed to create VOD");
 
 			// Act: update failure without error field
-			vi.mocked(updateVod).mockResolvedValueOnce({ success: false });
+			vi.mocked(updateVod).mockResolvedValueOnce({
+				error: "Failed to update VOD metadata",
+				success: false,
+			});
 			await act(async () => {
 				await result.current.handleUpdateVodMetadata({
 					durationSeconds: 600,
@@ -273,6 +282,7 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 
 			// Act: toggle publish failure without error field
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+				error: "Failed to update publication status",
 				success: false,
 			});
 			await act(async () => {
@@ -281,7 +291,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			expect(result.current.error).toBe("Failed to update publication status");
 
 			// Act: delete failure without error field
-			vi.mocked(deleteVod).mockResolvedValueOnce({ success: false });
+			vi.mocked(deleteVod).mockResolvedValueOnce({
+				error: "Failed to delete VOD",
+				success: false,
+			});
 			await act(async () => {
 				await result.current.handleDeleteVod();
 			});
@@ -332,11 +345,11 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
 			vi.mocked(createScenario).mockResolvedValueOnce({
-				scenario: mockScenarios[0] as never,
+				data: mockScenarios[0] as never,
 				success: true,
 			});
 			vi.mocked(updateScenario).mockResolvedValueOnce({
-				scenario: {
+				data: {
 					...mockScenarios[0],
 					promptText: "Updated Prompt",
 				} as never,
@@ -395,7 +408,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			expect(setError).toHaveBeenCalledWith("Failed to create");
 
 			// Act: save error without error field
-			vi.mocked(createScenario).mockResolvedValueOnce({ success: false });
+			vi.mocked(createScenario).mockResolvedValueOnce({
+				error: "Failed to save scenario",
+				success: false,
+			});
 			await act(async () => {
 				await result.current.handleSaveScenario({
 					explanationText: "Exp",
@@ -418,12 +434,18 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			const setSuccess = vi.fn();
 			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
-			vi.mocked(deleteScenario).mockResolvedValueOnce({ success: true });
+			vi.mocked(deleteScenario).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 			vi.mocked(deleteScenario).mockResolvedValueOnce({
 				error: "Cannot delete scenario",
 				success: false,
 			});
-			vi.mocked(deleteScenario).mockResolvedValueOnce({ success: false });
+			vi.mocked(deleteScenario).mockResolvedValueOnce({
+				error: "Failed to delete scenario",
+				success: false,
+			});
 
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, "vod_1", state),
@@ -462,7 +484,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			const setSuccess = vi.fn();
 			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
-			vi.mocked(reorderScenarios).mockResolvedValueOnce({ success: true });
+			vi.mocked(reorderScenarios).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, "vod_1", state),
@@ -487,7 +512,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 				error: "Failed to reorder",
 				success: false,
 			});
-			vi.mocked(reorderScenarios).mockResolvedValueOnce({ success: false });
+			vi.mocked(reorderScenarios).mockResolvedValueOnce({
+				error: "Failed to reorder scenarios",
+				success: false,
+			});
 
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, "vod_1", state),

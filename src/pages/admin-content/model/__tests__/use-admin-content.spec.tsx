@@ -86,8 +86,11 @@ describe("useAdminContentState", () => {
 	it("handles bulk unpublish and dismiss alert", async () => {
 		// Arrange
 		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
-			failed: [],
-			succeeded: ["vod_1"],
+			data: {
+				failed: [],
+				succeeded: ["vod_1"],
+			},
+			success: true,
 		});
 		const { result } = renderHook(() =>
 			useAdminContentState({ initialVods: mockInitialVods }),
@@ -113,6 +116,7 @@ describe("useAdminContentState", () => {
 	it("handles single delete confirmation and dialog close", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
+			data: undefined,
 			success: true,
 		});
 		const { result } = renderHook(() =>
@@ -141,8 +145,11 @@ describe("useAdminContentState", () => {
 	it("handles bulk publish with succeeded and empty succeeded", async () => {
 		// Arrange
 		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
-			failed: [{ error: "Draft error", id: "vod_2" }],
-			succeeded: [],
+			data: {
+				failed: [{ error: "Draft error", id: "vod_2" }],
+				succeeded: [],
+			},
+			success: true,
 		});
 		const { result } = renderHook(() =>
 			useAdminContentState({ initialVods: mockInitialVods }),
@@ -160,8 +167,11 @@ describe("useAdminContentState", () => {
 	it("handles bulk delete with succeeded and empty succeeded", async () => {
 		// Arrange
 		vi.mocked(bulkDeleteVods).mockResolvedValueOnce({
-			failed: [{ error: "Foreign key error", id: "vod_1" }],
-			succeeded: [],
+			data: {
+				failed: [{ error: "Foreign key error", id: "vod_1" }],
+				succeeded: [],
+			},
+			success: true,
 		});
 		const { result } = renderHook(() =>
 			useAdminContentState({ initialVods: mockInitialVods }),
@@ -233,6 +243,7 @@ describe("useAdminContentState", () => {
 	it("handles handleTogglePublish mutation", async () => {
 		// Arrange
 		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+			data: mockInitialVods[1] as never,
 			success: true,
 		});
 		const { result } = renderHook(() =>
@@ -254,8 +265,11 @@ describe("useAdminContentState", () => {
 	it("handles bulk publish with succeeded items and removes from selectedIds", async () => {
 		// Arrange
 		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
-			failed: [],
-			succeeded: ["vod_2"],
+			data: {
+				failed: [],
+				succeeded: ["vod_2"],
+			},
+			success: true,
 		});
 		const { result } = renderHook(() =>
 			useAdminContentState({ initialVods: mockInitialVods }),
@@ -277,8 +291,11 @@ describe("useAdminContentState", () => {
 	it("handles bulk delete with succeeded items and removes from selectedIds", async () => {
 		// Arrange
 		vi.mocked(bulkDeleteVods).mockResolvedValueOnce({
-			failed: [],
-			succeeded: ["vod_1"],
+			data: {
+				failed: [],
+				succeeded: ["vod_1"],
+			},
+			success: true,
 		});
 		const { result } = renderHook(() =>
 			useAdminContentState({ initialVods: mockInitialVods }),
@@ -301,6 +318,7 @@ describe("useAdminContentState", () => {
 	it("handles single delete and removes from selectedIds", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
+			data: undefined,
 			success: true,
 		});
 		const { result } = renderHook(() =>

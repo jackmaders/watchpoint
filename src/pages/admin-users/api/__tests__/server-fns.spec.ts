@@ -38,7 +38,10 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce(mockUsers as never);
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				data: mockUsers,
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -66,7 +69,10 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce([]);
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				data: [],
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -160,14 +166,14 @@ describe("admin-users server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbUpdateUserRole).mockResolvedValueOnce({
-				success: true,
-				user: {
+				data: {
 					createdAt: new Date(),
 					email: "player@example.com",
 					id: "usr_target",
 					name: "Target Player",
 					role: "ADMIN",
 				} as never,
+				success: true,
 			});
 
 			// Act

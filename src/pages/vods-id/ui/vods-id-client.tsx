@@ -9,13 +9,13 @@ import {
 	MODULE_DEFINITIONS,
 	ModuleFilterPills,
 } from "@/entities/vod";
-import type { getSessionManifest, ModuleType } from "@/shared/db";
+import type { ModuleType, SessionManifest } from "@/shared/db";
 import { authClient } from "@/shared/lib/auth-client";
 import { AuthModal } from "@/shared/ui/auth-modal";
 
 export interface VodsIdClientProps {
 	registrationEnabled?: boolean;
-	vod: NonNullable<Awaited<ReturnType<typeof getSessionManifest>>>;
+	vod: SessionManifest;
 }
 
 export function VodsIdClient({

@@ -21,16 +21,13 @@ export interface GetSessionManifestOptions {
 	publishedOnly?: boolean;
 }
 
-export type PublishedVodItem =
-	Awaited<ReturnType<typeof getPublishedVods>> extends DbResult<infer T>
-		? T[number]
-		: never;
+export type PublishedVodItem = VodItem & {
+	scenarios: Array<{ id: string }>;
+};
 
-export type SessionManifest = NonNullable<
-	Awaited<ReturnType<typeof getSessionManifest>> extends DbResult<infer T>
-		? T
-		: never
->;
+export type SessionManifest = VodItem & {
+	scenarios: ScenarioItem[];
+};
 
 export interface GetAdminVodsOptions {
 	isPublished?: boolean;
@@ -40,10 +37,9 @@ export interface GetAdminVodsOptions {
 	search?: string;
 }
 
-export type AdminVodItem =
-	Awaited<ReturnType<typeof getAdminVods>> extends DbResult<infer T>
-		? T[number]
-		: never;
+export type AdminVodItem = VodItem & {
+	scenarios: Array<{ id: string }>;
+};
 
 export type VodItem = typeof vods.$inferSelect;
 export type ScenarioItem = typeof scenarios.$inferSelect;

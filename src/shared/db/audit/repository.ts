@@ -1,4 +1,5 @@
 import { desc } from "drizzle-orm";
+import type { users } from "../auth/schema";
 import { type DbContext, getDb } from "../client/client";
 import { type DbResult, dbFailure, dbSuccess } from "../common/result";
 import type { JsonValue } from "../common/types";
@@ -69,10 +70,9 @@ export interface GetAuditLogsOptions {
 	offset?: number;
 }
 
-export type AuditEntryWithActor =
-	Awaited<ReturnType<typeof getAuditLogs>> extends DbResult<infer T>
-		? T[number]
-		: never;
+export type AuditEntryWithActor = AuditEntryItem & {
+	actor: typeof users.$inferSelect | null;
+};
 
 export async function getAuditLogs(
 	options: GetAuditLogsOptions = {},

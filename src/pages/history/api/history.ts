@@ -15,5 +15,9 @@ export async function getPlayerHistoryData(
 		throw new Error("Authentication required");
 	}
 
-	return queryPlayerHistory(user.id, options, context);
+	const result = await queryPlayerHistory(user.id, options, context);
+	if (!result.success) {
+		throw new Error(result.error);
+	}
+	return result.data;
 }

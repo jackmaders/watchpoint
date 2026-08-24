@@ -16,7 +16,10 @@ describe("vods server-fns", () => {
 			{ id: "vod_1", title: "VOD 1" },
 			{ id: "vod_2", title: "VOD 2" },
 		] as never;
-		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce(mockVods);
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			data: mockVods,
+			success: true,
+		} as never);
 
 		// Act
 		const result = await (
@@ -25,6 +28,6 @@ describe("vods server-fns", () => {
 
 		// Assert
 		expect(dbGetPublishedVods).toHaveBeenCalled();
-		expect(result).toBe(mockVods);
+		expect(result).toEqual(mockVods);
 	});
 });

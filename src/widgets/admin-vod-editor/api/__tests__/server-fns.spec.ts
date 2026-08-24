@@ -47,7 +47,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetAdminVods).mockResolvedValueOnce(mockVods as never);
+			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+				data: mockVods,
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -71,7 +74,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetAdminVods).mockResolvedValueOnce([]);
+			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+				data: [],
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -139,7 +145,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetVodById).mockResolvedValueOnce(mockVod as never);
+			vi.mocked(dbGetVodById).mockResolvedValueOnce({
+				data: mockVod,
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -186,8 +195,8 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbCreateVod).mockResolvedValueOnce({
+				data: { ...input, id: "v1", isPublished: false } as never,
 				success: true,
-				vod: { ...input, id: "v1", isPublished: false } as never,
 			});
 
 			// Act
@@ -202,8 +211,8 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 			});
 			expect(result).toEqual({
+				data: { ...input, id: "v1", isPublished: false },
 				success: true,
-				vod: { ...input, id: "v1", isPublished: false },
 			});
 		});
 
@@ -229,8 +238,8 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbUpdateVod).mockResolvedValueOnce({
+				data: { id: "v1", title: "New Title" } as never,
 				success: true,
-				vod: { id: "v1", title: "New Title" } as never,
 			});
 
 			// Act
@@ -245,8 +254,8 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 			});
 			expect(result).toEqual({
+				data: { id: "v1", title: "New Title" },
 				success: true,
-				vod: { id: "v1", title: "New Title" },
 			});
 		});
 
@@ -258,8 +267,8 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbUpdateVod).mockResolvedValueOnce({
+				data: { id: "v1", isPublished: true } as never,
 				success: true,
-				vod: { id: "v1", isPublished: true } as never,
 			});
 
 			// Act
@@ -270,8 +279,8 @@ describe("admin-content server functions", () => {
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
 			expect(result).toEqual({
+				data: { id: "v1", isPublished: true },
 				success: true,
-				vod: { id: "v1", isPublished: true },
 			});
 		});
 
@@ -295,7 +304,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbDeleteVod).mockResolvedValueOnce({ success: true });
+			vi.mocked(dbDeleteVod).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 
 			// Act
 			const result = await (
@@ -308,7 +320,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 				id: "v1",
 			});
-			expect(result).toEqual({ success: true });
+			expect(result).toEqual({ data: undefined, success: true });
 		});
 
 		it("throws error for invalid delete payload", async () => {
@@ -332,8 +344,8 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbSetVodPublicationStatus).mockResolvedValueOnce({
+				data: { id: "v1", isPublished: true } as never,
 				success: true,
-				vod: { id: "v1", isPublished: true } as never,
 			});
 
 			// Act
@@ -351,8 +363,8 @@ describe("admin-content server functions", () => {
 				isPublished: true,
 			});
 			expect(result).toEqual({
+				data: { id: "v1", isPublished: true },
 				success: true,
-				vod: { id: "v1", isPublished: true },
 			});
 		});
 
@@ -379,8 +391,11 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbBulkPublishVods).mockResolvedValueOnce({
-				failed: [],
-				succeeded: ["v1", "v2"],
+				data: {
+					failed: [],
+					succeeded: ["v1", "v2"],
+				},
+				success: true,
 			});
 
 			// Act
@@ -392,7 +407,10 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
-			expect(result).toEqual({ failed: [], succeeded: ["v1", "v2"] });
+			expect(result).toEqual({
+				data: { failed: [], succeeded: ["v1", "v2"] },
+				success: true,
+			});
 		});
 
 		it("throws error for invalid bulk publish payload", async () => {
@@ -416,8 +434,11 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbBulkDeleteVods).mockResolvedValueOnce({
-				failed: [],
-				succeeded: ["v1"],
+				data: {
+					failed: [],
+					succeeded: ["v1"],
+				},
+				success: true,
 			});
 
 			// Act
@@ -429,7 +450,10 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(result).toEqual({ failed: [], succeeded: ["v1"] });
+			expect(result).toEqual({
+				data: { failed: [], succeeded: ["v1"] },
+				success: true,
+			});
 		});
 
 		it("throws error for invalid bulk delete payload", async () => {
@@ -466,7 +490,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbCreateScenario).mockResolvedValueOnce({
-				scenario: { ...scenarioInput, id: "s1" } as never,
+				data: { ...scenarioInput, id: "s1" } as never,
 				success: true,
 			});
 
@@ -484,7 +508,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 			});
 			expect(result).toEqual({
-				scenario: { ...scenarioInput, id: "s1" },
+				data: { ...scenarioInput, id: "s1" },
 				success: true,
 			});
 		});
@@ -511,7 +535,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbUpdateScenario).mockResolvedValueOnce({
-				scenario: { id: "s1", promptText: "New Prompt" } as never,
+				data: { id: "s1", promptText: "New Prompt" } as never,
 				success: true,
 			});
 
@@ -529,7 +553,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 			});
 			expect(result).toEqual({
-				scenario: { id: "s1", promptText: "New Prompt" },
+				data: { id: "s1", promptText: "New Prompt" },
 				success: true,
 			});
 		});
@@ -554,7 +578,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbDeleteScenario).mockResolvedValueOnce({ success: true });
+			vi.mocked(dbDeleteScenario).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 
 			// Act
 			const result = await (
@@ -569,7 +596,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 				id: "s1",
 			});
-			expect(result).toEqual({ success: true });
+			expect(result).toEqual({ data: undefined, success: true });
 		});
 
 		it("throws error for invalid delete scenario payload", async () => {
@@ -596,7 +623,10 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbReorderScenarios).mockResolvedValueOnce({ success: true });
+			vi.mocked(dbReorderScenarios).mockResolvedValueOnce({
+				data: undefined,
+				success: true,
+			});
 
 			// Act
 			const result = await (
@@ -611,7 +641,7 @@ describe("admin-content server functions", () => {
 				...reorderInput,
 				actorUserId: "admin_1",
 			});
-			expect(result).toEqual({ success: true });
+			expect(result).toEqual({ data: undefined, success: true });
 		});
 
 		it("throws error for invalid reorder scenario payload", async () => {

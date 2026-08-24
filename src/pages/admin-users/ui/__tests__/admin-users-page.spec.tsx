@@ -155,11 +155,11 @@ describe("AdminUsersPage", () => {
 	it("promotes player to admin on promote button click", async () => {
 		// Arrange
 		vi.mocked(updateUserRole).mockResolvedValueOnce({
-			success: true,
-			user: {
+			data: {
 				...initialUsers[1],
 				role: "ADMIN",
-			},
+			} as never,
+			success: true,
 		});
 		render(
 			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
@@ -229,6 +229,7 @@ describe("AdminUsersPage", () => {
 	it("displays default fallback error message when server returns success false without message", async () => {
 		// Arrange
 		vi.mocked(updateUserRole).mockResolvedValueOnce({
+			error: "Failed to update role",
 			success: false,
 		});
 		const twoAdmins = [

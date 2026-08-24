@@ -204,8 +204,8 @@ describe("AdminContentPage", () => {
 	it("executes single row publish toggle successfully", async () => {
 		// Arrange
 		setVodPublicationStatusSpy.mockResolvedValueOnce({
+			data: { ...mockInitialVods[1], isPublished: true },
 			success: true,
-			vod: { ...mockInitialVods[1], isPublished: true },
 		} as never);
 		render(
 			<AdminContentPage
@@ -259,6 +259,7 @@ describe("AdminContentPage", () => {
 	it("opens confirmation dialog before deleting a single VOD, shows scenario count, and deletes on confirm", async () => {
 		// Arrange
 		deleteVodSpy.mockResolvedValueOnce({
+			data: undefined,
 			success: true,
 		} as never);
 		render(
@@ -295,8 +296,11 @@ describe("AdminContentPage", () => {
 	it("executes bulk publish with partial failures and displays summary alert", async () => {
 		// Arrange
 		bulkPublishVodsSpy.mockResolvedValueOnce({
-			failed: [{ error: "Cannot publish with zero scenarios", id: "vod_3" }],
-			succeeded: ["vod_2"],
+			data: {
+				failed: [{ error: "Cannot publish with zero scenarios", id: "vod_3" }],
+				succeeded: ["vod_2"],
+			},
+			success: true,
 		} as never);
 		render(
 			<AdminContentPage
@@ -337,8 +341,11 @@ describe("AdminContentPage", () => {
 	it("executes bulk unpublish successfully", async () => {
 		// Arrange
 		bulkPublishVodsSpy.mockResolvedValueOnce({
-			failed: [],
-			succeeded: ["vod_1"],
+			data: {
+				failed: [],
+				succeeded: ["vod_1"],
+			},
+			success: true,
 		} as never);
 		render(
 			<AdminContentPage
@@ -370,8 +377,11 @@ describe("AdminContentPage", () => {
 	it("opens confirmation dialog for bulk delete, showing total vods and scenario count, and deletes on confirm", async () => {
 		// Arrange
 		bulkDeleteVodsSpy.mockResolvedValueOnce({
-			failed: [],
-			succeeded: ["vod_1", "vod_2"],
+			data: {
+				failed: [],
+				succeeded: ["vod_1", "vod_2"],
+			},
+			success: true,
 		} as never);
 		render(
 			<AdminContentPage
@@ -437,6 +447,7 @@ describe("AdminContentPage", () => {
 	it("handles error result without error message during toggle publish", async () => {
 		// Arrange
 		setVodPublicationStatusSpy.mockResolvedValueOnce({
+			error: "Failed to update publication status",
 			success: false,
 		} as never);
 		render(
@@ -462,6 +473,7 @@ describe("AdminContentPage", () => {
 	it("handles error result without error message during single delete", async () => {
 		// Arrange
 		deleteVodSpy.mockResolvedValueOnce({
+			error: "Failed to delete VOD",
 			success: false,
 		} as never);
 		render(

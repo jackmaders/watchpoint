@@ -77,7 +77,10 @@ describe("entities/vod server-fns", () => {
 	it("loads a protected manifest for an authenticated user", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -99,7 +102,10 @@ describe("entities/vod server-fns", () => {
 	it("executes getSessionManifest handler correctly with object payload", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -125,7 +131,10 @@ describe("entities/vod server-fns", () => {
 	it("normalizes a blank module filter at the server-function seam", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (

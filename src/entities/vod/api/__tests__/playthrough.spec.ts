@@ -39,8 +39,9 @@ describe("playthrough persistence actions", () => {
 	it("creates an owned playthrough and returns snapshot identities", async () => {
 		// Arrange
 		vi.mocked(createPlaythrough).mockResolvedValueOnce({
-			id: "playthrough_1",
-		} as never);
+			data: { id: "playthrough_1" } as never,
+			success: true,
+		});
 
 		// Act
 		const result = await startPlaythroughAction({
@@ -65,9 +66,10 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a stable conflict for a duplicate start identity", async () => {
 		// Arrange
-		vi.mocked(createPlaythrough).mockRejectedValueOnce(
-			new Error("Playthrough start conflict"),
-		);
+		vi.mocked(createPlaythrough).mockResolvedValueOnce({
+			error: "Playthrough start conflict",
+			success: false,
+		});
 
 		// Act
 		const result = await startPlaythroughAction(input);
@@ -111,8 +113,9 @@ describe("playthrough persistence actions", () => {
 	it("completes an owned playthrough", async () => {
 		// Arrange
 		vi.mocked(completePlaythrough).mockResolvedValueOnce({
-			id: "completion_1",
-		} as never);
+			data: { id: "completion_1" } as never,
+			success: true,
+		});
 
 		// Act
 		const result = await completePlaythroughAction("playthrough_1");
@@ -126,7 +129,10 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a safe failure for a missing playthrough", async () => {
 		// Arrange
-		vi.mocked(completePlaythrough).mockResolvedValueOnce(null as never);
+		vi.mocked(completePlaythrough).mockResolvedValueOnce({
+			data: null,
+			success: true,
+		});
 
 		// Act
 		const result = await completePlaythroughAction("missing");
