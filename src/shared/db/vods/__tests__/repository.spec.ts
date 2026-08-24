@@ -10,12 +10,9 @@ import {
 	deleteVod,
 	getAdminVods,
 	getPublishedVods,
-	getScenarioById,
-	getScenariosByVodId,
 	getSessionManifest,
 	getVodById,
 	reorderScenarios,
-	setVodPublicationStatus,
 	updateScenario,
 	updateVod,
 } from "../repository";

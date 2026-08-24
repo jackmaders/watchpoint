@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "./client";
+import { getDb } from "../client";
 
 vi.mock("wrangler");
 
