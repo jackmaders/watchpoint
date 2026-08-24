@@ -394,6 +394,10 @@ describe("auth", () => {
 
 	it("handleAuthRequest delegates request to auth instance handler", async () => {
 		// Arrange
+		const auth = await getAuth();
+		const handlerSpy = vi
+			.spyOn(auth, "handler")
+			.mockResolvedValueOnce(new Response("ok"));
 		const mockRequest = new Request("http://localhost:3000/api/auth/session");
 
 		// Act
@@ -401,5 +405,6 @@ describe("auth", () => {
 
 		// Assert
 		expect(response).toBeDefined();
+		expect(handlerSpy).toHaveBeenCalledWith(mockRequest);
 	});
 });
