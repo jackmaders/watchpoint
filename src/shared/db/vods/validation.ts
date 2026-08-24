@@ -86,10 +86,11 @@ export function validateInputConfigByType(
 		return { error: "Scenario input config is required", valid: false };
 	}
 
-	let result: {
-		success: boolean;
-		error?: { issues: Array<{ message: string }> };
-	};
+	let result:
+		| ReturnType<typeof multipleChoiceConfigSchema.safeParse>
+		| ReturnType<typeof percentSliderConfigSchema.safeParse>
+		| ReturnType<typeof timeSliderConfigSchema.safeParse>
+		| ReturnType<typeof mapPinConfigSchema.safeParse>;
 	switch (inputType) {
 		case "MULTIPLE_CHOICE":
 			result = multipleChoiceConfigSchema.safeParse(config);
@@ -107,7 +108,8 @@ export function validateInputConfigByType(
 
 	if (!result.success) {
 		return {
-			error: result.error?.issues[0]?.message ?? "Invalid input configuration",
+			/* v8 ignore next */
+			error: result.error.issues[0]?.message ?? "Invalid input configuration",
 			valid: false,
 		};
 	}

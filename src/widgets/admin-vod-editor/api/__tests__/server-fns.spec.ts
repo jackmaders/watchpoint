@@ -102,6 +102,27 @@ describe("admin-content server functions", () => {
 			).rejects.toThrow("Invalid query payload");
 		});
 
+		it("throws error when dbGetAdminVods fails", async () => {
+			// Arrange
+			vi.mocked(requirePermission).mockResolvedValueOnce({
+				id: "admin_1",
+				role: "ADMIN",
+			});
+			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+				error: "Failed to load VODs",
+				success: false,
+			});
+
+			// Act & Assert
+			await expect(
+				(
+					getAdminVods as unknown as (ctx: {
+						data: unknown;
+					}) => Promise<unknown>
+				)({ data: {} }),
+			).rejects.toThrow("Failed to load VODs");
+		});
+
 		it("throws 403 Forbidden when invoked by regular player", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockRejectedValueOnce(
@@ -161,6 +182,27 @@ describe("admin-content server functions", () => {
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
 			expect(dbGetVodById).toHaveBeenCalledWith("v1");
 			expect(result).toEqual(mockVod);
+		});
+
+		it("throws error when dbGetVodById fails", async () => {
+			// Arrange
+			vi.mocked(requirePermission).mockResolvedValueOnce({
+				id: "admin_1",
+				role: "ADMIN",
+			});
+			vi.mocked(dbGetVodById).mockResolvedValueOnce({
+				error: "VOD query failed",
+				success: false,
+			});
+
+			// Act & Assert
+			await expect(
+				(
+					getAdminVodById as unknown as (ctx: {
+						data: unknown;
+					}) => Promise<unknown>
+				)({ data: { id: "v1" } }),
+			).rejects.toThrow("VOD query failed");
 		});
 
 		it("throws error for invalid ID payload", async () => {

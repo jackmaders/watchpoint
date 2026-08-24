@@ -81,6 +81,24 @@ describe("playthrough persistence actions", () => {
 		});
 	});
 
+	it("returns generic error when createPlaythrough returns generic error", async () => {
+		// Arrange
+		vi.mocked(createPlaythrough).mockResolvedValueOnce({
+			error: "Some DB error",
+			success: false,
+		});
+
+		// Act
+		const result = await startPlaythroughAction(input);
+
+		// Assert
+		expect(result).toEqual({
+			error:
+				"We couldn’t save your progress. Your training session can continue.",
+			success: false,
+		});
+	});
+
 	it("returns a generic failure for an unexpected start error", async () => {
 		// Arrange
 		vi.mocked(createPlaythrough).mockRejectedValueOnce(new Error("D1 offline"));
@@ -146,6 +164,24 @@ describe("playthrough persistence actions", () => {
 		vi.mocked(completePlaythrough).mockRejectedValueOnce(
 			new Error("D1 offline"),
 		);
+
+		// Act
+		const result = await completePlaythroughAction("playthrough_1");
+
+		// Assert
+		expect(result).toEqual({
+			error:
+				"We couldn’t save your progress. Your training session can continue.",
+			success: false,
+		});
+	});
+
+	it("returns failure when completePlaythrough returns success: false", async () => {
+		// Arrange
+		vi.mocked(completePlaythrough).mockResolvedValueOnce({
+			error: "DB error",
+			success: false,
+		});
 
 		// Act
 		const result = await completePlaythroughAction("playthrough_1");

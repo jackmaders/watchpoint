@@ -1,7 +1,12 @@
 import { desc } from "drizzle-orm";
 import type { users } from "../auth/schema";
 import { type DbContext, getDb } from "../client/client";
-import { type DbResult, dbFailure, dbSuccess } from "../common/result";
+import {
+	type DbResult,
+	dbFailure,
+	dbSuccess,
+	toErrorMessage,
+} from "../common/result";
 import type { JsonValue } from "../common/types";
 import { auditEntries } from "./schema";
 
@@ -34,9 +39,7 @@ export async function createAuditEntry(
 
 		return dbSuccess(entry ?? null);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to create audit entry",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to create audit entry"));
 	}
 }
 
@@ -54,11 +57,7 @@ export async function getAuditEntries(
 		});
 		return dbSuccess(entries);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error
-				? error.message
-				: "Failed to retrieve audit entries",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve audit entries"));
 	}
 }
 
@@ -106,8 +105,6 @@ export async function getAuditLogs(
 
 		return dbSuccess(logs);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve audit logs",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve audit logs"));
 	}
 }

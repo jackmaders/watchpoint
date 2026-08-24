@@ -4,7 +4,12 @@ import {
 	calculateMedianActiveLatency,
 } from "../../lib/metrics";
 import { type DbContext, getDb } from "../client/client";
-import { type DbResult, dbFailure, dbSuccess } from "../common/result";
+import {
+	type DbResult,
+	dbFailure,
+	dbSuccess,
+	toErrorMessage,
+} from "../common/result";
 import type { JsonValue } from "../common/types";
 import type { ModuleType } from "../vods/schema";
 import {
@@ -98,9 +103,7 @@ async function handlePlaythroughCreationConflict(
 		!(error instanceof Error) ||
 		!/unique constraint failed/i.test(error.message)
 	) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to create playthrough",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to create playthrough"));
 	}
 
 	const existingResult = await getPlaythrough(input.id, input.userId, context);
@@ -187,9 +190,7 @@ export async function getPlaythrough(
 
 		return dbSuccess(playthrough ?? null);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve playthrough",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve playthrough"));
 	}
 }
 
@@ -281,9 +282,7 @@ export async function getPlayerHistory(
 		return dbSuccess(nonTest);
 	} catch (error) {
 		return dbFailure(
-			error instanceof Error
-				? error.message
-				: "Failed to retrieve player history",
+			toErrorMessage(error, "Failed to retrieve player history"),
 		);
 	}
 }
@@ -429,9 +428,7 @@ export async function queryPlayerHistory(
 			totalPages,
 		});
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to query player history",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to query player history"));
 	}
 }
 
@@ -466,9 +463,7 @@ export async function getPlaythroughHistoryDetail(
 		return dbSuccess(mapPlaythroughToHistoryItem(playthrough as never));
 	} catch (error) {
 		return dbFailure(
-			error instanceof Error
-				? error.message
-				: "Failed to retrieve playthrough detail",
+			toErrorMessage(error, "Failed to retrieve playthrough detail"),
 		);
 	}
 }
@@ -505,7 +500,7 @@ export async function completePlaythrough(
 				.values({ completedAt, playthroughId: id, userId })
 				.returning();
 
-			return comp ?? null;
+			return comp;
 		});
 
 		if (completion) return dbSuccess(completion);
@@ -529,9 +524,7 @@ export async function completePlaythrough(
 			return dbSuccess(existing ?? null);
 		}
 
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to complete playthrough",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to complete playthrough"));
 	}
 }
 
@@ -548,23 +541,15 @@ export interface RecordPlaythroughAttemptInput {
 	userId: string;
 }
 
-type AttemptRecordQuery = Awaited<
-	ReturnType<
-		Awaited<ReturnType<typeof getDb>>["query"]["attemptRecords"]["findFirst"]
-	>
->;
-
 function isIdenticalAttempt(
-	existing: AttemptRecordQuery,
+	existing: AttemptRecordItem,
 	input: RecordPlaythroughAttemptInput,
 ): boolean {
 	return (
-		existing !== undefined &&
-		existing !== null &&
 		existing.userId === input.userId &&
 		existing.scenarioId === input.scenarioId &&
 		existing.isCorrect === input.isCorrect &&
-		(existing.isTimedOut ?? false) === (input.isTimedOut ?? false) &&
+		Boolean(existing.isTimedOut) === Boolean(input.isTimedOut) &&
 		existing.responseTimeMs === input.responseTimeMs &&
 		(existing.playthroughId ?? null) === (input.playthroughId ?? null) &&
 		(existing.scenarioSnapshotId ?? null) ===
@@ -628,9 +613,7 @@ export async function recordPlaythroughAttempt(
 		return dbSuccess(attempt ?? null);
 	} catch (error) {
 		if (!isIdempotencyConstraintError(error)) {
-			return dbFailure(
-				error instanceof Error ? error.message : "Failed to record attempt",
-			);
+			return dbFailure(toErrorMessage(error, "Failed to record attempt"));
 		}
 
 		return handleAttemptIdempotencyRetry(input, context);
@@ -651,9 +634,7 @@ export async function getPlaythroughAttempts(
 		});
 		return dbSuccess(attempts);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve attempts",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve attempts"));
 	}
 }
 
@@ -671,9 +652,7 @@ export async function getAttemptByIdempotencyKey(
 		return dbSuccess(attempt ?? null);
 	} catch (error) {
 		return dbFailure(
-			error instanceof Error
-				? error.message
-				: "Failed to retrieve attempt by key",
+			toErrorMessage(error, "Failed to retrieve attempt by key"),
 		);
 	}
 }

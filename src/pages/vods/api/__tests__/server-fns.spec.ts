@@ -30,4 +30,17 @@ describe("vods server-fns", () => {
 		expect(dbGetPublishedVods).toHaveBeenCalled();
 		expect(result).toEqual(mockVods);
 	});
+
+	it("throws error when dbGetPublishedVods fails", async () => {
+		// Arrange
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			error: "Failed to query VODs",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(getPublishedVods as unknown as () => Promise<unknown>)(),
+		).rejects.toThrow("Failed to query VODs");
+	});
 });

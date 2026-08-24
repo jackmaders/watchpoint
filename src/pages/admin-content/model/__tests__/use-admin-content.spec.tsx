@@ -338,4 +338,45 @@ describe("useAdminContentState", () => {
 		expect(result.current.vods).toHaveLength(1);
 		expect(result.current.selectedIds).toEqual([]);
 	});
+
+	it("handles bulk publish error response", async () => {
+		// Arrange
+		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
+			error: "Bulk publish rejected",
+			success: false,
+		});
+		const { result } = renderHook(() =>
+			useAdminContentState({ initialVods: mockInitialVods }),
+		);
+
+		// Act
+		await act(async () => {
+			await result.current.handleBulkPublish(["vod_1"]);
+		});
+
+		// Assert
+		expect(result.current.error).toBe("Bulk publish rejected");
+	});
+
+	it("handles bulk delete error response", async () => {
+		// Arrange
+		vi.mocked(bulkDeleteVods).mockResolvedValueOnce({
+			error: "Bulk delete rejected",
+			success: false,
+		});
+		const { result } = renderHook(() =>
+			useAdminContentState({ initialVods: mockInitialVods }),
+		);
+
+		// Act
+		act(() => {
+			result.current.handleOpenBulkDelete(["vod_1", "vod_2"]);
+		});
+		await act(async () => {
+			await result.current.handleConfirmDelete();
+		});
+
+		// Assert
+		expect(result.current.error).toBe("Bulk delete rejected");
+	});
 });

@@ -97,6 +97,29 @@ describe("admin-users server functions", () => {
 			).rejects.toThrow("Invalid users query payload");
 		});
 
+		it("throws error when dbGetUsers fails", async () => {
+			// Arrange
+			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
+				id: "usr_admin",
+				name: "Admin User",
+				role: "ADMIN",
+			});
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				error: "Failed to load users",
+				success: false,
+			});
+
+			// Act & Assert
+			await expect(
+				(
+					getAdminUsers as unknown as (ctx: {
+						data: unknown;
+					}) => Promise<unknown>
+				)({ data: {} }),
+			).rejects.toThrow("Failed to load users");
+		});
+
 		it("throws 403 Forbidden when invoked by an Ordinary Player", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockRejectedValueOnce(

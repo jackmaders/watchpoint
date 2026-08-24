@@ -99,6 +99,23 @@ describe("entities/vod server-fns", () => {
 		expect(result).toBe(mockManifest);
 	});
 
+	it("throws error when dbGetSessionManifest fails in getProtectedSessionManifest", async () => {
+		// Arrange
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			error: "Manifest query failed",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(
+				getProtectedSessionManifest as unknown as (ctx: {
+					data: { vodId: string };
+				}) => Promise<unknown>
+			)({ data: { vodId: "vod_123" } }),
+		).rejects.toThrow("Manifest query failed");
+	});
+
 	it("executes getSessionManifest handler correctly with object payload", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
@@ -126,6 +143,23 @@ describe("entities/vod server-fns", () => {
 			publishedOnly: true,
 		});
 		expect(result).toBe(mockManifest);
+	});
+
+	it("throws error when dbGetSessionManifest fails in getSessionManifest", async () => {
+		// Arrange
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			error: "Public manifest query failed",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(
+				getSessionManifest as unknown as (ctx: {
+					data: { vodId: string };
+				}) => Promise<unknown>
+			)({ data: { vodId: "vod_123" } }),
+		).rejects.toThrow("Public manifest query failed");
 	});
 
 	it("normalizes a blank module filter at the server-function seam", async () => {

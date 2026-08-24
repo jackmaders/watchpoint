@@ -305,7 +305,7 @@ export function AdminUsersPage({
 			});
 
 			if (!result.success) {
-				setError(result.error ?? "Failed to update role");
+				setError(result.error);
 				return;
 			}
 

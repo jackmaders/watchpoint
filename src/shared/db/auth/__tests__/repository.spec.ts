@@ -35,6 +35,25 @@ describe("auth repository", () => {
 		});
 	});
 
+	it("getUserCount handles empty result", async () => {
+		// Arrange
+		const mockDb = {
+			select: vi.fn().mockReturnValue({
+				from: vi.fn().mockResolvedValue([]),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		// Act
+		const result = await getUserCount();
+
+		// Assert
+		expect(result).toEqual({
+			data: 0,
+			success: true,
+		});
+	});
+
 	it("getUserCount handles database errors", async () => {
 		// Arrange
 		vi.mocked(getDb).mockRejectedValue(new Error("D1 count failure"));
@@ -65,7 +84,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(mockUser),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "usr_123" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockUser);
+					}),
 				},
 			},
 		};
@@ -86,7 +110,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(null),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "usr_missing" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(null);
+					}),
 				},
 			},
 		};
@@ -144,10 +173,25 @@ describe("auth repository", () => {
 		vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 		// Act
-		const result = await getUsers({ role: "ADMIN", search: "adm" });
+		const resultBoth = await getUsers({ role: "ADMIN", search: "adm" });
+		const resultSearch = await getUsers({ search: "adm" });
+		const resultRole = await getUsers({ role: "ADMIN" });
+		const resultNone = await getUsers({});
 
 		// Assert
-		expect(result).toEqual({
+		expect(resultBoth).toEqual({
+			data: mockUsers,
+			success: true,
+		});
+		expect(resultSearch).toEqual({
+			data: mockUsers,
+			success: true,
+		});
+		expect(resultRole).toEqual({
+			data: mockUsers,
+			success: true,
+		});
+		expect(resultNone).toEqual({
 			data: mockUsers,
 			success: true,
 		});
@@ -199,7 +243,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(null),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "missing_target" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(null);
+					}),
 				},
 			},
 		};
@@ -229,7 +278,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(mockUser),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockUser);
+					}),
 				},
 			},
 		};
@@ -259,7 +313,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(mockTarget),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockTarget);
+					}),
 				},
 			},
 			select: vi.fn().mockReturnValue({
@@ -298,7 +357,12 @@ describe("auth repository", () => {
 		const mockDb = {
 			query: {
 				users: {
-					findFirst: vi.fn().mockResolvedValue(mockTarget),
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockTarget);
+					}),
 				},
 			},
 			update: vi.fn().mockReturnValue({
@@ -332,5 +396,224 @@ describe("auth repository", () => {
 			}),
 			undefined,
 		);
+	});
+
+	it("updateUserRole handles getUserById query failure", async () => {
+		// Arrange
+		vi.mocked(getDb).mockRejectedValueOnce(new Error("User lookup failed"));
+
+		// Act
+		const result = await updateUserRole({
+			actorUserId: "actor_1",
+			newRole: "ADMIN",
+			targetUserId: "target_1",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			error: "User lookup failed",
+			success: false,
+		});
+	});
+
+	it("updateUserRole handles empty returning array on update", async () => {
+		// Arrange
+		const mockTarget = {
+			id: "target_1",
+			name: "Target User",
+			role: "PLAYER" as const,
+		};
+		const mockDb = {
+			query: {
+				users: {
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockTarget);
+					}),
+				},
+			},
+			update: vi.fn().mockReturnValue({
+				set: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([]),
+					}),
+				}),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		// Act
+		const result = await updateUserRole({
+			actorUserId: "actor_1",
+			newRole: "ADMIN",
+			targetUserId: "target_1",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			error: "Failed to update user role",
+			success: false,
+		});
+	});
+
+	it("updateUserRole handles exception during update", async () => {
+		// Arrange
+		const mockTarget = {
+			id: "target_1",
+			name: "Target User",
+			role: "PLAYER" as const,
+		};
+		const mockDb = {
+			query: {
+				users: {
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockTarget);
+					}),
+				},
+			},
+			update: vi.fn().mockReturnValue({
+				set: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						returning: vi.fn().mockRejectedValue(new Error("Write error")),
+					}),
+				}),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		// Act
+		const result = await updateUserRole({
+			actorUserId: "actor_1",
+			newRole: "ADMIN",
+			targetUserId: "target_1",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			error: "Write error",
+			success: false,
+		});
+	});
+
+	it("updateUserRole allows demoting an administrator when more than one remains", async () => {
+		// Arrange
+		const mockTarget = {
+			id: "target_1",
+			name: "Target Admin",
+			role: "ADMIN" as const,
+		};
+		const updatedUser = {
+			...mockTarget,
+			role: "PLAYER" as const,
+		};
+		const mockDb = {
+			query: {
+				users: {
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where) {
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						}
+						return Promise.resolve(mockTarget);
+					}),
+				},
+			},
+			select: vi.fn().mockReturnValue({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue([{ value: 2 }]),
+				}),
+			}),
+			update: vi.fn().mockReturnValue({
+				set: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([updatedUser]),
+					}),
+				}),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		// Act
+		const result = await updateUserRole({
+			actorUserId: "actor_other",
+			newRole: "PLAYER",
+			targetUserId: "target_1",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			data: updatedUser,
+			success: true,
+		});
+	});
+
+	it("handles non-Error rejection in all functions", async () => {
+		// Arrange
+		vi.mocked(getDb).mockRejectedValue("string rejection");
+
+		// Act & Assert
+		expect(await getUserCount()).toEqual({
+			error: "Failed to retrieve user count",
+			success: false,
+		});
+		expect(await getUserById("usr_1")).toEqual({
+			error: "Failed to retrieve user by ID",
+			success: false,
+		});
+		expect(await getUsers()).toEqual({
+			error: "Failed to retrieve users",
+			success: false,
+		});
+		expect(
+			await updateUserRole({
+				actorUserId: "actor_1",
+				newRole: "ADMIN",
+				targetUserId: "target_1",
+			}),
+		).toEqual({
+			error: "Failed to retrieve user by ID",
+			success: false,
+		});
+
+		// Test non-Error rejection in applyUserRoleUpdate
+		const mockTarget = {
+			id: "target_1",
+			name: "Target User",
+			role: "PLAYER" as const,
+		};
+		const mockDb = {
+			query: {
+				users: {
+					findFirst: vi.fn().mockImplementation((options) => {
+						if (options?.where)
+							options.where({ id: "target_1" }, { eq: vi.fn() });
+						return Promise.resolve(mockTarget);
+					}),
+				},
+			},
+			update: vi.fn().mockReturnValue({
+				set: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						returning: vi.fn().mockRejectedValue("string update failure"),
+					}),
+				}),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		expect(
+			await updateUserRole({
+				actorUserId: "actor_1",
+				newRole: "ADMIN",
+				targetUserId: "target_1",
+			}),
+		).toEqual({
+			error: "Failed to update user role",
+			success: false,
+		});
 	});
 });

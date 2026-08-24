@@ -9,16 +9,16 @@ describe("audit repository", () => {
 		vi.clearAllMocks();
 	});
 
-	it("createAuditEntry inserts and returns audit entry", async () => {
+	it("createAuditEntry inserts and returns audit entry with optional fields omitted", async () => {
 		// Arrange
 		const mockEntry = {
 			action: "TEST_ACTION",
-			actorUserId: "usr_1",
+			actorUserId: null,
 			createdAt: new Date(),
 			entityId: "ent_1",
 			entityType: "VOD",
 			id: "audit_1",
-			metadata: { note: "test" },
+			metadata: {},
 		};
 		const mockDb = {
 			insert: vi.fn().mockReturnValue({
@@ -32,10 +32,8 @@ describe("audit repository", () => {
 		// Act
 		const result = await createAuditEntry({
 			action: "TEST_ACTION",
-			actorUserId: "usr_1",
 			entityId: "ent_1",
 			entityType: "VOD",
-			metadata: { note: "test" },
 		});
 
 		// Assert
@@ -45,9 +43,36 @@ describe("audit repository", () => {
 		});
 	});
 
-	it("createAuditEntry handles database error gracefully", async () => {
+	it("createAuditEntry handles empty returning array", async () => {
 		// Arrange
-		vi.mocked(getDb).mockRejectedValue(new Error("D1 insert failure"));
+		const mockDb = {
+			insert: vi.fn().mockReturnValue({
+				values: vi.fn().mockReturnValue({
+					returning: vi.fn().mockResolvedValue([]),
+				}),
+			}),
+		};
+		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+		// Act
+		const result = await createAuditEntry({
+			action: "FAIL_ACTION",
+			actorUserId: "usr_1",
+			entityId: "ent_fail",
+			entityType: "VOD",
+			metadata: { foo: "bar" },
+		});
+
+		// Assert
+		expect(result).toEqual({
+			data: null,
+			success: true,
+		});
+	});
+
+	it("createAuditEntry handles non-Error exception", async () => {
+		// Arrange
+		vi.mocked(getDb).mockRejectedValue("D1 insert string failure");
 
 		// Act
 		const result = await createAuditEntry({
@@ -58,7 +83,7 @@ describe("audit repository", () => {
 
 		// Assert
 		expect(result).toEqual({
-			error: "D1 insert failure",
+			error: "Failed to create audit entry",
 			success: false,
 		});
 	});
@@ -95,21 +120,28 @@ describe("audit repository", () => {
 		});
 	});
 
-	it("getAuditEntries returns dbFailure on error", async () => {
+	it("getAuditEntries returns dbFailure on error (Error and non-Error)", async () => {
 		// Arrange
-		vi.mocked(getDb).mockRejectedValue(new Error("Query failed"));
+		vi.mocked(getDb)
+			.mockRejectedValueOnce(new Error("Query failed"))
+			.mockRejectedValueOnce("String error");
 
 		// Act
-		const result = await getAuditEntries("VOD", "vod_1");
+		const res1 = await getAuditEntries("VOD", "vod_1");
+		const res2 = await getAuditEntries("VOD", "vod_1");
 
 		// Assert
-		expect(result).toEqual({
+		expect(res1).toEqual({
 			error: "Query failed",
+			success: false,
+		});
+		expect(res2).toEqual({
+			error: "Failed to retrieve audit entries",
 			success: false,
 		});
 	});
 
-	it("getAuditLogs filters by options and returns logs with actor", async () => {
+	it("getAuditLogs filters by each option combination", async () => {
 		// Arrange
 		const mockLogs = [
 			{
@@ -143,58 +175,43 @@ describe("audit repository", () => {
 		vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 		// Act
-		const result = await getAuditLogs({
+		const resAll = await getAuditLogs({
 			actorUserId: "usr_1",
 			entityId: "vod_1",
 			entityType: "VOD",
 			limit: 10,
 			offset: 0,
 		});
+		const resType = await getAuditLogs({ entityType: "VOD" });
+		const resEntity = await getAuditLogs({ entityId: "vod_1" });
+		const resActor = await getAuditLogs({ actorUserId: "usr_1" });
+		const resNone = await getAuditLogs({});
 
 		// Assert
-		expect(result).toEqual({
-			data: mockLogs,
-			success: true,
-		});
+		expect(resAll).toEqual({ data: mockLogs, success: true });
+		expect(resType).toEqual({ data: mockLogs, success: true });
+		expect(resEntity).toEqual({ data: mockLogs, success: true });
+		expect(resActor).toEqual({ data: mockLogs, success: true });
+		expect(resNone).toEqual({ data: mockLogs, success: true });
 	});
 
-	it("getAuditLogs handles no filter conditions", async () => {
+	it("getAuditLogs returns dbFailure on error (Error and non-Error)", async () => {
 		// Arrange
-		const mockLogs: unknown[] = [];
-		const mockDb = {
-			query: {
-				auditEntries: {
-					findMany: vi.fn().mockImplementation((options) => {
-						if (options?.where) {
-							options.where({}, { and: vi.fn(), eq: vi.fn() });
-						}
-						return Promise.resolve(mockLogs);
-					}),
-				},
-			},
-		};
-		vi.mocked(getDb).mockResolvedValue(mockDb as never);
+		vi.mocked(getDb)
+			.mockRejectedValueOnce(new Error("Audit log fetch error"))
+			.mockRejectedValueOnce("String error");
 
 		// Act
-		const result = await getAuditLogs({});
+		const res1 = await getAuditLogs();
+		const res2 = await getAuditLogs();
 
 		// Assert
-		expect(result).toEqual({
-			data: mockLogs,
-			success: true,
-		});
-	});
-
-	it("getAuditLogs returns dbFailure on error", async () => {
-		// Arrange
-		vi.mocked(getDb).mockRejectedValue(new Error("Audit log fetch error"));
-
-		// Act
-		const result = await getAuditLogs();
-
-		// Assert
-		expect(result).toEqual({
+		expect(res1).toEqual({
 			error: "Audit log fetch error",
+			success: false,
+		});
+		expect(res2).toEqual({
+			error: "Failed to retrieve audit logs",
 			success: false,
 		});
 	});

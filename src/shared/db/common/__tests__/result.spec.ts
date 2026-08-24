@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dbFailure, dbSuccess } from "../result";
+import { dbFailure, dbSuccess, toErrorMessage } from "../result";
 
 describe("dbResult helpers", () => {
 	it("constructs a successful result object with data", () => {
@@ -28,5 +28,14 @@ describe("dbResult helpers", () => {
 			error: errorMessage,
 			success: false,
 		});
+	});
+
+	it("toErrorMessage returns error.message for Error instances and fallback otherwise", () => {
+		// Act & Assert
+		expect(toErrorMessage(new Error("Actual error"), "Fallback")).toBe(
+			"Actual error",
+		);
+		expect(toErrorMessage("string error", "Fallback")).toBe("Fallback");
+		expect(toErrorMessage(null, "Fallback")).toBe("Fallback");
 	});
 });

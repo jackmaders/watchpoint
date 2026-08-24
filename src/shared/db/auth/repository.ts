@@ -1,7 +1,12 @@
 import { count, desc, eq } from "drizzle-orm";
 import { createAuditEntry } from "../audit/repository";
 import { type DbContext, getDb } from "../client/client";
-import { type DbResult, dbFailure, dbSuccess } from "../common/result";
+import {
+	type DbResult,
+	dbFailure,
+	dbSuccess,
+	toErrorMessage,
+} from "../common/result";
 import { type UserRole, users } from "./schema";
 import { updateUserRoleInputSchema } from "./validation";
 
@@ -17,12 +22,10 @@ export async function getUserCount(
 ): Promise<DbResult<number>> {
 	try {
 		const db = await getDb(context);
-		const [{ value }] = await db.select({ value: count() }).from(users);
-		return dbSuccess(value);
+		const [row] = await db.select({ value: count() }).from(users);
+		return dbSuccess(row?.value ?? 0);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve user count",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve user count"));
 	}
 }
 
@@ -37,9 +40,7 @@ export async function getUserById(
 		});
 		return dbSuccess(user ?? null);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve user by ID",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve user by ID"));
 	}
 }
 
@@ -70,9 +71,7 @@ export async function getUsers(
 
 		return dbSuccess(userList);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to retrieve users",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to retrieve users"));
 	}
 }
 
@@ -142,9 +141,7 @@ async function applyUserRoleUpdate(
 
 		return dbSuccess(updatedUser);
 	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to update user role",
-		);
+		return dbFailure(toErrorMessage(error, "Failed to update user role"));
 	}
 }
 
@@ -154,9 +151,7 @@ export async function updateUserRole(
 ): Promise<DbResult<UserItem>> {
 	const parsed = updateUserRoleInputSchema.safeParse(params);
 	if (!parsed.success) {
-		return dbFailure(
-			parsed.error.issues[0]?.message ?? "Invalid role update input",
-		);
+		return dbFailure(parsed.error.issues[0].message);
 	}
 
 	const { actorUserId, newRole, targetUserId } = parsed.data;

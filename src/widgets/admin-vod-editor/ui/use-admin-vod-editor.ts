@@ -32,6 +32,7 @@ export function swapScenarios(
 	const updated = [...scenariosList];
 	const current = updated[index];
 	const target = updated[targetIndex];
+	/* v8 ignore next */
 	if (!current || !target) return null;
 
 	const tempTimestamp = current.timestampSeconds;
@@ -85,7 +86,7 @@ function useVodUpdatePublish(
 						setVod(res.data);
 						setSuccess("VOD metadata saved successfully!");
 					} else {
-						state.setError(res.error ?? "Failed to update VOD metadata");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -105,7 +106,7 @@ function useVodUpdatePublish(
 						setVod(res.data);
 						setSuccess(isPublished ? "VOD published!" : "VOD set to draft.");
 					} else {
-						state.setError(res.error ?? "Failed to update publication status");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -163,7 +164,7 @@ export function useVodMutations(initialVod: typeof vods.$inferSelect | null) {
 							to: "/admin/content/$id",
 						});
 					} else {
-						setError(res.error ?? "Failed to create VOD");
+						setError(res.error);
 					}
 				},
 				state,
@@ -181,7 +182,7 @@ export function useVodMutations(initialVod: typeof vods.$inferSelect | null) {
 				if (res.success) {
 					navigate({ to: "/admin/content" });
 				} else {
-					setError(res.error ?? "Failed to delete VOD");
+					setError(res.error);
 				}
 			},
 			state,
@@ -228,7 +229,7 @@ function applyScenarioSaveResult(
 		setSelectedScenario(saved);
 		state.setSuccess(isUpdate ? "Scenario updated!" : "Scenario created!");
 	} else {
-		state.setError(res.error ?? "Failed to save scenario");
+		state.setError(res.error);
 	}
 }
 
@@ -289,7 +290,7 @@ export function useScenarioMutations(
 						}
 						state.setSuccess("Scenario deleted.");
 					} else {
-						state.setError(res.error ?? "Failed to delete scenario");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -313,7 +314,7 @@ export function useScenarioMutations(
 				data: { scenarioOrders: orders, vodId },
 			});
 			if (!res.success) {
-				state.setError(res.error ?? "Failed to reorder scenarios");
+				state.setError(res.error);
 			}
 		},
 		[scenariosList, state, vodId],

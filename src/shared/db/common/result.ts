@@ -9,3 +9,7 @@ export function dbSuccess<T>(data: T): DbResult<T> {
 export function dbFailure<T = never>(error: string): DbResult<T> {
 	return { error, success: false };
 }
+
+export function toErrorMessage(error: unknown, fallback: string): string {
+	return error instanceof Error ? error.message : fallback;
+}
