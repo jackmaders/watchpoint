@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-router");
-vi.mock("@/widgets/admin-layout");
+vi.mock("@/widgets/layout-admin");
 vi.mock("@/pages/admin");
 vi.mock("@/pages/admin-content");
 vi.mock("@/pages/admin-users");
@@ -11,7 +11,7 @@ import { adminIndexRouteOptions } from "@/pages/admin";
 import { adminAuditRouteOptions } from "@/pages/admin-audit";
 import { adminContentRouteOptions } from "@/pages/admin-content";
 import { adminUsersRouteOptions } from "@/pages/admin-users";
-import { adminRouteOptions } from "@/widgets/admin-layout";
+import { adminRouteOptions } from "@/widgets/layout-admin";
 import { Route as AdminRoute } from "../../admin";
 import { Route as AdminAuditRoute } from "../audit";
 import { Route as AdminContentRoute } from "../content";
@@ -19,7 +19,7 @@ import { Route as AdminIndexRoute } from "../index";
 import { Route as AdminUsersRoute } from "../users";
 
 describe("admin routes", () => {
-	it("AdminRoute wires adminRouteOptions from widgets/admin-layout", () => {
+	it("AdminRoute wires adminRouteOptions from widgets/layout-admin", () => {
 		// Arrange & Act & Assert
 		expect(AdminRoute.options).toEqual(adminRouteOptions);
 	});

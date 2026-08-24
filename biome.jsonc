@@ -114,10 +114,12 @@
 		},
 		{
 			"includes": [
-				"app/routes/**/*.tsx",
-				"app/routes/**/*.ts",
-				"!app/routes/__root.tsx",
-				"!app/routes/**/__tests__/**"
+				"**/app/routes/**/*.tsx",
+				"**/app/routes/**/*.ts",
+				"**/app/routes/*.tsx",
+				"**/app/routes/*.ts",
+				"!**/app/routes/__root.tsx",
+				"!**/app/routes/**/__tests__/**"
 			],
 			"path": "./plugins/enforce-ultra-thin-routes.grit"
 		}
