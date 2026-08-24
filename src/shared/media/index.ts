@@ -1,3 +1,19 @@
+import { handleMediaRequest } from "./api";
+
+export const mediaApiRouteOptions = {
+	server: {
+		handlers: {
+			GET: handleMediaRequest,
+		},
+	},
+};
+
+export {
+	getMediaBucket,
+	handleGetMedia,
+	handleMediaRequest,
+	type MediaContext,
+} from "./api";
 export type {
 	SessionMediaAdapterOptions,
 	SessionMediaAdapterResult,

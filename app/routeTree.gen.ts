@@ -16,10 +16,10 @@ import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as HistoryIndexRouteImport } from './routes/history/index'
-import { Route as HistoryPlaythroughIdRouteImport } from './routes/history/$playthroughId'
+import { Route as HistoryIdRouteImport } from './routes/history/$id'
 import { Route as VodsIndexRouteImport } from './routes/vods/index'
 import { Route as VodsIdRouteImport } from './routes/vods/$id'
-import { Route as AdminContentVodIdRouteImport } from './routes/admin/content/$vodId'
+import { Route as AdminContentIdRouteImport } from './routes/admin/content/$id'
 import { Route as AdminContentNewRouteImport } from './routes/admin/content/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
@@ -61,9 +61,9 @@ const HistoryIndexRoute = HistoryIndexRouteImport.update({
   path: '/history/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HistoryPlaythroughIdRoute = HistoryPlaythroughIdRouteImport.update({
-  id: '/history/$playthroughId',
-  path: '/history/$playthroughId',
+const HistoryIdRoute = HistoryIdRouteImport.update({
+  id: '/history/$id',
+  path: '/history/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VodsIndexRoute = VodsIndexRouteImport.update({
@@ -76,9 +76,9 @@ const VodsIdRoute = VodsIdRouteImport.update({
   path: '/vods/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminContentVodIdRoute = AdminContentVodIdRouteImport.update({
-  id: '/$vodId',
-  path: '/$vodId',
+const AdminContentIdRoute = AdminContentIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
   getParentRoute: () => AdminContentRoute,
 } as any)
 const AdminContentNewRoute = AdminContentNewRouteImport.update({
@@ -113,12 +113,12 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
-  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
+  '/history/$id': typeof HistoryIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/history/': typeof HistoryIndexRoute
   '/vods/': typeof VodsIndexRoute
-  '/admin/content/$vodId': typeof AdminContentVodIdRoute
+  '/admin/content/$id': typeof AdminContentIdRoute
   '/admin/content/new': typeof AdminContentNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -130,12 +130,12 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
-  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
+  '/history/$id': typeof HistoryIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/admin': typeof AdminIndexRoute
   '/history': typeof HistoryIndexRoute
   '/vods': typeof VodsIndexRoute
-  '/admin/content/$vodId': typeof AdminContentVodIdRoute
+  '/admin/content/$id': typeof AdminContentIdRoute
   '/admin/content/new': typeof AdminContentNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -149,12 +149,12 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
-  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
+  '/history/$id': typeof HistoryIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/history/': typeof HistoryIndexRoute
   '/vods/': typeof VodsIndexRoute
-  '/admin/content/$vodId': typeof AdminContentVodIdRoute
+  '/admin/content/$id': typeof AdminContentIdRoute
   '/admin/content/new': typeof AdminContentNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$': typeof ApiMediaSplatRoute
@@ -169,12 +169,12 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/content'
     | '/admin/users'
-    | '/history/$playthroughId'
+    | '/history/$id'
     | '/vods/$id'
     | '/admin/'
     | '/history/'
     | '/vods/'
-    | '/admin/content/$vodId'
+    | '/admin/content/$id'
     | '/admin/content/new'
     | '/api/auth/$'
     | '/api/media/$'
@@ -186,12 +186,12 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/content'
     | '/admin/users'
-    | '/history/$playthroughId'
+    | '/history/$id'
     | '/vods/$id'
     | '/admin'
     | '/history'
     | '/vods'
-    | '/admin/content/$vodId'
+    | '/admin/content/$id'
     | '/admin/content/new'
     | '/api/auth/$'
     | '/api/media/$'
@@ -204,12 +204,12 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/content'
     | '/admin/users'
-    | '/history/$playthroughId'
+    | '/history/$id'
     | '/vods/$id'
     | '/admin/'
     | '/history/'
     | '/vods/'
-    | '/admin/content/$vodId'
+    | '/admin/content/$id'
     | '/admin/content/new'
     | '/api/auth/$'
     | '/api/media/$'
@@ -220,7 +220,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  HistoryPlaythroughIdRoute: typeof HistoryPlaythroughIdRoute
+  HistoryIdRoute: typeof HistoryIdRoute
   VodsIdRoute: typeof VodsIdRouteWithChildren
   HistoryIndexRoute: typeof HistoryIndexRoute
   VodsIndexRoute: typeof VodsIndexRoute
@@ -280,11 +280,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/history/$playthroughId': {
-      id: '/history/$playthroughId'
-      path: '/history/$playthroughId'
-      fullPath: '/history/$playthroughId'
-      preLoaderRoute: typeof HistoryPlaythroughIdRouteImport
+    '/history/$id': {
+      id: '/history/$id'
+      path: '/history/$id'
+      fullPath: '/history/$id'
+      preLoaderRoute: typeof HistoryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vods/': {
@@ -301,11 +301,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VodsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/content/$vodId': {
-      id: '/admin/content/$vodId'
-      path: '/$vodId'
-      fullPath: '/admin/content/$vodId'
-      preLoaderRoute: typeof AdminContentVodIdRouteImport
+    '/admin/content/$id': {
+      id: '/admin/content/$id'
+      path: '/$id'
+      fullPath: '/admin/content/$id'
+      preLoaderRoute: typeof AdminContentIdRouteImport
       parentRoute: typeof AdminContentRoute
     }
     '/admin/content/new': {
@@ -347,12 +347,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminContentRouteChildren {
-  AdminContentVodIdRoute: typeof AdminContentVodIdRoute
+  AdminContentIdRoute: typeof AdminContentIdRoute
   AdminContentNewRoute: typeof AdminContentNewRoute
 }
 
 const AdminContentRouteChildren: AdminContentRouteChildren = {
-  AdminContentVodIdRoute: AdminContentVodIdRoute,
+  AdminContentIdRoute: AdminContentIdRoute,
   AdminContentNewRoute: AdminContentNewRoute,
 }
 
@@ -390,7 +390,7 @@ const VodsIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  HistoryPlaythroughIdRoute: HistoryPlaythroughIdRoute,
+  HistoryIdRoute: HistoryIdRoute,
   VodsIdRoute: VodsIdRouteWithChildren,
   HistoryIndexRoute: HistoryIndexRoute,
   VodsIndexRoute: VodsIndexRoute,

@@ -111,8 +111,18 @@
 				"!**/generated/**"
 			],
 			"path": "./plugins/enforce-no-production-testid.grit"
+		},
+		{
+			"includes": [
+				"app/routes/**/*.tsx",
+				"app/routes/**/*.ts",
+				"!app/routes/__root.tsx",
+				"!app/routes/**/__tests__/**"
+			],
+			"path": "./plugins/enforce-ultra-thin-routes.grit"
 		}
 	],
+
 	"vcs": {
 		"clientKind": "git",
 		"enabled": true,

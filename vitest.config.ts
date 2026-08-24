@@ -18,7 +18,7 @@ export default defineConfig({
 				"src/**/index.server.ts",
 				"src/app/**",
 				"src/pages/prototype-*/**",
-				"src/pages/vod-detail/ui/session-player-media-recovery-prototype.tsx",
+				"src/pages/vods-id-session/ui/session-player-media-recovery-prototype.tsx",
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			reporter: ["text-summary", "text"],

@@ -1,8 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { adminIndexRouteOptions } from "@/pages/admin";
 
-export const Route = createFileRoute("/admin/")({
-	beforeLoad: () => {
-		throw redirect({ to: "/admin/content" });
-	},
-	component: () => null,
-});
+export const Route = createFileRoute("/admin/")(adminIndexRouteOptions);

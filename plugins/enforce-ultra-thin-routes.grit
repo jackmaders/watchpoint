@@ -1,0 +1,29 @@
+engine biome(1.0)
+language js(typescript,jsx)
+
+or {
+	`useState($args)` as $hook where {
+		register_diagnostic(
+			span=$hook,
+			message="Thin Route Violation: Do not declare state hooks (`useState`) directly in route adapters. Place state logic in the corresponding `src/pages/` slice."
+		)
+	},
+	`useEffect($args)` as $hook where {
+		register_diagnostic(
+			span=$hook,
+			message="Thin Route Violation: Do not declare lifecycle hooks (`useEffect`) directly in route adapters. Place effect logic in the corresponding `src/pages/` slice."
+		)
+	},
+	`useReducer($args)` as $hook where {
+		register_diagnostic(
+			span=$hook,
+			message="Thin Route Violation: Do not declare reducer hooks (`useReducer`) directly in route adapters. Place reducer logic in the corresponding `src/pages/` slice."
+		)
+	},
+	`useMemo($args)` as $hook where {
+		register_diagnostic(
+			span=$hook,
+			message="Thin Route Violation: Do not declare memoization hooks (`useMemo`) directly in route adapters. Place memoized logic in the corresponding `src/pages/` slice."
+		)
+	}
+}

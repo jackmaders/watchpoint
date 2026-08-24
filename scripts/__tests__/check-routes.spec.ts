@@ -10,8 +10,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin/audit': typeof AdminAuditRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/content/$id': typeof AdminContentIdRoute
+  '/admin/content/new': typeof AdminContentNewRoute
   '/admin/users': typeof AdminUsersRoute
-  '/history/$playthroughId': typeof HistoryPlaythroughIdRoute
+  '/history/$id': typeof HistoryIdRoute
   '/vods/$id': typeof VodsIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/history/': typeof HistoryIndexRoute

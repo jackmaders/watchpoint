@@ -1,18 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockInstance,
+	vi,
+} from "vitest";
 import type { AdminVodItem } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
+import * as adminVodEditor from "@/widgets/admin-vod-editor";
 import { AdminContentPage } from "../admin-content-page";
 
 vi.mock("@tanstack/react-router");
-vi.mock("../../api/server-fns");
-
-import {
-	bulkDeleteVods,
-	bulkPublishVods,
-	deleteVod,
-	setVodPublicationStatus,
-} from "../../api/server-fns";
 
 const mockAdminUser: AuthenticatedUser = {
 	email: "admin@example.com",
@@ -63,9 +63,34 @@ const mockInitialVods: AdminVodItem[] = [
 	},
 ];
 
+let setVodPublicationStatusSpy: MockInstance;
+let deleteVodSpy: MockInstance;
+let bulkPublishVodsSpy: MockInstance;
+let bulkDeleteVodsSpy: MockInstance;
+
 describe("AdminContentPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setVodPublicationStatusSpy = vi
+			.spyOn(adminVodEditor, "setVodPublicationStatus")
+			.mockResolvedValue({
+				success: true,
+			} as never);
+		deleteVodSpy = vi.spyOn(adminVodEditor, "deleteVod").mockResolvedValue({
+			success: true,
+		} as never);
+		bulkPublishVodsSpy = vi
+			.spyOn(adminVodEditor, "bulkPublishVods")
+			.mockResolvedValue({
+				failed: [],
+				succeeded: [],
+			} as never);
+		bulkDeleteVodsSpy = vi
+			.spyOn(adminVodEditor, "bulkDeleteVods")
+			.mockResolvedValue({
+				failed: [],
+				succeeded: [],
+			} as never);
 	});
 
 	it("renders header, total count, filters, and table", () => {
@@ -178,10 +203,10 @@ describe("AdminContentPage", () => {
 
 	it("executes single row publish toggle successfully", async () => {
 		// Arrange
-		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+		setVodPublicationStatusSpy.mockResolvedValueOnce({
 			success: true,
 			vod: { ...mockInitialVods[1], isPublished: true },
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -196,7 +221,7 @@ describe("AdminContentPage", () => {
 
 		// Assert
 		await waitFor(() => {
-			expect(setVodPublicationStatus).toHaveBeenCalledWith({
+			expect(setVodPublicationStatusSpy).toHaveBeenCalledWith({
 				data: {
 					id: "vod_2",
 					isPublished: true,
@@ -207,10 +232,10 @@ describe("AdminContentPage", () => {
 
 	it("handles error during single row publish toggle", async () => {
 		// Arrange
-		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+		setVodPublicationStatusSpy.mockResolvedValueOnce({
 			error: "Cannot publish a VOD with zero scenarios",
 			success: false,
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -233,9 +258,9 @@ describe("AdminContentPage", () => {
 
 	it("opens confirmation dialog before deleting a single VOD, shows scenario count, and deletes on confirm", async () => {
 		// Arrange
-		vi.mocked(deleteVod).mockResolvedValueOnce({
+		deleteVodSpy.mockResolvedValueOnce({
 			success: true,
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -260,7 +285,7 @@ describe("AdminContentPage", () => {
 
 		// Assert: calls deleteVod and removes item from table
 		await waitFor(() => {
-			expect(deleteVod).toHaveBeenCalledWith({
+			expect(deleteVodSpy).toHaveBeenCalledWith({
 				data: { id: "vod_1" },
 			});
 			expect(screen.queryByText("GM Rein Guide")).toBeNull();
@@ -269,10 +294,10 @@ describe("AdminContentPage", () => {
 
 	it("executes bulk publish with partial failures and displays summary alert", async () => {
 		// Arrange
-		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
+		bulkPublishVodsSpy.mockResolvedValueOnce({
 			failed: [{ error: "Cannot publish with zero scenarios", id: "vod_3" }],
 			succeeded: ["vod_2"],
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -288,7 +313,7 @@ describe("AdminContentPage", () => {
 
 		// Assert: summary alert appears
 		await waitFor(() => {
-			expect(bulkPublishVods).toHaveBeenCalledWith({
+			expect(bulkPublishVodsSpy).toHaveBeenCalledWith({
 				data: {
 					ids: expect.arrayContaining(["vod_1", "vod_2", "vod_3"]),
 					isPublished: true,
@@ -311,10 +336,10 @@ describe("AdminContentPage", () => {
 
 	it("executes bulk unpublish successfully", async () => {
 		// Arrange
-		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
+		bulkPublishVodsSpy.mockResolvedValueOnce({
 			failed: [],
 			succeeded: ["vod_1"],
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -330,7 +355,7 @@ describe("AdminContentPage", () => {
 
 		// Assert
 		await waitFor(() => {
-			expect(bulkPublishVods).toHaveBeenCalledWith({
+			expect(bulkPublishVodsSpy).toHaveBeenCalledWith({
 				data: {
 					ids: ["vod_1"],
 					isPublished: false,
@@ -344,10 +369,10 @@ describe("AdminContentPage", () => {
 
 	it("opens confirmation dialog for bulk delete, showing total vods and scenario count, and deletes on confirm", async () => {
 		// Arrange
-		vi.mocked(bulkDeleteVods).mockResolvedValueOnce({
+		bulkDeleteVodsSpy.mockResolvedValueOnce({
 			failed: [],
 			succeeded: ["vod_1", "vod_2"],
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -374,7 +399,7 @@ describe("AdminContentPage", () => {
 
 		// Assert: calls bulkDeleteVods and removes items
 		await waitFor(() => {
-			expect(bulkDeleteVods).toHaveBeenCalledWith({
+			expect(bulkDeleteVodsSpy).toHaveBeenCalledWith({
 				data: {
 					ids: ["vod_1", "vod_2"],
 				},
@@ -387,7 +412,7 @@ describe("AdminContentPage", () => {
 
 	it("handles exception during single delete", async () => {
 		// Arrange
-		vi.mocked(deleteVod).mockRejectedValueOnce(new Error("Network Error"));
+		deleteVodSpy.mockRejectedValueOnce(new Error("Network Error"));
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -411,9 +436,9 @@ describe("AdminContentPage", () => {
 
 	it("handles error result without error message during toggle publish", async () => {
 		// Arrange
-		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+		setVodPublicationStatusSpy.mockResolvedValueOnce({
 			success: false,
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -436,9 +461,9 @@ describe("AdminContentPage", () => {
 
 	it("handles error result without error message during single delete", async () => {
 		// Arrange
-		vi.mocked(deleteVod).mockResolvedValueOnce({
+		deleteVodSpy.mockResolvedValueOnce({
 			success: false,
-		});
+		} as never);
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -480,7 +505,7 @@ describe("AdminContentPage", () => {
 
 	it("handles exception during toggle publish", async () => {
 		// Arrange
-		vi.mocked(setVodPublicationStatus).mockRejectedValueOnce(
+		setVodPublicationStatusSpy.mockRejectedValueOnce(
 			new Error("Server unreachable"),
 		);
 		render(
@@ -507,9 +532,7 @@ describe("AdminContentPage", () => {
 
 	it("handles exception during bulk publish", async () => {
 		// Arrange
-		vi.mocked(bulkPublishVods).mockRejectedValueOnce(
-			new Error("Bulk server error"),
-		);
+		bulkPublishVodsSpy.mockRejectedValueOnce(new Error("Bulk server error"));
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -533,7 +556,7 @@ describe("AdminContentPage", () => {
 
 	it("handles exception during bulk delete", async () => {
 		// Arrange
-		vi.mocked(bulkDeleteVods).mockRejectedValueOnce(
+		bulkDeleteVodsSpy.mockRejectedValueOnce(
 			new Error("Bulk delete network error"),
 		);
 		render(

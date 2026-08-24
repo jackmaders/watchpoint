@@ -9,6 +9,7 @@ import {
 	getAuth,
 	getAuthConfig,
 	getCurrentUser,
+	handleAuthRequest,
 	isRegistrationOpen,
 } from "../auth";
 
@@ -389,5 +390,16 @@ describe("auth", () => {
 
 		// Assert
 		expect(open).toBe(false);
+	});
+
+	it("handleAuthRequest delegates request to auth instance handler", async () => {
+		// Arrange
+		const mockRequest = new Request("http://localhost:3000/api/auth/session");
+
+		// Act
+		const response = await handleAuthRequest({ request: mockRequest });
+
+		// Assert
+		expect(response).toBeDefined();
 	});
 });
