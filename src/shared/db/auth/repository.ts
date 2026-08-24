@@ -82,6 +82,72 @@ export interface UpdateUserRoleParams {
 	targetUserId: string;
 }
 
+async function validateDemotionPreconditions(
+	targetUser: UserItem,
+	newRole: UserRole,
+	context?: DbContext,
+): Promise<string | null> {
+	if (targetUser.role !== "ADMIN" || newRole === "ADMIN") {
+		return null;
+	}
+
+	const db = await getDb(context);
+	const [{ value: adminCount }] = await db
+		.select({ value: count() })
+		.from(users)
+		.where(eq(users.role, "ADMIN"));
+
+	if (adminCount <= 1) {
+		return "Cannot demote the last remaining administrator";
+	}
+
+	return null;
+}
+
+async function applyUserRoleUpdate(
+	targetUserId: string,
+	newRole: UserRole,
+	previousRole: UserRole,
+	actorUserId: string,
+	context?: DbContext,
+): Promise<DbResult<UserItem>> {
+	try {
+		const db = await getDb(context);
+		const [updatedUser] = await db
+			.update(users)
+			.set({
+				role: newRole,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, targetUserId))
+			.returning();
+
+		if (!updatedUser) {
+			return dbFailure("Failed to update user role");
+		}
+
+		await createAuditEntry(
+			{
+				action: "USER_ROLE_UPDATED",
+				actorUserId,
+				entityId: targetUserId,
+				entityType: "USER",
+				metadata: {
+					newRole,
+					previousRole,
+				},
+			},
+			context,
+		);
+
+		return dbSuccess(updatedUser);
+	} catch (error) {
+		return dbFailure(
+			error instanceof Error ? error.message : "Failed to update user role",
+		);
+	}
+}
+
 export async function updateUserRole(
 	params: UpdateUserRoleParams,
 	context?: DbContext,
@@ -112,51 +178,20 @@ export async function updateUserRole(
 		return dbSuccess(targetUser);
 	}
 
-	try {
-		const db = await getDb(context);
-
-		if (targetUser.role === "ADMIN" && newRole !== "ADMIN") {
-			const [{ value: adminCount }] = await db
-				.select({ value: count() })
-				.from(users)
-				.where(eq(users.role, "ADMIN"));
-
-			if (adminCount <= 1) {
-				return dbFailure("Cannot demote the last remaining administrator");
-			}
-		}
-
-		const [updatedUser] = await db
-			.update(users)
-			.set({
-				role: newRole,
-				updatedAt: new Date(),
-			})
-			.where(eq(users.id, targetUserId))
-			.returning();
-
-		if (!updatedUser) {
-			return dbFailure("Failed to update user role");
-		}
-
-		await createAuditEntry(
-			{
-				action: "USER_ROLE_UPDATED",
-				actorUserId,
-				entityId: targetUserId,
-				entityType: "USER",
-				metadata: {
-					newRole,
-					previousRole: targetUser.role,
-				},
-			},
-			context,
-		);
-
-		return dbSuccess(updatedUser);
-	} catch (error) {
-		return dbFailure(
-			error instanceof Error ? error.message : "Failed to update user role",
-		);
+	const demotionError = await validateDemotionPreconditions(
+		targetUser,
+		newRole,
+		context,
+	);
+	if (demotionError) {
+		return dbFailure(demotionError);
 	}
+
+	return applyUserRoleUpdate(
+		targetUserId,
+		newRole,
+		targetUser.role,
+		actorUserId,
+		context,
+	);
 }
