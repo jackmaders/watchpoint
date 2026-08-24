@@ -1,3 +1,2 @@
-export { checkAdminAccess } from "./api/server-fns";
-export { AccessDeniedPage } from "./ui/access-denied-page";
-export { AdminLayout } from "./ui/admin-layout";
+export { adminIndexBeforeLoad } from "./api/loaders";
+export { adminIndexRouteOptions } from "./model/route-options";

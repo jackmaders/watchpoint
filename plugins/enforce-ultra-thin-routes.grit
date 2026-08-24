@@ -1,0 +1,17 @@
+engine biome(1.0)
+language js(typescript,jsx)
+
+or {
+	`createFileRoute($route)({ $options })`,
+	`createFileRoute($route)(($args) => $body)`,
+	`createAPIFileRoute($route)({ $options })`,
+	`createAPIFileRoute($route)(($args) => $body)`,
+	JsxElement(),
+	JsxSelfClosingElement(),
+	`function $name($args) { $body }`
+} as $target where {
+	register_diagnostic(
+		span=$target,
+		message="Ultra-Thin Route Violation: Route adapters must only export Route = createFileRoute(...)(importedRouteOptions). Do not declare inline components, functions, JSX, or option objects."
+	)
+}

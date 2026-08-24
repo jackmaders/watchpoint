@@ -3,12 +3,14 @@
 import type { AdminVodItem } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
+import {
+	BulkSummaryAlert,
+	DeleteConfirmationDialog,
+} from "@/widgets/admin-vod-editor";
 import type { ContentSearchParams } from "../model/search-params";
 import { useAdminContentState } from "../model/use-admin-content";
 import { AdminContentFilters } from "./admin-content-filters";
 import { AdminContentTable } from "./admin-content-table";
-import { BulkSummaryAlert } from "./bulk-summary-alert";
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 
 export interface AdminContentPageProps {
 	currentUser: AuthenticatedUser;

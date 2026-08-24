@@ -179,3 +179,21 @@ export async function isRegistrationOpen(
 		.from(schema.users);
 	return userCount === 0;
 }
+
+export async function handleAuthRequest({
+	request,
+}: {
+	request: Request;
+}): Promise<Response> {
+	const auth = await getAuth();
+	return auth.handler(request);
+}
+
+export const authApiRouteOptions = {
+	server: {
+		handlers: {
+			GET: handleAuthRequest,
+			POST: handleAuthRequest,
+		},
+	},
+};

@@ -60,7 +60,38 @@ export const redirect = vi.fn((opts: { to: string }) => {
 	Object.assign(err, { isRedirect: true, ...opts });
 	return err;
 });
+export const notFound = vi.fn((opts?: Record<string, unknown>) => {
+	const err = new Error("Not Found");
+	Object.assign(err, { isNotFound: true, ...opts });
+	return err;
+});
 export const useNavigate = vi.fn(() => vi.fn());
 export const useParams = vi.fn(() => ({}));
 export const useRouteContext = vi.fn(() => ({}));
 export const useSearch = vi.fn(() => ({}));
+
+const routeApiRegistry = new Map<
+	string,
+	{
+		useLoaderData: ReturnType<typeof vi.fn>;
+		useNavigate: ReturnType<typeof vi.fn>;
+		useParams: ReturnType<typeof vi.fn>;
+		useRouteContext: ReturnType<typeof vi.fn>;
+		useSearch: ReturnType<typeof vi.fn>;
+	}
+>();
+
+export const getRouteApi = vi.fn((id: string) => {
+	let existing = routeApiRegistry.get(id);
+	if (!existing) {
+		existing = {
+			useLoaderData: vi.fn(() => ({})),
+			useNavigate: vi.fn(() => vi.fn()),
+			useParams: vi.fn(() => ({})),
+			useRouteContext: vi.fn(() => ({})),
+			useSearch: vi.fn(() => ({})),
+		};
+		routeApiRegistry.set(id, existing);
+	}
+	return existing;
+});

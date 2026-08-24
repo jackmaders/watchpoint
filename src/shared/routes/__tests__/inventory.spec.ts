@@ -28,7 +28,7 @@ describe("Route Inventory Manifest", () => {
 		const staticRoute = "/";
 		const dynamicVodRoute = "/vods/$id";
 		const dynamicSessionRoute = "/vods/$id/session";
-		const dynamicHistoryRoute = "/history/$playthroughId";
+		const dynamicHistoryRoute = "/history/$id";
 
 		// Act
 		const resolvedStatic = resolveRoutePath(staticRoute);
@@ -40,7 +40,7 @@ describe("Route Inventory Manifest", () => {
 		expect(resolvedStatic).toBe("/");
 		expect(resolvedVod).toBe("/vods/vod_local_fixture");
 		expect(resolvedSession).toBe("/vods/vod_local_fixture/session");
-		expect(resolvedHistory).toBe("/history/playthrough_local_fixture");
+		expect(resolvedHistory).toBe("/history/vod_local_fixture");
 	});
 
 	it("validates that all user-facing routes are declared in the inventory", () => {
@@ -50,10 +50,10 @@ describe("Route Inventory Manifest", () => {
 			"/admin",
 			"/admin/audit",
 			"/admin/content",
-			"/admin/content/$vodId",
+			"/admin/content/$id",
 			"/admin/content/new",
 			"/admin/users",
-			"/history/$playthroughId",
+			"/history/$id",
 			"/vods/$id",
 			"/admin/",
 			"/history/",

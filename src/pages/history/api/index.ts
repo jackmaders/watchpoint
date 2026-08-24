@@ -1,8 +1,3 @@
-export {
-	getPlayerHistoryData,
-	getPlaythroughHistoryDetailData,
-} from "./history";
-export {
-	getPlayerHistory,
-	getPlaythroughHistoryDetail,
-} from "./server-fns";
+export { getPlayerHistoryData } from "./history";
+export * from "./loaders";
+export { getPlayerHistory } from "./server-fns";

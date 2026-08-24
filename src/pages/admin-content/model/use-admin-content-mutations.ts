@@ -7,7 +7,7 @@ import {
 	bulkPublishVods,
 	deleteVod,
 	setVodPublicationStatus,
-} from "../api/server-fns";
+} from "@/widgets/admin-vod-editor";
 
 export function usePublicationMutations(
 	setVods: React.Dispatch<React.SetStateAction<AdminVodItem[]>>,

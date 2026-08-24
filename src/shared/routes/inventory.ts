@@ -60,9 +60,9 @@ export const DEFAULT_ROUTE_INVENTORY: readonly RouteInventoryEntry[] = [
 	{
 		accessStates: ["admin"],
 		description: "Administrator VOD editor and scenario authoring",
-		fullPath: "/admin/content/$vodId",
+		fullPath: "/admin/content/$id",
 		isUserFacing: true,
-		paramFixtures: { vodId: FIXTURE_IDS.vod },
+		paramFixtures: { id: FIXTURE_IDS.vod },
 	},
 	{
 		accessStates: ["admin"],
@@ -105,9 +105,9 @@ export const DEFAULT_ROUTE_INVENTORY: readonly RouteInventoryEntry[] = [
 	{
 		accessStates: ["authenticated_user"],
 		description: "Player playthrough history breakdown detail",
-		fullPath: "/history/$playthroughId",
+		fullPath: "/history/$id",
 		isUserFacing: true,
-		paramFixtures: { playthroughId: "playthrough_local_fixture" },
+		paramFixtures: { id: "playthrough_local_fixture" },
 	},
 	{
 		accessStates: ["public"],

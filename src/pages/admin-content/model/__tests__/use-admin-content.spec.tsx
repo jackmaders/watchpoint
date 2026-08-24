@@ -2,14 +2,14 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminVodItem } from "@/shared/db";
 
-vi.mock("../../api/server-fns");
+vi.mock("@/widgets/admin-vod-editor");
 
 import {
 	bulkDeleteVods,
 	bulkPublishVods,
 	deleteVod,
 	setVodPublicationStatus,
-} from "../../api/server-fns";
+} from "@/widgets/admin-vod-editor";
 import { useAdminContentState } from "../use-admin-content";
 
 const mockInitialVods: AdminVodItem[] = [

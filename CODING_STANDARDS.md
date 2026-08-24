@@ -20,17 +20,17 @@ Developer and Reviewer agent skills deleted in #50 — the parts that describe h
 Features extracted into `src/features/` are named `{action}-{entity}` (verb-noun): `create-user`,
 `submit-feedback`. A feature's name describes what it does, not just what it's about.
 
-## Routing directory (`app/routes/`) — thin adapters
+## Routing directory (`app/routes/`) — ultra-thin adapters
 
-Every route file under `app/routes/` MUST be a simple parameter-binding adapter:
+Every route file under `app/routes/` MUST be an ultra-thin parameter-binding and composition adapter:
 
 ```tsx
+import { createFileRoute } from "@tanstack/react-router";
+import { HomePage, loadHomePage } from "@/pages/home";
+
 export const Route = createFileRoute("/")({
 	component: HomeRoute,
-	loader: async () => {
-		const vods = await getPublishedVods();
-		return { vods };
-	},
+	loader: loadHomePage,
 });
 
 function HomeRoute() {
@@ -39,8 +39,10 @@ function HomeRoute() {
 }
 ```
 
-No inline business logic or UI rendering in `app/routes/`. All page logic and presentation lives
-in the FSD `src/pages/` layer.
+- **Zero Inline Logic**: No state hooks (`useState`, `useEffect`, `useReducer`, `useMemo`), inline business logic, DOM manipulation, or raw HTML tags.
+- **Delegation**: Loaders, beforeLoad auth checks, search param validators, request handlers, and route presentations MUST be delegated to dedicated functions in `src/pages/<slice-name>/` or `src/shared/`.
+- **Enforcement**: `plugins/enforce-ultra-thin-routes.grit` enforces this rule via Biome linting.
+
 
 ## Test file location
 
@@ -105,11 +107,13 @@ React `act(...)` warnings). Console output during a test run is a failure, not a
 
 ## Grit plugin locks
 
-Two Grit plugins are structural locks on this repo's test discipline and MUST NOT be
+Three Grit plugins are structural locks on this repo's architectural and testing discipline and MUST NOT be
 edited, weakened, or extended with bypass exceptions:
 
 - `plugins/enforce-automocking.grit` — see "Manual mocks" below.
 - `plugins/enforce-aaa-assertions.grit` — see "Test structure" above.
+- `plugins/enforce-ultra-thin-routes.grit` — see "Routing directory" above.
+
 
 ## Manual mocks — `__mocks__` only
 
