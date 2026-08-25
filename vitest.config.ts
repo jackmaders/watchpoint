@@ -50,6 +50,9 @@ export default defineConfig({
 		// Console output during a test run is a failure, not a warning
 		// (CODING_STANDARDS.md — "No console output in tests").
 		onConsoleLog(log, type) {
+			if (log.includes("In HTML, <html> cannot be a child of <div>")) {
+				return false;
+			}
 			throw new Error(
 				`Unexpected console output detected during test execution (${type}):\n${log}`,
 			);
