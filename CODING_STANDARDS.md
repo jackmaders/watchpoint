@@ -142,3 +142,28 @@ helper, state machine, or policy object instead of branching further at the call
 No file grows past 1,000 lines without extracting subcomponents or helper modules. Keep
 FSD slices (`src/pages/<slice-name>/`) modular and focused rather than letting one file
 absorb everything a slice needs.
+
+## Database Services & D1 Error Handling Standards
+
+### Service-Oriented Architecture
+- Database modules under `src/shared/db/<domain>/` are structured as **Domain Services** (`service.ts`).
+- Drizzle acts as the internal data-mapping engine. All database access must flow through typed domain service functions.
+- Services export standard CRUD operations and named domain workflow functions.
+
+### Method Naming & Return Type Contracts
+- **Single Record Queries**: Use `get<Entity>ById(id)` or `get<Entity>By<Field>(value)`. Always returns `Promise<T | null>` (never throws on not-found).
+- **Collection Queries**: Use `list<Entities>(options)`. Always returns `Promise<T[]>` (returns empty array `[]` when no matches are found).
+- **Existence & Metrics**: Use `exists<Entity>(options)` (`Promise<boolean>`) and `count<Entities>(options)` (`Promise<number>`).
+- **Standard Mutations**:
+  - `create<Entity>(input)`: Inserts a single record. Returns `Promise<T>`.
+  - `update<Entity>(id, input)`: Updates a single record. Returns `Promise<T | null>`.
+  - `upsert<Entity>(input)`: Inserts or updates a record based on unique constraints. Returns `Promise<T>`.
+  - `delete<Entity>(id)`: Deletes a single record. Returns `Promise<boolean>`.
+- **Complex Domain Workflows**: Named with action-first business verbs (`publishVod`, `reorderScenarios`, `changeUserRole`, `recordPlaythroughAttempt`, `completePlaythrough`).
+
+### D1Error & SQLite Error Handling
+- Catch raw Drizzle / D1 exceptions and map or verify against standard `D1ErrorCode` constants / SQLite error codes (e.g. `SQLITE_CONSTRAINT_UNIQUE = 2067`, `SQLITE_CONSTRAINT_FOREIGNKEY = 787`, `SQLITE_BUSY = 5`).
+- Query operations return `null` or `[]` on missing records and only propagate genuine D1 infrastructure errors.
+- Mutation operations catch constraint violations to distinguish predictable conflicts (e.g. unique constraint collision) from fatal infrastructure failures.
+- Server-side error monitoring (Sentry) and client-side UI error notifications (Toasts) are isolated at server function (`server-fns.ts`) and client mutation boundaries (`MutationCache` / `QueryCache`).
+

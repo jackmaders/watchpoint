@@ -50,10 +50,21 @@ export {
 } from "./auth/validation";
 export { type DbContext, type DrizzleDb, getDb } from "./client/client";
 export {
+	catchDbError,
+	D1DatabaseError,
+	type D1DatabaseErrorOptions,
+	D1ErrorKind,
+	parseD1Error,
+} from "./common/errors";
+export {
 	type DbResult,
 	dbFailure,
 	dbSuccess,
 } from "./common/result";
+export {
+	createTableService,
+	type TableWithId,
+} from "./common/service";
 export type { JsonPrimitive, JsonValue } from "./common/types";
 // Playthroughs & Telemetry
 export type {
@@ -114,6 +125,18 @@ export {
 	type SeedCredentials,
 	type SeedEnvironment,
 } from "./seed";
+export {
+	type HeroRole,
+	heroRoleEnum,
+	type InputType,
+	inputTypeEnum,
+	type ModuleType,
+	moduleTypeEnum,
+	scenarios,
+	scenariosRelations,
+	vods,
+	vodsRelations,
+} from "./vods/schema";
 // VODs & Scenarios
 export type {
 	AdminVodItem,
@@ -132,7 +155,7 @@ export type {
 	UpdateScenarioInput,
 	UpdateVodInput,
 	VodItem,
-} from "./vods/repository";
+} from "./vods/service";
 export {
 	bulkDeleteVods,
 	bulkPublishVods,
@@ -147,22 +170,12 @@ export {
 	getSessionManifest,
 	getVodById,
 	reorderScenarios,
+	scenarioTableService,
 	setVodPublicationStatus,
 	updateScenario,
 	updateVod,
-} from "./vods/repository";
-export {
-	type HeroRole,
-	heroRoleEnum,
-	type InputType,
-	inputTypeEnum,
-	type ModuleType,
-	moduleTypeEnum,
-	scenarios,
-	scenariosRelations,
-	vods,
-	vodsRelations,
-} from "./vods/schema";
+	vodTableService,
+} from "./vods/service";
 export {
 	boundedSliderConfigSchema,
 	insertScenarioSchema,
