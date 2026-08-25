@@ -17,9 +17,10 @@ describe("getPlaythroughHistoryDetailData", () => {
 		const mockUser = { id: "usr_1" };
 		const mockItem = { accuracy: 95, id: "pt_1" };
 		vi.mocked(getCurrentUser).mockResolvedValueOnce(mockUser as never);
-		vi.mocked(getPlaythroughHistoryDetail).mockResolvedValueOnce(
-			mockItem as never,
-		);
+		vi.mocked(getPlaythroughHistoryDetail).mockResolvedValueOnce({
+			data: mockItem,
+			success: true,
+		} as never);
 
 		// Act
 		const result = await getPlaythroughHistoryDetailData("pt_1");
@@ -41,6 +42,20 @@ describe("getPlaythroughHistoryDetailData", () => {
 		// Act & Assert
 		await expect(getPlaythroughHistoryDetailData("pt_1")).rejects.toThrow(
 			"Authentication required",
+		);
+	});
+
+	it("throws error when getPlaythroughHistoryDetail fails", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "usr_1" } as never);
+		vi.mocked(getPlaythroughHistoryDetail).mockResolvedValueOnce({
+			error: "Not found",
+			success: false,
+		} as never);
+
+		// Act & Assert
+		await expect(getPlaythroughHistoryDetailData("pt_1")).rejects.toThrow(
+			"Failed to lookup playthrough detail: Not found",
 		);
 	});
 });

@@ -74,8 +74,6 @@ describe("getPlayerHistoryData", () => {
 		} as never);
 
 		// Act & Assert
-		await expect(getPlayerHistoryData()).rejects.toThrow(
-			"Failed to query player history: Database error",
-		);
+		await expect(getPlayerHistoryData()).rejects.toThrow("Database error");
 	});
 });

@@ -148,7 +148,10 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 
 	it("handleVodManifestRequest delegates params to handleGetVodManifest", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce(null);
+		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+			data: null,
+			success: true,
+		});
 		const req = new Request("http://localhost/api/vods/vod_1/manifest");
 
 		// Act
