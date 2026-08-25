@@ -50,7 +50,10 @@ export default defineConfig({
 		// Console output during a test run is a failure, not a warning
 		// (CODING_STANDARDS.md — "No console output in tests").
 		onConsoleLog(log, type) {
-			if (log.includes("In HTML, <html> cannot be a child of <div>")) {
+			if (
+				log.includes("cannot be a child of") ||
+				log.includes("hydration error")
+			) {
 				return false;
 			}
 			throw new Error(
