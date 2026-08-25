@@ -1,8 +1,6 @@
-"use client";
-
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import type { HeroRole, scenarios, vods } from "@/shared/db";
+import type { DbResult, HeroRole, scenarios, vods } from "@/shared/db";
 import {
 	createScenario,
 	createVod,
@@ -14,49 +12,51 @@ import {
 	updateVod,
 } from "../api/server-fns";
 
-export function swapScenarios(
-	list: Array<typeof scenarios.$inferSelect>,
-	scenarioId: string,
-	direction: "up" | "down",
-) {
-	const sorted = [...list].sort(
-		(a, b) => a.timestampSeconds - b.timestampSeconds,
-	);
-	const idx = sorted.findIndex((s) => s.id === scenarioId);
-	if (idx === -1) return null;
-	const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-	const current = sorted[idx];
-	const target = sorted[targetIdx];
-	if (!current || !target) return null;
-
-	return sorted.map((s) => {
-		if (s.id === current.id)
-			return { ...s, timestampSeconds: target.timestampSeconds };
-		if (s.id === target.id)
-			return { ...s, timestampSeconds: current.timestampSeconds };
-		return s;
-	});
-}
-
 export interface MutationStateHandlers {
 	clearAlerts: () => void;
 	setError: (err: string | null) => void;
 	setIsSubmitting: (sub: boolean) => void;
 }
 
+export function swapScenarios(
+	scenariosList: Array<typeof scenarios.$inferSelect>,
+	scenarioId: string,
+	direction: "up" | "down",
+) {
+	const index = scenariosList.findIndex((s) => s.id === scenarioId);
+	if (index === -1) return null;
+	if (direction === "up" && index === 0) return null;
+	if (direction === "down" && index === scenariosList.length - 1) return null;
+
+	const targetIndex = direction === "up" ? index - 1 : index + 1;
+	const updated = [...scenariosList];
+	const current = updated[index];
+	const target = updated[targetIndex];
+	/* v8 ignore next */
+	if (!current || !target) return null;
+
+	const tempTimestamp = current.timestampSeconds;
+	updated[index] = { ...target, timestampSeconds: tempTimestamp };
+	updated[targetIndex] = {
+		...current,
+		timestampSeconds: target.timestampSeconds,
+	};
+	return updated;
+}
+
 export async function runMutation<T>(
-	runner: () => Promise<T>,
-	onSuccess: (data: T) => void,
+	fn: () => Promise<T>,
+	onSuccess: (res: T) => void,
 	state: MutationStateHandlers,
 	fallbackError: string,
 ) {
 	state.clearAlerts();
 	state.setIsSubmitting(true);
 	try {
-		const result = await runner();
-		onSuccess(result);
-	} catch (err: unknown) {
-		state.setError(err instanceof Error ? err.message : fallbackError);
+		const res = await fn();
+		onSuccess(res);
+	} catch (error) {
+		state.setError(error instanceof Error ? error.message : fallbackError);
 	} finally {
 		state.setIsSubmitting(false);
 	}
@@ -64,9 +64,9 @@ export async function runMutation<T>(
 
 function useVodUpdatePublish(
 	vod: typeof vods.$inferSelect | null,
-	setVod: (v: typeof vods.$inferSelect | null) => void,
+	setVod: (vod: typeof vods.$inferSelect | null) => void,
 	state: MutationStateHandlers,
-	setSuccess: (s: string | null) => void,
+	setSuccess: (msg: string | null) => void,
 ) {
 	const handleUpdateVodMetadata = useCallback(
 		async (values: {
@@ -82,11 +82,11 @@ function useVodUpdatePublish(
 			await runMutation(
 				() => updateVod({ data: { id: vod.id, ...values } }),
 				(res) => {
-					if (res.success && res.vod) {
-						setVod(res.vod);
+					if (res.success) {
+						setVod(res.data);
 						setSuccess("VOD metadata saved successfully!");
 					} else {
-						state.setError(res.error ?? "Failed to update VOD metadata");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -102,11 +102,11 @@ function useVodUpdatePublish(
 			await runMutation(
 				() => setVodPublicationStatus({ data: { id: vod.id, isPublished } }),
 				(res) => {
-					if (res.success && res.vod) {
-						setVod(res.vod);
+					if (res.success) {
+						setVod(res.data);
 						setSuccess(isPublished ? "VOD published!" : "VOD set to draft.");
 					} else {
-						state.setError(res.error ?? "Failed to update publication status");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -156,15 +156,15 @@ export function useVodMutations(initialVod: typeof vods.$inferSelect | null) {
 			await runMutation(
 				() => createVod({ data: values }),
 				(res) => {
-					if (res.success && res.vod) {
+					if (res.success) {
 						setSuccess("VOD created successfully!");
-						setVod(res.vod);
+						setVod(res.data);
 						navigate({
-							params: { id: res.vod.id },
+							params: { id: res.data.id },
 							to: "/admin/content/$id",
 						});
 					} else {
-						setError(res.error ?? "Failed to create VOD");
+						setError(res.error);
 					}
 				},
 				state,
@@ -182,7 +182,7 @@ export function useVodMutations(initialVod: typeof vods.$inferSelect | null) {
 				if (res.success) {
 					navigate({ to: "/admin/content" });
 				} else {
-					setError(res.error ?? "Failed to delete VOD");
+					setError(res.error);
 				}
 			},
 			state,
@@ -211,11 +211,7 @@ export interface ScenarioMutationsState extends MutationStateHandlers {
 }
 
 function applyScenarioSaveResult(
-	res: {
-		error?: string;
-		scenario?: typeof scenarios.$inferSelect;
-		success: boolean;
-	},
+	res: DbResult<typeof scenarios.$inferSelect>,
 	isUpdate: boolean,
 	scenariosList: Array<typeof scenarios.$inferSelect>,
 	setScenariosList: React.Dispatch<
@@ -224,8 +220,8 @@ function applyScenarioSaveResult(
 	setSelectedScenario: (s: typeof scenarios.$inferSelect | null) => void,
 	state: ScenarioMutationsState,
 ) {
-	if (res.success && res.scenario) {
-		const saved = res.scenario;
+	if (res.success) {
+		const saved = res.data;
 		const updated = isUpdate
 			? scenariosList.map((s) => (s.id === saved.id ? saved : s))
 			: [...scenariosList, saved];
@@ -233,7 +229,7 @@ function applyScenarioSaveResult(
 		setSelectedScenario(saved);
 		state.setSuccess(isUpdate ? "Scenario updated!" : "Scenario created!");
 	} else {
-		state.setError(res.error ?? "Failed to save scenario");
+		state.setError(res.error);
 	}
 }
 
@@ -294,7 +290,7 @@ export function useScenarioMutations(
 						}
 						state.setSuccess("Scenario deleted.");
 					} else {
-						state.setError(res.error ?? "Failed to delete scenario");
+						state.setError(res.error);
 					}
 				},
 				state,
@@ -318,7 +314,7 @@ export function useScenarioMutations(
 				data: { scenarioOrders: orders, vodId },
 			});
 			if (!res.success) {
-				state.setError(res.error ?? "Failed to reorder scenarios");
+				state.setError(res.error);
 			}
 		},
 		[scenariosList, state, vodId],

@@ -1,5 +1,3 @@
-import type { HeroRole, ModuleType } from "./schema";
-
 export const FIXTURE_IDS = {
 	adminUser: "usr_local_admin",
 	playerUser: "usr_local_player",
@@ -13,7 +11,7 @@ export const FIXTURE_VOD = {
 	isPublished: true,
 	mapName: "Local Test Map",
 	rankTier: "Synthetic",
-	role: "SUPPORT" as HeroRole,
+	role: "SUPPORT" as const,
 	title: "Local Synthetic VOD Fixture",
 	youtubeVideoId: "local-fixture-video",
 } as const;
@@ -25,46 +23,41 @@ export function getLocalFixtureVod() {
 	};
 }
 
-const FIXTURE_SCENARIOS: ReadonlyArray<{
-	explanationText: string;
-	id: string;
-	moduleType: ModuleType;
-	promptText: string;
-}> = [
+const FIXTURE_SCENARIOS = [
 	{
 		explanationText:
 			"Use high ground to preserve sightlines and safe retreat options.",
 		id: "scenario_local_strategy",
-		moduleType: "STRATEGY",
+		moduleType: "STRATEGY" as const,
 		promptText: "Where should the player position for the initial push?",
 	},
 	{
 		explanationText:
 			"Use the available cooldown during the short timing window.",
 		id: "scenario_local_tactics",
-		moduleType: "TACTICS",
+		moduleType: "TACTICS" as const,
 		promptText: "What is the immediate fight-winning decision?",
 	},
 	{
 		explanationText:
 			"Recent damage and fight timing indicate the ultimate is nearly ready.",
 		id: "scenario_local_ultimate",
-		moduleType: "ULTIMATE",
+		moduleType: "ULTIMATE" as const,
 		promptText: "What should you estimate about the enemy ultimate?",
 	},
 	{
 		explanationText: "The ability was used recently and remains on cooldown.",
 		id: "scenario_local_cooldown",
-		moduleType: "COOLDOWN",
+		moduleType: "COOLDOWN" as const,
 		promptText: "Is the enemy defensive ability available?",
 	},
 	{
 		explanationText: "Audio and team-position cues identify the flank route.",
 		id: "scenario_local_spatial",
-		moduleType: "SPATIAL",
+		moduleType: "SPATIAL" as const,
 		promptText: "Where is the unseen threat most likely positioned?",
 	},
-];
+] as const;
 
 export function getLocalFixtureScenarios(vodId: string) {
 	return FIXTURE_SCENARIOS.map((scenario, index) => ({

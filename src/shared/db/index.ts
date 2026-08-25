@@ -1,70 +1,138 @@
-export { type DbContext, getDb } from "./client/client";
-export type { RecordPlaythroughAttemptInput } from "./repositories/attempts";
-export {
-	getAttemptByIdempotencyKey,
-	getPlaythroughAttempts,
-	recordPlaythroughAttempt,
-} from "./repositories/attempts";
+// Audit
 export type {
+	AuditEntryItem,
+	AuditEntryWithActor,
 	CreateAuditEntryInput,
 	GetAuditLogsOptions,
-} from "./repositories/audit";
+} from "./audit/repository";
 export {
 	createAuditEntry,
 	getAuditEntries,
 	getAuditLogs,
-} from "./repositories/audit";
-export type {
-	CreatePlaythroughInput,
-	GetPlayerHistoryOptions,
-	PlayerHistoryItem,
-	PlayerHistoryResult,
-	ScenarioSnapshotInput,
-} from "./repositories/playthroughs";
+} from "./audit/repository";
 export {
-	completePlaythrough,
-	createPlaythrough,
-	getPlayerHistory,
-	getPlaythrough,
-	getPlaythroughHistoryDetail,
-	queryPlayerHistory,
-} from "./repositories/playthroughs";
+	auditEntries,
+	auditEntriesRelations,
+} from "./audit/schema";
+export {
+	insertAuditEntrySchema,
+	selectAuditEntrySchema,
+} from "./audit/validation";
+
+// Auth & Users
 export type {
 	GetUsersOptions,
 	UpdateUserRoleParams,
-	UpdateUserRoleResult,
 	UserItem,
-} from "./repositories/users";
+} from "./auth/repository";
 export {
 	getUserById,
 	getUserCount,
 	getUsers,
 	updateUserRole,
-} from "./repositories/users";
+} from "./auth/repository";
+export {
+	accounts,
+	accountsRelations,
+	sessions,
+	sessionsRelations,
+	type UserRole,
+	userRoleEnum,
+	users,
+	usersRelations,
+	verifications,
+} from "./auth/schema";
+export {
+	insertUserSchema,
+	selectUserSchema,
+	type UpdateUserRoleInput,
+	updateUserRoleInputSchema,
+} from "./auth/validation";
+export { type DbContext, type DrizzleDb, getDb } from "./client/client";
+export {
+	type DbResult,
+	dbFailure,
+	dbSuccess,
+} from "./common/result";
+export type { JsonPrimitive, JsonValue } from "./common/types";
+// Playthroughs & Telemetry
+export type {
+	AttemptRecordItem,
+	CreatePlaythroughInput,
+	GetPlayerHistoryOptions,
+	PlayerHistoryItem,
+	PlayerHistoryResult,
+	PlaythroughCompletionItem,
+	PlaythroughItem,
+	RecordPlaythroughAttemptInput,
+	ScenarioSnapshotInput,
+} from "./playthroughs/repository";
+export {
+	completePlaythrough,
+	createPlaythrough,
+	getAttemptByIdempotencyKey,
+	getPlayerHistory,
+	getPlaythrough,
+	getPlaythroughAttempts,
+	getPlaythroughHistoryDetail,
+	IDEMPOTENCY_CONFLICT_ERROR,
+	PLAYTHROUGH_NOT_IN_PROGRESS_ERROR,
+	PLAYTHROUGH_START_CONFLICT_ERROR,
+	queryPlayerHistory,
+	recordPlaythroughAttempt,
+} from "./playthroughs/repository";
+export {
+	attemptRecords,
+	attemptRecordsRelations,
+	type PlaythroughStatus,
+	playthroughCompletions,
+	playthroughCompletionsRelations,
+	playthroughModuleSelections,
+	playthroughModuleSelectionsRelations,
+	playthroughStatusEnum,
+	playthroughs,
+	playthroughsRelations,
+	scenarioSnapshots,
+	scenarioSnapshotsRelations,
+} from "./playthroughs/schema";
+export {
+	insertAttemptRecordSchema,
+	insertPlaythroughSchema,
+	scenarioSnapshotInputSchema,
+	selectAttemptRecordSchema,
+	selectPlaythroughSchema,
+} from "./playthroughs/validation";
+// Seed
+export {
+	assertLocalSeedTarget,
+	executeSeed,
+	FIXTURE_IDS,
+	FIXTURE_VOD,
+	getLocalFixtureScenarios,
+	getLocalFixtureVod,
+	getSeedCredentials,
+	type SeedCredentials,
+	type SeedEnvironment,
+} from "./seed";
+// VODs & Scenarios
 export type {
 	AdminVodItem,
 	BulkOperationResult,
 	CreateScenarioInput,
-	CreateScenarioResult,
 	CreateVodInput,
-	CreateVodResult,
 	DeleteScenarioInput,
-	DeleteScenarioResult,
 	DeleteVodInput,
-	DeleteVodResult,
 	GetAdminVodsOptions,
 	GetSessionManifestOptions,
 	PublishedVodItem,
 	ReorderScenariosInput,
-	ReorderScenariosResult,
+	ScenarioItem,
 	SessionManifest,
 	SetVodPublicationStatusInput,
-	SetVodPublicationStatusResult,
 	UpdateScenarioInput,
-	UpdateScenarioResult,
 	UpdateVodInput,
-	UpdateVodResult,
-} from "./repositories/vods";
+	VodItem,
+} from "./vods/repository";
 export {
 	bulkDeleteVods,
 	bulkPublishVods,
@@ -82,28 +150,31 @@ export {
 	setVodPublicationStatus,
 	updateScenario,
 	updateVod,
-	validateScenarioConfig,
-	validateVodForPublishing,
-} from "./repositories/vods";
+} from "./vods/repository";
 export {
-	attemptRecords,
-	auditEntries,
 	type HeroRole,
 	heroRoleEnum,
 	type InputType,
 	inputTypeEnum,
-	type JsonPrimitive,
-	type JsonValue,
 	type ModuleType,
 	moduleTypeEnum,
-	type PlaythroughStatus,
-	playthroughCompletions,
-	playthroughModuleSelections,
-	playthroughStatusEnum,
-	playthroughs,
-	scenarioSnapshots,
 	scenarios,
-	type UserRole,
-	userRoleEnum,
+	scenariosRelations,
 	vods,
-} from "./schema";
+	vodsRelations,
+} from "./vods/schema";
+export {
+	boundedSliderConfigSchema,
+	insertScenarioSchema,
+	insertVodSchema,
+	mapPinConfigSchema,
+	multipleChoiceConfigSchema,
+	multipleChoiceOptionSchema,
+	percentSliderConfigSchema,
+	selectScenarioSchema,
+	selectVodSchema,
+	timeSliderConfigSchema,
+	validateInputConfigByType,
+	validateScenarioConfig,
+	validateVodForPublishing,
+} from "./vods/validation";

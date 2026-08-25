@@ -30,7 +30,10 @@ describe("entities/vod server-fns", () => {
 	it("fetches published VODs only", async () => {
 		// Arrange
 		const mockVods = [{ id: "vod_1", isPublished: true }] as never;
-		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce(mockVods);
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			data: mockVods,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -42,10 +45,26 @@ describe("entities/vod server-fns", () => {
 		expect(result).toBe(mockVods);
 	});
 
+	it("throws error when dbGetPublishedVods fails", async () => {
+		// Arrange
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			error: "Failed to fetch vods",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(getPublishedVods as unknown as () => Promise<unknown>)(),
+		).rejects.toThrow("Failed to fetch vods");
+	});
+
 	it("fetches VOD by id", async () => {
 		// Arrange
 		const mockVod = { id: "vod_1", title: "VOD 1" } as never;
-		vi.mocked(dbGetVodById).mockResolvedValueOnce(mockVod);
+		vi.mocked(dbGetVodById).mockResolvedValueOnce({
+			data: mockVod,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -57,6 +76,23 @@ describe("entities/vod server-fns", () => {
 		// Assert
 		expect(dbGetVodById).toHaveBeenCalledWith("vod_1");
 		expect(result).toBe(mockVod);
+	});
+
+	it("throws error when dbGetVodById fails", async () => {
+		// Arrange
+		vi.mocked(dbGetVodById).mockResolvedValueOnce({
+			error: "Failed to fetch vod",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(
+				getVodById as unknown as (ctx: {
+					data: { id: string };
+				}) => Promise<unknown>
+			)({ data: { id: "vod_1" } }),
+		).rejects.toThrow("Failed to fetch vod");
 	});
 
 	it("rejects anonymous protected manifest requests", async () => {
@@ -77,7 +113,10 @@ describe("entities/vod server-fns", () => {
 	it("loads a protected manifest for an authenticated user", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -96,10 +135,30 @@ describe("entities/vod server-fns", () => {
 		expect(result).toBe(mockManifest);
 	});
 
+	it("throws error when dbGetSessionManifest fails in getProtectedSessionManifest", async () => {
+		// Arrange
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			error: "Manifest query failed",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(
+				getProtectedSessionManifest as unknown as (ctx: {
+					data: { vodId: string };
+				}) => Promise<unknown>
+			)({ data: { vodId: "vod_123" } }),
+		).rejects.toThrow("Manifest query failed");
+	});
+
 	it("executes getSessionManifest handler correctly with object payload", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (
@@ -122,10 +181,30 @@ describe("entities/vod server-fns", () => {
 		expect(result).toBe(mockManifest);
 	});
 
+	it("throws error when dbGetSessionManifest fails in getSessionManifest", async () => {
+		// Arrange
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			error: "Public manifest query failed",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(
+				getSessionManifest as unknown as (ctx: {
+					data: { vodId: string };
+				}) => Promise<unknown>
+			)({ data: { vodId: "vod_123" } }),
+		).rejects.toThrow("Public manifest query failed");
+	});
+
 	it("normalizes a blank module filter at the server-function seam", async () => {
 		// Arrange
 		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce(mockManifest);
+		vi.mocked(dbGetSessionManifest).mockResolvedValueOnce({
+			data: mockManifest,
+			success: true,
+		});
 
 		// Act
 		const result = await (

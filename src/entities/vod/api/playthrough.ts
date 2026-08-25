@@ -2,6 +2,8 @@ import type {
 	CreatePlaythroughInput,
 	JsonValue,
 	ModuleType,
+	PlaythroughCompletionItem,
+	PlaythroughItem,
 } from "@/shared/db";
 import { completePlaythrough, createPlaythrough } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
@@ -10,7 +12,7 @@ export type StartPlaythroughInput = Omit<CreatePlaythroughInput, "userId">;
 
 export type StartPlaythroughResult =
 	| {
-			playthrough: Awaited<ReturnType<typeof createPlaythrough>>;
+			playthrough: PlaythroughItem;
 			scenarioSnapshotIds: string[];
 			success: true;
 	  }
@@ -23,22 +25,30 @@ export async function startPlaythroughAction(
 	const user = await getCurrentUser(undefined, context);
 	if (!user) return { error: "Authentication required", success: false };
 	try {
+		const result = await createPlaythrough(
+			{ ...input, userId: user.id },
+			context,
+		);
+		if (!result.success) {
+			return {
+				error:
+					result.error === "Playthrough start conflict"
+						? "Playthrough start conflict"
+						: "We couldn’t save your progress. Your training session can continue.",
+				success: false,
+			};
+		}
 		return {
-			playthrough: await createPlaythrough(
-				{ ...input, userId: user.id },
-				context,
-			),
+			playthrough: result.data,
 			scenarioSnapshotIds: input.scenarios.map(
 				(scenario) => scenario.id ?? scenario.scenarioId,
 			),
 			success: true,
 		};
-	} catch (error) {
+	} catch {
 		return {
 			error:
-				error instanceof Error && error.message === "Playthrough start conflict"
-					? "Playthrough start conflict"
-					: "We couldn’t save your progress. Your training session can continue.",
+				"We couldn’t save your progress. Your training session can continue.",
 			success: false,
 		};
 	}
@@ -46,7 +56,7 @@ export async function startPlaythroughAction(
 
 export type CompletePlaythroughResult =
 	| {
-			completion: Awaited<ReturnType<typeof completePlaythrough>>;
+			completion: PlaythroughCompletionItem;
 			success: true;
 	  }
 	| { error: string; success: false };
@@ -58,13 +68,16 @@ export async function completePlaythroughAction(
 	const user = await getCurrentUser(undefined, context);
 	if (!user) return { error: "Authentication required", success: false };
 	try {
-		const completion = await completePlaythrough(
-			playthroughId,
-			user.id,
-			context,
-		);
-		return completion
-			? { completion, success: true }
+		const result = await completePlaythrough(playthroughId, user.id, context);
+		if (!result.success) {
+			return {
+				error:
+					"We couldn’t save your progress. Your training session can continue.",
+				success: false,
+			};
+		}
+		return result.data
+			? { completion: result.data, success: true }
 			: { error: "Playthrough not found", success: false };
 	} catch {
 		return {

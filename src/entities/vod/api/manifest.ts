@@ -13,17 +13,17 @@ export async function handleGetVodManifest(
 	const { id } = await params;
 	const url = new URL(request.url);
 
-	const manifest = await getSessionManifest(id, {
+	const manifestResult = await getSessionManifest(id, {
 		modules: normalizeSessionManifestModules(
 			url.searchParams.getAll("modules"),
 		),
 	});
 
-	if (!manifest) {
+	if (!manifestResult.success || !manifestResult.data) {
 		return Response.json({ error: "VOD not found" }, { status: 404 });
 	}
 
-	return Response.json(manifest, { status: 200 });
+	return Response.json(manifestResult.data, { status: 200 });
 }
 
 export async function handleVodManifestRequest({

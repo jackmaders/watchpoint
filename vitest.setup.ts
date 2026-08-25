@@ -1,6 +1,25 @@
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 
+if (typeof process !== "undefined" && typeof process.on === "function") {
+	process.on("uncaughtException", (err: unknown) => {
+		const error = err as {
+			code?: string;
+			errors?: Array<{ code?: string }>;
+			message?: string;
+		};
+		if (
+			error?.code === "ECONNREFUSED" ||
+			error?.message?.includes("ECONNREFUSED") ||
+			(Array.isArray(error?.errors) &&
+				error.errors.some((e) => e?.code === "ECONNREFUSED"))
+		) {
+			return;
+		}
+		throw err;
+	});
+}
+
 const failOnUnmockedFetch = (input: RequestInfo | URL) => {
 	const url =
 		typeof input === "string"

@@ -12,20 +12,45 @@ describe("getPlayerHistoryData", () => {
 		vi.clearAllMocks();
 	});
 
-	it("fetches player history for authenticated user with default options", async () => {
+	it("queries player history for the authenticated user", async () => {
 		// Arrange
-		const mockUser = { id: "usr_1" };
-		const mockResult = { items: [], total: 0 };
-		vi.mocked(getCurrentUser).mockResolvedValueOnce(mockUser as never);
-		vi.mocked(queryPlayerHistory).mockResolvedValueOnce(mockResult as never);
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({
+			id: "player_123",
+		});
+		const expectedHistory = {
+			items: [],
+			page: 1,
+			pageSize: 10,
+			total: 0,
+			totalPages: 1,
+		};
+		vi.mocked(queryPlayerHistory).mockResolvedValueOnce({
+			data: expectedHistory,
+			success: true,
+		} as never);
 
 		// Act
-		const result = await getPlayerHistoryData();
+		const result = await getPlayerHistoryData({
+			modules: ["STRATEGY"],
+			page: 1,
+			pageSize: 10,
+			status: "COMPLETED",
+			vodId: "vod_1",
+		});
 
 		// Assert
-		expect(getCurrentUser).toHaveBeenCalled();
-		expect(queryPlayerHistory).toHaveBeenCalledWith("usr_1", {}, undefined);
-		expect(result).toEqual(mockResult);
+		expect(result).toEqual(expectedHistory);
+		expect(queryPlayerHistory).toHaveBeenCalledWith(
+			"player_123",
+			{
+				modules: ["STRATEGY"],
+				page: 1,
+				pageSize: 10,
+				status: "COMPLETED",
+				vodId: "vod_1",
+			},
+			undefined,
+		);
 	});
 
 	it("throws error when user is not authenticated", async () => {
@@ -36,5 +61,19 @@ describe("getPlayerHistoryData", () => {
 		await expect(getPlayerHistoryData()).rejects.toThrow(
 			"Authentication required",
 		);
+	});
+
+	it("throws error when queryPlayerHistory fails", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({
+			id: "player_123",
+		});
+		vi.mocked(queryPlayerHistory).mockResolvedValueOnce({
+			error: "Database error",
+			success: false,
+		} as never);
+
+		// Act & Assert
+		await expect(getPlayerHistoryData()).rejects.toThrow("Database error");
 	});
 });

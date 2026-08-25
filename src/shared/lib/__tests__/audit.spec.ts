@@ -25,7 +25,10 @@ describe("shared audit server function", () => {
 		// Arrange
 		const mockLogs = [{ action: "UPDATE", id: "audit_1" }];
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce(mockLogs as never);
+		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+			data: mockLogs,
+			success: true,
+		} as never);
 
 		// Act
 		const result = await (
@@ -49,7 +52,10 @@ describe("shared audit server function", () => {
 	it("handles undefined payload defaulting to empty object", async () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce([]);
+		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+			data: [],
+			success: true,
+		} as never);
 
 		// Act
 		const result = await (
@@ -60,6 +66,24 @@ describe("shared audit server function", () => {
 
 		// Assert
 		expect(result).toEqual([]);
+	});
+
+	it("throws error when query fails", async () => {
+		// Arrange
+		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
+		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+			error: "Database error",
+			success: false,
+		} as never);
+
+		// Act & Assert
+		await expect(
+			(
+				getAdminAuditLogs as unknown as (ctx: {
+					data?: unknown;
+				}) => Promise<unknown>
+			)({ data: undefined }),
+		).rejects.toThrow("Failed to query audit logs: Database error");
 	});
 
 	it("throws error for invalid audit payload", async () => {

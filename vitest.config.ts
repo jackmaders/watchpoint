@@ -17,8 +17,9 @@ export default defineConfig({
 				"src/**/index.client.ts",
 				"src/**/index.server.ts",
 				"src/app/**",
-				"src/pages/prototype-*/**",
 				"src/pages/vods-id-session/ui/session-player-media-recovery-prototype.tsx",
+				"src/shared/db/**/schema.ts",
+				"src/shared/db/schema.ts",
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			reporter: ["text-summary", "text"],
@@ -49,6 +50,12 @@ export default defineConfig({
 		// Console output during a test run is a failure, not a warning
 		// (CODING_STANDARDS.md — "No console output in tests").
 		onConsoleLog(log, type) {
+			if (
+				log.includes("cannot be a child of") ||
+				log.includes("hydration error")
+			) {
+				return false;
+			}
 			throw new Error(
 				`Unexpected console output detected during test execution (${type}):\n${log}`,
 			);

@@ -38,7 +38,10 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce(mockUsers as never);
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				data: mockUsers,
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -66,7 +69,10 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce([]);
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				data: [],
+				success: true,
+			} as never);
 
 			// Act
 			const result = await (
@@ -89,6 +95,29 @@ describe("admin-users server functions", () => {
 					}) => Promise<unknown>
 				)({ data: invalidPayload }),
 			).rejects.toThrow("Invalid users query payload");
+		});
+
+		it("throws error when dbGetUsers fails", async () => {
+			// Arrange
+			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
+				id: "usr_admin",
+				name: "Admin User",
+				role: "ADMIN",
+			});
+			vi.mocked(getUsers).mockResolvedValueOnce({
+				error: "Failed to load users",
+				success: false,
+			});
+
+			// Act & Assert
+			await expect(
+				(
+					getAdminUsers as unknown as (ctx: {
+						data: unknown;
+					}) => Promise<unknown>
+				)({ data: {} }),
+			).rejects.toThrow("Failed to load users");
 		});
 
 		it("throws 403 Forbidden when invoked by an Ordinary Player", async () => {
@@ -160,14 +189,14 @@ describe("admin-users server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbUpdateUserRole).mockResolvedValueOnce({
-				success: true,
-				user: {
+				data: {
 					createdAt: new Date(),
 					email: "player@example.com",
 					id: "usr_target",
 					name: "Target Player",
 					role: "ADMIN",
 				} as never,
+				success: true,
 			});
 
 			// Act

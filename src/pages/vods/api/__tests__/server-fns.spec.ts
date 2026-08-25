@@ -16,7 +16,10 @@ describe("vods server-fns", () => {
 			{ id: "vod_1", title: "VOD 1" },
 			{ id: "vod_2", title: "VOD 2" },
 		] as never;
-		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce(mockVods);
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			data: mockVods,
+			success: true,
+		} as never);
 
 		// Act
 		const result = await (
@@ -25,6 +28,19 @@ describe("vods server-fns", () => {
 
 		// Assert
 		expect(dbGetPublishedVods).toHaveBeenCalled();
-		expect(result).toBe(mockVods);
+		expect(result).toEqual(mockVods);
+	});
+
+	it("throws error when dbGetPublishedVods fails", async () => {
+		// Arrange
+		vi.mocked(dbGetPublishedVods).mockResolvedValueOnce({
+			error: "Failed to query VODs",
+			success: false,
+		});
+
+		// Act & Assert
+		await expect(
+			(getPublishedVods as unknown as () => Promise<unknown>)(),
+		).rejects.toThrow("Failed to query VODs");
 	});
 });

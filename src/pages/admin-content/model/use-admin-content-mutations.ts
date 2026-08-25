@@ -31,7 +31,7 @@ export function usePublicationMutations(
 					data: { id: vod.id, isPublished },
 				});
 				if (!result.success) {
-					setError(result.error ?? "Failed to update publication status");
+					setError(result.error);
 					return;
 				}
 				setVods((prev) =>
@@ -52,9 +52,14 @@ export function usePublicationMutations(
 			setOperationResult(null);
 			setIsOperating(true);
 			try {
-				const result = await bulkPublishVods({
+				const res = await bulkPublishVods({
 					data: { ids, isPublished },
 				});
+				if (!res.success) {
+					setError(res.error);
+					return;
+				}
+				const result = res.data;
 				setOperationResult({ label, result });
 				if (result.succeeded.length > 0) {
 					setVods((prev) =>
@@ -104,7 +109,7 @@ export function useDeletionMutations(
 		async (id: string) => {
 			const result = await deleteVod({ data: { id } });
 			if (!result.success) {
-				setError(result.error ?? "Failed to delete VOD");
+				setError(result.error);
 			} else {
 				setVods((prev) => prev.filter((v) => v.id !== id));
 				setSelectedIds((prev) => prev.filter((item) => item !== id));
@@ -115,7 +120,12 @@ export function useDeletionMutations(
 
 	const executeDeleteBulk = useCallback(
 		async (ids: string[]) => {
-			const result = await bulkDeleteVods({ data: { ids } });
+			const res = await bulkDeleteVods({ data: { ids } });
+			if (!res.success) {
+				setError(res.error);
+				return;
+			}
+			const result = res.data;
 			setOperationResult({ label: "Bulk Delete", result });
 			if (result.succeeded.length > 0) {
 				setVods((prev) => prev.filter((v) => !result.succeeded.includes(v.id)));
@@ -124,7 +134,7 @@ export function useDeletionMutations(
 				);
 			}
 		},
-		[setOperationResult, setSelectedIds, setVods],
+		[setError, setOperationResult, setSelectedIds, setVods],
 	);
 
 	const handleExecuteDelete = useCallback(

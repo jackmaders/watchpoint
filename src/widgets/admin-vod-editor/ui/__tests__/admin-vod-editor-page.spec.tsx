@@ -89,8 +89,8 @@ describe("AdminVodEditorPage", () => {
 	it("renders create VOD view, handles cancel, and handles create errors", async () => {
 		// Arrange
 		vi.mocked(createVod).mockResolvedValueOnce({
+			data: { ...mockVod, id: "vod_new" } as never,
 			success: true,
-			vod: { ...mockVod, id: "vod_new" } as never,
 		});
 
 		// Act
@@ -191,13 +191,13 @@ describe("AdminVodEditorPage", () => {
 		expect(screen.getByText("Publication Status:")).toBeDefined();
 	});
 
-	it("handles saving scenario updates via updateScenario and handles errors", async () => {
+	it("handles editing an existing scenario via updateScenario and handles errors", async () => {
 		// Arrange
 		const baseScenario = mockScenarios[0];
 		if (!baseScenario) throw new Error("Missing mock scenario");
 
 		vi.mocked(updateScenario).mockResolvedValueOnce({
-			scenario: {
+			data: {
 				...baseScenario,
 				promptText: "Updated Positioning Prompt",
 			} as never,
@@ -280,7 +280,7 @@ describe("AdminVodEditorPage", () => {
 			vodId: "vod_123",
 		};
 		vi.mocked(createScenario).mockResolvedValueOnce({
-			scenario: createdScenario as never,
+			data: createdScenario as never,
 			success: true,
 		});
 
@@ -349,7 +349,10 @@ describe("AdminVodEditorPage", () => {
 
 	it("handles deleting a scenario via deleteScenario and handles errors", async () => {
 		// Arrange
-		vi.mocked(deleteScenario).mockResolvedValueOnce({ success: true });
+		vi.mocked(deleteScenario).mockResolvedValueOnce({
+			data: undefined,
+			success: true,
+		});
 
 		render(
 			<AdminVodEditorPage
@@ -399,7 +402,10 @@ describe("AdminVodEditorPage", () => {
 
 	it("handles reordering scenarios successfully", async () => {
 		// Arrange
-		vi.mocked(reorderScenarios).mockResolvedValueOnce({ success: true });
+		vi.mocked(reorderScenarios).mockResolvedValueOnce({
+			data: undefined,
+			success: true,
+		});
 
 		render(
 			<AdminVodEditorPage
@@ -459,8 +465,8 @@ describe("AdminVodEditorPage", () => {
 	it("handles publishing VOD and publication error branches", async () => {
 		// Arrange
 		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+			data: { ...mockVod, isPublished: true } as never,
 			success: true,
-			vod: { ...mockVod, isPublished: true } as never,
 		});
 
 		render(
@@ -507,7 +513,10 @@ describe("AdminVodEditorPage", () => {
 
 	it("handles deleting VOD and delete error branches", async () => {
 		// Arrange
-		vi.mocked(deleteVod).mockResolvedValueOnce({ success: true });
+		vi.mocked(deleteVod).mockResolvedValueOnce({
+			data: undefined,
+			success: true,
+		});
 
 		render(
 			<AdminVodEditorPage
@@ -553,8 +562,8 @@ describe("AdminVodEditorPage", () => {
 	it("switches tabs, edits VOD metadata, and handles metadata save errors", async () => {
 		// Arrange
 		vi.mocked(updateVod).mockResolvedValueOnce({
+			data: { ...mockVod, title: "Updated GM Ana Title" } as never,
 			success: true,
-			vod: { ...mockVod, title: "Updated GM Ana Title" } as never,
 		});
 
 		render(

@@ -24,6 +24,10 @@ export const getAdminAuditLogs = createServerFn({ method: "GET" })
 	.handler(
 		async ({ data }): Promise<Array<typeof auditEntries.$inferSelect>> => {
 			await requirePermission("audit:view");
-			return dbGetAuditLogs(data);
+			const result = await dbGetAuditLogs(data);
+			if (!result.success) {
+				throw new Error(`Failed to query audit logs: ${result.error}`);
+			}
+			return result.data;
 		},
 	);

@@ -10,6 +10,13 @@ export async function getPlaythroughHistoryDetailData(
 	if (!user) {
 		throw new Error("Authentication required");
 	}
-
-	return getPlaythroughHistoryDetail(playthroughId, user.id, context);
+	const result = await getPlaythroughHistoryDetail(
+		playthroughId,
+		user.id,
+		context,
+	);
+	if (!result.success) {
+		throw new Error(`Failed to lookup playthrough detail: ${result.error}`);
+	}
+	return result.data;
 }

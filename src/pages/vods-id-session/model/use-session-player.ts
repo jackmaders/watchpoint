@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { getSessionManifest } from "@/shared/db";
+import type { SessionManifest } from "@/shared/db";
 import {
 	type PlaybackStatus,
 	type SessionMediaAdapterResult,
@@ -41,9 +41,7 @@ export { normalizeScenario, toScenarioOverlayData } from "./session-contract";
 export type { SessionPlayerState } from "./session-playthrough-coordinator";
 export { resolveNewStatusState } from "./session-playthrough-coordinator";
 
-export type ManifestVod = NonNullable<
-	Awaited<ReturnType<typeof getSessionManifest>>
->;
+export type ManifestVod = SessionManifest;
 export type ScenarioItem = NormalizedScenario<ManifestVod["scenarios"][number]>;
 
 export interface UseSessionPlayerOptions {
