@@ -48,7 +48,13 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
-				data: mockVods,
+				data: {
+					items: mockVods,
+					page: 1,
+					pageSize: 10,
+					total: 1,
+					totalPages: 1,
+				},
 				success: true,
 			} as never);
 
@@ -75,7 +81,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
-				data: [],
+				data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
 				success: true,
 			} as never);
 

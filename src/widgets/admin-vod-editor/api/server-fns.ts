@@ -156,7 +156,7 @@ export const getAdminVods = createServerFn({ method: "GET" })
 		if (!result.success) {
 			throw new Error(result.error);
 		}
-		return result.data;
+		return result.data.items;
 	});
 
 export const getAdminVodById = createServerFn({ method: "GET" })
