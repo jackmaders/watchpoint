@@ -4,7 +4,7 @@ vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
 vi.mock("../permissions");
 
-import { getAuditLogs as dbGetAuditLogs } from "@/shared/db";
+import { auditService } from "@/shared/db";
 import { getAdminAuditLogs } from "../audit";
 import { requirePermission } from "../permissions";
 
@@ -25,7 +25,7 @@ describe("shared audit server function", () => {
 		// Arrange
 		const mockLogs = [{ action: "UPDATE", id: "audit_1" }];
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+		vi.mocked(auditService.list).mockResolvedValueOnce({
 			data: { items: mockLogs, page: 1, pageSize: 10, total: 1, totalPages: 1 },
 			success: true,
 		} as never);
@@ -41,7 +41,7 @@ describe("shared audit server function", () => {
 
 		// Assert
 		expect(requirePermission).toHaveBeenCalledWith("audit:view");
-		expect(dbGetAuditLogs).toHaveBeenCalledWith({
+		expect(auditService.list).toHaveBeenCalledWith({
 			entityId: "vod_1",
 			limit: 10,
 			offset: 0,
@@ -52,7 +52,7 @@ describe("shared audit server function", () => {
 	it("handles undefined payload defaulting to empty object", async () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+		vi.mocked(auditService.list).mockResolvedValueOnce({
 			data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
 			success: true,
 		} as never);
@@ -71,7 +71,7 @@ describe("shared audit server function", () => {
 	it("throws error when query fails", async () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
+		vi.mocked(auditService.list).mockResolvedValueOnce({
 			error: "Database error",
 			success: false,
 		} as never);

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { type auditEntries, getAuditLogs as dbGetAuditLogs } from "@/shared/db";
+import { type AuditEntryItem, auditService } from "@/shared/db";
 import { requirePermission } from "./permissions";
 
 export const GetAdminAuditLogsSchema = z.object({
@@ -21,13 +21,11 @@ export const getAdminAuditLogs = createServerFn({ method: "GET" })
 		}
 		return parsed.data;
 	})
-	.handler(
-		async ({ data }): Promise<Array<typeof auditEntries.$inferSelect>> => {
-			await requirePermission("audit:view");
-			const result = await dbGetAuditLogs(data);
-			if (!result.success) {
-				throw new Error(`Failed to query audit logs: ${result.error}`);
-			}
-			return result.data.items;
-		},
-	);
+	.handler(async ({ data }): Promise<AuditEntryItem[]> => {
+		await requirePermission("audit:view");
+		const result = await auditService.list(data);
+		if (!result.success) {
+			throw new Error(`Failed to query audit logs: ${result.error}`);
+		}
+		return result.data.items;
+	});

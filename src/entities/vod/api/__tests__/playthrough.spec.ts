@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { completePlaythrough, createPlaythrough } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
 	completePlaythroughAction,
@@ -38,7 +38,7 @@ describe("playthrough persistence actions", () => {
 
 	it("creates an owned playthrough and returns snapshot identities", async () => {
 		// Arrange
-		vi.mocked(createPlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.create).mockResolvedValueOnce({
 			data: { id: "playthrough_1" } as never,
 			success: true,
 		});
@@ -58,7 +58,7 @@ describe("playthrough persistence actions", () => {
 			scenarioSnapshotIds: ["snapshot_1", "scenario_2"],
 			success: true,
 		});
-		expect(createPlaythrough).toHaveBeenCalledWith(
+		expect(playthroughService.create).toHaveBeenCalledWith(
 			expect.objectContaining({ userId: "user_1" }),
 			undefined,
 		);
@@ -66,7 +66,7 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a stable conflict for a duplicate start identity", async () => {
 		// Arrange
-		vi.mocked(createPlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.create).mockResolvedValueOnce({
 			error: "Playthrough start conflict",
 			success: false,
 		});
@@ -83,7 +83,7 @@ describe("playthrough persistence actions", () => {
 
 	it("returns generic error when createPlaythrough returns generic error", async () => {
 		// Arrange
-		vi.mocked(createPlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.create).mockResolvedValueOnce({
 			error: "Some DB error",
 			success: false,
 		});
@@ -101,7 +101,9 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a generic failure for an unexpected start error", async () => {
 		// Arrange
-		vi.mocked(createPlaythrough).mockRejectedValueOnce(new Error("D1 offline"));
+		vi.mocked(playthroughService.create).mockRejectedValueOnce(
+			new Error("D1 offline"),
+		);
 
 		// Act
 		const result = await startPlaythroughAction(input);
@@ -130,7 +132,7 @@ describe("playthrough persistence actions", () => {
 
 	it("completes an owned playthrough", async () => {
 		// Arrange
-		vi.mocked(completePlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.complete).mockResolvedValueOnce({
 			data: { id: "completion_1" } as never,
 			success: true,
 		});
@@ -147,7 +149,7 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a safe failure for a missing playthrough", async () => {
 		// Arrange
-		vi.mocked(completePlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.complete).mockResolvedValueOnce({
 			data: null,
 			success: true,
 		});
@@ -161,7 +163,7 @@ describe("playthrough persistence actions", () => {
 
 	it("returns a generic failure when completion persistence throws", async () => {
 		// Arrange
-		vi.mocked(completePlaythrough).mockRejectedValueOnce(
+		vi.mocked(playthroughService.complete).mockRejectedValueOnce(
 			new Error("D1 offline"),
 		);
 
@@ -178,7 +180,7 @@ describe("playthrough persistence actions", () => {
 
 	it("returns failure when completePlaythrough returns success: false", async () => {
 		// Arrange
-		vi.mocked(completePlaythrough).mockResolvedValueOnce({
+		vi.mocked(playthroughService.complete).mockResolvedValueOnce({
 			error: "DB error",
 			success: false,
 		});

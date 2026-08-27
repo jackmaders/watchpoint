@@ -1,14 +1,7 @@
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { count } from "drizzle-orm";
-import { type DbContext, getDb } from "../db/core/client";
+import { authService, type DbContext, getDb } from "../db";
 import * as schema from "../db/schema";
-
-type SelectableDb = {
-	select: (fields: unknown) => {
-		from: (table: unknown) => Promise<Array<{ value: number }>>;
-	};
-};
 
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
@@ -58,9 +51,8 @@ export function createAuthInstance(
 			user: {
 				create: {
 					before: async (user) => {
-						const [{ value: userCount }] = await (db as unknown as SelectableDb)
-							.select({ value: count() })
-							.from(schema.users);
+						const countResult = await authService.getUserCount();
+						const userCount = countResult.success ? countResult.data : 0;
 						if (userCount === 0) {
 							return {
 								data: {
@@ -173,10 +165,8 @@ export async function isRegistrationOpen(
 	if (env.BETTER_AUTH_ALLOW_REGISTRATION === "true") {
 		return true;
 	}
-	const db = await getDb(context);
-	const [{ value: userCount }] = await (db as unknown as SelectableDb)
-		.select({ value: count() })
-		.from(schema.users);
+	const countResult = await authService.getUserCount(context);
+	const userCount = countResult.success ? countResult.data : 0;
 	return userCount === 0;
 }
 

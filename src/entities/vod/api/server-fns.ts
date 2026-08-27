@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
-	getPublishedVods as dbGetPublishedVods,
-	getSessionManifest as dbGetSessionManifest,
-	getVodById as dbGetVodById,
 	type PublishedVodItem,
 	type SessionManifest,
+	vodService,
 } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
@@ -27,7 +25,7 @@ export type GetSessionManifestPayload = SessionManifestTransportQuery;
 
 export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 	async (): Promise<PublishedVodItem[]> => {
-		const result = await dbGetPublishedVods();
+		const result = await vodService.listPublished();
 		if (!result.success) {
 			throw new Error(result.error);
 		}
@@ -38,7 +36,7 @@ export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 export const getVodById = createServerFn({ method: "GET" })
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await dbGetVodById(data.id);
+		const result = await vodService.getById(data.id);
 		if (!result.success) {
 			throw new Error(result.error);
 		}
@@ -48,7 +46,7 @@ export const getVodById = createServerFn({ method: "GET" })
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await dbGetSessionManifest(data.vodId, {
+		const result = await vodService.getSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});
@@ -65,7 +63,7 @@ export const getProtectedSessionManifest = createServerFn({ method: "GET" })
 			throw new Error("Authentication required");
 		}
 
-		const result = await dbGetSessionManifest(data.vodId, {
+		const result = await vodService.getSessionManifest(data.vodId, {
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});

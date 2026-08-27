@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../../db");
 vi.mock("../../db/core/client");
 vi.mock("@tanstack/react-start/server");
 
-import { getDb } from "../../db/core/client";
+import { authService } from "../../db";
 import {
 	createAuthInstance,
 	getAuth,
@@ -222,11 +223,11 @@ describe("auth", () => {
 
 	it("databaseHooks grants ADMIN to the first user registered", async () => {
 		// Arrange
-		const mockDb = {
-			select: vi.fn().mockReturnValue({
-				from: vi.fn().mockResolvedValue([{ value: 0 }]),
-			}),
-		};
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			data: 0,
+			success: true,
+		});
+		const mockDb = {};
 		const config = {
 			allowRegistration: false,
 			baseURL: "http://localhost:3000",
@@ -265,11 +266,11 @@ describe("auth", () => {
 
 	it("databaseHooks grants PLAYER to subsequent user when registration is open", async () => {
 		// Arrange
-		const mockDb = {
-			select: vi.fn().mockReturnValue({
-				from: vi.fn().mockResolvedValue([{ value: 3 }]),
-			}),
-		};
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			data: 3,
+			success: true,
+		});
+		const mockDb = {};
 		const config = {
 			allowRegistration: true,
 			baseURL: "http://localhost:3000",
@@ -311,11 +312,11 @@ describe("auth", () => {
 
 	it("databaseHooks throws FORBIDDEN for subsequent user when registration is closed", async () => {
 		// Arrange
-		const mockDb = {
-			select: vi.fn().mockReturnValue({
-				from: vi.fn().mockResolvedValue([{ value: 1 }]),
-			}),
-		};
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			data: 1,
+			success: true,
+		});
+		const mockDb = {};
 		const config = {
 			allowRegistration: false,
 			baseURL: "http://localhost:3000",
@@ -360,12 +361,68 @@ describe("auth", () => {
 
 	it("isRegistrationOpen returns true when user table is empty and env is false", async () => {
 		// Arrange
-		const mockDb = {
-			select: vi.fn().mockReturnValue({
-				from: vi.fn().mockResolvedValue([{ value: 0 }]),
-			}),
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			data: 0,
+			success: true,
+		});
+		const env = { BETTER_AUTH_ALLOW_REGISTRATION: "false" };
+
+		// Act
+		const open = await isRegistrationOpen(undefined, env);
+
+		// Assert
+		expect(open).toBe(true);
+	});
+
+	it("databaseHooks grants ADMIN when getUserCount fails (falls back to 0)", async () => {
+		// Arrange
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			error: "DB error",
+			success: false,
+		});
+		const mockDb = {};
+		const config = {
+			allowRegistration: false,
+			baseURL: "http://localhost:3000",
+			emailAndPassword: { disableSignUp: false, enabled: true },
+			secret: "test-secret-key-123456789012345678901234",
+			session: { expiresIn: 1000, updateAge: 100 },
 		};
-		vi.mocked(getDb).mockResolvedValueOnce(mockDb as never);
+		type AuthOptionsWithHook = {
+			databaseHooks?: {
+				user?: {
+					create?: {
+						before?: (user: {
+							email: string;
+							name: string;
+						}) => Promise<unknown>;
+					};
+				};
+			};
+		};
+
+		// Act
+		const instance = createAuthInstance(mockDb as never, config);
+		const hook = (instance.options as unknown as AuthOptionsWithHook)
+			.databaseHooks?.user?.create?.before;
+		const result = await hook?.({ email: "first@example.com", name: "First" });
+
+		// Assert
+		expect(result).toEqual({
+			data: {
+				email: "first@example.com",
+				name: "First",
+				role: "ADMIN",
+			},
+		});
+	});
+
+	it("isRegistrationOpen returns true when getUserCount fails (falls back to 0)", async () => {
+		// Arrange
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			error: "DB error",
+			success: false,
+		});
 		const env = { BETTER_AUTH_ALLOW_REGISTRATION: "false" };
 
 		// Act
@@ -377,12 +434,10 @@ describe("auth", () => {
 
 	it("isRegistrationOpen returns false when user table has users and env is false", async () => {
 		// Arrange
-		const mockDb = {
-			select: vi.fn().mockReturnValue({
-				from: vi.fn().mockResolvedValue([{ value: 2 }]),
-			}),
-		};
-		vi.mocked(getDb).mockResolvedValueOnce(mockDb as never);
+		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+			data: 2,
+			success: true,
+		});
 		const env = { BETTER_AUTH_ALLOW_REGISTRATION: "false" };
 
 		// Act

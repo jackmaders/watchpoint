@@ -3,7 +3,7 @@ import type {
 	GetPlayerHistoryOptions,
 	PlayerHistoryResult,
 } from "@/shared/db";
-import { queryPlayerHistory } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 
 export async function getPlayerHistoryData(
@@ -15,7 +15,11 @@ export async function getPlayerHistoryData(
 		throw new Error("Authentication required");
 	}
 
-	const result = await queryPlayerHistory(user.id, options, context);
+	const result = await playthroughService.listHistory(
+		user.id,
+		options,
+		context,
+	);
 	if (!result.success) {
 		throw new Error(result.error);
 	}

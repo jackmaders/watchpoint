@@ -1,5 +1,5 @@
 import type { DbContext, PlayerHistoryItem } from "@/shared/db";
-import { getPlaythroughHistoryDetail } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 
 export async function getPlaythroughHistoryDetailData(
@@ -10,7 +10,7 @@ export async function getPlaythroughHistoryDetailData(
 	if (!user) {
 		throw new Error("Authentication required");
 	}
-	const result = await getPlaythroughHistoryDetail(
+	const result = await playthroughService.getHistoryDetail(
 		playthroughId,
 		user.id,
 		context,
