@@ -342,5 +342,38 @@ describe("auditService", () => {
 				success: false,
 			});
 		});
+
+		it("delegates list to listLogs", async () => {
+			// Arrange
+			const mockLogs = [{ action: "LOGIN", id: "1" }];
+			const mockDb = {
+				query: {
+					auditEntries: {
+						findMany: vi.fn().mockResolvedValue(mockLogs),
+					},
+				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([{ value: 1 }]),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+			// Act
+			const result = await auditService.list();
+
+			// Assert
+			expect(result).toEqual({
+				data: {
+					items: mockLogs,
+					page: 1,
+					pageSize: 10,
+					total: 1,
+					totalPages: 1,
+				},
+				success: true,
+			});
+		});
 	});
 });

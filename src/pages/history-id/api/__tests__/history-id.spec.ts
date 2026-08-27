@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/shared/db");
 vi.mock("@/shared/lib/auth");
 
-import { getPlaythroughHistoryDetail } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { getPlaythroughHistoryDetailData } from "../history-id";
 
@@ -17,7 +17,7 @@ describe("getPlaythroughHistoryDetailData", () => {
 		const mockUser = { id: "usr_1" };
 		const mockItem = { accuracy: 95, id: "pt_1" };
 		vi.mocked(getCurrentUser).mockResolvedValueOnce(mockUser as never);
-		vi.mocked(getPlaythroughHistoryDetail).mockResolvedValueOnce({
+		vi.mocked(playthroughService.getHistoryDetail).mockResolvedValueOnce({
 			data: mockItem,
 			success: true,
 		} as never);
@@ -27,7 +27,7 @@ describe("getPlaythroughHistoryDetailData", () => {
 
 		// Assert
 		expect(getCurrentUser).toHaveBeenCalled();
-		expect(getPlaythroughHistoryDetail).toHaveBeenCalledWith(
+		expect(playthroughService.getHistoryDetail).toHaveBeenCalledWith(
 			"pt_1",
 			"usr_1",
 			undefined,
@@ -48,7 +48,7 @@ describe("getPlaythroughHistoryDetailData", () => {
 	it("throws error when getPlaythroughHistoryDetail fails", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "usr_1" } as never);
-		vi.mocked(getPlaythroughHistoryDetail).mockResolvedValueOnce({
+		vi.mocked(playthroughService.getHistoryDetail).mockResolvedValueOnce({
 			error: "Not found",
 			success: false,
 		} as never);

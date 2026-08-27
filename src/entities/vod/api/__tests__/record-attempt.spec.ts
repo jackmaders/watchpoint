@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { recordAttemptAction } from "../record-attempt";
 
-vi.mock("@/shared/db/core/client");
+vi.mock("@/shared/db");
 vi.mock("@/shared/lib/auth");
 
 describe("recordAttemptAction", () => {
@@ -13,6 +13,22 @@ describe("recordAttemptAction", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(getCurrentUser).mockResolvedValue({ id: "usr_auth_default" });
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValue({
+			data: { id: "mock_attempt_id" } as never,
+			success: true,
+		});
+		vi.mocked(playthroughService.getById).mockResolvedValue({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+				status: "IN_PROGRESS",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
 	});
 
 	it("rejects an attempt for an unauthenticated user", async () => {
@@ -35,6 +51,7 @@ describe("recordAttemptAction", () => {
 			error: "Authentication required",
 			success: false,
 		});
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("attributes attempt to authenticated user when user session is available", async () => {
@@ -56,6 +73,17 @@ describe("recordAttemptAction", () => {
 			attemptId: "mock_attempt_id",
 			success: true,
 		});
+		expect(playthroughService.recordAttempt).toHaveBeenCalledWith(
+			expect.objectContaining({
+				idempotencyKey: validIdempotencyKey,
+				isCorrect: true,
+				responseTimeMs: 800,
+				scenarioId: validScenarioId,
+				selectedOptionId: "opt_b",
+				userId: "usr_auth_456",
+			}),
+			undefined,
+		);
 	});
 
 	it("handles timeout response with omitted selectedOptionId and zero latency", async () => {
@@ -101,7 +129,6 @@ describe("recordAttemptAction", () => {
 
 	it("returns a safe failure envelope for invalid UUID scenarioId", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {
 			isCorrect: true,
 			responseTimeMs: 1200,
@@ -115,12 +142,11 @@ describe("recordAttemptAction", () => {
 		// Assert
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("returns a safe failure envelope for negative responseTimeMs", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {
 			isCorrect: true,
 			responseTimeMs: -100,
@@ -134,12 +160,11 @@ describe("recordAttemptAction", () => {
 		// Assert
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("returns a safe failure envelope for float responseTimeMs", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {
 			isCorrect: true,
 			responseTimeMs: 1234.56,
@@ -153,12 +178,11 @@ describe("recordAttemptAction", () => {
 		// Assert
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("returns a safe failure envelope when payload is completely invalid", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {};
 
 		// Act
@@ -167,14 +191,14 @@ describe("recordAttemptAction", () => {
 		// Assert
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
-	it("returns a safe failure envelope when database insertion throws an unexpected error", async () => {
+	it("returns a safe failure envelope when playthroughService.recordAttempt returns an error", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error("D1 connection lost");
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValueOnce({
+			error: "Failed to record attempt",
+			success: false,
 		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
@@ -194,12 +218,11 @@ describe("recordAttemptAction", () => {
 		});
 	});
 
-	it("does not classify unrelated uniqueness failures as idempotency conflicts", async () => {
+	it("returns a safe failure envelope when recordAttempt throws an unexpected error", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error("UNIQUE constraint failed: attempt_record.id");
-		});
+		vi.mocked(playthroughService.recordAttempt).mockRejectedValueOnce(
+			new Error("D1 connection lost"),
+		);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -216,12 +239,10 @@ describe("recordAttemptAction", () => {
 			error: "Failed to record attempt",
 			success: false,
 		});
-		expect(db.query.attemptRecords.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("requires a UUID idempotency key for new writes", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {
 			isCorrect: true,
 			responseTimeMs: 1500,
@@ -237,12 +258,11 @@ describe("recordAttemptAction", () => {
 			error: "Invalid attempt payload",
 			success: false,
 		});
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects a non-UUID idempotency key without inserting", async () => {
 		// Arrange
-		const db = await getDb();
 		const input = {
 			idempotencyKey: "not-a-uuid",
 			isCorrect: true,
@@ -257,16 +277,15 @@ describe("recordAttemptAction", () => {
 		// Assert
 		expect(result.success).toBe(false);
 		expect(result.error).toBe("Invalid attempt payload");
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("persists the idempotency key and answer fields", async () => {
 		// Arrange
-		const db = await getDb();
-		const values = vi.fn((_record: unknown) => ({
-			returning: vi.fn().mockResolvedValue([{ id: "attempt_1" }]),
-		}));
-		vi.mocked(db.insert).mockImplementationOnce(() => ({ values }) as never);
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValueOnce({
+			data: { id: "attempt_1" } as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -280,30 +299,41 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({ attemptId: "attempt_1", success: true });
-		expect(values).toHaveBeenCalledWith({
-			idempotencyKey: validIdempotencyKey,
-			inputValue: null,
-			isCorrect: true,
-			isTimedOut: false,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		});
+		expect(playthroughService.recordAttempt).toHaveBeenCalledWith(
+			{
+				idempotencyKey: validIdempotencyKey,
+				inputValue: undefined,
+				isCorrect: true,
+				isTimedOut: false,
+				playthroughId: undefined as never,
+				responseTimeMs: 1500,
+				scenarioId: validScenarioId,
+				scenarioSnapshotId: undefined as never,
+				selectedOptionId: "opt_a",
+				userId: "usr_auth_default",
+			},
+			undefined,
+		);
 	});
 
 	it("persists playthrough and Scenario snapshot ownership when supplied", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
-			status: "IN_PROGRESS",
-			userId: "usr_auth_default",
-		} as never);
-		const values = vi.fn((_record: unknown) => ({
-			returning: vi.fn().mockResolvedValue([{ id: "attempt_2" }]),
-		}));
-		vi.mocked(db.insert).mockImplementationOnce(() => ({ values }) as never);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+				status: "IN_PROGRESS",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValueOnce({
+			data: { id: "attempt_2" } as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -319,18 +349,21 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({ attemptId: "attempt_2", success: true });
-		expect(values).toHaveBeenCalledWith(
+		expect(playthroughService.recordAttempt).toHaveBeenCalledWith(
 			expect.objectContaining({
 				playthroughId: "playthrough_1",
 				scenarioSnapshotId: "snapshot_1",
 			}),
+			undefined,
 		);
 	});
 
 	it("rejects playthrough identifiers that are not owned by the user", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(undefined);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: null,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -348,17 +381,23 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects attempts after the playthrough is completed", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
-			status: "COMPLETED",
-			userId: "usr_auth_default",
-		} as never);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
+				status: "COMPLETED",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -377,16 +416,23 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects a snapshot whose source Scenario does not match", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: "other_scenario" }],
-			status: "IN_PROGRESS",
-			userId: "usr_auth_default",
-		} as never);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [{ id: "snapshot_1", scenarioId: "other_scenario" }],
+				status: "IN_PROGRESS",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -405,44 +451,23 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
-	});
-
-	it("rejects a playthrough owned by another authenticated user", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [{ id: "snapshot_1", scenarioId: validScenarioId }],
-			status: "IN_PROGRESS",
-			userId: "usr_other",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			isCorrect: true,
-			playthroughId: "playthrough_1",
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			scenarioSnapshotId: "snapshot_1",
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			error: "Playthrough snapshot ownership is required",
-			success: false,
-		});
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects an owned playthrough without the requested snapshot", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [],
-			status: "IN_PROGRESS",
-			userId: "usr_auth_default",
-		} as never);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [],
+				status: "IN_PROGRESS",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -461,18 +486,25 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects an owned playthrough with a different snapshot", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce({
-			scenarioSnapshots: [
-				{ id: "other_snapshot", scenarioId: validScenarioId },
-			],
-			status: "IN_PROGRESS",
-			userId: "usr_auth_default",
-		} as never);
+		vi.mocked(playthroughService.getById).mockResolvedValueOnce({
+			data: {
+				attempts: [],
+				id: "playthrough_1",
+				moduleSelections: [],
+				scenarioSnapshots: [
+					{ id: "other_snapshot", scenarioId: validScenarioId },
+				],
+				status: "IN_PROGRESS",
+				userId: "usr_auth_default",
+				vodId: "vod_1",
+			} as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: true,
@@ -491,32 +523,7 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
-	});
-
-	it("rejects a cross-user playthrough even when the requester is authenticated", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "usr_other" });
-		vi.mocked(db.query.playthroughs.findFirst).mockResolvedValueOnce(undefined);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			isCorrect: true,
-			playthroughId: "usr_owner_playthrough",
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			scenarioSnapshotId: "usr_owner_snapshot",
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			error: "Playthrough snapshot ownership is required",
-			success: false,
-		});
-		expect(db.insert).not.toHaveBeenCalled();
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
 	it("rejects an attempt with only one persistence identifier", async () => {
@@ -537,226 +544,17 @@ describe("recordAttemptAction", () => {
 			error: "Playthrough snapshot ownership is required",
 			success: false,
 		});
+		expect(playthroughService.recordAttempt).not.toHaveBeenCalled();
 	});
 
-	it("returns the canonical identifier for an identical duplicate", async () => {
+	it("returns idempotency conflict when service returns idempotency conflict", async () => {
 		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: {
-				answers: ["opt_a"],
-				metadata: { source: "client" },
-			},
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			inputValue: {
-				answers: ["opt_a"],
-				metadata: { source: "client" },
-			},
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			attemptId: "attempt_existing",
-			success: true,
-		});
-	});
-
-	it("returns a generic conflict for changed-payload key reuse", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: {
-				answers: ["opt_a"],
-				metadata: { source: "client" },
-			},
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			inputValue: {
-				answers: ["opt_a"],
-				metadata: { source: "server" },
-			},
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValueOnce({
 			error: "Attempt idempotency conflict",
 			success: false,
 		});
-	});
-
-	it("returns a generic conflict when timeout state changes on key reuse", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: null,
-			isCorrect: false,
-			isTimedOut: true,
-			responseTimeMs: 3000,
-			scenarioId: validScenarioId,
-			selectedOptionId: null,
-			userId: "usr_auth_default",
-		} as never);
 		const input = {
 			idempotencyKey: validIdempotencyKey,
-			isCorrect: false,
-			isTimedOut: false,
-			responseTimeMs: 3000,
-			scenarioId: validScenarioId,
-			selectedOptionId: null,
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			error: "Attempt idempotency conflict",
-			success: false,
-		});
-	});
-
-	it("returns a generic conflict for cross-actor key reuse", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "usr_other" });
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: null,
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			error: "Attempt idempotency conflict",
-			success: false,
-		});
-	});
-
-	it("returns a generic conflict when duplicate input data is omitted", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: { choice: "opt_a" },
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-		};
-
-		// Act
-		const result = await recordAttemptAction(input);
-
-		// Assert
-		expect(result).toEqual({
-			error: "Attempt idempotency conflict",
-			success: false,
-		});
-	});
-
-	it("returns a generic conflict when duplicate JSON shapes differ", async () => {
-		// Arrange
-		const db = await getDb();
-		vi.mocked(db.insert).mockImplementationOnce(() => {
-			throw new Error(
-				"UNIQUE constraint failed: attempt_record.idempotency_key",
-			);
-		});
-		vi.mocked(db.query.attemptRecords.findFirst).mockResolvedValueOnce({
-			id: "attempt_existing",
-			idempotencyKey: validIdempotencyKey,
-			inputValue: ["opt_a"],
-			isCorrect: true,
-			responseTimeMs: 1500,
-			scenarioId: validScenarioId,
-			selectedOptionId: "opt_a",
-			userId: "usr_auth_default",
-		} as never);
-		const input = {
-			idempotencyKey: validIdempotencyKey,
-			inputValue: { choice: "opt_a" },
 			isCorrect: true,
 			responseTimeMs: 1500,
 			scenarioId: validScenarioId,
@@ -775,11 +573,10 @@ describe("recordAttemptAction", () => {
 
 	it("persists timeout state independently from correctness", async () => {
 		// Arrange
-		const db = await getDb();
-		const values = vi.fn((_record: unknown) => ({
-			returning: vi.fn().mockResolvedValue([{ id: "attempt_timeout" }]),
-		}));
-		vi.mocked(db.insert).mockImplementationOnce(() => ({ values }) as never);
+		vi.mocked(playthroughService.recordAttempt).mockResolvedValueOnce({
+			data: { id: "attempt_timeout" } as never,
+			success: true,
+		});
 		const input = {
 			idempotencyKey: validIdempotencyKey,
 			isCorrect: false,
@@ -794,15 +591,20 @@ describe("recordAttemptAction", () => {
 
 		// Assert
 		expect(result).toEqual({ attemptId: "attempt_timeout", success: true });
-		expect(values).toHaveBeenCalledWith({
-			idempotencyKey: validIdempotencyKey,
-			inputValue: null,
-			isCorrect: false,
-			isTimedOut: true,
-			responseTimeMs: 3000,
-			scenarioId: validScenarioId,
-			selectedOptionId: null,
-			userId: "usr_auth_default",
-		});
+		expect(playthroughService.recordAttempt).toHaveBeenCalledWith(
+			{
+				idempotencyKey: validIdempotencyKey,
+				inputValue: undefined,
+				isCorrect: false,
+				isTimedOut: true,
+				playthroughId: undefined as never,
+				responseTimeMs: 3000,
+				scenarioId: validScenarioId,
+				scenarioSnapshotId: undefined as never,
+				selectedOptionId: null,
+				userId: "usr_auth_default",
+			},
+			undefined,
+		);
 	});
 });

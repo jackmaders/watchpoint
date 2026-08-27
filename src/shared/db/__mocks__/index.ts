@@ -1,8 +1,11 @@
 import { vi } from "vitest";
+import { getDb } from "../core/__mocks__/client";
 import { dbSuccess } from "../core/result";
 import { userRoleEnum } from "../schema/auth";
 import { playthroughStatusEnum } from "../schema/playthroughs";
 import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema/vods";
+
+export { getDb };
 
 export const getPublishedVods = vi.fn(async () => dbSuccess([]));
 export const getSessionManifest = vi.fn(async () => dbSuccess(null));
@@ -161,6 +164,7 @@ export const validateVodForPublishing = vi.fn(() => ({ valid: true }));
 
 export const mockAuditService = {
 	create: createAuditEntry,
+	list: getAuditLogs,
 	listByEntity: getAuditEntries,
 	listLogs: getAuditLogs,
 };

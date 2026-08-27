@@ -63,6 +63,12 @@ export const auditService = {
 			return dbFailure(toErrorMessage(error, "Failed to create audit entry"));
 		}
 	},
+	list(
+		options: GetAuditLogsOptions = {},
+		context?: DbContext,
+	): Promise<DbResult<PaginatedResult<AuditEntryWithActor>>> {
+		return auditService.listLogs(options, context);
+	},
 
 	async listByEntity(
 		entityType: string,

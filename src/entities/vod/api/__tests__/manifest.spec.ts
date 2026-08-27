@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getSessionManifest } from "@/shared/db";
+import { vodService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { handleGetVodManifest, handleVodManifestRequest } from "../manifest";
 
@@ -26,7 +26,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		// Assert
 		expect(res.status).toBe(401);
 		expect(body).toEqual({ error: "Authentication required" });
-		expect(getSessionManifest).not.toHaveBeenCalled();
+		expect(vodService.getSessionManifest).not.toHaveBeenCalled();
 	});
 
 	it("returns 200 JSON with VOD manifest when VOD exists", async () => {
@@ -55,7 +55,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			youtubeVideoId: "dQw4w9WgXcQ",
 		};
 
-		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
 			data: mockManifest,
 			success: true,
 		} as never);
@@ -93,7 +93,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			title: "GM Ana VOD",
 			youtubeVideoId: "dQw4w9WgXcQ",
 		});
-		expect(getSessionManifest).toHaveBeenCalledWith("vod_1", {
+		expect(vodService.getSessionManifest).toHaveBeenCalledWith("vod_1", {
 			modules: undefined,
 		});
 	});
@@ -105,7 +105,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			scenarios: [],
 		};
 
-		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
 			data: mockManifest,
 			success: true,
 		} as never);
@@ -118,8 +118,8 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 		const res = await handleGetVodManifest(req, {
 			params: Promise.resolve({ id: "vod_1" }),
 		});
-		const capturedModules =
-			vi.mocked(getSessionManifest).mock.calls[0]?.[1]?.modules;
+		const capturedModules = vi.mocked(vodService.getSessionManifest).mock
+			.calls[0]?.[1]?.modules;
 
 		// Assert
 		expect(res.status).toBe(200);
@@ -128,7 +128,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 
 	it("returns 404 JSON response if VOD manifest is not found", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
 			data: null,
 			success: true,
 		} as never);
@@ -148,7 +148,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 
 	it("handleVodManifestRequest delegates params to handleGetVodManifest", async () => {
 		// Arrange
-		vi.mocked(getSessionManifest).mockResolvedValueOnce({
+		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
 			data: null,
 			success: true,
 		});

@@ -4,7 +4,7 @@ vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
 vi.mock("@/shared/lib/permissions");
 
-import { updateUserRole as dbUpdateUserRole, getUsers } from "@/shared/db";
+import { authService } from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
 import { getAdminUsers, updateUserRole } from "../server-fns";
 
@@ -38,7 +38,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce({
+			vi.mocked(authService.listUsers).mockResolvedValueOnce({
 				data: mockUsers,
 				success: true,
 			} as never);
@@ -54,7 +54,7 @@ describe("admin-users server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("users:view");
-			expect(getUsers).toHaveBeenCalledWith({
+			expect(authService.listUsers).toHaveBeenCalledWith({
 				role: "ADMIN",
 				search: "admin",
 			});
@@ -69,7 +69,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce({
+			vi.mocked(authService.listUsers).mockResolvedValueOnce({
 				data: [],
 				success: true,
 			} as never);
@@ -105,7 +105,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(getUsers).mockResolvedValueOnce({
+			vi.mocked(authService.listUsers).mockResolvedValueOnce({
 				error: "Failed to load users",
 				success: false,
 			});
@@ -188,7 +188,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(dbUpdateUserRole).mockResolvedValueOnce({
+			vi.mocked(authService.updateUserRole).mockResolvedValueOnce({
 				data: {
 					createdAt: new Date(),
 					email: "player@example.com",
@@ -210,7 +210,7 @@ describe("admin-users server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("users:manage-roles");
-			expect(dbUpdateUserRole).toHaveBeenCalledWith({
+			expect(authService.updateUserRole).toHaveBeenCalledWith({
 				actorUserId: "usr_admin",
 				newRole: "ADMIN",
 				targetUserId: "usr_target",

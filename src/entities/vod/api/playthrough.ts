@@ -5,7 +5,7 @@ import type {
 	PlaythroughCompletionItem,
 	PlaythroughItem,
 } from "@/shared/db";
-import { completePlaythrough, createPlaythrough } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 
 export type StartPlaythroughInput = Omit<CreatePlaythroughInput, "userId">;
@@ -25,7 +25,7 @@ export async function startPlaythroughAction(
 	const user = await getCurrentUser(undefined, context);
 	if (!user) return { error: "Authentication required", success: false };
 	try {
-		const result = await createPlaythrough(
+		const result = await playthroughService.create(
 			{ ...input, userId: user.id },
 			context,
 		);
@@ -68,7 +68,11 @@ export async function completePlaythroughAction(
 	const user = await getCurrentUser(undefined, context);
 	if (!user) return { error: "Authentication required", success: false };
 	try {
-		const result = await completePlaythrough(playthroughId, user.id, context);
+		const result = await playthroughService.complete(
+			playthroughId,
+			user.id,
+			context,
+		);
 		if (!result.success) {
 			return {
 				error:

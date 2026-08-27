@@ -4,23 +4,12 @@ import {
 	type AdminVodItem,
 	type BulkOperationResult,
 	type DbResult,
-	bulkDeleteVods as dbBulkDeleteVods,
-	bulkPublishVods as dbBulkPublishVods,
-	createScenario as dbCreateScenario,
-	createVod as dbCreateVod,
-	deleteScenario as dbDeleteScenario,
-	deleteVod as dbDeleteVod,
-	getAdminVods as dbGetAdminVods,
-	getVodById as dbGetVodById,
-	reorderScenarios as dbReorderScenarios,
-	setVodPublicationStatus as dbSetVodPublicationStatus,
-	updateScenario as dbUpdateScenario,
-	updateVod as dbUpdateVod,
 	heroRoleEnum,
 	inputTypeEnum,
 	moduleTypeEnum,
 	type ScenarioItem,
 	type VodItem,
+	vodService,
 } from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
 
@@ -152,7 +141,7 @@ export const getAdminVods = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<AdminVodItem[]> => {
 		await requirePermission("catalog:manage");
-		const result = await dbGetAdminVods(data);
+		const result = await vodService.listAdmin(data);
 		if (!result.success) {
 			throw new Error(result.error);
 		}
@@ -172,7 +161,7 @@ export const getAdminVodById = createServerFn({ method: "GET" })
 			data,
 		}): Promise<(VodItem & { scenarios: ScenarioItem[] }) | null> => {
 			await requirePermission("catalog:manage");
-			const result = await dbGetVodById(data.id);
+			const result = await vodService.getById(data.id);
 			if (!result.success) {
 				throw new Error(result.error);
 			}
@@ -190,7 +179,7 @@ export const createVod = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<VodItem>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbCreateVod({
+		return vodService.create({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -208,7 +197,7 @@ export const updateVod = createServerFn({ method: "POST" })
 		const permission =
 			data.isPublished !== undefined ? "catalog:publish" : "catalog:manage";
 		const actor = await requirePermission(permission);
-		return dbUpdateVod({
+		return vodService.update({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -224,7 +213,7 @@ export const deleteVod = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<void>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbDeleteVod({
+		return vodService.delete({
 			actorUserId: actor.id,
 			id: data.id,
 		});
@@ -240,7 +229,7 @@ export const setVodPublicationStatus = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<VodItem>> => {
 		const actor = await requirePermission("catalog:publish");
-		return dbSetVodPublicationStatus({
+		return vodService.setPublicationStatus({
 			actorUserId: actor.id,
 			id: data.id,
 			isPublished: data.isPublished,
@@ -257,7 +246,7 @@ export const bulkPublishVods = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<BulkOperationResult>> => {
 		const actor = await requirePermission("catalog:publish");
-		return dbBulkPublishVods({
+		return vodService.bulkPublish({
 			actorUserId: actor.id,
 			ids: data.ids,
 			isPublished: data.isPublished,
@@ -274,7 +263,7 @@ export const bulkDeleteVods = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<BulkOperationResult>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbBulkDeleteVods({
+		return vodService.bulkDelete({
 			actorUserId: actor.id,
 			ids: data.ids,
 		});
@@ -290,7 +279,7 @@ export const createScenario = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<ScenarioItem>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbCreateScenario({
+		return vodService.createScenario({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -306,7 +295,7 @@ export const updateScenario = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<ScenarioItem>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbUpdateScenario({
+		return vodService.updateScenario({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -322,7 +311,7 @@ export const deleteScenario = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<void>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbDeleteScenario({
+		return vodService.deleteScenario({
 			actorUserId: actor.id,
 			id: data.id,
 		});
@@ -338,7 +327,7 @@ export const reorderScenarios = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<void>> => {
 		const actor = await requirePermission("catalog:manage");
-		return dbReorderScenarios({
+		return vodService.reorderScenarios({
 			actorUserId: actor.id,
 			scenarioOrders: data.scenarioOrders,
 			vodId: data.vodId,

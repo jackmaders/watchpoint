@@ -1,4 +1,4 @@
-import { getSessionManifest } from "@/shared/db";
+import { vodService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { normalizeSessionManifestModules } from "./session-manifest-query";
 
@@ -13,7 +13,7 @@ export async function handleGetVodManifest(
 	const { id } = await params;
 	const url = new URL(request.url);
 
-	const manifestResult = await getSessionManifest(id, {
+	const manifestResult = await vodService.getSessionManifest(id, {
 		modules: normalizeSessionManifestModules(
 			url.searchParams.getAll("modules"),
 		),

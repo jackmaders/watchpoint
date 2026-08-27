@@ -1,6 +1,4 @@
-import { eq } from "drizzle-orm";
-import type { JsonValue } from "@/shared/db";
-import { attemptRecords, type DbContext, getDb } from "@/shared/db";
+import { type DbContext, playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
 	type RecordAttemptInput,
@@ -8,148 +6,26 @@ import {
 	type RecordAttemptResult,
 } from "../model/attempt";
 
-const IDEMPOTENCY_CONFLICT_ERROR = "Attempt idempotency conflict";
-
-function isUniqueConstraintError(error: unknown): boolean {
-	return (
-		error instanceof Error &&
-		/unique constraint failed:\s*attempt_record\.(idempotency_key|playthrough_snapshot_idx)$/i.test(
-			error.message.trim(),
-		)
-	);
-}
-
-function areJsonArraysEqual(left: JsonValue[], right: JsonValue[]): boolean {
-	return (
-		left.length === right.length &&
-		left.every((value, index) => areJsonValuesEqual(value, right[index]))
-	);
-}
-
-function areJsonObjectsEqual(
-	left: { [key: string]: JsonValue },
-	right: { [key: string]: JsonValue },
-): boolean {
-	const leftKeys = Object.keys(left);
-	const rightKeys = Object.keys(right);
-	return (
-		leftKeys.length === rightKeys.length &&
-		leftKeys.every((key) => areJsonValuesEqual(left[key], right[key]))
-	);
-}
-
-function areJsonValuesEqual(
-	left: JsonValue | null | undefined,
-	right: JsonValue | null | undefined,
-): boolean {
-	if (left === right) return true;
-	if (typeof left !== "object" || left === null) return false;
-	if (typeof right !== "object" || right === null) return false;
-
-	if (Array.isArray(left) !== Array.isArray(right)) return false;
-	if (Array.isArray(left) && Array.isArray(right)) {
-		return areJsonArraysEqual(left, right);
-	}
-
-	return areJsonObjectsEqual(
-		left as { [key: string]: JsonValue },
-		right as { [key: string]: JsonValue },
-	);
-}
-
-function isIdenticalAttempt(
-	existing: {
-		inputValue: Record<string, JsonValue> | null | undefined;
-		isCorrect: boolean;
-		isTimedOut: boolean | null | undefined;
-		responseTimeMs: number;
-		playthroughId?: string | null;
-		scenarioId: string;
-		scenarioSnapshotId?: string | null;
-		selectedOptionId: string | null;
-		userId: string;
-	},
-	input: RecordAttemptInput,
-	userId: string,
-): boolean {
-	return (
-		existing.userId === userId &&
-		existing.scenarioId === input.scenarioId &&
-		existing.isCorrect === input.isCorrect &&
-		(existing.isTimedOut ?? false) === (input.isTimedOut ?? false) &&
-		existing.responseTimeMs === input.responseTimeMs &&
-		(existing.playthroughId ?? null) === (input.playthroughId ?? null) &&
-		(existing.scenarioSnapshotId ?? null) ===
-			(input.scenarioSnapshotId ?? null) &&
-		existing.selectedOptionId === (input.selectedOptionId ?? null) &&
-		areJsonValuesEqual(existing.inputValue, input.inputValue ?? null)
-	);
-}
-
 async function belongsToAuthenticatedPlaythrough(
-	db: AttemptDatabase,
 	playthroughId: string,
 	scenarioSnapshotId: string,
 	scenarioId: string,
 	userId: string,
+	context?: DbContext,
 ): Promise<boolean> {
-	const playthrough = await db.query.playthroughs.findFirst({
-		where: (playthrough, { eq }) => eq(playthrough.id, playthroughId),
-		with: {
-			scenarioSnapshots: true,
-		},
-	});
-	if (playthrough === undefined) return false;
-	if (playthrough.userId !== userId) return false;
+	const result = await playthroughService.getById(
+		playthroughId,
+		userId,
+		context,
+	);
+	if (!result.success || !result.data) return false;
+	const playthrough = result.data;
 	if (playthrough.status !== "IN_PROGRESS") return false;
 
 	return playthrough.scenarioSnapshots.some((snapshot) => {
 		if (snapshot.id !== scenarioSnapshotId) return false;
 		return snapshot.scenarioId === scenarioId;
 	});
-}
-
-type AttemptDatabase = Awaited<ReturnType<typeof getDb>>;
-
-async function insertAttempt(
-	db: AttemptDatabase,
-	values: {
-		idempotencyKey: string;
-		inputValue: Record<string, JsonValue> | null;
-		isCorrect: boolean;
-		isTimedOut: boolean;
-		responseTimeMs: number;
-		scenarioId: string;
-		selectedOptionId: string | null;
-		userId: string;
-	},
-	input: RecordAttemptInput,
-): Promise<RecordAttemptResult> {
-	try {
-		const [inserted] = await db
-			.insert(attemptRecords)
-			.values(values)
-			.returning({ id: attemptRecords.id });
-
-		return {
-			attemptId: inserted?.id,
-			success: true,
-		};
-	} catch (error) {
-		if (!isUniqueConstraintError(error)) throw error;
-
-		const existing = await db.query.attemptRecords.findFirst({
-			where: eq(attemptRecords.idempotencyKey, input.idempotencyKey),
-		});
-		if (existing && isIdenticalAttempt(existing, input, values.userId)) {
-			return { attemptId: existing.id, success: true };
-		}
-
-		return {
-			error: IDEMPOTENCY_CONFLICT_ERROR,
-			success: false,
-		};
-	}
 }
 
 export async function recordAttemptAction(
@@ -181,34 +57,16 @@ export async function recordAttemptAction(
 				success: false,
 			};
 		}
-		const values = {
-			idempotencyKey: parsed.data.idempotencyKey,
-			inputValue:
-				parsed.data.inputValue !== undefined ? parsed.data.inputValue : null,
-			isCorrect: parsed.data.isCorrect,
-			isTimedOut: parsed.data.isTimedOut,
-			responseTimeMs: parsed.data.responseTimeMs,
-			scenarioId: parsed.data.scenarioId,
-			selectedOptionId: parsed.data.selectedOptionId ?? null,
-			userId,
-			...(parsed.data.playthroughId
-				? { playthroughId: parsed.data.playthroughId }
-				: {}),
-			...(parsed.data.scenarioSnapshotId
-				? { scenarioSnapshotId: parsed.data.scenarioSnapshotId }
-				: {}),
-		};
 
-		const db = await getDb(context);
 		if (
 			parsed.data.playthroughId &&
 			parsed.data.scenarioSnapshotId &&
 			!(await belongsToAuthenticatedPlaythrough(
-				db,
 				parsed.data.playthroughId,
 				parsed.data.scenarioSnapshotId,
 				parsed.data.scenarioId,
 				userId,
+				context,
 			))
 		) {
 			return {
@@ -216,7 +74,34 @@ export async function recordAttemptAction(
 				success: false,
 			};
 		}
-		return await insertAttempt(db, values, parsed.data);
+
+		const result = await playthroughService.recordAttempt(
+			{
+				idempotencyKey: parsed.data.idempotencyKey,
+				inputValue: parsed.data.inputValue,
+				isCorrect: parsed.data.isCorrect,
+				isTimedOut: parsed.data.isTimedOut,
+				playthroughId: parsed.data.playthroughId as string,
+				responseTimeMs: parsed.data.responseTimeMs,
+				scenarioId: parsed.data.scenarioId,
+				scenarioSnapshotId: parsed.data.scenarioSnapshotId as string,
+				selectedOptionId: parsed.data.selectedOptionId ?? null,
+				userId,
+			},
+			context,
+		);
+
+		if (!result.success) {
+			return {
+				error: result.error,
+				success: false,
+			};
+		}
+
+		return {
+			attemptId: result.data?.id,
+			success: true,
+		};
 	} catch {
 		return {
 			error: "Failed to record attempt",

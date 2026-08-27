@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/shared/db");
 vi.mock("@/shared/lib/auth");
 
-import { queryPlayerHistory } from "@/shared/db";
+import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { getPlayerHistoryData } from "../history";
 
@@ -24,7 +24,7 @@ describe("getPlayerHistoryData", () => {
 			total: 0,
 			totalPages: 1,
 		};
-		vi.mocked(queryPlayerHistory).mockResolvedValueOnce({
+		vi.mocked(playthroughService.listHistory).mockResolvedValueOnce({
 			data: expectedHistory,
 			success: true,
 		} as never);
@@ -40,7 +40,7 @@ describe("getPlayerHistoryData", () => {
 
 		// Assert
 		expect(result).toEqual(expectedHistory);
-		expect(queryPlayerHistory).toHaveBeenCalledWith(
+		expect(playthroughService.listHistory).toHaveBeenCalledWith(
 			"player_123",
 			{
 				modules: ["STRATEGY"],
@@ -68,7 +68,7 @@ describe("getPlayerHistoryData", () => {
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({
 			id: "player_123",
 		});
-		vi.mocked(queryPlayerHistory).mockResolvedValueOnce({
+		vi.mocked(playthroughService.listHistory).mockResolvedValueOnce({
 			error: "Database error",
 			success: false,
 		} as never);

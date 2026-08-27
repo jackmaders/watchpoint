@@ -4,20 +4,7 @@ vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
 vi.mock("@/shared/lib/permissions");
 
-import {
-	bulkDeleteVods as dbBulkDeleteVods,
-	bulkPublishVods as dbBulkPublishVods,
-	createScenario as dbCreateScenario,
-	createVod as dbCreateVod,
-	deleteScenario as dbDeleteScenario,
-	deleteVod as dbDeleteVod,
-	getAdminVods as dbGetAdminVods,
-	getVodById as dbGetVodById,
-	reorderScenarios as dbReorderScenarios,
-	setVodPublicationStatus as dbSetVodPublicationStatus,
-	updateScenario as dbUpdateScenario,
-	updateVod as dbUpdateVod,
-} from "@/shared/db";
+import { vodService } from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
 import {
 	bulkDeleteVods,
@@ -47,7 +34,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
 				data: {
 					items: mockVods,
 					page: 1,
@@ -67,7 +54,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbGetAdminVods).toHaveBeenCalledWith({
+			expect(vodService.listAdmin).toHaveBeenCalledWith({
 				role: "SUPPORT",
 				search: "Ana",
 			});
@@ -80,7 +67,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
 				data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
 				success: true,
 			} as never);
@@ -114,7 +101,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetAdminVods).mockResolvedValueOnce({
+			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
 				error: "Failed to load VODs",
 				success: false,
 			});
@@ -172,7 +159,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetVodById).mockResolvedValueOnce({
+			vi.mocked(vodService.getById).mockResolvedValueOnce({
 				data: mockVod,
 				success: true,
 			} as never);
@@ -186,7 +173,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbGetVodById).toHaveBeenCalledWith("v1");
+			expect(vodService.getById).toHaveBeenCalledWith("v1");
 			expect(result).toEqual(mockVod);
 		});
 
@@ -196,7 +183,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbGetVodById).mockResolvedValueOnce({
+			vi.mocked(vodService.getById).mockResolvedValueOnce({
 				error: "VOD query failed",
 				success: false,
 			});
@@ -242,7 +229,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbCreateVod).mockResolvedValueOnce({
+			vi.mocked(vodService.create).mockResolvedValueOnce({
 				data: { ...input, id: "v1", isPublished: false } as never,
 				success: true,
 			});
@@ -254,7 +241,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbCreateVod).toHaveBeenCalledWith({
+			expect(vodService.create).toHaveBeenCalledWith({
 				...input,
 				actorUserId: "admin_1",
 			});
@@ -285,7 +272,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbUpdateVod).mockResolvedValueOnce({
+			vi.mocked(vodService.update).mockResolvedValueOnce({
 				data: { id: "v1", title: "New Title" } as never,
 				success: true,
 			});
@@ -297,7 +284,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbUpdateVod).toHaveBeenCalledWith({
+			expect(vodService.update).toHaveBeenCalledWith({
 				...input,
 				actorUserId: "admin_1",
 			});
@@ -314,7 +301,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbUpdateVod).mockResolvedValueOnce({
+			vi.mocked(vodService.update).mockResolvedValueOnce({
 				data: { id: "v1", isPublished: true } as never,
 				success: true,
 			});
@@ -352,7 +339,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbDeleteVod).mockResolvedValueOnce({
+			vi.mocked(vodService.delete).mockResolvedValueOnce({
 				data: undefined,
 				success: true,
 			});
@@ -364,7 +351,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbDeleteVod).toHaveBeenCalledWith({
+			expect(vodService.delete).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "v1",
 			});
@@ -391,7 +378,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbSetVodPublicationStatus).mockResolvedValueOnce({
+			vi.mocked(vodService.setPublicationStatus).mockResolvedValueOnce({
 				data: { id: "v1", isPublished: true } as never,
 				success: true,
 			});
@@ -405,7 +392,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
-			expect(dbSetVodPublicationStatus).toHaveBeenCalledWith({
+			expect(vodService.setPublicationStatus).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "v1",
 				isPublished: true,
@@ -438,7 +425,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbBulkPublishVods).mockResolvedValueOnce({
+			vi.mocked(vodService.bulkPublish).mockResolvedValueOnce({
 				data: {
 					failed: [],
 					succeeded: ["v1", "v2"],
@@ -481,7 +468,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbBulkDeleteVods).mockResolvedValueOnce({
+			vi.mocked(vodService.bulkDelete).mockResolvedValueOnce({
 				data: {
 					failed: [],
 					succeeded: ["v1"],
@@ -537,7 +524,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbCreateScenario).mockResolvedValueOnce({
+			vi.mocked(vodService.createScenario).mockResolvedValueOnce({
 				data: { ...scenarioInput, id: "s1" } as never,
 				success: true,
 			});
@@ -551,7 +538,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbCreateScenario).toHaveBeenCalledWith({
+			expect(vodService.createScenario).toHaveBeenCalledWith({
 				...scenarioInput,
 				actorUserId: "admin_1",
 			});
@@ -582,7 +569,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbUpdateScenario).mockResolvedValueOnce({
+			vi.mocked(vodService.updateScenario).mockResolvedValueOnce({
 				data: { id: "s1", promptText: "New Prompt" } as never,
 				success: true,
 			});
@@ -596,7 +583,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbUpdateScenario).toHaveBeenCalledWith({
+			expect(vodService.updateScenario).toHaveBeenCalledWith({
 				...updateInput,
 				actorUserId: "admin_1",
 			});
@@ -626,7 +613,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbDeleteScenario).mockResolvedValueOnce({
+			vi.mocked(vodService.deleteScenario).mockResolvedValueOnce({
 				data: undefined,
 				success: true,
 			});
@@ -640,7 +627,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbDeleteScenario).toHaveBeenCalledWith({
+			expect(vodService.deleteScenario).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "s1",
 			});
@@ -671,7 +658,7 @@ describe("admin-content server functions", () => {
 				id: "admin_1",
 				role: "ADMIN",
 			});
-			vi.mocked(dbReorderScenarios).mockResolvedValueOnce({
+			vi.mocked(vodService.reorderScenarios).mockResolvedValueOnce({
 				data: undefined,
 				success: true,
 			});
@@ -685,7 +672,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(dbReorderScenarios).toHaveBeenCalledWith({
+			expect(vodService.reorderScenarios).toHaveBeenCalledWith({
 				...reorderInput,
 				actorUserId: "admin_1",
 			});

@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {
+	authService,
 	type DbResult,
-	getUsers as dbGetUsers,
-	updateUserRole as dbUpdateUserRole,
 	type UserItem,
 	userRoleEnum,
 } from "@/shared/db";
@@ -33,7 +32,7 @@ export const getAdminUsers = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<UserItem[]> => {
 		await requirePermission("users:view");
-		const result = await dbGetUsers(data);
+		const result = await authService.listUsers(data);
 		if (!result.success) {
 			throw new Error(result.error);
 		}
@@ -50,7 +49,7 @@ export const updateUserRole = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data }): Promise<DbResult<UserItem>> => {
 		const actor = await requirePermission("users:manage-roles");
-		return dbUpdateUserRole({
+		return authService.updateUserRole({
 			actorUserId: actor.id,
 			newRole: data.newRole,
 			targetUserId: data.targetUserId,
