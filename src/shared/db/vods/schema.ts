@@ -6,7 +6,7 @@ import {
 	sqliteTable,
 	text,
 } from "drizzle-orm/sqlite-core";
-import type { JsonValue } from "../common/types";
+import type { JsonValue } from "../core/types";
 
 export const heroRoleEnum = ["TANK", "DAMAGE", "SUPPORT"] as const;
 export type HeroRole = (typeof heroRoleEnum)[number];

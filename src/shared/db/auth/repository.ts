@@ -1,12 +1,13 @@
 import { count, desc, eq } from "drizzle-orm";
 import { createAuditEntry } from "../audit/repository";
-import { type DbContext, getDb } from "../client/client";
 import {
+	type DbContext,
 	type DbResult,
 	dbFailure,
 	dbSuccess,
+	getDb,
 	toErrorMessage,
-} from "../common/result";
+} from "../core";
 import { type UserRole, users } from "./schema";
 import { updateUserRoleInputSchema } from "./validation";
 

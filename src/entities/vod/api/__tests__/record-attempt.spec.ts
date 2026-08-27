@@ -3,7 +3,7 @@ import { getDb } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { recordAttemptAction } from "../record-attempt";
 
-vi.mock("@/shared/db/client/client");
+vi.mock("@/shared/db/core/client");
 vi.mock("@/shared/lib/auth");
 
 describe("recordAttemptAction", () => {

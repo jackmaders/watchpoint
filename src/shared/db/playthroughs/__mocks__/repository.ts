@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { dbSuccess } from "../../common/result";
+import { dbSuccess } from "../../core/result";
 
 export const createPlaythrough = vi.fn(async () =>
 	dbSuccess({

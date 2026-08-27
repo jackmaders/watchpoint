@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { users } from "../../auth/schema";
-import { getDb } from "../../client/client";
-import { D1DatabaseError, D1ErrorKind } from "../errors";
+import { getDb } from "../../core/client";
+import { D1DatabaseError, D1ErrorKind } from "../../core/errors";
 import { createTableService } from "../service";
 
-vi.mock("../../client/client");
+vi.mock("../../core/client");
 
 describe("createTableService", () => {
 	const service = createTableService(users);

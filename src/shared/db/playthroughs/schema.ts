@@ -9,7 +9,7 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { users } from "../auth/schema";
-import type { JsonValue } from "../common/types";
+import type { JsonValue } from "../core/types";
 import { inputTypeEnum, moduleTypeEnum, scenarios, vods } from "../vods/schema";
 
 export const playthroughStatusEnum = ["IN_PROGRESS", "COMPLETED"] as const;

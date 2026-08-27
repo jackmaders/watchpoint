@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { dbSuccess } from "../../common/result";
+import { dbSuccess } from "../../core/result";
 import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema";
 
 export const getPublishedVods = vi.fn(async () => dbSuccess([]));

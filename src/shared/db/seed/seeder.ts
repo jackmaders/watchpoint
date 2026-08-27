@@ -1,7 +1,7 @@
 import { hashPassword } from "better-auth/crypto";
 import { auditEntries } from "../audit/schema";
 import { accounts, sessions, users } from "../auth/schema";
-import type { DrizzleDb } from "../client/client";
+import type { DrizzleDb } from "../core/client";
 import {
 	attemptRecords,
 	playthroughCompletions,

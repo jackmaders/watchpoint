@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "../../client/client";
+import { getDb } from "../../core/client";
 import {
 	completePlaythrough,
 	createPlaythrough,
@@ -14,7 +14,7 @@ import {
 	recordPlaythroughAttempt,
 } from "../repository";
 
-vi.mock("../../client/client");
+vi.mock("../../core/client");
 
 describe("playthroughs repository", () => {
 	beforeEach(() => {

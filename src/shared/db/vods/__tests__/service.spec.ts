@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "../../client/client";
+import { getDb } from "../../core/client";
 import { scenarioTableService, vodTableService } from "../service";
 
-vi.mock("../../client/client");
+vi.mock("../../core/client");
 vi.mock("../../audit/repository");
 
 describe("vods domain service", () => {

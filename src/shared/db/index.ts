@@ -48,24 +48,31 @@ export {
 	type UpdateUserRoleInput,
 	updateUserRoleInputSchema,
 } from "./auth/validation";
-export { type DbContext, type DrizzleDb, getDb } from "./client/client";
-export {
-	catchDbError,
-	D1DatabaseError,
-	type D1DatabaseErrorOptions,
-	D1ErrorKind,
-	parseD1Error,
-} from "./common/errors";
-export {
-	type DbResult,
-	dbFailure,
-	dbSuccess,
-} from "./common/result";
 export {
 	createTableService,
 	type TableWithId,
 } from "./common/service";
-export type { JsonPrimitive, JsonValue } from "./common/types";
+export {
+	type ClampedPagination,
+	catchDbError,
+	clampPagination,
+	D1DatabaseError,
+	type D1DatabaseErrorOptions,
+	D1ErrorKind,
+	type DbContext,
+	type DbResult,
+	type DrizzleDb,
+	dbFailure,
+	dbSuccess,
+	escapeLike,
+	getDb,
+	type JsonPrimitive,
+	type JsonValue,
+	type PaginatedResult,
+	type PaginationOptions,
+	parseD1Error,
+	toErrorMessage,
+} from "./core";
 // Playthroughs & Telemetry
 export type {
 	AttemptRecordItem,
