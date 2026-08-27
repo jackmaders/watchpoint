@@ -48,7 +48,15 @@ export const updateUserRole = vi.fn(async () =>
 		updatedAt: new Date(),
 	}),
 );
-export const getAdminVods = vi.fn(async () => dbSuccess([]));
+export const getAdminVods = vi.fn(async () =>
+	dbSuccess({
+		items: [],
+		page: 1,
+		pageSize: 10,
+		total: 0,
+		totalPages: 1,
+	}),
+);
 export const getVodById = vi.fn(async () => dbSuccess(null));
 export const createVod = vi.fn(async () =>
 	dbSuccess({
@@ -139,9 +147,64 @@ export const deleteScenario = vi.fn(async () => dbSuccess(undefined));
 export const reorderScenarios = vi.fn(async () => dbSuccess(undefined));
 export const createAuditEntry = vi.fn(async () => dbSuccess(null));
 export const getAuditEntries = vi.fn(async () => dbSuccess([]));
-export const getAuditLogs = vi.fn(async () => dbSuccess([]));
+export const getAuditLogs = vi.fn(async () =>
+	dbSuccess({
+		items: [],
+		page: 1,
+		pageSize: 10,
+		total: 0,
+		totalPages: 1,
+	}),
+);
 export const validateScenarioConfig = vi.fn(() => ({ valid: true }));
 export const validateVodForPublishing = vi.fn(() => ({ valid: true }));
+
+export const mockAuditService = {
+	create: createAuditEntry,
+	listByEntity: getAuditEntries,
+	listLogs: getAuditLogs,
+};
+export const auditService = mockAuditService;
+
+export const mockAuthService = {
+	getById: getUserById,
+	getUserCount: getUserCount,
+	listUsers: getUsers,
+	updateUserRole: updateUserRole,
+};
+export const authService = mockAuthService;
+
+export const mockVodService = {
+	bulkDelete: bulkDeleteVods,
+	bulkPublish: bulkPublishVods,
+	create: createVod,
+	createScenario: createScenario,
+	delete: deleteVod,
+	deleteScenario: deleteScenario,
+	getById: getVodById,
+	getScenarioById: getScenarioById,
+	getScenariosByVodId: getScenariosByVodId,
+	getSessionManifest: getSessionManifest,
+	listAdmin: getAdminVods,
+	listPublished: getPublishedVods,
+	reorderScenarios: reorderScenarios,
+	setPublicationStatus: setVodPublicationStatus,
+	update: updateVod,
+	updateScenario: updateScenario,
+};
+export const vodService = mockVodService;
+
+export const mockPlaythroughService = {
+	complete: completePlaythrough,
+	create: createPlaythrough,
+	getAttemptByIdempotencyKey: getAttemptByIdempotencyKey,
+	getAttempts: getPlaythroughAttempts,
+	getById: getPlaythrough,
+	getHistoryDetail: getPlaythroughHistoryDetail,
+	listHistory: queryPlayerHistory,
+	recordAttempt: recordPlaythroughAttempt,
+};
+export const playthroughService = mockPlaythroughService;
 
 export {
 	heroRoleEnum,

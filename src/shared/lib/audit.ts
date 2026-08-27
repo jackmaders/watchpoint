@@ -28,6 +28,6 @@ export const getAdminAuditLogs = createServerFn({ method: "GET" })
 			if (!result.success) {
 				throw new Error(`Failed to query audit logs: ${result.error}`);
 			}
-			return result.data;
+			return result.data.items;
 		},
 	);

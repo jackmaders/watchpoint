@@ -26,7 +26,7 @@ describe("shared audit server function", () => {
 		const mockLogs = [{ action: "UPDATE", id: "audit_1" }];
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
 		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
-			data: mockLogs,
+			data: { items: mockLogs, page: 1, pageSize: 10, total: 1, totalPages: 1 },
 			success: true,
 		} as never);
 
@@ -53,7 +53,7 @@ describe("shared audit server function", () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
 		vi.mocked(dbGetAuditLogs).mockResolvedValueOnce({
-			data: [],
+			data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
 			success: true,
 		} as never);
 

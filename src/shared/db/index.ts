@@ -1,31 +1,9 @@
-// Audit
-export type {
-	AuditEntryItem,
-	AuditEntryWithActor,
-	CreateAuditEntryInput,
-	GetAuditLogsOptions,
-} from "./audit/repository";
-export {
-	createAuditEntry,
-	getAuditEntries,
-	getAuditLogs,
-} from "./audit/repository";
+// Domain Services
+
 export {
 	insertAuditEntrySchema,
 	selectAuditEntrySchema,
 } from "./audit/validation";
-// Auth & Users
-export type {
-	GetUsersOptions,
-	UpdateUserRoleParams,
-	UserItem,
-} from "./auth/repository";
-export {
-	getUserById,
-	getUserCount,
-	getUsers,
-	updateUserRole,
-} from "./auth/repository";
 export {
 	insertUserSchema,
 	selectUserSchema,
@@ -57,32 +35,6 @@ export {
 	parseD1Error,
 	toErrorMessage,
 } from "./core";
-// Playthroughs & Telemetry
-export type {
-	AttemptRecordItem,
-	CreatePlaythroughInput,
-	GetPlayerHistoryOptions,
-	PlayerHistoryItem,
-	PlayerHistoryResult,
-	PlaythroughCompletionItem,
-	PlaythroughItem,
-	RecordPlaythroughAttemptInput,
-	ScenarioSnapshotInput,
-} from "./playthroughs/repository";
-export {
-	completePlaythrough,
-	createPlaythrough,
-	getAttemptByIdempotencyKey,
-	getPlayerHistory,
-	getPlaythrough,
-	getPlaythroughAttempts,
-	getPlaythroughHistoryDetail,
-	IDEMPOTENCY_CONFLICT_ERROR,
-	PLAYTHROUGH_NOT_IN_PROGRESS_ERROR,
-	PLAYTHROUGH_START_CONFLICT_ERROR,
-	queryPlayerHistory,
-	recordPlaythroughAttempt,
-} from "./playthroughs/repository";
 export {
 	insertAttemptRecordSchema,
 	insertPlaythroughSchema,
@@ -90,6 +42,7 @@ export {
 	selectAttemptRecordSchema,
 	selectPlaythroughSchema,
 } from "./playthroughs/validation";
+// Schema
 export {
 	auditEntries,
 	auditEntriesRelations,
@@ -143,6 +96,64 @@ export {
 	type SeedCredentials,
 	type SeedEnvironment,
 } from "./seed";
+export {
+	auditService,
+	authService,
+	playthroughService,
+	vodService,
+} from "./services";
+// Audit
+export type {
+	AuditEntryItem,
+	AuditEntryWithActor,
+	CreateAuditEntryInput,
+	GetAuditLogsOptions,
+} from "./services/audit.service";
+export {
+	createAuditEntry,
+	getAuditEntries,
+	getAuditLogs,
+} from "./services/audit.service";
+// Auth & Users
+export type {
+	GetUsersOptions,
+	UpdateUserRoleParams,
+	UserItem,
+} from "./services/auth.service";
+export {
+	getUserById,
+	getUserCount,
+	getUsers,
+	updateUserRole,
+} from "./services/auth.service";
+// Playthroughs & Telemetry
+export type {
+	AttemptRecordItem,
+	CreatePlaythroughInput,
+	GetPlayerHistoryOptions,
+	PlayerHistoryItem,
+	PlayerHistoryResult,
+	PlaythroughCompletionItem,
+	PlaythroughItem,
+	PlaythroughWithDetails,
+	RecordPlaythroughAttemptInput,
+	ScenarioSnapshotInput,
+} from "./services/playthroughs.service";
+export {
+	completePlaythrough,
+	createPlaythrough,
+	getAttemptByIdempotencyKey,
+	getPlayerHistory,
+	getPlaythrough,
+	getPlaythroughAttempts,
+	getPlaythroughHistoryDetail,
+	IDEMPOTENCY_CONFLICT_ERROR,
+	PLAYTHROUGH_NOT_IN_PROGRESS_ERROR,
+	PLAYTHROUGH_START_CONFLICT_ERROR,
+	queryPlayerHistory,
+	recordPlaythroughAttempt,
+} from "./services/playthroughs.service";
+
 // VODs & Scenarios
 export type {
 	AdminVodItem,
@@ -161,7 +172,7 @@ export type {
 	UpdateScenarioInput,
 	UpdateVodInput,
 	VodItem,
-} from "./vods/service";
+} from "./services/vods.service";
 export {
 	bulkDeleteVods,
 	bulkPublishVods,
@@ -181,7 +192,7 @@ export {
 	updateScenario,
 	updateVod,
 	vodTableService,
-} from "./vods/service";
+} from "./services/vods.service";
 export {
 	boundedSliderConfigSchema,
 	insertScenarioSchema,
