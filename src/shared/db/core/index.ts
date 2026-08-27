@@ -7,6 +7,7 @@ export {
 	parseD1Error,
 } from "./errors";
 export {
+	buildPaginatedResult,
 	type ClampedPagination,
 	clampPagination,
 	escapeLike,
@@ -18,5 +19,6 @@ export {
 	dbFailure,
 	dbSuccess,
 	toErrorMessage,
+	tryDb,
 } from "./result";
 export type { JsonPrimitive, JsonValue } from "./types";

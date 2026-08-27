@@ -14,12 +14,10 @@ import {
 	getSessionManifest,
 	getVodById,
 	reorderScenarios,
-	scenarioTableService,
 	setVodPublicationStatus,
 	updateScenario,
 	updateVod,
 	vodService,
-	vodTableService,
 } from "../vods.service";
 
 vi.mock("../../core/client");
@@ -397,13 +395,13 @@ describe("vodService", () => {
 				id: "vod_new",
 				isPublished: false,
 			};
-			vi.spyOn(vodTableService, "create").mockResolvedValue(
-				createdVod as never,
-			);
 			const mockDb = {
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
-						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
+						returning: vi
+							.fn()
+							.mockResolvedValueOnce([createdVod])
+							.mockResolvedValueOnce([{ id: "audit_1" }]),
 					}),
 				}),
 			};
@@ -419,9 +417,16 @@ describe("vodService", () => {
 			});
 		});
 
-		it("handles vodTableService returning undefined", async () => {
+		it("handles database insert returning empty array", async () => {
 			// Arrange
-			vi.spyOn(vodTableService, "create").mockResolvedValue(undefined as never);
+			const mockDb = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([]),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
 			const result = await vodService.create(validCreateInput);
@@ -435,7 +440,7 @@ describe("vodService", () => {
 
 		it("handles exceptions (Error and non-Error)", async () => {
 			// Arrange
-			vi.spyOn(vodTableService, "create")
+			vi.mocked(getDb)
 				.mockRejectedValueOnce(new Error("DB insert error"))
 				.mockRejectedValueOnce("String error");
 
@@ -542,21 +547,6 @@ describe("vodService", () => {
 				},
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			const updatedVod = {
-				...mockExistingVod,
-				durationSeconds: 700,
-				heroName: "Mercy",
-				isPublished: true,
-				mapName: "Oasis",
-				rankTier: "Top 500",
-				role: "SUPPORT" as const,
-				title: "Updated Title",
-				youtubeVideoId: "new_vid",
-			};
-			vi.spyOn(vodTableService, "update").mockResolvedValue(
-				updatedVod as never,
-			);
-
 			// Act 1: Updating fields without changing publication status
 			const updatedVod1 = {
 				...mockExistingVod,
@@ -568,9 +558,26 @@ describe("vodService", () => {
 				title: "Updated Title",
 				youtubeVideoId: "new_vid",
 			};
-			vi.spyOn(vodTableService, "update").mockResolvedValueOnce(
-				updatedVod1 as never,
-			);
+			const mockDb1 = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
+					}),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([updatedVod1]),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb1 as never);
 
 			const result1 = await updateVod({
 				actorUserId: "usr_1",
@@ -586,7 +593,8 @@ describe("vodService", () => {
 
 			// Act 2: Unpublishing a published vod
 			const publishedExisting = { ...mockExistingVod, isPublished: true };
-			vi.mocked(getDb).mockResolvedValue({
+			const updatedVod2 = { ...publishedExisting, isPublished: false };
+			const mockDb2 = {
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
 						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
@@ -597,11 +605,15 @@ describe("vodService", () => {
 						findFirst: vi.fn().mockResolvedValue(publishedExisting),
 					},
 				},
-			} as never);
-			const updatedVod2 = { ...publishedExisting, isPublished: false };
-			vi.spyOn(vodTableService, "update").mockResolvedValueOnce(
-				updatedVod2 as never,
-			);
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([updatedVod2]),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb2 as never);
 
 			const result2 = await updateVod({
 				actorUserId: "usr_1",
@@ -620,24 +632,59 @@ describe("vodService", () => {
 			});
 		});
 
-		it("handles vodTableService returning null and exceptions", async () => {
+		it("handles update returning empty array and exceptions", async () => {
 			// Arrange
-			const mockDb = {
+			const mockDbEmpty = {
 				query: {
 					vods: {
 						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
 					},
 				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([]),
+						}),
+					}),
+				}),
 			};
-			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			vi.spyOn(vodTableService, "update")
-				.mockResolvedValueOnce(null as never)
-				.mockRejectedValueOnce(new Error("Update fail"))
-				.mockRejectedValueOnce("String error");
+			vi.mocked(getDb).mockResolvedValue(mockDbEmpty as never);
 
 			// Act
 			const res1 = await vodService.update({ id: "vod_1", title: "New" });
+
+			const mockDbError = {
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockRejectedValue(new Error("Update fail")),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbError as never);
 			const res2 = await vodService.update({ id: "vod_1", title: "New" });
+
+			const mockDbStringError = {
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockRejectedValue("String error"),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbStringError as never);
 			const res3 = await vodService.update({ id: "vod_1", title: "New" });
 
 			// Assert
@@ -677,6 +724,9 @@ describe("vodService", () => {
 		it("deletes vod and logs audit", async () => {
 			// Arrange
 			const mockDb = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(undefined),
+				}),
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
 						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
@@ -689,7 +739,6 @@ describe("vodService", () => {
 				},
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			vi.spyOn(vodTableService, "delete").mockResolvedValue(true as never);
 
 			// Act
 			const result = await deleteVod({ actorUserId: "usr_1", id: "vod_1" });
@@ -700,20 +749,30 @@ describe("vodService", () => {
 
 		it("handles delete exceptions (Error and non-Error)", async () => {
 			// Arrange
-			const mockDb = {
+			const mockDbError = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockRejectedValue(new Error("Delete fail")),
+				}),
 				query: {
 					vods: {
 						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
 					},
 				},
 			};
-			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			vi.spyOn(vodTableService, "delete")
-				.mockRejectedValueOnce(new Error("Delete fail"))
-				.mockRejectedValueOnce("String error");
-
-			// Act
+			vi.mocked(getDb).mockResolvedValue(mockDbError as never);
 			const res1 = await vodService.delete({ id: "vod_1" });
+
+			const mockDbStringError = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockRejectedValue("String error"),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue(mockExistingVod),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbStringError as never);
 			const res2 = await vodService.delete({ id: "vod_1" });
 
 			// Assert
@@ -780,11 +839,15 @@ describe("vodService", () => {
 							.mockResolvedValueOnce(null),
 					},
 				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([{ id: "v1" }]),
+						}),
+					}),
+				}),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			vi.spyOn(vodTableService, "update").mockResolvedValue({
-				id: "v1",
-			} as never);
 
 			// Act
 			const singleRes = await setVodPublicationStatus({
@@ -810,6 +873,9 @@ describe("vodService", () => {
 		it("bulkDelete handles mixed outcomes", async () => {
 			// Arrange
 			const mockDb = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(undefined),
+				}),
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
 						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
@@ -825,7 +891,6 @@ describe("vodService", () => {
 				},
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-			vi.spyOn(vodTableService, "delete").mockResolvedValue(true as never);
 
 			// Act
 			const result = await bulkDeleteVods({ ids: ["v1", "v2"] });
@@ -967,13 +1032,13 @@ describe("vodService", () => {
 
 			// Act 4: Success creation
 			const createdScenario = { id: "sc_new", ...validScenarioInput };
-			vi.spyOn(scenarioTableService, "create").mockResolvedValue(
-				createdScenario as never,
-			);
 			const mockDbSuccess = {
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
-						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
+						returning: vi
+							.fn()
+							.mockResolvedValueOnce([createdScenario])
+							.mockResolvedValueOnce([{ id: "audit_1" }]),
 					}),
 				}),
 				query: {
@@ -998,29 +1063,78 @@ describe("vodService", () => {
 				imageUrl: null,
 				timeLimitSeconds: null,
 			};
-			vi.spyOn(scenarioTableService, "create").mockResolvedValueOnce(
-				minimalCreatedScenario as never,
-			);
+			const mockDbMinimal = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi
+							.fn()
+							.mockResolvedValueOnce([minimalCreatedScenario])
+							.mockResolvedValueOnce([{ id: "audit_1" }]),
+					}),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue({ durationSeconds: 600 }),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbMinimal as never);
 			const resMinimal = await createScenario(minimalScenarioInput);
 			expect(resMinimal).toEqual({
 				data: minimalCreatedScenario,
 				success: true,
 			});
 
-			// Act 5: scenarioTableService returns null or throws
-			vi.spyOn(scenarioTableService, "create")
-				.mockResolvedValueOnce(null as never)
-				.mockRejectedValueOnce(new Error("Create err"))
-				.mockRejectedValueOnce("Str err");
-
+			// Act 5: database returns empty or throws
+			const mockDbEmptyScenario = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockResolvedValue([]),
+					}),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue({ durationSeconds: 600 }),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbEmptyScenario as never);
 			expect(await vodService.createScenario(validScenarioInput)).toEqual({
 				error: "Failed to create scenario",
 				success: false,
 			});
+
+			const mockDbCreateErr = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockRejectedValue(new Error("Create err")),
+					}),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue({ durationSeconds: 600 }),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbCreateErr as never);
 			expect(await vodService.createScenario(validScenarioInput)).toEqual({
 				error: "Create err",
 				success: false,
 			});
+
+			const mockDbCreateStrErr = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi.fn().mockRejectedValue("Str err"),
+					}),
+				}),
+				query: {
+					vods: {
+						findFirst: vi.fn().mockResolvedValue({ durationSeconds: 600 }),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbCreateStrErr as never);
 			expect(await vodService.createScenario(validScenarioInput)).toEqual({
 				error: "Failed to create scenario",
 				success: false,
@@ -1063,9 +1177,6 @@ describe("vodService", () => {
 
 			// Act 3: Success update
 			const updatedScenario = { ...existingScenario, promptText: "New Prompt" };
-			vi.spyOn(scenarioTableService, "update").mockResolvedValue(
-				updatedScenario as never,
-			);
 			const mockDbSuccess = {
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
@@ -1077,6 +1188,13 @@ describe("vodService", () => {
 						findFirst: vi.fn().mockResolvedValue(existingScenario),
 					},
 				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([updatedScenario]),
+						}),
+					}),
+				}),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
@@ -1093,20 +1211,62 @@ describe("vodService", () => {
 			});
 			expect(resSuccess).toEqual({ data: updatedScenario, success: true });
 
-			// Act 4: Table service returns null or throws
-			vi.spyOn(scenarioTableService, "update")
-				.mockResolvedValueOnce(null as never)
-				.mockRejectedValueOnce(new Error("Update fail"))
-				.mockRejectedValueOnce("Str err");
-
+			// Act 4: Table update returns empty or throws
+			const mockDbEmptyUpdate = {
+				query: {
+					scenarios: {
+						findFirst: vi.fn().mockResolvedValue(existingScenario),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockResolvedValue([]),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbEmptyUpdate as never);
 			expect(await vodService.updateScenario({ id: "sc_1" })).toEqual({
 				error: "Failed to update scenario",
 				success: false,
 			});
+
+			const mockDbUpdateErr = {
+				query: {
+					scenarios: {
+						findFirst: vi.fn().mockResolvedValue(existingScenario),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockRejectedValue(new Error("Update fail")),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbUpdateErr as never);
 			expect(await vodService.updateScenario({ id: "sc_1" })).toEqual({
 				error: "Update fail",
 				success: false,
 			});
+
+			const mockDbUpdateStrErr = {
+				query: {
+					scenarios: {
+						findFirst: vi.fn().mockResolvedValue(existingScenario),
+					},
+				},
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockReturnValue({
+							returning: vi.fn().mockRejectedValue("Str err"),
+						}),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbUpdateStrErr as never);
 			expect(await vodService.updateScenario({ id: "sc_1" })).toEqual({
 				error: "Failed to update scenario",
 				success: false,
@@ -1134,8 +1294,10 @@ describe("vodService", () => {
 			});
 
 			// Act 2: Success
-			vi.spyOn(scenarioTableService, "delete").mockResolvedValue(true as never);
 			const mockDbSuccess = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue(undefined),
+				}),
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
 						returning: vi.fn().mockResolvedValue([{ id: "audit_1" }]),
@@ -1153,21 +1315,33 @@ describe("vodService", () => {
 			expect(resSuccess).toEqual({ data: undefined, success: true });
 
 			// Act 3: Exception during delete
-			vi.mocked(getDb).mockResolvedValue({
+			const mockDbDeleteErr = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockRejectedValue(new Error("Delete fail")),
+				}),
 				query: {
 					scenarios: {
 						findFirst: vi.fn().mockResolvedValue(existingScenario),
 					},
 				},
-			} as never);
-			vi.spyOn(scenarioTableService, "delete")
-				.mockRejectedValueOnce(new Error("Delete fail"))
-				.mockRejectedValueOnce("Str err");
-
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbDeleteErr as never);
 			expect(await vodService.deleteScenario({ id: "sc_1" })).toEqual({
 				error: "Delete fail",
 				success: false,
 			});
+
+			const mockDbDeleteStrErr = {
+				delete: vi.fn().mockReturnValue({
+					where: vi.fn().mockRejectedValue("Str err"),
+				}),
+				query: {
+					scenarios: {
+						findFirst: vi.fn().mockResolvedValue(existingScenario),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDbDeleteStrErr as never);
 			expect(await vodService.deleteScenario({ id: "sc_1" })).toEqual({
 				error: "Failed to delete scenario",
 				success: false,

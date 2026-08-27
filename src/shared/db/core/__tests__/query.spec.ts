@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampPagination, escapeLike } from "../query";
+import { buildPaginatedResult, clampPagination, escapeLike } from "../query";
 
 describe("escapeLike", () => {
 	it("escapes percent signs", () => {
@@ -228,6 +228,46 @@ describe("clampPagination", () => {
 			offset: 0,
 			page: 1,
 			pageSize: 10,
+		});
+	});
+});
+
+describe("buildPaginatedResult", () => {
+	it("correctly constructs a PaginatedResult from items, total, and clamped pagination", () => {
+		// Arrange
+		const items = [{ id: "1" }, { id: "2" }];
+		const total = 25;
+		const pagination = { offset: 0, page: 1, pageSize: 10 };
+
+		// Act
+		const result = buildPaginatedResult(items, total, pagination);
+
+		// Assert
+		expect(result).toEqual({
+			items: [{ id: "1" }, { id: "2" }],
+			page: 1,
+			pageSize: 10,
+			total: 25,
+			totalPages: 3,
+		});
+	});
+
+	it("ensures totalPages is at least 1 when total is 0", () => {
+		// Arrange
+		const items: Array<{ id: string }> = [];
+		const total = 0;
+		const pagination = { offset: 0, page: 1, pageSize: 10 };
+
+		// Act
+		const result = buildPaginatedResult(items, total, pagination);
+
+		// Assert
+		expect(result).toEqual({
+			items: [],
+			page: 1,
+			pageSize: 10,
+			total: 0,
+			totalPages: 1,
 		});
 	});
 });

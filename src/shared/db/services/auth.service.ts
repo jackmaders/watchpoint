@@ -1,5 +1,4 @@
 import { count, desc, eq } from "drizzle-orm";
-import { updateUserRoleInputSchema } from "../auth/validation";
 import {
 	type DbContext,
 	type DbResult,
@@ -10,6 +9,7 @@ import {
 	toErrorMessage,
 } from "../core";
 import { type UserRole, users } from "../schema/auth";
+import { updateUserRoleInputSchema } from "../validation/auth";
 import { auditService } from "./audit.service";
 
 export interface GetUsersOptions {
@@ -90,6 +90,9 @@ async function applyUserRoleUpdate(
 }
 
 export const authService = {
+	async count(context?: DbContext): Promise<DbResult<number>> {
+		return authService.getUserCount(context);
+	},
 	async getById(
 		id: string,
 		context?: DbContext,
@@ -112,6 +115,13 @@ export const authService = {
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve user count"));
 		}
+	},
+
+	async list(
+		options: GetUsersOptions = {},
+		context?: DbContext,
+	): Promise<DbResult<UserItem[]>> {
+		return authService.listUsers(options, context);
 	},
 
 	async listUsers(

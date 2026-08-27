@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dbFailure, dbSuccess, toErrorMessage } from "../result";
+import { dbFailure, dbSuccess, toErrorMessage, tryDb } from "../result";
 
 describe("dbResult helpers", () => {
 	it("constructs a successful result object with data", () => {
@@ -61,5 +61,51 @@ describe("dbResult helpers", () => {
 
 		// Assert
 		expect(result).toBe("Fallback");
+	});
+
+	it("tryDb returns success result when operation resolves", async () => {
+		// Arrange
+		const operation = async () => ({ id: "123", name: "Ana" });
+
+		// Act
+		const result = await tryDb(operation);
+
+		// Assert
+		expect(result).toEqual({
+			data: { id: "123", name: "Ana" },
+			success: true,
+		});
+	});
+
+	it("tryDb parses and returns failure when operation rejects", async () => {
+		// Arrange
+		const operation = async () => {
+			throw new Error("UNIQUE constraint failed: user.email");
+		};
+
+		// Act
+		const result = await tryDb(operation);
+
+		// Assert
+		expect(result).toEqual({
+			error: "A record with this email already exists",
+			success: false,
+		});
+	});
+
+	it("tryDb uses fallback message when unknown error occurs", async () => {
+		// Arrange
+		const operation = async () => {
+			throw "something unknown";
+		};
+
+		// Act
+		const result = await tryDb(operation, "Custom fallback error");
+
+		// Assert
+		expect(result).toEqual({
+			error: "Custom fallback error",
+			success: false,
+		});
 	});
 });

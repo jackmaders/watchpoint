@@ -1,5 +1,6 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import {
+	buildPaginatedResult,
 	clampPagination,
 	type DbContext,
 	type DbResult,
@@ -97,7 +98,7 @@ export const auditService = {
 		try {
 			const db = await getDb(context);
 			const { actorUserId, entityId, entityType } = options;
-			const { offset, page, pageSize } = clampPagination(options);
+			const pagination = clampPagination(options);
 
 			const conditions = [];
 			if (entityType) {
@@ -118,8 +119,8 @@ export const auditService = {
 				.where(whereClause);
 
 			const logs = await db.query.auditEntries.findMany({
-				limit: pageSize,
-				offset,
+				limit: pagination.pageSize,
+				offset: pagination.offset,
 				orderBy: [desc(auditEntries.createdAt), desc(auditEntries.id)],
 				where: (entry, { and, eq }) => {
 					const conds = [];
@@ -133,15 +134,7 @@ export const auditService = {
 				},
 			});
 
-			const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-			return dbSuccess({
-				items: logs,
-				page,
-				pageSize,
-				total,
-				totalPages,
-			});
+			return dbSuccess(buildPaginatedResult(logs, total, pagination));
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve audit logs"));
 		}

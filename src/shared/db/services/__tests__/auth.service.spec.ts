@@ -16,7 +16,7 @@ describe("authService", () => {
 	});
 
 	describe("getUserCount", () => {
-		it("returns total user count wrapped in dbSuccess", async () => {
+		it("returns total user count wrapped in dbSuccess via count and getUserCount", async () => {
 			// Arrange
 			const mockDb = {
 				select: vi.fn().mockReturnValue({
@@ -27,9 +27,14 @@ describe("authService", () => {
 
 			// Act
 			const result = await authService.getUserCount();
+			const resultCount = await authService.count();
 
 			// Assert
 			expect(result).toEqual({
+				data: 5,
+				success: true,
+			});
+			expect(resultCount).toEqual({
 				data: 5,
 				success: true,
 			});
@@ -197,6 +202,7 @@ describe("authService", () => {
 			});
 			const resultSearch = await authService.listUsers({ search: "adm" });
 			const resultRole = await authService.listUsers({ role: "ADMIN" });
+			const resultList = await authService.list({ role: "ADMIN" });
 			const resultNone = await getUsers({});
 
 			// Assert
@@ -209,6 +215,10 @@ describe("authService", () => {
 				success: true,
 			});
 			expect(resultRole).toEqual({
+				data: mockUsers,
+				success: true,
+			});
+			expect(resultList).toEqual({
 				data: mockUsers,
 				success: true,
 			});

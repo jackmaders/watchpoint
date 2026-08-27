@@ -7,7 +7,7 @@ import {
 	validateInputConfigByType,
 	validateScenarioConfig,
 	validateVodForPublishing,
-} from "../validation";
+} from "../vods";
 
 describe("vods validation", () => {
 	describe("multipleChoiceConfigSchema", () => {
