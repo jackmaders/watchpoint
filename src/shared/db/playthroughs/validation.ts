@@ -1,7 +1,11 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { moduleTypeEnum } from "../vods/schema";
-import { attemptRecords, playthroughs, scenarioSnapshots } from "./schema";
+import {
+	attemptRecords,
+	playthroughs,
+	scenarioSnapshots,
+} from "../schema/playthroughs";
+import { moduleTypeEnum } from "../schema/vods";
 
 export const selectPlaythroughSchema = createSelectSchema(playthroughs);
 export const insertPlaythroughSchema = createInsertSchema(playthroughs);

@@ -8,7 +8,7 @@ import {
 	getDb,
 	toErrorMessage,
 } from "../core";
-import { type UserRole, users } from "./schema";
+import { type UserRole, users } from "../schema/auth";
 import { updateUserRoleInputSchema } from "./validation";
 
 export interface GetUsersOptions {

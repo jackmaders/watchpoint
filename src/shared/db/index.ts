@@ -11,14 +11,9 @@ export {
 	getAuditLogs,
 } from "./audit/repository";
 export {
-	auditEntries,
-	auditEntriesRelations,
-} from "./audit/schema";
-export {
 	insertAuditEntrySchema,
 	selectAuditEntrySchema,
 } from "./audit/validation";
-
 // Auth & Users
 export type {
 	GetUsersOptions,
@@ -31,17 +26,6 @@ export {
 	getUsers,
 	updateUserRole,
 } from "./auth/repository";
-export {
-	accounts,
-	accountsRelations,
-	sessions,
-	sessionsRelations,
-	type UserRole,
-	userRoleEnum,
-	users,
-	usersRelations,
-	verifications,
-} from "./auth/schema";
 export {
 	insertUserSchema,
 	selectUserSchema,
@@ -100,6 +84,28 @@ export {
 	recordPlaythroughAttempt,
 } from "./playthroughs/repository";
 export {
+	insertAttemptRecordSchema,
+	insertPlaythroughSchema,
+	scenarioSnapshotInputSchema,
+	selectAttemptRecordSchema,
+	selectPlaythroughSchema,
+} from "./playthroughs/validation";
+export {
+	auditEntries,
+	auditEntriesRelations,
+} from "./schema/audit";
+export {
+	accounts,
+	accountsRelations,
+	sessions,
+	sessionsRelations,
+	type UserRole,
+	userRoleEnum,
+	users,
+	usersRelations,
+	verifications,
+} from "./schema/auth";
+export {
 	attemptRecords,
 	attemptRecordsRelations,
 	type PlaythroughStatus,
@@ -112,14 +118,19 @@ export {
 	playthroughsRelations,
 	scenarioSnapshots,
 	scenarioSnapshotsRelations,
-} from "./playthroughs/schema";
+} from "./schema/playthroughs";
 export {
-	insertAttemptRecordSchema,
-	insertPlaythroughSchema,
-	scenarioSnapshotInputSchema,
-	selectAttemptRecordSchema,
-	selectPlaythroughSchema,
-} from "./playthroughs/validation";
+	type HeroRole,
+	heroRoleEnum,
+	type InputType,
+	inputTypeEnum,
+	type ModuleType,
+	moduleTypeEnum,
+	scenarios,
+	scenariosRelations,
+	vods,
+	vodsRelations,
+} from "./schema/vods";
 // Seed
 export {
 	assertLocalSeedTarget,
@@ -132,18 +143,6 @@ export {
 	type SeedCredentials,
 	type SeedEnvironment,
 } from "./seed";
-export {
-	type HeroRole,
-	heroRoleEnum,
-	type InputType,
-	inputTypeEnum,
-	type ModuleType,
-	moduleTypeEnum,
-	scenarios,
-	scenariosRelations,
-	vods,
-	vodsRelations,
-} from "./vods/schema";
 // VODs & Scenarios
 export type {
 	AdminVodItem,

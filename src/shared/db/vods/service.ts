@@ -16,7 +16,7 @@ import {
 	type ModuleType,
 	scenarios,
 	vods,
-} from "./schema";
+} from "../schema/vods";
 import {
 	insertVodSchema,
 	validateScenarioConfig,

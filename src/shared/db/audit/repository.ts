@@ -1,5 +1,4 @@
 import { desc } from "drizzle-orm";
-import type { users } from "../auth/schema";
 import {
 	type DbContext,
 	type DbResult,
@@ -9,7 +8,8 @@ import {
 	type JsonValue,
 	toErrorMessage,
 } from "../core";
-import { auditEntries } from "./schema";
+import { auditEntries } from "../schema/audit";
+import type { users } from "../schema/auth";
 
 export interface CreateAuditEntryInput {
 	action: string;

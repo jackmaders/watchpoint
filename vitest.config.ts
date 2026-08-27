@@ -20,6 +20,7 @@ export default defineConfig({
 				"src/pages/vods-id-session/ui/session-player-media-recovery-prototype.tsx",
 				"src/shared/db/**/schema.ts",
 				"src/shared/db/schema.ts",
+				"src/shared/db/schema/**",
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			reporter: ["text-summary", "text"],

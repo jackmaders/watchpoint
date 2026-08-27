@@ -6,7 +6,7 @@ import {
 	moduleTypeEnum,
 	scenarios,
 	vods,
-} from "./schema";
+} from "../schema/vods";
 
 export const multipleChoiceOptionSchema = z.object({
 	id: z.string().min(1),

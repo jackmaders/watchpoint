@@ -8,9 +8,9 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import { users } from "../auth/schema";
 import type { JsonValue } from "../core/types";
-import { inputTypeEnum, moduleTypeEnum, scenarios, vods } from "../vods/schema";
+import { users } from "./auth";
+import { inputTypeEnum, moduleTypeEnum, scenarios, vods } from "./vods";
 
 export const playthroughStatusEnum = ["IN_PROGRESS", "COMPLETED"] as const;
 export type PlaythroughStatus = (typeof playthroughStatusEnum)[number];
