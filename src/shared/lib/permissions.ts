@@ -1,4 +1,4 @@
-import type { DbContext } from "../db/client/client";
+import type { DbContext } from "../db/core/client";
 import type { UserRole } from "../db/schema";
 import { getCurrentUser } from "./auth";
 

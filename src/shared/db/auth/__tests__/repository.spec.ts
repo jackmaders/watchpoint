@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createAuditEntry } from "../../audit/repository";
-import { getDb } from "../../client/client";
+import { getDb } from "../../core/client";
 import {
 	getUserById,
 	getUserCount,
@@ -8,7 +8,7 @@ import {
 	updateUserRole,
 } from "../repository";
 
-vi.mock("../../client/client");
+vi.mock("../../core/client");
 vi.mock("../../audit/repository");
 
 describe("auth repository", () => {

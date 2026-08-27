@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDb } from "../../client/client";
+import { getDb } from "../../core/client";
 import { createAuditEntry, getAuditEntries, getAuditLogs } from "../repository";
 
-vi.mock("../../client/client");
+vi.mock("../../core/client");
 
 describe("audit repository", () => {
 	beforeEach(() => {

@@ -116,8 +116,11 @@ describe("db client", () => {
 			new Error("Proxy failed"),
 		);
 
-		// Act & Assert
-		await expect(getDb({})).rejects.toThrow(
+		// Act
+		const promise = getDb({});
+
+		// Assert
+		await expect(promise).rejects.toThrow(
 			/Cloudflare D1 database binding \(DB\) not found/,
 		);
 	});

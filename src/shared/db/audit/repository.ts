@@ -1,13 +1,14 @@
 import { desc } from "drizzle-orm";
 import type { users } from "../auth/schema";
-import { type DbContext, getDb } from "../client/client";
 import {
+	type DbContext,
 	type DbResult,
 	dbFailure,
 	dbSuccess,
+	getDb,
+	type JsonValue,
 	toErrorMessage,
-} from "../common/result";
-import type { JsonValue } from "../common/types";
+} from "../core";
 import { auditEntries } from "./schema";
 
 export interface CreateAuditEntryInput {

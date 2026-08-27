@@ -30,12 +30,36 @@ describe("dbResult helpers", () => {
 		});
 	});
 
-	it("toErrorMessage returns error.message for Error instances and fallback otherwise", () => {
-		// Act & Assert
-		expect(toErrorMessage(new Error("Actual error"), "Fallback")).toBe(
-			"Actual error",
-		);
-		expect(toErrorMessage("string error", "Fallback")).toBe("Fallback");
-		expect(toErrorMessage(null, "Fallback")).toBe("Fallback");
+	it("toErrorMessage returns error.message for Error instances", () => {
+		// Arrange
+		const error = new Error("Actual error");
+
+		// Act
+		const result = toErrorMessage(error, "Fallback");
+
+		// Assert
+		expect(result).toBe("Actual error");
+	});
+
+	it("toErrorMessage returns fallback for non-Error string instances", () => {
+		// Arrange
+		const error = "string error";
+
+		// Act
+		const result = toErrorMessage(error, "Fallback");
+
+		// Assert
+		expect(result).toBe("Fallback");
+	});
+
+	it("toErrorMessage returns fallback for null values", () => {
+		// Arrange
+		const error = null;
+
+		// Act
+		const result = toErrorMessage(error, "Fallback");
+
+		// Assert
+		expect(result).toBe("Fallback");
 	});
 });

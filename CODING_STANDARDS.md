@@ -145,25 +145,36 @@ absorb everything a slice needs.
 
 ## Database Services & D1 Error Handling Standards
 
-### Service-Oriented Architecture
-- Database modules under `src/shared/db/<domain>/` are structured as **Domain Services** (`service.ts`).
-- Drizzle acts as the internal data-mapping engine. All database access must flow through typed domain service functions.
-- Services export standard CRUD operations and named domain workflow functions.
+### Layered Database Architecture
+- The database subsystem is organized into three explicit layers under `src/shared/db/`:
+  - `src/shared/db/core/`: Foundational infrastructure (D1 client/context, `DbResult<T>`, error mapping, `escapeLike`, pagination & sorting helpers).
+  - `src/shared/db/schema/`: Drizzle table declarations, relations, and enums (`audit.ts`, `auth.ts`, `playthroughs.ts`, `vods.ts`, `index.ts`).
+  - `src/shared/db/services/`: Cohesive domain service objects (`vods.service.ts`, `auth.service.ts`, `audit.service.ts`, `playthroughs.service.ts`).
+- Drizzle acts as the internal data-mapping engine. All database access must flow through typed domain service objects (e.g. `vodService`, `authService`, `auditService`, `playthroughService`). Zero direct Drizzle imports or query operations are permitted outside `src/shared/db/`.
 
-### Method Naming & Return Type Contracts
-- **Single Record Queries**: Use `get<Entity>ById(id)` or `get<Entity>By<Field>(value)`. Always returns `Promise<T | null>` (never throws on not-found).
-- **Collection Queries**: Use `list<Entities>(options)`. Always returns `Promise<T[]>` (returns empty array `[]` when no matches are found).
-- **Existence & Metrics**: Use `exists<Entity>(options)` (`Promise<boolean>`) and `count<Entities>(options)` (`Promise<number>`).
+### Service Object Contracts & Method Naming
+- **Domain Service Objects**: Each domain exports a cohesive service object (e.g. `vodService`, `authService`) containing standard CRUD and domain workflow operations.
+- **Return Type Contract**: All service methods return `Promise<DbResult<T>>` (`{ success: true, data: T } | { success: false, error: string }`).
+- **Single Record Queries**: Use `getById(id, context?)` or `getBy<Field>(value, context?)`. Returns `Promise<DbResult<T | null>>` (returns `data: null`, never throws on not-found).
+- **Collection Queries**: Use `list<Entities>(options?, context?)` or `list(options?, context?)`. Returns `Promise<DbResult<T[]>>` or `Promise<DbResult<PaginatedResult<T>>>`.
+- **Existence & Metrics**: Use `exists(options, context?)` (`Promise<DbResult<boolean>>`) and `count(options?, context?)` (`Promise<DbResult<number>>`).
 - **Standard Mutations**:
-  - `create<Entity>(input)`: Inserts a single record. Returns `Promise<T>`.
-  - `update<Entity>(id, input)`: Updates a single record. Returns `Promise<T | null>`.
-  - `upsert<Entity>(input)`: Inserts or updates a record based on unique constraints. Returns `Promise<T>`.
-  - `delete<Entity>(id)`: Deletes a single record. Returns `Promise<boolean>`.
+  - `create(input, context?)`: Inserts a single record. Returns `Promise<DbResult<T>>`.
+  - `update(id, input, context?)`: Updates a single record. Returns `Promise<DbResult<T>>`.
+  - `upsert(input, context?)`: Inserts or updates a record based on unique constraints. Returns `Promise<DbResult<T>>`.
+  - `delete(id, context?)`: Deletes a single record. Returns `Promise<DbResult<void>>` or `Promise<DbResult<boolean>>`.
 - **Complex Domain Workflows**: Named with action-first business verbs (`publishVod`, `reorderScenarios`, `changeUserRole`, `recordPlaythroughAttempt`, `completePlaythrough`).
+
+### Pagination & Query Sanitization Standards
+- **Standard Pagination Envelope**: Paginated collection queries return `PaginatedResult<T>` (`{ items: T[], page: number, pageSize: number, total: number, totalPages: number }`). Page size is clamped to `[1, 50]` (default 10).
+- **Deterministic Sort Tiebreakers**: Every offset-paginated query must append the primary key (`desc(table.id)`) to prevent row duplication/skipping.
+- **LIKE Sanitization**: All string search inputs must be passed through `escapeLike(query)` from `core/query.ts` to escape `%`, `_`, and `\` wildcards.
+- **Forced Boundary Scopes**: Tenancy, ownership (`userId`), and visibility (`isPublished = true`) filters must be enforced in private service helpers.
 
 ### D1Error & SQLite Error Handling
 - Catch raw Drizzle / D1 exceptions and map or verify against standard `D1ErrorCode` constants / SQLite error codes (e.g. `SQLITE_CONSTRAINT_UNIQUE = 2067`, `SQLITE_CONSTRAINT_FOREIGNKEY = 787`, `SQLITE_BUSY = 5`).
-- Query operations return `null` or `[]` on missing records and only propagate genuine D1 infrastructure errors.
+- Query operations return `data: null` or `data: []` on missing records and only return failures on genuine D1 infrastructure errors.
 - Mutation operations catch constraint violations to distinguish predictable conflicts (e.g. unique constraint collision) from fatal infrastructure failures.
 - Server-side error monitoring (Sentry) and client-side UI error notifications (Toasts) are isolated at server function (`server-fns.ts`) and client mutation boundaries (`MutationCache` / `QueryCache`).
+
 

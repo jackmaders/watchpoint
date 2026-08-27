@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../db/client/client");
+vi.mock("../../db/core/client");
 vi.mock("@tanstack/react-start/server");
 
-import { getDb } from "../../db/client/client";
+import { getDb } from "../../db/core/client";
 import {
 	createAuthInstance,
 	getAuth,

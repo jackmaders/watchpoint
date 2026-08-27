@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { userRoleEnum } from "../auth/schema";
-import { dbSuccess } from "../common/result";
+import { dbSuccess } from "../core/result";
 import { playthroughStatusEnum } from "../playthroughs/schema";
 import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../vods/schema";
 

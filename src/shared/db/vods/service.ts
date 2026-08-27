@@ -1,14 +1,15 @@
 import { desc, eq } from "drizzle-orm";
 import { createAuditEntry } from "../audit/repository";
-import { type DbContext, getDb } from "../client/client";
+import { createTableService } from "../common/service";
 import {
+	type DbContext,
 	type DbResult,
 	dbFailure,
 	dbSuccess,
+	getDb,
+	type JsonValue,
 	toErrorMessage,
-} from "../common/result";
-import { createTableService } from "../common/service";
-import type { JsonValue } from "../common/types";
+} from "../core";
 import {
 	type HeroRole,
 	type InputType,

@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { dbSuccess } from "../../common/result";
+import { dbSuccess } from "../../core/result";
 
 export const createAuditEntry = vi.fn(async () => dbSuccess(null));
 export const getAuditEntries = vi.fn(async () => dbSuccess([]));

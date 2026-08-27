@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "../auth/schema";
-import type { JsonValue } from "../common/types";
+import type { JsonValue } from "../core/types";
 
 export const auditEntries = sqliteTable(
 	"audit_entry",

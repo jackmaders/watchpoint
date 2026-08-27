@@ -1,7 +1,7 @@
 import { count as drizzleCount, eq } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
-import { type DbContext, getDb } from "../client/client";
-import { catchDbError } from "./errors";
+import { type DbContext, getDb } from "../core/client";
+import { catchDbError } from "../core/errors";
 
 export interface TableWithId extends SQLiteTable {
 	id: SQLiteColumn;

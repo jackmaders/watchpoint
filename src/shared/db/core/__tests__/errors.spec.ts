@@ -189,10 +189,12 @@ describe("errors utility", () => {
 	it("catchDbError creates a rejecting handler that parses errors", () => {
 		// Arrange
 		const handler = catchDbError("Default fallback");
+		const testError = new Error("FOREIGN KEY constraint failed");
 
-		// Act & Assert
-		expect(() => handler(new Error("FOREIGN KEY constraint failed"))).toThrow(
-			D1DatabaseError,
-		);
+		// Act
+		const execute = () => handler(testError);
+
+		// Assert
+		expect(execute).toThrow(D1DatabaseError);
 	});
 });

@@ -1,7 +1,7 @@
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { count } from "drizzle-orm";
-import { type DbContext, getDb } from "../db/client/client";
+import { type DbContext, getDb } from "../db/core/client";
 import * as schema from "../db/schema";
 
 type SelectableDb = {
