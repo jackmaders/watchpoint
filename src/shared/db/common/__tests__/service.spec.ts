@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { users } from "../../auth/schema";
 import { getDb } from "../../core/client";
 import { D1DatabaseError, D1ErrorKind } from "../../core/errors";
+import { users } from "../../schema/auth";
 import { createTableService } from "../service";
 
 vi.mock("../../core/client");

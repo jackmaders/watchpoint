@@ -1,15 +1,15 @@
 import { hashPassword } from "better-auth/crypto";
-import { auditEntries } from "../audit/schema";
-import { accounts, sessions, users } from "../auth/schema";
 import type { DrizzleDb } from "../core/client";
+import { auditEntries } from "../schema/audit";
+import { accounts, sessions, users } from "../schema/auth";
 import {
 	attemptRecords,
 	playthroughCompletions,
 	playthroughModuleSelections,
 	playthroughs,
 	scenarioSnapshots,
-} from "../playthroughs/schema";
-import { scenarios, vods } from "../vods/schema";
+} from "../schema/playthroughs";
+import { scenarios, vods } from "../schema/vods";
 import {
 	FIXTURE_IDS,
 	getLocalFixtureScenarios,

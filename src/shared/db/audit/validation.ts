@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { auditEntries } from "./schema";
+import { auditEntries } from "../schema/audit";
 
 export const selectAuditEntrySchema = createSelectSchema(auditEntries);
 export const insertAuditEntrySchema = createInsertSchema(auditEntries, {

@@ -12,7 +12,6 @@ import {
 	type JsonValue,
 	toErrorMessage,
 } from "../core";
-import type { ModuleType } from "../vods/schema";
 import {
 	attemptRecords,
 	type PlaythroughStatus,
@@ -20,7 +19,8 @@ import {
 	playthroughModuleSelections,
 	playthroughs,
 	scenarioSnapshots,
-} from "./schema";
+} from "../schema/playthroughs";
+import type { ModuleType } from "../schema/vods";
 
 export const PLAYTHROUGH_START_CONFLICT_ERROR = "Playthrough start conflict";
 export const PLAYTHROUGH_NOT_IN_PROGRESS_ERROR =

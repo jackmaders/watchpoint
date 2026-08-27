@@ -1,8 +1,8 @@
 import { vi } from "vitest";
-import { userRoleEnum } from "../auth/schema";
 import { dbSuccess } from "../core/result";
-import { playthroughStatusEnum } from "../playthroughs/schema";
-import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../vods/schema";
+import { userRoleEnum } from "../schema/auth";
+import { playthroughStatusEnum } from "../schema/playthroughs";
+import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema/vods";
 
 export const getPublishedVods = vi.fn(async () => dbSuccess([]));
 export const getSessionManifest = vi.fn(async () => dbSuccess(null));

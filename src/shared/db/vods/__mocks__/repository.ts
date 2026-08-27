@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { dbSuccess } from "../../core/result";
-import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema";
+import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../../schema/vods";
 
 export const getPublishedVods = vi.fn(async () => dbSuccess([]));
 export const getAdminVods = vi.fn(async () => dbSuccess([]));
