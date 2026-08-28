@@ -41,12 +41,12 @@ describe("getPlayerHistoryData", () => {
 		// Assert
 		expect(result).toEqual(expectedHistory);
 		expect(playthroughService.listHistory).toHaveBeenCalledWith(
-			"player_123",
 			{
 				modules: ["STRATEGY"],
 				page: 1,
 				pageSize: 10,
 				status: "COMPLETED",
+				userId: "player_123",
 				vodId: "vod_1",
 			},
 			undefined,

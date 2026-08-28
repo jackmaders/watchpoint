@@ -70,7 +70,7 @@ describe("entities/vod server-fns", () => {
 		)({ data: { id: "vod_1" } });
 
 		// Assert
-		expect(vodService.getById).toHaveBeenCalledWith("vod_1");
+		expect(vodService.getById).toHaveBeenCalledWith({ id: "vod_1" });
 		expect(result).toBe(mockVod);
 	});
 
@@ -124,7 +124,8 @@ describe("entities/vod server-fns", () => {
 		});
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith("vod_123", {
+		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
+			id: "vod_123",
 			modules: ["STRATEGY"],
 			publishedOnly: undefined,
 		});
@@ -170,7 +171,8 @@ describe("entities/vod server-fns", () => {
 		});
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith("vod_123", {
+		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
+			id: "vod_123",
 			modules: ["STRATEGY"],
 			publishedOnly: true,
 		});
@@ -212,7 +214,8 @@ describe("entities/vod server-fns", () => {
 		});
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith("vod_123", {
+		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
+			id: "vod_123",
 			modules: undefined,
 			publishedOnly: undefined,
 		});

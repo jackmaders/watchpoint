@@ -38,8 +38,14 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.listUsers).mockResolvedValueOnce({
-				data: mockUsers,
+			vi.mocked(authService.list).mockResolvedValueOnce({
+				data: {
+					items: mockUsers,
+					page: 1,
+					pageSize: 50,
+					total: mockUsers.length,
+					totalPages: 1,
+				},
 				success: true,
 			} as never);
 
@@ -54,7 +60,7 @@ describe("admin-users server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("users:view");
-			expect(authService.listUsers).toHaveBeenCalledWith({
+			expect(authService.list).toHaveBeenCalledWith({
 				role: "ADMIN",
 				search: "admin",
 			});
@@ -69,8 +75,14 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.listUsers).mockResolvedValueOnce({
-				data: [],
+			vi.mocked(authService.list).mockResolvedValueOnce({
+				data: {
+					items: [],
+					page: 1,
+					pageSize: 50,
+					total: 0,
+					totalPages: 1,
+				},
 				success: true,
 			} as never);
 
@@ -105,7 +117,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.listUsers).mockResolvedValueOnce({
+			vi.mocked(authService.list).mockResolvedValueOnce({
 				error: "Failed to load users",
 				success: false,
 			});

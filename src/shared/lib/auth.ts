@@ -51,7 +51,7 @@ export function createAuthInstance(
 			user: {
 				create: {
 					before: async (user) => {
-						const countResult = await authService.getUserCount();
+						const countResult = await authService.count();
 						const userCount = countResult.success ? countResult.data : 0;
 						if (userCount === 0) {
 							return {
@@ -165,7 +165,7 @@ export async function isRegistrationOpen(
 	if (env.BETTER_AUTH_ALLOW_REGISTRATION === "true") {
 		return true;
 	}
-	const countResult = await authService.getUserCount(context);
+	const countResult = await authService.count(undefined, context);
 	const userCount = countResult.success ? countResult.data : 0;
 	return userCount === 0;
 }

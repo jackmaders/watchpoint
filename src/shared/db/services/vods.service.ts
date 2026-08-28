@@ -36,6 +36,10 @@ export interface GetSessionManifestOptions {
 	publishedOnly?: boolean;
 }
 
+export interface GetSessionManifestInput extends GetSessionManifestOptions {
+	id: string;
+}
+
 export type PublishedVodItem = VodItem & {
 	scenarios: Array<{ id: string }>;
 };
@@ -46,8 +50,6 @@ export type SessionManifest = VodItem & {
 
 export interface GetAdminVodsOptions extends PaginationOptions {
 	isPublished?: boolean;
-	limit?: number;
-	offset?: number;
 	role?: HeroRole;
 	search?: string;
 }
@@ -304,7 +306,7 @@ async function validateScenarioCreation(
 		return validation.error ?? "Invalid scenario configuration";
 	}
 
-	const vodResult = await vodService.getById(input.vodId, context);
+	const vodResult = await vodService.getById({ id: input.vodId }, context);
 	if (!vodResult.success) {
 		return vodResult.error;
 	}
@@ -490,7 +492,7 @@ export const vodService = {
 		input: DeleteVodInput,
 		context?: DbContext,
 	): Promise<DbResult<void>> {
-		const existingResult = await vodService.getById(input.id, context);
+		const existingResult = await vodService.getById({ id: input.id }, context);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
 		}
@@ -529,7 +531,10 @@ export const vodService = {
 		input: DeleteScenarioInput,
 		context?: DbContext,
 	): Promise<DbResult<void>> {
-		const existingResult = await vodService.getScenarioById(input.id, context);
+		const existingResult = await vodService.getScenarioById(
+			{ id: input.id },
+			context,
+		);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
 		}
@@ -565,13 +570,13 @@ export const vodService = {
 	},
 
 	async getById(
-		id: string,
+		input: { id: string },
 		context?: DbContext,
 	): Promise<DbResult<(VodItem & { scenarios: ScenarioItem[] }) | null>> {
 		try {
 			const db = await getDb(context);
 			const vod = await db.query.vods.findFirst({
-				where: (table, { eq }) => eq(table.id, id),
+				where: (table, { eq }) => eq(table.id, input.id),
 				with: {
 					scenarios: {
 						orderBy: (scenariosTable, { asc }) => [
@@ -588,13 +593,13 @@ export const vodService = {
 	},
 
 	async getScenarioById(
-		id: string,
+		input: { id: string },
 		context?: DbContext,
 	): Promise<DbResult<ScenarioItem | null>> {
 		try {
 			const db = await getDb(context);
 			const scenario = await db.query.scenarios.findFirst({
-				where: (table, { eq }) => eq(table.id, id),
+				where: (table, { eq }) => eq(table.id, input.id),
 			});
 			return dbSuccess(scenario ?? null);
 		} catch (error) {
@@ -603,14 +608,14 @@ export const vodService = {
 	},
 
 	async getScenariosByVodId(
-		vodId: string,
+		input: { vodId: string },
 		context?: DbContext,
 	): Promise<DbResult<ScenarioItem[]>> {
 		try {
 			const db = await getDb(context);
 			const scenarioList = await db.query.scenarios.findMany({
 				orderBy: (table, { asc }) => [asc(table.timestampSeconds)],
-				where: (table, { eq }) => eq(table.vodId, vodId),
+				where: (table, { eq }) => eq(table.vodId, input.vodId),
 			});
 			return dbSuccess(scenarioList);
 		} catch (error) {
@@ -619,13 +624,12 @@ export const vodService = {
 	},
 
 	async getSessionManifest(
-		id: string,
-		options: GetSessionManifestOptions = {},
+		input: GetSessionManifestInput,
 		context?: DbContext,
 	): Promise<DbResult<(VodItem & { scenarios: ScenarioItem[] }) | null>> {
 		try {
 			const db = await getDb(context);
-			const { modules, publishedOnly = true } = options;
+			const { id, modules, publishedOnly = true } = input;
 
 			const vod = await db.query.vods.findFirst({
 				where: publishedOnly
@@ -756,7 +760,7 @@ export const vodService = {
 		input: ReorderScenariosInput,
 		context?: DbContext,
 	): Promise<DbResult<void>> {
-		const vodResult = await vodService.getById(input.vodId, context);
+		const vodResult = await vodService.getById({ id: input.vodId }, context);
 		if (!vodResult.success) {
 			return dbFailure(vodResult.error);
 		}
@@ -776,25 +780,27 @@ export const vodService = {
 
 		try {
 			const db = await getDb(context);
-			for (const order of input.scenarioOrders) {
-				await db
-					.update(scenarios)
-					.set({ timestampSeconds: order.timestampSeconds })
-					.where(eq(scenarios.id, order.id));
-			}
+			await db.transaction(async (tx) => {
+				for (const order of input.scenarioOrders) {
+					await tx
+						.update(scenarios)
+						.set({ timestampSeconds: order.timestampSeconds })
+						.where(eq(scenarios.id, order.id));
+				}
 
-			await auditService.create(
-				{
-					action: "SCENARIOS_REORDERED",
-					actorUserId: input.actorUserId,
-					entityId: input.vodId,
-					entityType: "VOD",
-					metadata: {
-						scenarioOrders: input.scenarioOrders as unknown as JsonValue,
+				await auditService.create(
+					{
+						action: "SCENARIOS_REORDERED",
+						actorUserId: input.actorUserId,
+						entityId: input.vodId,
+						entityType: "VOD",
+						metadata: {
+							scenarioOrders: input.scenarioOrders as unknown as JsonValue,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
+			});
 
 			return dbSuccess(undefined);
 		} catch (error) {
@@ -820,7 +826,7 @@ export const vodService = {
 		input: UpdateVodInput,
 		context?: DbContext,
 	): Promise<DbResult<VodItem>> {
-		const existingResult = await vodService.getById(input.id, context);
+		const existingResult = await vodService.getById({ id: input.id }, context);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
 		}
@@ -859,7 +865,10 @@ export const vodService = {
 		input: UpdateScenarioInput,
 		context?: DbContext,
 	): Promise<DbResult<ScenarioItem>> {
-		const existingResult = await vodService.getScenarioById(input.id, context);
+		const existingResult = await vodService.getScenarioById(
+			{ id: input.id },
+			context,
+		);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
 		}
@@ -907,20 +916,3 @@ export const vodService = {
 		}
 	},
 };
-
-export const getPublishedVods = vodService.listPublished;
-export const getAdminVods = vodService.listAdmin;
-export const getVodById = vodService.getById;
-export const getSessionManifest = vodService.getSessionManifest;
-export const createVod = vodService.create;
-export const updateVod = vodService.update;
-export const deleteVod = vodService.delete;
-export const setVodPublicationStatus = vodService.setPublicationStatus;
-export const bulkPublishVods = vodService.bulkPublish;
-export const bulkDeleteVods = vodService.bulkDelete;
-export const getScenarioById = vodService.getScenarioById;
-export const getScenariosByVodId = vodService.getScenariosByVodId;
-export const createScenario = vodService.createScenario;
-export const updateScenario = vodService.updateScenario;
-export const deleteScenario = vodService.deleteScenario;
-export const reorderScenarios = vodService.reorderScenarios;

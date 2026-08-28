@@ -16,8 +16,7 @@ export async function getPlayerHistoryData(
 	}
 
 	const result = await playthroughService.listHistory(
-		user.id,
-		options,
+		{ ...options, userId: user.id },
 		context,
 	);
 	if (!result.success) {

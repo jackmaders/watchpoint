@@ -223,7 +223,7 @@ describe("auth", () => {
 
 	it("databaseHooks grants ADMIN to the first user registered", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			data: 0,
 			success: true,
 		});
@@ -266,7 +266,7 @@ describe("auth", () => {
 
 	it("databaseHooks grants PLAYER to subsequent user when registration is open", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			data: 3,
 			success: true,
 		});
@@ -312,7 +312,7 @@ describe("auth", () => {
 
 	it("databaseHooks throws FORBIDDEN for subsequent user when registration is closed", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			data: 1,
 			success: true,
 		});
@@ -361,7 +361,7 @@ describe("auth", () => {
 
 	it("isRegistrationOpen returns true when user table is empty and env is false", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			data: 0,
 			success: true,
 		});
@@ -376,7 +376,7 @@ describe("auth", () => {
 
 	it("databaseHooks grants ADMIN when getUserCount fails (falls back to 0)", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			error: "DB error",
 			success: false,
 		});
@@ -419,7 +419,7 @@ describe("auth", () => {
 
 	it("isRegistrationOpen returns true when getUserCount fails (falls back to 0)", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			error: "DB error",
 			success: false,
 		});
@@ -434,7 +434,7 @@ describe("auth", () => {
 
 	it("isRegistrationOpen returns false when user table has users and env is false", async () => {
 		// Arrange
-		vi.mocked(authService.getUserCount).mockResolvedValueOnce({
+		vi.mocked(authService.count).mockResolvedValueOnce({
 			data: 2,
 			success: true,
 		});

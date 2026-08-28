@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../core/client";
-import {
-	auditService,
-	createAuditEntry,
-	getAuditEntries,
-	getAuditLogs,
-} from "../audit.service";
+import { auditService } from "../audit.service";
 
 vi.mock("../../core/client");
 
@@ -61,7 +56,7 @@ describe("auditService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await createAuditEntry({
+			const result = await auditService.create({
 				action: "FAIL_ACTION",
 				actorUserId: "usr_1",
 				entityId: "ent_fail",
@@ -130,31 +125,10 @@ describe("auditService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await auditService.listByEntity("VOD", "vod_1");
-
-			// Assert
-			expect(result).toEqual({
-				data: mockEntries,
-				success: true,
+			const result = await auditService.listByEntity({
+				entityId: "vod_1",
+				entityType: "VOD",
 			});
-		});
-
-		it("delegates getAuditEntries to listByEntity", async () => {
-			// Arrange
-			const mockEntries = [
-				{ action: "EDIT", entityId: "vod_1", entityType: "VOD", id: "1" },
-			];
-			const mockDb = {
-				query: {
-					auditEntries: {
-						findMany: vi.fn().mockResolvedValue(mockEntries),
-					},
-				},
-			};
-			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-
-			// Act
-			const result = await getAuditEntries("VOD", "vod_1");
 
 			// Assert
 			expect(result).toEqual({
@@ -170,8 +144,14 @@ describe("auditService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await auditService.listByEntity("VOD", "vod_1");
-			const res2 = await auditService.listByEntity("VOD", "vod_1");
+			const res1 = await auditService.listByEntity({
+				entityId: "vod_1",
+				entityType: "VOD",
+			});
+			const res2 = await auditService.listByEntity({
+				entityId: "vod_1",
+				entityType: "VOD",
+			});
 
 			// Assert
 			expect(res1).toEqual({
@@ -185,7 +165,7 @@ describe("auditService", () => {
 		});
 	});
 
-	describe("listLogs", () => {
+	describe("list", () => {
 		it("filters by each option combination and returns paginated result", async () => {
 			// Arrange
 			const mockLogs = [
@@ -225,17 +205,17 @@ describe("auditService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const resAll = await auditService.listLogs({
+			const resAll = await auditService.list({
 				actorUserId: "usr_1",
 				entityId: "vod_1",
 				entityType: "VOD",
 				page: 1,
 				pageSize: 10,
 			});
-			const resType = await auditService.listLogs({ entityType: "VOD" });
-			const resEntity = await auditService.listLogs({ entityId: "vod_1" });
-			const resActor = await auditService.listLogs({ actorUserId: "usr_1" });
-			const resNone = await getAuditLogs({});
+			const resType = await auditService.list({ entityType: "VOD" });
+			const resEntity = await auditService.list({ entityId: "vod_1" });
+			const resActor = await auditService.list({ actorUserId: "usr_1" });
+			const resNone = await auditService.list({});
 
 			// Assert
 			expect(resAll).toEqual({
@@ -307,7 +287,7 @@ describe("auditService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await auditService.listLogs();
+			const result = await auditService.list();
 
 			// Assert
 			expect(result).toEqual({
@@ -329,8 +309,8 @@ describe("auditService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await auditService.listLogs();
-			const res2 = await auditService.listLogs();
+			const res1 = await auditService.list();
+			const res2 = await auditService.list();
 
 			// Assert
 			expect(res1).toEqual({
@@ -340,39 +320,6 @@ describe("auditService", () => {
 			expect(res2).toEqual({
 				error: "Failed to retrieve audit logs",
 				success: false,
-			});
-		});
-
-		it("delegates list to listLogs", async () => {
-			// Arrange
-			const mockLogs = [{ action: "LOGIN", id: "1" }];
-			const mockDb = {
-				query: {
-					auditEntries: {
-						findMany: vi.fn().mockResolvedValue(mockLogs),
-					},
-				},
-				select: vi.fn().mockReturnValue({
-					from: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([{ value: 1 }]),
-					}),
-				}),
-			};
-			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-
-			// Act
-			const result = await auditService.list();
-
-			// Assert
-			expect(result).toEqual({
-				data: {
-					items: mockLogs,
-					page: 1,
-					pageSize: 10,
-					total: 1,
-					totalPages: 1,
-				},
-				success: true,
 			});
 		});
 	});

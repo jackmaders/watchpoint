@@ -190,8 +190,7 @@ async function handlePlaythroughCreationConflict(
 	}
 
 	const existingResult = await playthroughService.getById(
-		input.id,
-		input.userId,
+		{ id: input.id, userId: input.userId },
 		context,
 	);
 	if (
@@ -406,12 +405,12 @@ async function fetchHistoryRows(
 
 export const playthroughService = {
 	async complete(
-		id: string,
-		userId: string,
+		input: { id: string; userId: string },
 		context?: DbContext,
 	): Promise<DbResult<PlaythroughCompletionItem | null>> {
 		try {
 			const db = await getDb(context);
+			const { id, userId } = input;
 			const completedAt = new Date();
 
 			const completion = await db.transaction(async (tx) => {
@@ -458,8 +457,8 @@ export const playthroughService = {
 				const existing = await db.query.playthroughCompletions.findFirst({
 					where: (table, { and: tableAnd, eq: tableEq }) =>
 						tableAnd(
-							tableEq(table.playthroughId, id),
-							tableEq(table.userId, userId),
+							tableEq(table.playthroughId, input.id),
+							tableEq(table.userId, input.userId),
 						),
 				});
 				return dbSuccess(existing ?? null);
@@ -520,8 +519,7 @@ export const playthroughService = {
 	},
 
 	async getAttemptByIdempotencyKey(
-		idempotencyKey: string,
-		userId: string,
+		input: { idempotencyKey: string; userId: string },
 		context?: DbContext,
 	): Promise<DbResult<AttemptRecordItem | null>> {
 		try {
@@ -529,8 +527,8 @@ export const playthroughService = {
 			const attempt = await db.query.attemptRecords.findFirst({
 				where: (table, { and: tableAnd, eq: tableEq }) =>
 					tableAnd(
-						tableEq(table.idempotencyKey, idempotencyKey),
-						tableEq(table.userId, userId),
+						tableEq(table.idempotencyKey, input.idempotencyKey),
+						tableEq(table.userId, input.userId),
 					),
 			});
 			return dbSuccess(attempt ?? null);
@@ -542,8 +540,7 @@ export const playthroughService = {
 	},
 
 	async getAttempts(
-		playthroughId: string,
-		userId: string,
+		input: { playthroughId: string; userId: string },
 		context?: DbContext,
 	): Promise<DbResult<AttemptRecordItem[]>> {
 		try {
@@ -552,8 +549,8 @@ export const playthroughService = {
 				orderBy: (table, { asc }) => [asc(table.createdAt)],
 				where: (table, { and: tableAnd, eq: tableEq }) =>
 					tableAnd(
-						tableEq(table.playthroughId, playthroughId),
-						tableEq(table.userId, userId),
+						tableEq(table.playthroughId, input.playthroughId),
+						tableEq(table.userId, input.userId),
 					),
 			});
 			return dbSuccess(attempts);
@@ -561,9 +558,9 @@ export const playthroughService = {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve attempts"));
 		}
 	},
+
 	async getById(
-		id: string,
-		userId: string,
+		input: { id: string; userId: string },
 		context?: DbContext,
 	): Promise<DbResult<PlaythroughWithDetails | null>> {
 		try {
@@ -571,7 +568,10 @@ export const playthroughService = {
 
 			const playthrough = await db.query.playthroughs.findFirst({
 				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(tableEq(table.id, id), tableEq(table.userId, userId)),
+					tableAnd(
+						tableEq(table.id, input.id),
+						tableEq(table.userId, input.userId),
+					),
 				with: {
 					attempts: true,
 					moduleSelections: true,
@@ -588,8 +588,7 @@ export const playthroughService = {
 	},
 
 	async getHistoryDetail(
-		playthroughId: string,
-		userId: string,
+		input: { playthroughId: string; userId: string },
 		context?: DbContext,
 	): Promise<DbResult<PlayerHistoryItem | null>> {
 		try {
@@ -597,8 +596,8 @@ export const playthroughService = {
 			const playthrough = await db.query.playthroughs.findFirst({
 				where: (table, { and: tableAnd, eq: tableEq }) =>
 					tableAnd(
-						tableEq(table.id, playthroughId),
-						tableEq(table.userId, userId),
+						tableEq(table.id, input.playthroughId),
+						tableEq(table.userId, input.userId),
 					),
 				with: {
 					attempts: true,
@@ -627,12 +626,12 @@ export const playthroughService = {
 	},
 
 	async listHistory(
-		userId: string,
-		options: GetPlayerHistoryOptions = {},
+		options: GetPlayerHistoryOptions & { userId: string },
 		context?: DbContext,
 	): Promise<DbResult<PaginatedResult<PlayerHistoryItem>>> {
 		try {
 			const db = await getDb(context);
+			const { userId } = options;
 			const pagination = clampPagination(options);
 
 			const user = await db.query.users.findFirst({
@@ -699,41 +698,3 @@ export const playthroughService = {
 		}
 	},
 };
-
-export async function getPlayerHistory(
-	userId: string,
-	context?: DbContext,
-): Promise<DbResult<PlaythroughItem[]>> {
-	try {
-		const db = await getDb(context);
-		const user = await db.query.users.findFirst({
-			columns: { isTestAccount: true },
-			where: (table, { eq: userEq }) => userEq(table.id, userId),
-		});
-
-		if (!user || user.isTestAccount) {
-			return dbSuccess([]);
-		}
-
-		const playthroughsForUser = await db.query.playthroughs.findMany({
-			orderBy: [desc(playthroughs.createdAt), desc(playthroughs.id)],
-			where: (table, { eq }) => eq(table.userId, userId),
-		});
-
-		return dbSuccess(playthroughsForUser);
-	} catch (error) {
-		return dbFailure(
-			toErrorMessage(error, "Failed to retrieve player history"),
-		);
-	}
-}
-
-export const createPlaythrough = playthroughService.create;
-export const getPlaythrough = playthroughService.getById;
-export const queryPlayerHistory = playthroughService.listHistory;
-export const getPlaythroughHistoryDetail = playthroughService.getHistoryDetail;
-export const completePlaythrough = playthroughService.complete;
-export const recordPlaythroughAttempt = playthroughService.recordAttempt;
-export const getAttemptByIdempotencyKey =
-	playthroughService.getAttemptByIdempotencyKey;
-export const getPlaythroughAttempts = playthroughService.getAttempts;

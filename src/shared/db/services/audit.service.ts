@@ -29,8 +29,11 @@ export interface GetAuditLogsOptions extends PaginationOptions {
 	actorUserId?: string;
 	entityId?: string;
 	entityType?: string;
-	limit?: number;
-	offset?: number;
+}
+
+export interface ListAuditEntriesByEntityInput {
+	entityId: string;
+	entityType: string;
 }
 
 export type AuditEntryWithActor = AuditEntryItem & {
@@ -64,34 +67,8 @@ export const auditService = {
 			return dbFailure(toErrorMessage(error, "Failed to create audit entry"));
 		}
 	},
-	list(
-		options: GetAuditLogsOptions = {},
-		context?: DbContext,
-	): Promise<DbResult<PaginatedResult<AuditEntryWithActor>>> {
-		return auditService.listLogs(options, context);
-	},
 
-	async listByEntity(
-		entityType: string,
-		entityId: string,
-		context?: DbContext,
-	): Promise<DbResult<AuditEntryItem[]>> {
-		try {
-			const db = await getDb(context);
-			const entries = await db.query.auditEntries.findMany({
-				orderBy: [desc(auditEntries.createdAt), desc(auditEntries.id)],
-				where: (entry, { and, eq }) =>
-					and(eq(entry.entityType, entityType), eq(entry.entityId, entityId)),
-			});
-			return dbSuccess(entries);
-		} catch (error) {
-			return dbFailure(
-				toErrorMessage(error, "Failed to retrieve audit entries"),
-			);
-		}
-	},
-
-	async listLogs(
+	async list(
 		options: GetAuditLogsOptions = {},
 		context?: DbContext,
 	): Promise<DbResult<PaginatedResult<AuditEntryWithActor>>> {
@@ -139,8 +116,24 @@ export const auditService = {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve audit logs"));
 		}
 	},
-};
 
-export const createAuditEntry = auditService.create;
-export const getAuditEntries = auditService.listByEntity;
-export const getAuditLogs = auditService.listLogs;
+	async listByEntity(
+		input: ListAuditEntriesByEntityInput,
+		context?: DbContext,
+	): Promise<DbResult<AuditEntryItem[]>> {
+		try {
+			const db = await getDb(context);
+			const { entityId, entityType } = input;
+			const entries = await db.query.auditEntries.findMany({
+				orderBy: [desc(auditEntries.createdAt), desc(auditEntries.id)],
+				where: (entry, { and, eq }) =>
+					and(eq(entry.entityType, entityType), eq(entry.entityId, entityId)),
+			});
+			return dbSuccess(entries);
+		} catch (error) {
+			return dbFailure(
+				toErrorMessage(error, "Failed to retrieve audit entries"),
+			);
+		}
+	},
+};

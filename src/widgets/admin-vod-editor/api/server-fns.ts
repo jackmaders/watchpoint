@@ -161,7 +161,7 @@ export const getAdminVodById = createServerFn({ method: "GET" })
 			data,
 		}): Promise<(VodItem & { scenarios: ScenarioItem[] }) | null> => {
 			await requirePermission("catalog:manage");
-			const result = await vodService.getById(data.id);
+			const result = await vodService.getById({ id: data.id });
 			if (!result.success) {
 				throw new Error(result.error);
 			}

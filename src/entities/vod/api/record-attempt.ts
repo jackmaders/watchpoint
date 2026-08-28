@@ -14,8 +14,7 @@ async function belongsToAuthenticatedPlaythrough(
 	context?: DbContext,
 ): Promise<boolean> {
 	const result = await playthroughService.getById(
-		playthroughId,
-		userId,
+		{ id: playthroughId, userId },
 		context,
 	);
 	if (!result.success || !result.data) return false;

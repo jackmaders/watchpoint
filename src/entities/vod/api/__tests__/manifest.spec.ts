@@ -93,7 +93,8 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			title: "GM Ana VOD",
 			youtubeVideoId: "dQw4w9WgXcQ",
 		});
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith("vod_1", {
+		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
+			id: "vod_1",
 			modules: undefined,
 		});
 	});
@@ -119,7 +120,7 @@ describe("GET /api/vods/[id]/manifest handler", () => {
 			params: Promise.resolve({ id: "vod_1" }),
 		});
 		const capturedModules = vi.mocked(vodService.getSessionManifest).mock
-			.calls[0]?.[1]?.modules;
+			.calls[0]?.[0]?.modules;
 
 		// Assert
 		expect(res.status).toBe(200);

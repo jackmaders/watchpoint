@@ -1,24 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../core/client";
-import {
-	bulkDeleteVods,
-	bulkPublishVods,
-	createScenario,
-	createVod,
-	deleteScenario,
-	deleteVod,
-	getAdminVods,
-	getPublishedVods,
-	getScenarioById,
-	getScenariosByVodId,
-	getSessionManifest,
-	getVodById,
-	reorderScenarios,
-	setVodPublicationStatus,
-	updateScenario,
-	updateVod,
-	vodService,
-} from "../vods.service";
+import { vodService } from "../vods.service";
 
 vi.mock("../../core/client");
 
@@ -57,15 +39,15 @@ describe("vodService", () => {
 			});
 		});
 
-		it("delegates getPublishedVods and handles database error (Error and non-Error)", async () => {
+		it("handles database error (Error and non-Error)", async () => {
 			// Arrange
 			vi.mocked(getDb)
 				.mockRejectedValueOnce(new Error("Query failed"))
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await getPublishedVods();
-			const res2 = await getPublishedVods();
+			const res1 = await vodService.listPublished();
+			const res2 = await vodService.listPublished();
 
 			// Assert
 			expect(res1).toEqual({
@@ -133,7 +115,7 @@ describe("vodService", () => {
 			});
 		});
 
-		it("delegates getAdminVods with empty options", async () => {
+		it("handles empty options", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
@@ -158,7 +140,7 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await getAdminVods();
+			const result = await vodService.listAdmin();
 
 			// Assert
 			expect(result).toEqual({
@@ -220,7 +202,7 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await vodService.getById("vod_1");
+			const result = await vodService.getById({ id: "vod_1" });
 
 			// Assert
 			expect(result).toEqual({
@@ -229,7 +211,7 @@ describe("vodService", () => {
 			});
 		});
 
-		it("returns null when vod not found and delegates getVodById", async () => {
+		it("returns null when vod not found", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
@@ -241,7 +223,7 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await getVodById("vod_missing");
+			const result = await vodService.getById({ id: "vod_missing" });
 
 			// Assert
 			expect(result).toEqual({
@@ -257,8 +239,8 @@ describe("vodService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await vodService.getById("vod_1");
-			const res2 = await vodService.getById("vod_1");
+			const res1 = await vodService.getById({ id: "vod_1" });
+			const res2 = await vodService.getById({ id: "vod_1" });
 
 			// Assert
 			expect(res1).toEqual({
@@ -301,24 +283,30 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const resWithModules = await vodService.getSessionManifest("vod_1", {
+			const resWithModules = await vodService.getSessionManifest({
+				id: "vod_1",
 				modules: ["STRATEGY"],
 				publishedOnly: true,
 			});
-			const resPublishedFalse = await vodService.getSessionManifest("vod_1", {
+			const resPublishedFalse = await vodService.getSessionManifest({
+				id: "vod_1",
 				publishedOnly: false,
 			});
-			const resNullModules = await getSessionManifest("vod_1", {
+			const resNullModules = await vodService.getSessionManifest({
+				id: "vod_1",
 				modules: null,
 			});
-			const resEmptyModules = await getSessionManifest("vod_1", {
+			const resEmptyModules = await vodService.getSessionManifest({
+				id: "vod_1",
 				modules: [],
 			});
 
 			vi.mocked(getDb).mockResolvedValueOnce({
 				query: { vods: { findFirst: vi.fn().mockResolvedValue(null) } },
 			} as never);
-			const resNullVod = await vodService.getSessionManifest("vod_null");
+			const resNullVod = await vodService.getSessionManifest({
+				id: "vod_null",
+			});
 
 			// Assert
 			expect(resWithModules).toEqual({ data: mockVod, success: true });
@@ -335,8 +323,8 @@ describe("vodService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await vodService.getSessionManifest("vod_1");
-			const res2 = await vodService.getSessionManifest("vod_1");
+			const res1 = await vodService.getSessionManifest({ id: "vod_1" });
+			const res2 = await vodService.getSessionManifest({ id: "vod_1" });
 
 			// Assert
 			expect(res1).toEqual({
@@ -408,7 +396,46 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await createVod(validCreateInput);
+			const result = await vodService.create(validCreateInput);
+
+			// Assert
+			expect(result).toEqual({
+				data: createdVod,
+				success: true,
+			});
+		});
+
+		it("creates unassigned VOD when actorUserId is omitted", async () => {
+			// Arrange
+			const unassignedInput = { ...validCreateInput, actorUserId: undefined };
+
+			const createdVod = {
+				createdAt: new Date(),
+				durationSeconds: 1200,
+				heroName: "Ana",
+				id: "vod_unassigned",
+				isPublished: false,
+				mapName: "King's Row",
+				rankTier: "Grandmaster",
+				role: "SUPPORT" as const,
+				title: "Ana VOD Review",
+				youtubeVideoId: "dQw4w9WgXcQ",
+			};
+
+			const mockDb = {
+				insert: vi.fn().mockReturnValue({
+					values: vi.fn().mockReturnValue({
+						returning: vi
+							.fn()
+							.mockResolvedValueOnce([createdVod])
+							.mockResolvedValueOnce([{ id: "audit_unassigned" }]),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+			// Act
+			const result = await vodService.create(unassignedInput);
 
 			// Assert
 			expect(result).toEqual({
@@ -579,7 +606,7 @@ describe("vodService", () => {
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb1 as never);
 
-			const result1 = await updateVod({
+			const result1 = await vodService.update({
 				actorUserId: "usr_1",
 				durationSeconds: 700,
 				heroName: "Mercy",
@@ -615,7 +642,7 @@ describe("vodService", () => {
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb2 as never);
 
-			const result2 = await updateVod({
+			const result2 = await vodService.update({
 				actorUserId: "usr_1",
 				id: "vod_1",
 				isPublished: false,
@@ -741,7 +768,10 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await deleteVod({ actorUserId: "usr_1", id: "vod_1" });
+			const result = await vodService.delete({
+				actorUserId: "usr_1",
+				id: "vod_1",
+			});
 
 			// Assert
 			expect(result).toEqual({ data: undefined, success: true });
@@ -850,11 +880,11 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const singleRes = await setVodPublicationStatus({
+			const singleRes = await vodService.setPublicationStatus({
 				id: "v1",
 				isPublished: true,
 			});
-			const bulkRes = await bulkPublishVods({
+			const bulkRes = await vodService.bulkPublish({
 				ids: ["v1", "v2"],
 				isPublished: true,
 			});
@@ -893,7 +923,7 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await bulkDeleteVods({ ids: ["v1", "v2"] });
+			const result = await vodService.bulkDelete({ ids: ["v1", "v2"] });
 
 			// Assert
 			expect(result).toEqual({
@@ -952,8 +982,8 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const resOne = await getScenarioById("sc_1");
-			const resMany = await getScenariosByVodId("vod_1");
+			const resOne = await vodService.getScenarioById({ id: "sc_1" });
+			const resMany = await vodService.getScenariosByVodId({ vodId: "vod_1" });
 
 			// Assert
 			expect(resOne).toEqual({ data: mockScenario, success: true });
@@ -966,19 +996,19 @@ describe("vodService", () => {
 				.mockRejectedValueOnce(new Error("Scs query err"))
 				.mockRejectedValueOnce("Str err");
 
-			expect(await vodService.getScenarioById("sc_1")).toEqual({
+			expect(await vodService.getScenarioById({ id: "sc_1" })).toEqual({
 				error: "Sc query err",
 				success: false,
 			});
-			expect(await vodService.getScenarioById("sc_1")).toEqual({
+			expect(await vodService.getScenarioById({ id: "sc_1" })).toEqual({
 				error: "Failed to retrieve scenario",
 				success: false,
 			});
-			expect(await vodService.getScenariosByVodId("vod_1")).toEqual({
+			expect(await vodService.getScenariosByVodId({ vodId: "vod_1" })).toEqual({
 				error: "Scs query err",
 				success: false,
 			});
-			expect(await vodService.getScenariosByVodId("vod_1")).toEqual({
+			expect(await vodService.getScenariosByVodId({ vodId: "vod_1" })).toEqual({
 				error: "Failed to retrieve scenarios",
 				success: false,
 			});
@@ -1049,7 +1079,7 @@ describe("vodService", () => {
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
-			const resSuccess = await createScenario(validScenarioInput);
+			const resSuccess = await vodService.createScenario(validScenarioInput);
 			expect(resSuccess).toEqual({ data: createdScenario, success: true });
 
 			// Act 4b: Success creation with optional fields omitted
@@ -1079,7 +1109,7 @@ describe("vodService", () => {
 				},
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbMinimal as never);
-			const resMinimal = await createScenario(minimalScenarioInput);
+			const resMinimal = await vodService.createScenario(minimalScenarioInput);
 			expect(resMinimal).toEqual({
 				data: minimalCreatedScenario,
 				success: true,
@@ -1198,7 +1228,7 @@ describe("vodService", () => {
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
-			const resSuccess = await updateScenario({
+			const resSuccess = await vodService.updateScenario({
 				explanationText: "New E",
 				id: "sc_1",
 				imageUrl: "img",
@@ -1311,7 +1341,7 @@ describe("vodService", () => {
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
-			const resSuccess = await deleteScenario({ id: "sc_1" });
+			const resSuccess = await vodService.deleteScenario({ id: "sc_1" });
 			expect(resSuccess).toEqual({ data: undefined, success: true });
 
 			// Act 3: Exception during delete
@@ -1411,6 +1441,13 @@ describe("vodService", () => {
 			});
 
 			// Act 4: Success
+			const mockTx = {
+				update: vi.fn().mockReturnValue({
+					set: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([]),
+					}),
+				}),
+			};
 			const mockDbSuccess = {
 				insert: vi.fn().mockReturnValue({
 					values: vi.fn().mockReturnValue({
@@ -1418,36 +1455,44 @@ describe("vodService", () => {
 					}),
 				}),
 				query: { vods: { findFirst: vi.fn().mockResolvedValue(mockVod) } },
-				update: vi.fn().mockReturnValue({
-					set: vi.fn().mockReturnValue({
-						where: vi.fn().mockResolvedValue([]),
-					}),
-				}),
+				transaction: vi.fn(async (cb: (tx: typeof mockTx) => unknown) =>
+					cb(mockTx),
+				),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
-			const resSuccess = await reorderScenarios({
+			const resSuccess = await vodService.reorderScenarios({
 				scenarioOrders: [{ id: "sc_1", timestampSeconds: 25 }],
 				vodId: "vod_1",
 			});
 			expect(resSuccess).toEqual({ data: undefined, success: true });
 
 			// Act 5: Reorder update error (Error and non-Error)
-			const mockDbError = {
-				query: { vods: { findFirst: vi.fn().mockResolvedValue(mockVod) } },
+			const mockTxError = {
 				update: vi.fn().mockReturnValue({
 					set: vi.fn().mockReturnValue({
 						where: vi.fn().mockRejectedValue(new Error("Update fail")),
 					}),
 				}),
 			};
-			const mockDbString = {
+			const mockDbError = {
 				query: { vods: { findFirst: vi.fn().mockResolvedValue(mockVod) } },
+				transaction: vi.fn(async (cb: (tx: typeof mockTxError) => unknown) =>
+					cb(mockTxError),
+				),
+			};
+			const mockTxString = {
 				update: vi.fn().mockReturnValue({
 					set: vi.fn().mockReturnValue({
 						where: vi.fn().mockRejectedValue("Str err"),
 					}),
 				}),
+			};
+			const mockDbString = {
+				query: { vods: { findFirst: vi.fn().mockResolvedValue(mockVod) } },
+				transaction: vi.fn(async (cb: (tx: typeof mockTxString) => unknown) =>
+					cb(mockTxString),
+				),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDbError as never);
 

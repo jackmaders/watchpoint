@@ -173,7 +173,7 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.getById).toHaveBeenCalledWith("v1");
+			expect(vodService.getById).toHaveBeenCalledWith({ id: "v1" });
 			expect(result).toEqual(mockVod);
 		});
 
