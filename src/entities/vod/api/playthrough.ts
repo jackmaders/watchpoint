@@ -69,8 +69,7 @@ export async function completePlaythroughAction(
 	if (!user) return { error: "Authentication required", success: false };
 	try {
 		const result = await playthroughService.complete(
-			playthroughId,
-			user.id,
+			{ id: playthroughId, userId: user.id },
 			context,
 		);
 		if (!result.success) {

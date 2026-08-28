@@ -28,8 +28,7 @@ describe("getPlaythroughHistoryDetailData", () => {
 		// Assert
 		expect(getCurrentUser).toHaveBeenCalled();
 		expect(playthroughService.getHistoryDetail).toHaveBeenCalledWith(
-			"pt_1",
-			"usr_1",
+			{ playthroughId: "pt_1", userId: "usr_1" },
 			undefined,
 		);
 		expect(result).toEqual(mockItem);

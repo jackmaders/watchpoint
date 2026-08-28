@@ -11,8 +11,7 @@ export async function getPlaythroughHistoryDetailData(
 		throw new Error("Authentication required");
 	}
 	const result = await playthroughService.getHistoryDetail(
-		playthroughId,
-		user.id,
+		{ playthroughId, userId: user.id },
 		context,
 	);
 	if (!result.success) {

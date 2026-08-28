@@ -1,12 +1,5 @@
 import type { DbContext } from "@/shared/db";
-import {
-	type CreatePlaythroughInput,
-	completePlaythrough,
-	createPlaythrough,
-	getPlayerHistory,
-	getPlaythrough,
-	getPlaythroughAttempts,
-} from "@/shared/db";
+import { type CreatePlaythroughInput, playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 
 const AUTHENTICATION_REQUIRED = "Authentication required";
@@ -26,17 +19,17 @@ export async function createOwnedPlaythrough(
 	context?: DbContext,
 ) {
 	const user = await requireCurrentUser(context);
-	return createPlaythrough({ ...input, userId: user.id }, context);
+	return playthroughService.create({ ...input, userId: user.id }, context);
 }
 
 export async function getOwnedPlaythrough(id: string, context?: DbContext) {
 	const user = await requireCurrentUser(context);
-	return getPlaythrough(id, user.id, context);
+	return playthroughService.getById({ id, userId: user.id }, context);
 }
 
 export async function getOwnedPlayerHistory(context?: DbContext) {
 	const user = await requireCurrentUser(context);
-	return getPlayerHistory(user.id, context);
+	return playthroughService.listHistory({ userId: user.id }, context);
 }
 
 export async function getOwnedPlaythroughAttempts(
@@ -44,7 +37,10 @@ export async function getOwnedPlaythroughAttempts(
 	context?: DbContext,
 ) {
 	const user = await requireCurrentUser(context);
-	return getPlaythroughAttempts(playthroughId, user.id, context);
+	return playthroughService.getAttempts(
+		{ playthroughId, userId: user.id },
+		context,
+	);
 }
 
 export async function completeOwnedPlaythrough(
@@ -52,5 +48,8 @@ export async function completeOwnedPlaythrough(
 	context?: DbContext,
 ) {
 	const user = await requireCurrentUser(context);
-	return completePlaythrough(playthroughId, user.id, context);
+	return playthroughService.complete(
+		{ id: playthroughId, userId: user.id },
+		context,
+	);
 }

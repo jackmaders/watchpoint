@@ -19,6 +19,16 @@ export type DbContext =
 	| Record<string, unknown>;
 
 export async function getDb(context?: DbContext): Promise<DrizzleDb> {
+	const explicitBinding: D1Database | undefined =
+		(context as { env?: { DB?: D1Database } })?.env?.DB ??
+		(context as { DB?: D1Database })?.DB ??
+		(context as { cloudflare?: { env?: { DB?: D1Database } } })?.cloudflare?.env
+			?.DB;
+
+	if (explicitBinding) {
+		return drizzle(explicitBinding, { schema });
+	}
+
 	const globalEnv = globalThis as unknown as {
 		DB?: D1Database;
 		__env__?: { DB?: D1Database };
@@ -27,13 +37,7 @@ export async function getDb(context?: DbContext): Promise<DrizzleDb> {
 
 	if (globalEnv.db) return globalEnv.db;
 
-	let d1Binding: D1Database | undefined =
-		(context as { env?: { DB?: D1Database } })?.env?.DB ??
-		(context as { DB?: D1Database })?.DB ??
-		(context as { cloudflare?: { env?: { DB?: D1Database } } })?.cloudflare?.env
-			?.DB ??
-		globalEnv.DB ??
-		globalEnv.__env__?.DB;
+	let d1Binding: D1Database | undefined = globalEnv.DB ?? globalEnv.__env__?.DB;
 
 	if (!d1Binding && process.env.NODE_ENV !== "production") {
 		try {

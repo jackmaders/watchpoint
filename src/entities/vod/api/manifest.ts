@@ -13,7 +13,8 @@ export async function handleGetVodManifest(
 	const { id } = await params;
 	const url = new URL(request.url);
 
-	const manifestResult = await vodService.getSessionManifest(id, {
+	const manifestResult = await vodService.getSessionManifest({
+		id,
 		modules: normalizeSessionManifestModules(
 			url.searchParams.getAll("modules"),
 		),

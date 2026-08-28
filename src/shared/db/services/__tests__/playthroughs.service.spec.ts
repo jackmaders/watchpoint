@@ -1,17 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../core/client";
 import {
-	completePlaythrough,
-	createPlaythrough,
-	getAttemptByIdempotencyKey,
-	getPlayerHistory,
-	getPlaythrough,
-	getPlaythroughHistoryDetail,
 	IDEMPOTENCY_CONFLICT_ERROR,
 	PLAYTHROUGH_START_CONFLICT_ERROR,
 	playthroughService,
-	queryPlayerHistory,
-	recordPlaythroughAttempt,
 } from "../playthroughs.service";
 
 vi.mock("../../core/client");
@@ -75,7 +67,10 @@ describe("playthroughService", () => {
 		it("creates a playthrough without explicit id or modules/scenarios", async () => {
 			// Arrange
 			const mockPlaythrough = {
+				completedAt: null,
+				createdAt: new Date(),
 				id: "pt_1",
+				status: "IN_PROGRESS" as const,
 				userId: "usr_1",
 				vodId: "vod_1",
 			};
@@ -92,7 +87,7 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await createPlaythrough({
+			const result = await playthroughService.create({
 				modules: [],
 				scenarios: [],
 				userId: "usr_1",
@@ -109,7 +104,10 @@ describe("playthroughService", () => {
 		it("creates a playthrough with scenario snapshots without explicit id", async () => {
 			// Arrange
 			const mockPlaythrough = {
+				completedAt: null,
+				createdAt: new Date(),
 				id: "pt_1",
+				status: "IN_PROGRESS" as const,
 				userId: "usr_1",
 				vodId: "vod_1",
 			};
@@ -126,7 +124,7 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await createPlaythrough({
+			const result = await playthroughService.create({
 				modules: ["STRATEGY"],
 				scenarios: [
 					{
@@ -392,7 +390,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.getById("pt_1", "usr_1");
+			const result = await playthroughService.getById({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -401,7 +402,7 @@ describe("playthroughService", () => {
 			});
 		});
 
-		it("returns null data when not found and delegates getPlaythrough", async () => {
+		it("returns null data when not found", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
@@ -413,7 +414,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await getPlaythrough("pt_missing", "usr_1");
+			const result = await playthroughService.getById({
+				id: "pt_missing",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -429,8 +433,14 @@ describe("playthroughService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await playthroughService.getById("pt_1", "usr_1");
-			const res2 = await playthroughService.getById("pt_1", "usr_1");
+			const res1 = await playthroughService.getById({
+				id: "pt_1",
+				userId: "usr_1",
+			});
+			const res2 = await playthroughService.getById({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(res1).toEqual({
@@ -439,85 +449,6 @@ describe("playthroughService", () => {
 			});
 			expect(res2).toEqual({
 				error: "Failed to retrieve playthrough",
-				success: false,
-			});
-		});
-	});
-
-	describe("getPlayerHistory", () => {
-		it("returns empty array if user is test account or missing", async () => {
-			// Arrange
-			const mockDbTest = {
-				query: {
-					users: {
-						findFirst: vi.fn().mockResolvedValue({ isTestAccount: true }),
-					},
-				},
-			};
-			const mockDbNull = {
-				query: {
-					users: {
-						findFirst: vi.fn().mockResolvedValue(null),
-					},
-				},
-			};
-			vi.mocked(getDb)
-				.mockResolvedValueOnce(mockDbTest as never)
-				.mockResolvedValueOnce(mockDbNull as never);
-
-			// Act
-			const resTest = await getPlayerHistory("usr_test");
-			const resNull = await getPlayerHistory("usr_null");
-
-			// Assert
-			expect(resTest).toEqual({ data: [], success: true });
-			expect(resNull).toEqual({ data: [], success: true });
-		});
-
-		it("returns playthroughs for valid non-test user", async () => {
-			// Arrange
-			const mockRuns = [{ id: "run_1" }];
-			const mockDb = {
-				query: {
-					playthroughs: {
-						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where)
-								options.where({ userId: "usr_1" }, { eq: vi.fn() });
-							return Promise.resolve(mockRuns);
-						}),
-					},
-					users: {
-						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where)
-								options.where({ id: "usr_1" }, { eq: vi.fn() });
-							return Promise.resolve({ isTestAccount: false });
-						}),
-					},
-				},
-			};
-			vi.mocked(getDb).mockResolvedValue(mockDb as never);
-
-			// Act
-			const result = await getPlayerHistory("usr_1");
-
-			// Assert
-			expect(result).toEqual({ data: mockRuns, success: true });
-		});
-
-		it("handles database errors (Error and non-Error)", async () => {
-			// Arrange
-			vi.mocked(getDb)
-				.mockRejectedValueOnce(new Error("Fetch err"))
-				.mockRejectedValueOnce("Str err");
-
-			// Act
-			const res1 = await getPlayerHistory("usr_1");
-			const res2 = await getPlayerHistory("usr_1");
-
-			// Assert
-			expect(res1).toEqual({ error: "Fetch err", success: false });
-			expect(res2).toEqual({
-				error: "Failed to retrieve player history",
 				success: false,
 			});
 		});
@@ -536,7 +467,9 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.listHistory("usr_test");
+			const result = await playthroughService.listHistory({
+				userId: "usr_test",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -670,20 +603,22 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act 1: With all filters
-			const result1 = await queryPlayerHistory("usr_1", {
+			const result1 = await playthroughService.listHistory({
 				modules: ["STRATEGY"],
 				page: 1,
 				pageSize: 10,
 				status: "COMPLETED",
+				userId: "usr_1",
 				vodId: "vod_1",
 			});
 
 			// Act 2: With empty options (default branch)
-			const result2 = await playthroughService.listHistory("usr_1", {});
+			const result2 = await playthroughService.listHistory({ userId: "usr_1" });
 
 			// Act 3: With empty modules array
-			const result3 = await playthroughService.listHistory("usr_1", {
+			const result3 = await playthroughService.listHistory({
 				modules: [],
+				userId: "usr_1",
 			});
 
 			// Assert
@@ -704,8 +639,8 @@ describe("playthroughService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await playthroughService.listHistory("usr_1");
-			const res2 = await playthroughService.listHistory("usr_1");
+			const res1 = await playthroughService.listHistory({ userId: "usr_1" });
+			const res2 = await playthroughService.listHistory({ userId: "usr_1" });
 
 			// Assert
 			expect(res1).toEqual({
@@ -791,10 +726,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.getHistoryDetail(
-				"run_1",
-				"player_1",
-			);
+			const result = await playthroughService.getHistoryDetail({
+				playthroughId: "run_1",
+				userId: "player_1",
+			});
 
 			// Assert
 			expect(result.success).toBe(true);
@@ -804,7 +739,7 @@ describe("playthroughService", () => {
 			}
 		});
 
-		it("returns null for not found or test account playthroughs and delegates getPlaythroughHistoryDetail", async () => {
+		it("returns null for not found or test account playthroughs", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
@@ -822,11 +757,14 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const resNotFound = await getPlaythroughHistoryDetail(
-				"missing",
-				"player_1",
-			);
-			const resTest = await getPlaythroughHistoryDetail("test_run", "player_1");
+			const resNotFound = await playthroughService.getHistoryDetail({
+				playthroughId: "missing",
+				userId: "player_1",
+			});
+			const resTest = await playthroughService.getHistoryDetail({
+				playthroughId: "test_run",
+				userId: "player_1",
+			});
 
 			// Assert
 			expect(resNotFound).toEqual({ data: null, success: true });
@@ -840,14 +778,14 @@ describe("playthroughService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await playthroughService.getHistoryDetail(
-				"run_1",
-				"player_1",
-			);
-			const res2 = await playthroughService.getHistoryDetail(
-				"run_1",
-				"player_1",
-			);
+			const res1 = await playthroughService.getHistoryDetail({
+				playthroughId: "run_1",
+				userId: "player_1",
+			});
+			const res2 = await playthroughService.getHistoryDetail({
+				playthroughId: "run_1",
+				userId: "player_1",
+			});
 
 			// Assert
 			expect(res1).toEqual({
@@ -890,7 +828,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.complete("pt_1", "usr_1");
+			const result = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -935,7 +876,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await completePlaythrough("pt_1", "usr_1");
+			const result = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -966,7 +910,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await completePlaythrough("pt_1", "usr_1");
+			const result = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -1008,7 +955,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.complete("pt_1", "usr_1");
+			const result = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -1036,7 +986,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.complete("pt_1", "usr_1");
+			const result = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -1058,8 +1011,14 @@ describe("playthroughService", () => {
 				.mockResolvedValueOnce(mockDbStr as never);
 
 			// Act
-			const res1 = await playthroughService.complete("pt_1", "usr_1");
-			const res2 = await playthroughService.complete("pt_1", "usr_1");
+			const res1 = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
+			const res2 = await playthroughService.complete({
+				id: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(res1).toEqual({
@@ -1096,7 +1055,7 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await recordPlaythroughAttempt({
+			const result = await playthroughService.recordAttempt({
 				idempotencyKey: "idem_1",
 				isCorrect: true,
 				playthroughId: "pt_1",
@@ -1396,7 +1355,10 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.getAttempts("pt_1", "usr_1");
+			const result = await playthroughService.getAttempts({
+				playthroughId: "pt_1",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -1409,11 +1371,21 @@ describe("playthroughService", () => {
 				.mockRejectedValueOnce(new Error("Fetch failed"))
 				.mockRejectedValueOnce("Str error");
 
-			expect(await playthroughService.getAttempts("pt_1", "usr_1")).toEqual({
+			expect(
+				await playthroughService.getAttempts({
+					playthroughId: "pt_1",
+					userId: "usr_1",
+				}),
+			).toEqual({
 				error: "Fetch failed",
 				success: false,
 			});
-			expect(await playthroughService.getAttempts("pt_1", "usr_1")).toEqual({
+			expect(
+				await playthroughService.getAttempts({
+					playthroughId: "pt_1",
+					userId: "usr_1",
+				}),
+			).toEqual({
 				error: "Failed to retrieve attempts",
 				success: false,
 			});
@@ -1451,14 +1423,14 @@ describe("playthroughService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await playthroughService.getAttemptByIdempotencyKey(
-				"key_1",
-				"usr_1",
-			);
-			const resultNull = await getAttemptByIdempotencyKey(
-				"key_missing",
-				"usr_1",
-			);
+			const result = await playthroughService.getAttemptByIdempotencyKey({
+				idempotencyKey: "key_1",
+				userId: "usr_1",
+			});
+			const resultNull = await playthroughService.getAttemptByIdempotencyKey({
+				idempotencyKey: "key_missing",
+				userId: "usr_1",
+			});
 
 			// Assert
 			expect(result).toEqual({
@@ -1476,10 +1448,16 @@ describe("playthroughService", () => {
 				.mockRejectedValueOnce("Str error");
 
 			expect(
-				await playthroughService.getAttemptByIdempotencyKey("key_1", "usr_1"),
+				await playthroughService.getAttemptByIdempotencyKey({
+					idempotencyKey: "key_1",
+					userId: "usr_1",
+				}),
 			).toEqual({ error: "Key lookup failed", success: false });
 			expect(
-				await playthroughService.getAttemptByIdempotencyKey("key_1", "usr_1"),
+				await playthroughService.getAttemptByIdempotencyKey({
+					idempotencyKey: "key_1",
+					userId: "usr_1",
+				}),
 			).toEqual({
 				error: "Failed to retrieve attempt by key",
 				success: false,

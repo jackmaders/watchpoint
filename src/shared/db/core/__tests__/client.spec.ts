@@ -39,13 +39,14 @@ describe("db client", () => {
 		expect(db).toBe(existingClient);
 	});
 
-	it("resolves D1 database from context.env.DB in development and sets globalThis.db", async () => {
+	it("resolves D1 database from globalThis.DB in development and sets globalThis.db", async () => {
 		// Arrange
 		vi.stubEnv("NODE_ENV", "development");
 		const mockD1 = { prepare: vi.fn() } as never;
+		mockGlobals.DB = mockD1;
 
 		// Act
-		const db = await getDb({ env: { DB: mockD1 } });
+		const db = await getDb();
 
 		// Assert
 		expect(db).toBeDefined();

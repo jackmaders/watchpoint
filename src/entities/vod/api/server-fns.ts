@@ -36,7 +36,7 @@ export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 export const getVodById = createServerFn({ method: "GET" })
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await vodService.getById(data.id);
+		const result = await vodService.getById({ id: data.id });
 		if (!result.success) {
 			throw new Error(result.error);
 		}
@@ -46,7 +46,8 @@ export const getVodById = createServerFn({ method: "GET" })
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await vodService.getSessionManifest(data.vodId, {
+		const result = await vodService.getSessionManifest({
+			id: data.vodId,
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});
@@ -63,7 +64,8 @@ export const getProtectedSessionManifest = createServerFn({ method: "GET" })
 			throw new Error("Authentication required");
 		}
 
-		const result = await vodService.getSessionManifest(data.vodId, {
+		const result = await vodService.getSessionManifest({
+			id: data.vodId,
 			modules: data.modules,
 			publishedOnly: data.publishedOnly,
 		});

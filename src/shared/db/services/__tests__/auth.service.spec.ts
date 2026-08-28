@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "../../core/client";
-import {
-	authService,
-	getUserById,
-	getUserCount,
-	getUsers,
-	updateUserRole,
-} from "../auth.service";
+import { authService } from "../auth.service";
 
 vi.mock("../../core/client");
 
@@ -15,8 +9,8 @@ describe("authService", () => {
 		vi.clearAllMocks();
 	});
 
-	describe("getUserCount", () => {
-		it("returns total user count wrapped in dbSuccess via count and getUserCount", async () => {
+	describe("count", () => {
+		it("returns total user count wrapped in dbSuccess", async () => {
 			// Arrange
 			const mockDb = {
 				select: vi.fn().mockReturnValue({
@@ -26,21 +20,16 @@ describe("authService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await authService.getUserCount();
-			const resultCount = await authService.count();
+			const result = await authService.count();
 
 			// Assert
 			expect(result).toEqual({
 				data: 5,
 				success: true,
 			});
-			expect(resultCount).toEqual({
-				data: 5,
-				success: true,
-			});
 		});
 
-		it("handles empty result and delegates getUserCount", async () => {
+		it("handles empty result", async () => {
 			// Arrange
 			const mockDb = {
 				select: vi.fn().mockReturnValue({
@@ -50,7 +39,7 @@ describe("authService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await getUserCount();
+			const result = await authService.count();
 
 			// Assert
 			expect(result).toEqual({
@@ -66,8 +55,8 @@ describe("authService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await authService.getUserCount();
-			const res2 = await authService.getUserCount();
+			const res1 = await authService.count();
+			const res2 = await authService.count();
 
 			// Assert
 			expect(res1).toEqual({
@@ -110,7 +99,7 @@ describe("authService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await authService.getById("usr_123");
+			const result = await authService.getById({ id: "usr_123" });
 
 			// Assert
 			expect(result).toEqual({
@@ -119,7 +108,7 @@ describe("authService", () => {
 			});
 		});
 
-		it("returns null data when user is not found and delegates getUserById", async () => {
+		it("returns null data when user is not found", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
@@ -136,7 +125,7 @@ describe("authService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await getUserById("usr_missing");
+			const result = await authService.getById({ id: "usr_missing" });
 
 			// Assert
 			expect(result).toEqual({
@@ -152,8 +141,8 @@ describe("authService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await authService.getById("usr_123");
-			const res2 = await authService.getById("usr_123");
+			const res1 = await authService.getById({ id: "usr_123" });
+			const res2 = await authService.getById({ id: "usr_123" });
 
 			// Assert
 			expect(res1).toEqual({
@@ -167,8 +156,8 @@ describe("authService", () => {
 		});
 	});
 
-	describe("listUsers", () => {
-		it("returns users list with search escaping and role filters", async () => {
+	describe("list", () => {
+		it("returns paginated users list with search escaping and role filters", async () => {
 			// Arrange
 			const mockUsers = [
 				{
@@ -192,40 +181,38 @@ describe("authService", () => {
 						}),
 					},
 				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([{ value: 1 }]),
+					}),
+				}),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const resultBoth = await authService.listUsers({
+			const resultBoth = await authService.list({
 				role: "ADMIN",
 				search: "adm%_\\",
 			});
-			const resultSearch = await authService.listUsers({ search: "adm" });
-			const resultRole = await authService.listUsers({ role: "ADMIN" });
-			const resultList = await authService.list({ role: "ADMIN" });
-			const resultNone = await getUsers({});
+			const resultSearch = await authService.list({ search: "adm" });
+			const resultRole = await authService.list({ role: "ADMIN" });
+			const resultNone = await authService.list({});
 
 			// Assert
-			expect(resultBoth).toEqual({
-				data: mockUsers,
+			const expectedPaginated = {
+				data: {
+					items: mockUsers,
+					page: 1,
+					pageSize: 10,
+					total: 1,
+					totalPages: 1,
+				},
 				success: true,
-			});
-			expect(resultSearch).toEqual({
-				data: mockUsers,
-				success: true,
-			});
-			expect(resultRole).toEqual({
-				data: mockUsers,
-				success: true,
-			});
-			expect(resultList).toEqual({
-				data: mockUsers,
-				success: true,
-			});
-			expect(resultNone).toEqual({
-				data: mockUsers,
-				success: true,
-			});
+			};
+			expect(resultBoth).toEqual(expectedPaginated);
+			expect(resultSearch).toEqual(expectedPaginated);
+			expect(resultRole).toEqual(expectedPaginated);
+			expect(resultNone).toEqual(expectedPaginated);
 		});
 
 		it("handles database errors (Error and non-Error)", async () => {
@@ -235,8 +222,8 @@ describe("authService", () => {
 				.mockRejectedValueOnce("String error");
 
 			// Act
-			const res1 = await authService.listUsers();
-			const res2 = await authService.listUsers();
+			const res1 = await authService.list();
+			const res2 = await authService.list();
 
 			// Assert
 			expect(res1).toEqual({
@@ -401,7 +388,7 @@ describe("authService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
-			const result = await updateUserRole({
+			const result = await authService.updateUserRole({
 				actorUserId: "actor_1",
 				newRole: "ADMIN",
 				targetUserId: "target_1",

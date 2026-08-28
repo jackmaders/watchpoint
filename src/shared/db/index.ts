@@ -75,6 +75,7 @@ export {
 	type SeedCredentials,
 	type SeedEnvironment,
 } from "./seed";
+// Domain Services
 export {
 	auditService,
 	authService,
@@ -87,23 +88,13 @@ export type {
 	AuditEntryWithActor,
 	CreateAuditEntryInput,
 	GetAuditLogsOptions,
-} from "./services/audit.service";
-export {
-	createAuditEntry,
-	getAuditEntries,
-	getAuditLogs,
+	ListAuditEntriesByEntityInput,
 } from "./services/audit.service";
 // Auth & Users
 export type {
 	GetUsersOptions,
 	UpdateUserRoleParams,
 	UserItem,
-} from "./services/auth.service";
-export {
-	getUserById,
-	getUserCount,
-	getUsers,
-	updateUserRole,
 } from "./services/auth.service";
 // Playthroughs & Telemetry
 export type {
@@ -119,28 +110,22 @@ export type {
 	ScenarioSnapshotInput,
 } from "./services/playthroughs.service";
 export {
-	completePlaythrough,
-	createPlaythrough,
-	getAttemptByIdempotencyKey,
-	getPlayerHistory,
-	getPlaythrough,
-	getPlaythroughAttempts,
-	getPlaythroughHistoryDetail,
 	IDEMPOTENCY_CONFLICT_ERROR,
 	PLAYTHROUGH_NOT_IN_PROGRESS_ERROR,
 	PLAYTHROUGH_START_CONFLICT_ERROR,
-	queryPlayerHistory,
-	recordPlaythroughAttempt,
 } from "./services/playthroughs.service";
 // VODs & Scenarios
 export type {
 	AdminVodItem,
+	BulkDeleteVodsInput,
 	BulkOperationResult,
+	BulkPublishVodsInput,
 	CreateScenarioInput,
 	CreateVodInput,
 	DeleteScenarioInput,
 	DeleteVodInput,
 	GetAdminVodsOptions,
+	GetSessionManifestInput,
 	GetSessionManifestOptions,
 	PublishedVodItem,
 	ReorderScenariosInput,
@@ -150,24 +135,6 @@ export type {
 	UpdateScenarioInput,
 	UpdateVodInput,
 	VodItem,
-} from "./services/vods.service";
-export {
-	bulkDeleteVods,
-	bulkPublishVods,
-	createScenario,
-	createVod,
-	deleteScenario,
-	deleteVod,
-	getAdminVods,
-	getPublishedVods,
-	getScenarioById,
-	getScenariosByVodId,
-	getSessionManifest,
-	getVodById,
-	reorderScenarios,
-	setVodPublicationStatus,
-	updateScenario,
-	updateVod,
 } from "./services/vods.service";
 export {
 	insertAuditEntrySchema,

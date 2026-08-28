@@ -1,18 +1,22 @@
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, like, or } from "drizzle-orm";
 import {
+	buildPaginatedResult,
+	clampPagination,
 	type DbContext,
 	type DbResult,
 	dbFailure,
 	dbSuccess,
 	escapeLike,
 	getDb,
+	type PaginatedResult,
+	type PaginationOptions,
 	toErrorMessage,
 } from "../core";
 import { type UserRole, users } from "../schema/auth";
 import { updateUserRoleInputSchema } from "../validation/auth";
 import { auditService } from "./audit.service";
 
-export interface GetUsersOptions {
+export interface GetUsersOptions extends PaginationOptions {
 	role?: UserRole;
 	search?: string;
 }
@@ -90,24 +94,10 @@ async function applyUserRoleUpdate(
 }
 
 export const authService = {
-	async count(context?: DbContext): Promise<DbResult<number>> {
-		return authService.getUserCount(context);
-	},
-	async getById(
-		id: string,
+	async count(
+		_options?: Record<string, never>,
 		context?: DbContext,
-	): Promise<DbResult<UserItem | null>> {
-		try {
-			const db = await getDb(context);
-			const user = await db.query.users.findFirst({
-				where: (table, { eq }) => eq(table.id, id),
-			});
-			return dbSuccess(user ?? null);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve user by ID"));
-		}
-	},
-	async getUserCount(context?: DbContext): Promise<DbResult<number>> {
+	): Promise<DbResult<number>> {
 		try {
 			const db = await getDb(context);
 			const [row] = await db.select({ value: count() }).from(users);
@@ -117,39 +107,64 @@ export const authService = {
 		}
 	},
 
+	async getById(
+		input: { id: string },
+		context?: DbContext,
+	): Promise<DbResult<UserItem | null>> {
+		try {
+			const db = await getDb(context);
+			const user = await db.query.users.findFirst({
+				where: (table, { eq }) => eq(table.id, input.id),
+			});
+			return dbSuccess(user ?? null);
+		} catch (error) {
+			return dbFailure(toErrorMessage(error, "Failed to retrieve user by ID"));
+		}
+	},
+
 	async list(
 		options: GetUsersOptions = {},
 		context?: DbContext,
-	): Promise<DbResult<UserItem[]>> {
-		return authService.listUsers(options, context);
-	},
-
-	async listUsers(
-		options: GetUsersOptions = {},
-		context?: DbContext,
-	): Promise<DbResult<UserItem[]>> {
+	): Promise<DbResult<PaginatedResult<UserItem>>> {
 		try {
 			const db = await getDb(context);
 			const { role, search } = options;
+			const pagination = clampPagination(options);
+
+			const conditions = [];
+			if (search && search.trim().length > 0) {
+				const query = `%${escapeLike(search.trim().toLowerCase())}%`;
+				conditions.push(or(like(users.name, query), like(users.email, query)));
+			}
+			if (role) {
+				conditions.push(eq(users.role, role));
+			}
+			const whereClause =
+				conditions.length > 0 ? and(...conditions) : undefined;
+
+			const [{ value: total = 0 } = {}] = await db
+				.select({ value: count() })
+				.from(users)
+				.where(whereClause);
 
 			const userList = await db.query.users.findMany({
+				limit: pagination.pageSize,
+				offset: pagination.offset,
 				orderBy: [desc(users.createdAt), desc(users.id)],
 				where: (table, { and, eq, like, or }) => {
-					const conditions = [];
+					const conds = [];
 					if (search && search.trim().length > 0) {
 						const query = `%${escapeLike(search.trim().toLowerCase())}%`;
-						conditions.push(
-							or(like(table.name, query), like(table.email, query)),
-						);
+						conds.push(or(like(table.name, query), like(table.email, query)));
 					}
 					if (role) {
-						conditions.push(eq(table.role, role));
+						conds.push(eq(table.role, role));
 					}
-					return conditions.length > 0 ? and(...conditions) : undefined;
+					return conds.length > 0 ? and(...conds) : undefined;
 				},
 			});
 
-			return dbSuccess(userList);
+			return dbSuccess(buildPaginatedResult(userList, total, pagination));
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve users"));
 		}
@@ -170,7 +185,10 @@ export const authService = {
 			return dbFailure("Cannot demote your own account");
 		}
 
-		const targetUserResult = await authService.getById(targetUserId, context);
+		const targetUserResult = await authService.getById(
+			{ id: targetUserId },
+			context,
+		);
 		if (!targetUserResult.success) {
 			return dbFailure(targetUserResult.error);
 		}
@@ -201,8 +219,3 @@ export const authService = {
 		);
 	},
 };
-
-export const getUserCount = authService.getUserCount;
-export const getUserById = authService.getById;
-export const getUsers = authService.listUsers;
-export const updateUserRole = authService.updateUserRole;

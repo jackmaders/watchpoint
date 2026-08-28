@@ -136,9 +136,9 @@ export const attemptRecords = sqliteTable(
 			onDelete: "cascade",
 		}),
 		responseTimeMs: integer("response_time_ms").notNull(),
-		scenarioId: text("scenario_id")
-			.notNull()
-			.references(() => scenarios.id, { onDelete: "cascade" }),
+		scenarioId: text("scenario_id").references(() => scenarios.id, {
+			onDelete: "set null",
+		}),
 		scenarioSnapshotId: text("scenario_snapshot_id").references(
 			() => scenarioSnapshots.id,
 			{ onDelete: "cascade" },

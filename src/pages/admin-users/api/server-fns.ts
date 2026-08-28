@@ -32,11 +32,11 @@ export const getAdminUsers = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<UserItem[]> => {
 		await requirePermission("users:view");
-		const result = await authService.listUsers(data);
+		const result = await authService.list(data);
 		if (!result.success) {
 			throw new Error(result.error);
 		}
-		return result.data;
+		return result.data.items;
 	});
 
 export const updateUserRole = createServerFn({ method: "POST" })
