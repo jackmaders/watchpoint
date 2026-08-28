@@ -4,7 +4,9 @@ import {
 	calculateMedianActiveLatency,
 } from "../../lib/metrics";
 import {
+	buildPaginatedResult,
 	clampPagination,
+	D1ErrorKind,
 	type DbContext,
 	type DbResult,
 	type DrizzleDb,
@@ -14,6 +16,7 @@ import {
 	type JsonValue,
 	type PaginatedResult,
 	type PaginationOptions,
+	parseD1Error,
 	toErrorMessage,
 } from "../core";
 import {
@@ -181,11 +184,8 @@ async function handlePlaythroughCreationConflict(
 	error: unknown,
 	context?: DbContext,
 ): Promise<DbResult<PlaythroughItem>> {
-	if (
-		!input.id ||
-		!(error instanceof Error) ||
-		!/unique constraint failed/i.test(error.message)
-	) {
+	const parsed = parseD1Error(error);
+	if (!input.id || parsed.kind !== D1ErrorKind.UNIQUE_VIOLATION) {
 		return dbFailure(toErrorMessage(error, "Failed to create playthrough"));
 	}
 
@@ -297,11 +297,10 @@ function isIdenticalAttempt(
 }
 
 function isIdempotencyConstraintError(error: unknown): boolean {
+	const parsed = parseD1Error(error);
 	return (
-		error instanceof Error &&
-		/unique constraint failed:\s*attempt_record\.idempotency_key$/i.test(
-			error.message.trim(),
-		)
+		parsed.kind === D1ErrorKind.UNIQUE_VIOLATION &&
+		parsed.column === "idempotency_key"
 	);
 }
 
@@ -453,10 +452,8 @@ export const playthroughService = {
 
 			return dbSuccess(existing ?? null);
 		} catch (error) {
-			if (
-				error instanceof Error &&
-				/unique constraint failed/i.test(error.message)
-			) {
+			const parsed = parseD1Error(error);
+			if (parsed.kind === D1ErrorKind.UNIQUE_VIOLATION) {
 				const db = await getDb(context);
 				const existing = await db.query.playthroughCompletions.findFirst({
 					where: (table, { and: tableAnd, eq: tableEq }) =>
@@ -636,7 +633,7 @@ export const playthroughService = {
 	): Promise<DbResult<PaginatedResult<PlayerHistoryItem>>> {
 		try {
 			const db = await getDb(context);
-			const { offset, page, pageSize } = clampPagination(options);
+			const pagination = clampPagination(options);
 
 			const user = await db.query.users.findFirst({
 				columns: { isTestAccount: true },
@@ -644,13 +641,7 @@ export const playthroughService = {
 			});
 
 			if (!user || user.isTestAccount) {
-				return dbSuccess({
-					items: [],
-					page,
-					pageSize,
-					total: 0,
-					totalPages: 1,
-				});
+				return dbSuccess(buildPaginatedResult([], 0, pagination));
 			}
 
 			const whereClause = buildHistoryConditions(db, userId, options);
@@ -663,21 +654,14 @@ export const playthroughService = {
 				db,
 				userId,
 				options,
-				pageSize,
-				offset,
+				pagination.pageSize,
+				pagination.offset,
 			);
-			const totalPages = Math.max(1, Math.ceil(total / pageSize));
 			const items = rows.map((run) =>
 				mapPlaythroughToHistoryItem(run as never),
 			);
 
-			return dbSuccess({
-				items,
-				page,
-				pageSize,
-				total,
-				totalPages,
-			});
+			return dbSuccess(buildPaginatedResult(items, total, pagination));
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to query player history"));
 		}

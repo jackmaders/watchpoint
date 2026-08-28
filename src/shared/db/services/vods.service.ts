@@ -1,6 +1,6 @@
 import { and, count, desc, eq, like, or } from "drizzle-orm";
-import { createTableService } from "../common/service";
 import {
+	buildPaginatedResult,
 	clampPagination,
 	type DbContext,
 	type DbResult,
@@ -24,7 +24,7 @@ import {
 	insertVodSchema,
 	validateScenarioConfig,
 	validateVodForPublishing,
-} from "../vods/validation";
+} from "../validation/vods";
 import { auditService } from "./audit.service";
 
 // --- Base Types & DTOs ---
@@ -144,10 +144,6 @@ export interface ReorderScenariosInput {
 	scenarioOrders: Array<{ id: string; timestampSeconds: number }>;
 	vodId: string;
 }
-
-// --- Base Table Services ---
-export const vodTableService = createTableService(vods);
-export const scenarioTableService = createTableService(scenarios);
 
 function extractVodUpdateValues(
 	input: UpdateVodInput,
@@ -392,8 +388,10 @@ export const vodService = {
 		}
 
 		try {
-			const vod = await vodTableService.create(
-				{
+			const db = await getDb(context);
+			const [vod] = await db
+				.insert(vods)
+				.values({
 					durationSeconds: input.durationSeconds,
 					heroName: input.heroName,
 					isPublished: false,
@@ -402,9 +400,8 @@ export const vodService = {
 					role: input.role,
 					title: input.title,
 					youtubeVideoId: input.youtubeVideoId,
-				},
-				context,
-			);
+				})
+				.returning();
 
 			if (!vod) {
 				return dbFailure("Failed to create VOD");
@@ -446,8 +443,10 @@ export const vodService = {
 		}
 
 		try {
-			const scenario = await scenarioTableService.create(
-				{
+			const db = await getDb(context);
+			const [scenario] = await db
+				.insert(scenarios)
+				.values({
 					explanationText: input.explanationText,
 					imageUrl: input.imageUrl ?? null,
 					inputConfig: input.inputConfig,
@@ -457,9 +456,8 @@ export const vodService = {
 					timeLimitSeconds: input.timeLimitSeconds ?? null,
 					timestampSeconds: input.timestampSeconds,
 					vodId: input.vodId,
-				},
-				context,
-			);
+				})
+				.returning();
 
 			if (!scenario) {
 				return dbFailure("Failed to create scenario");
@@ -502,7 +500,8 @@ export const vodService = {
 		}
 
 		try {
-			await vodTableService.delete(input.id, context);
+			const db = await getDb(context);
+			await db.delete(vods).where(eq(vods.id, input.id));
 
 			await auditService.create(
 				{
@@ -540,7 +539,8 @@ export const vodService = {
 		}
 
 		try {
-			await scenarioTableService.delete(input.id, context);
+			const db = await getDb(context);
+			await db.delete(scenarios).where(eq(scenarios.id, input.id));
 
 			await auditService.create(
 				{
@@ -663,7 +663,7 @@ export const vodService = {
 		try {
 			const db = await getDb(context);
 			const { isPublished, role, search } = options;
-			const { offset, page, pageSize } = clampPagination(options);
+			const pagination = clampPagination(options);
 
 			const conditions = [];
 			if (typeof isPublished === "boolean") {
@@ -691,8 +691,8 @@ export const vodService = {
 				.where(whereClause);
 
 			const result = await db.query.vods.findMany({
-				limit: pageSize,
-				offset,
+				limit: pagination.pageSize,
+				offset: pagination.offset,
 				orderBy: [desc(vods.createdAt), desc(vods.id)],
 				where: (table, { and, eq, like, or }) => {
 					const conds = [];
@@ -723,15 +723,7 @@ export const vodService = {
 				},
 			});
 
-			const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-			return dbSuccess({
-				items: result,
-				page,
-				pageSize,
-				total,
-				totalPages,
-			});
+			return dbSuccess(buildPaginatedResult(result, total, pagination));
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve admin VODs"));
 		}
@@ -845,11 +837,12 @@ export const vodService = {
 		const updateValues = extractVodUpdateValues(input);
 
 		try {
-			const updatedVod = await vodTableService.update(
-				input.id,
-				updateValues,
-				context,
-			);
+			const db = await getDb(context);
+			const [updatedVod] = await db
+				.update(vods)
+				.set(updateValues)
+				.where(eq(vods.id, input.id))
+				.returning();
 
 			if (!updatedVod) {
 				return dbFailure("Failed to update VOD");
@@ -883,11 +876,12 @@ export const vodService = {
 		const updateValues = extractScenarioUpdateValues(input);
 
 		try {
-			const updatedScenario = await scenarioTableService.update(
-				input.id,
-				updateValues,
-				context,
-			);
+			const db = await getDb(context);
+			const [updatedScenario] = await db
+				.update(scenarios)
+				.set(updateValues)
+				.where(eq(scenarios.id, input.id))
+				.returning();
 
 			if (!updatedScenario) {
 				return dbFailure("Failed to update scenario");

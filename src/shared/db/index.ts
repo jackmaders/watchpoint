@@ -1,20 +1,5 @@
-// Domain Services
-
 export {
-	insertAuditEntrySchema,
-	selectAuditEntrySchema,
-} from "./audit/validation";
-export {
-	insertUserSchema,
-	selectUserSchema,
-	type UpdateUserRoleInput,
-	updateUserRoleInputSchema,
-} from "./auth/validation";
-export {
-	createTableService,
-	type TableWithId,
-} from "./common/service";
-export {
+	buildPaginatedResult,
 	type ClampedPagination,
 	catchDbError,
 	clampPagination,
@@ -34,14 +19,8 @@ export {
 	type PaginationOptions,
 	parseD1Error,
 	toErrorMessage,
+	tryDb,
 } from "./core";
-export {
-	insertAttemptRecordSchema,
-	insertPlaythroughSchema,
-	scenarioSnapshotInputSchema,
-	selectAttemptRecordSchema,
-	selectPlaythroughSchema,
-} from "./playthroughs/validation";
 // Schema
 export {
 	auditEntries,
@@ -153,7 +132,6 @@ export {
 	queryPlayerHistory,
 	recordPlaythroughAttempt,
 } from "./services/playthroughs.service";
-
 // VODs & Scenarios
 export type {
 	AdminVodItem,
@@ -187,12 +165,27 @@ export {
 	getSessionManifest,
 	getVodById,
 	reorderScenarios,
-	scenarioTableService,
 	setVodPublicationStatus,
 	updateScenario,
 	updateVod,
-	vodTableService,
 } from "./services/vods.service";
+export {
+	insertAuditEntrySchema,
+	selectAuditEntrySchema,
+} from "./validation/audit";
+export {
+	insertUserSchema,
+	selectUserSchema,
+	type UpdateUserRoleInput,
+	updateUserRoleInputSchema,
+} from "./validation/auth";
+export {
+	insertAttemptRecordSchema,
+	insertPlaythroughSchema,
+	scenarioSnapshotInputSchema,
+	selectAttemptRecordSchema,
+	selectPlaythroughSchema,
+} from "./validation/playthroughs";
 export {
 	boundedSliderConfigSchema,
 	insertScenarioSchema,
@@ -207,4 +200,4 @@ export {
 	validateInputConfigByType,
 	validateScenarioConfig,
 	validateVodForPublishing,
-} from "./vods/validation";
+} from "./validation/vods";

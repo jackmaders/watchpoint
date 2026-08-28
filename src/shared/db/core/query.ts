@@ -61,3 +61,21 @@ export function clampPagination(
 		pageSize: validPageSize,
 	};
 }
+
+/**
+ * Builds a standardized PaginatedResult from items, total count, and clamped pagination options.
+ */
+export function buildPaginatedResult<T>(
+	items: T[],
+	total: number,
+	pagination: ClampedPagination,
+): PaginatedResult<T> {
+	const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+	return {
+		items,
+		page: pagination.page,
+		pageSize: pagination.pageSize,
+		total,
+		totalPages,
+	};
+}
