@@ -17,7 +17,9 @@ import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema/vods";
 export { getDb };
 
 export const mockAuditService = {
+	count: vi.fn(async () => dbSuccess(0)),
 	create: vi.fn(async () => dbSuccess(null)),
+	getById: vi.fn(async () => dbSuccess(null)),
 	list: vi.fn(async () =>
 		dbSuccess({
 			items: [],
@@ -27,7 +29,6 @@ export const mockAuditService = {
 			totalPages: 1,
 		}),
 	),
-	listByEntity: vi.fn(async () => dbSuccess([])),
 };
 export const auditService = mockAuditService;
 

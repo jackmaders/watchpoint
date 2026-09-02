@@ -168,13 +168,13 @@ export async function getCurrentUser(
 }
 
 export async function isRegistrationOpen(
-	context?: DbContext,
+	_context?: DbContext,
 	env: Record<string, string | undefined> = process.env,
 ): Promise<boolean> {
 	if (env.BETTER_AUTH_ALLOW_REGISTRATION === "true") {
 		return true;
 	}
-	const countResult = await authService.count(undefined, context);
+	const countResult = await authService.count();
 	const userCount = countResult.success ? countResult.data : 0;
 	return userCount === 0;
 }
