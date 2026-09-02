@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying class name composition and duration formatting utilities.
+ *
+ * Validates the `cn` helper using Vitest to assert correct conditional class application and
+ * conflict resolution via `tailwind-merge` and `clsx`.
+ */
+
 import { describe, expect, it } from "vitest";
 import { cn } from "./utils";
 

@@ -1,3 +1,12 @@
+/**
+ * Manages server-side authentication configuration, player identity resolution,
+ * registration governance, and Better Auth engine initialization.
+ *
+ * Configures the Better Auth instance with Drizzle ORM SQLite adapter against Cloudflare D1,
+ * enforces first-user `ADMIN` role assignment and registration gating via database hooks,
+ * and exports `getAuth`, `getCurrentUser`, `isRegistrationOpen`, and `handleAuthRequest`.
+ */
+
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { authService, type DbContext, getDb } from "../db";

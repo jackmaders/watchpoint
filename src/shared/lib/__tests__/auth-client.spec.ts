@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying the structure and exported interface of the browser-side Better Auth client.
+ *
+ * Asserts that `authClient` correctly exposes expected session lifecycle and authentication methods
+ * required by consumer UI components.
+ */
+
 import { describe, expect, it } from "vitest";
 import { authClient } from "../auth-client";
 

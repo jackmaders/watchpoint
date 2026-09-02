@@ -1,3 +1,10 @@
+/**
+ * Component test suite verifying rendering, accessibility attributes, and variant styling across shared UI primitives.
+ *
+ * Validates `Alert`, `Dialog`, `Field`, `Input`, `Label`, and `Tabs` using React Testing Library,
+ * asserting proper DOM structure, ARIA role bindings, and conditional class applications.
+ */
+
 import { cleanup, render, screen } from "@testing-library/react";
 import { useId } from "react";
 import { afterEach, describe, expect, it } from "vitest";

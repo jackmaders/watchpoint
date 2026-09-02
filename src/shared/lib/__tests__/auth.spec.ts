@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying server-side Better Auth lifecycle, user resolution, and registration governance.
+ *
+ * Tests `getAuthConfig`, `createAuthInstance`, `getAuth`, `getCurrentUser`, and `isRegistrationOpen` using
+ * Vitest mocks for database services and request headers across edge and local runtime scenarios.
+ */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../db");

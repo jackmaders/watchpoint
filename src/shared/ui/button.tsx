@@ -1,3 +1,10 @@
+/**
+ * Renders the foundational interactive button component supporting design system visual hierarchy and polymorphic slot rendering.
+ *
+ * Implements `Button` and `buttonVariants` using `@radix-ui/react-slot` and class-variance-authority (`cva`),
+ * providing consistent sizing, variant styling, focus rings, and accessible button semantics across all UI slices.
+ */
+
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
