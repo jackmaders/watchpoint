@@ -9,6 +9,7 @@
 
 export {
 	buildPaginatedResult,
+	buildWhereConditions,
 	type ClampedPagination,
 	catchDbError,
 	clampPagination,
@@ -21,12 +22,14 @@ export {
 	dbFailure,
 	dbSuccess,
 	escapeLike,
+	executeQuery,
 	getDb,
 	type JsonPrimitive,
 	type JsonValue,
 	type PaginatedResult,
 	type PaginationOptions,
 	parseD1Error,
+	type TableFilterOptions,
 	toErrorMessage,
 	tryDb,
 } from "./core";

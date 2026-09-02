@@ -1,7 +1,7 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/d1";
 import { getPlatformProxy } from "wrangler";
-import * as schema from "../src/shared/db/schema";
+import * as schema from "../src/shared/db/schema/index";
 import { assertLocalSeedTarget, executeSeed } from "../src/shared/db/seed";
 
 async function main() {

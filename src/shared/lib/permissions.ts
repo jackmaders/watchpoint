@@ -7,8 +7,7 @@
  * against `getCurrentUser` and throws standard 401/403 HTTP responses on authorization failure.
  */
 
-import type { DbContext } from "../db/core/client";
-import type { UserRole } from "../db/schema";
+import type { DbContext, UserRole } from "../db";
 import { getCurrentUser } from "./auth";
 
 export const PERMISSIONS = {
