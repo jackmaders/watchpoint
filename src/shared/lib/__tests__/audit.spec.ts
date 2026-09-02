@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying input validation, authorization guards, and delegation in the audit server function.
+ *
+ * Validates `getAdminAuditLogs` using Vitest mocks for `requirePermission` and `auditService`, asserting
+ * schema parsing compliance, error propagation, and correct result payload mapping.
+ */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-start");

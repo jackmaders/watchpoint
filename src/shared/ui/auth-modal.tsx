@@ -1,3 +1,10 @@
+/**
+ * Renders interactive authentication dialogs and header account controls for player sign-in, registration, and session management.
+ *
+ * Implements `AuthModal`, `AccountControls`, and `resolveAuthResult` using Radix UI `Dialog` and `Tabs` primitives,
+ * styled with Tailwind CSS, wired to `authClient` for authentication actions, and supporting registration toggle states.
+ */
+
 "use client";
 
 import { Link } from "@tanstack/react-router";

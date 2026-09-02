@@ -1,3 +1,10 @@
+/**
+ * Renders accessible form field wrappers, grouped input layouts, labels, descriptions, and validation error messages.
+ *
+ * Implements `Field`, `FieldGroup`, `FieldLabel`, `FieldDescription`, and `FieldError` composed with Radix UI `Label`
+ * and Tailwind CSS utility classes, standardizing form typography and accessible error messaging.
+ */
+
 "use client";
 import type * as React from "react";
 import { cn } from "@/shared/lib/utils";

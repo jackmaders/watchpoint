@@ -1,3 +1,10 @@
+/**
+ * Storybook visual component documentation and interaction stories for the shared Button primitive.
+ *
+ * Defines stories demonstrating all button visual variants, size configurations, disabled states,
+ * polymorphic link rendering via `asChild`, and accessible keyboard activation flows.
+ */
+
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useCallback, useState } from "react";
 import { Button } from "@/shared/ui";

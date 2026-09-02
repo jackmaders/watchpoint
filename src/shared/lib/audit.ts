@@ -1,3 +1,12 @@
+/**
+ * Exposes a cross-cutting server function to query structured administrative audit logs,
+ * enabling authorized administrative interfaces to inspect system mutations and governance events.
+ *
+ * Implements `getAdminAuditLogs` as an authenticated TanStack Start server function using `createServerFn`.
+ * Enforces the `audit:view` capability via `requirePermission`, validates query pagination and filter parameters
+ * through `GetAdminAuditLogsSchema`, and delegates retrieval to `auditService.list` in the shared database layer.
+ */
+
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { type AuditEntryItem, auditService } from "@/shared/db";

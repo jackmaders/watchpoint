@@ -1,3 +1,10 @@
+/**
+ * Renders modal dialog overlays and content containers for focused user interactions and confirmation workflows.
+ *
+ * Wraps Radix UI `Dialog` primitives (`DialogPrimitive.Root`, `Content`, `Header`, `Title`, `Description`, `Close`)
+ * with Tailwind CSS layout styling, backdrop overlay transitions, and accessible keyboard focus management.
+ */
+
 "use client";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
