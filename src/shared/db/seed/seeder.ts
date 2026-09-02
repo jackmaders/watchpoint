@@ -1,3 +1,12 @@
+/**
+ * Orchestrates deterministic database seeding by purging existing records and populating
+ * initial user accounts, authentication credentials, VOD catalogs, and scenario fixtures.
+ *
+ * Implements the database seed runner. Validates local environment safety via `assertLocalSeedTarget`,
+ * hashes seed passwords using `better-auth/crypto`, clears relational tables in dependency order,
+ * and inserts reproducible player/admin accounts and synthetic VOD training data into Cloudflare D1 via Drizzle.
+ */
+
 import { hashPassword } from "better-auth/crypto";
 import type { DrizzleDb } from "../core/client";
 import { auditEntries } from "../schema/audit";

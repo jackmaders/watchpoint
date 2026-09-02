@@ -1,3 +1,12 @@
+/**
+ * Defines static test fixtures, deterministic identifiers, and synthetic VOD and scenario
+ * models used for seeding local development and testing databases.
+ *
+ * Implements deterministic fixture data. Exports `FIXTURE_IDS`, `FIXTURE_VOD`, `getLocalFixtureVod`,
+ * and `getLocalFixtureScenarios` covering all five learning module types (Strategy, Tactics,
+ * Ultimate Tracking, Cooldown Tracking, and Spatial Awareness) with polymorphic configurations.
+ */
+
 export const FIXTURE_IDS = {
 	adminUser: "usr_local_admin",
 	playerUser: "usr_local_player",

@@ -1,3 +1,13 @@
+/**
+ * Coordinates video on demand (VOD) catalog management, interactive scenario authoring,
+ * session manifest compilation, and bulk administrative lifecycle operations.
+ *
+ * Implements the ADR-0002, ADR-0003, and ADR-0010 domain service contracts via `vodService`.
+ * Encapsulates Drizzle ORM queries on Cloudflare D1, providing sanitized paginated catalog searches
+ * via `escapeLike`, pre-session manifest resolution filtered by active module selection, publication
+ * readiness validation, reordering operations, and automatic audit logging.
+ */
+
 import { and, count, desc, eq, like, or } from "drizzle-orm";
 import {
 	buildPaginatedResult,

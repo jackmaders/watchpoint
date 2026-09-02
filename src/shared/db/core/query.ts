@@ -1,3 +1,12 @@
+/**
+ * Enforces query sanitization, deterministic sort tiebreaking, and bounded pagination
+ * constraints across all collection reads throughout the database layer.
+ *
+ * Implements ADR-0010 pagination and sanitization primitives. Provides `escapeLike` for
+ * wildcard-safe SQL LIKE patterns, `clampPagination` to guarantee page sizes within [1, 50]
+ * bounds, and `buildPaginatedResult` for standard `PaginatedResult<T>` envelope construction.
+ */
+
 export interface PaginatedResult<T> {
 	items: T[];
 	page: number;

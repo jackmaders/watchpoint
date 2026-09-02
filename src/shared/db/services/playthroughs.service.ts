@@ -1,3 +1,12 @@
+/**
+ * Coordinates durable attempt recording, session lifecycle state transitions, and historical
+ * telemetry aggregation for interactive VOD training playthroughs.
+ *
+ * Implements the ADR-0007, ADR-0009, and ADR-0010 domain service contracts via `playthroughService`.
+ * Wraps Drizzle ORM operations against Cloudflare D1 inside transactional boundaries, enforces idempotent
+ * attempt recording and user ownership invariants, calculates playthrough accuracy and latency metrics, and projects results into `DbResult<T>`.
+ */
+
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import {
 	calculateAccuracy,

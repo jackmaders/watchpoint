@@ -1,3 +1,11 @@
+/**
+ * Provides in-memory mock implementations of the database client factory and query builder
+ * chains for testing database services in isolation.
+ *
+ * Implements mock infrastructure for ADR-0010 tests. Exports a stubbed `getDb` factory returning
+ * spy chains for Drizzle ORM query builders, selections, joins, and transactional mutations.
+ */
+
 import { vi } from "vitest";
 
 interface QueryOptions {

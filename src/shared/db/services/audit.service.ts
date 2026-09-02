@@ -1,3 +1,12 @@
+/**
+ * Coordinates immutable audit logging and historical inspection queries for administrative
+ * actions and domain state transitions across all entities.
+ *
+ * Implements the ADR-0010 domain service contract via `auditService`. Encapsulates Drizzle ORM
+ * operations against Cloudflare D1, providing pagination-clamped query methods (`list`, `listByEntity`)
+ * with deterministic primary-key sort tiebreakers and structured `create` log insertion into `DbResult<T>`.
+ */
+
 import { and, count, desc, eq } from "drizzle-orm";
 import {
 	buildPaginatedResult,
