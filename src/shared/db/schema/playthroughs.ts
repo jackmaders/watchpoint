@@ -1,3 +1,12 @@
+/**
+ * Defines database schemas, indexes, and relations for interactive playthrough sessions,
+ * scenario snapshots, module filtering choices, attempt telemetry, and completion records.
+ *
+ * Implements the session coordination schema for ADR-0007, ADR-0009, and ADR-0010. Configures
+ * Drizzle ORM tables for `playthroughs`, `playthroughCompletions`, `playthroughModuleSelections`,
+ * `scenarioSnapshots`, and `attemptRecords`, with idempotency indexes, foreign key cascades to `users` and `vods`, and polymorphic response payload columns.
+ */
+
 import { relations } from "drizzle-orm";
 import {
 	index,

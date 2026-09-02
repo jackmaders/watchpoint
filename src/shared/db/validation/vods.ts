@@ -1,3 +1,12 @@
+/**
+ * Defines Zod validation schemas and polymorphic input validators for VOD metadata,
+ * scenario configurations, and publication readiness checks.
+ *
+ * Implements domain integrity rules for VOD and scenario authoring. Provides schemas for multiple choice,
+ * percent slider, time slider, and 2D map pin inputs via `validateScenarioConfig` and `validateInputConfigByType`,
+ * as well as publication invariants via `validateVodForPublishing` ensuring every active module has valid scenarios.
+ */
+
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import {
