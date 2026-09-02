@@ -211,7 +211,7 @@ export const deleteVod = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<void>> => {
+	.handler(async ({ data }): Promise<DbResult<null>> => {
 		const actor = await requirePermission("catalog:manage");
 		return vodService.delete({
 			actorUserId: actor.id,
@@ -309,7 +309,7 @@ export const deleteScenario = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<void>> => {
+	.handler(async ({ data }): Promise<DbResult<null>> => {
 		const actor = await requirePermission("catalog:manage");
 		return vodService.deleteScenario({
 			actorUserId: actor.id,
@@ -325,7 +325,7 @@ export const reorderScenarios = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<void>> => {
+	.handler(async ({ data }): Promise<DbResult<null>> => {
 		const actor = await requirePermission("catalog:manage");
 		return vodService.reorderScenarios({
 			actorUserId: actor.id,

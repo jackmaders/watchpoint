@@ -116,7 +116,7 @@ describe("useAdminContentState", () => {
 	it("handles single delete confirmation and dialog close", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
-			data: undefined,
+			data: null,
 			success: true,
 		});
 		const { result } = renderHook(() =>
@@ -318,7 +318,7 @@ describe("useAdminContentState", () => {
 	it("handles single delete and removes from selectedIds", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
-			data: undefined,
+			data: null,
 			success: true,
 		});
 		const { result } = renderHook(() =>

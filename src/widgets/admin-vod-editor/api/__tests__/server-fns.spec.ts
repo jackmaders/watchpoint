@@ -340,7 +340,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(vodService.delete).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 
@@ -355,7 +355,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 				id: "v1",
 			});
-			expect(result).toEqual({ data: undefined, success: true });
+			expect(result).toEqual({ data: null, success: true });
 		});
 
 		it("throws error for invalid delete payload", async () => {
@@ -614,7 +614,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(vodService.deleteScenario).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 
@@ -631,7 +631,7 @@ describe("admin-content server functions", () => {
 				actorUserId: "admin_1",
 				id: "s1",
 			});
-			expect(result).toEqual({ data: undefined, success: true });
+			expect(result).toEqual({ data: null, success: true });
 		});
 
 		it("throws error for invalid delete scenario payload", async () => {
@@ -659,7 +659,7 @@ describe("admin-content server functions", () => {
 				role: "ADMIN",
 			});
 			vi.mocked(vodService.reorderScenarios).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 
@@ -676,7 +676,7 @@ describe("admin-content server functions", () => {
 				...reorderInput,
 				actorUserId: "admin_1",
 			});
-			expect(result).toEqual({ data: undefined, success: true });
+			expect(result).toEqual({ data: null, success: true });
 		});
 
 		it("throws error for invalid reorder scenario payload", async () => {

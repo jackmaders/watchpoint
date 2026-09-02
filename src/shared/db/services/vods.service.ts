@@ -11,17 +11,16 @@
 import { and, count, desc, eq, like, or } from "drizzle-orm";
 import {
 	buildPaginatedResult,
+	buildWhereConditions,
 	clampPagination,
 	type DbContext,
-	type DbResult,
 	dbFailure,
 	dbSuccess,
 	escapeLike,
+	executeQuery,
 	getDb,
 	type JsonValue,
-	type PaginatedResult,
-	type PaginationOptions,
-	toErrorMessage,
+	type TableFilterOptions,
 } from "../core";
 import {
 	type HeroRole,
@@ -58,11 +57,12 @@ export type SessionManifest = VodItem & {
 	scenarios: ScenarioItem[];
 };
 
-export interface GetAdminVodsOptions extends PaginationOptions {
-	isPublished?: boolean;
-	role?: HeroRole;
+export type GetAdminVodsOptions = TableFilterOptions<
+	typeof vods,
+	"isPublished" | "role"
+> & {
 	search?: string;
-}
+};
 
 export type AdminVodItem = VodItem & {
 	scenarios: Array<{ id: string }>;
@@ -332,11 +332,26 @@ async function validateScenarioCreation(
 	return null;
 }
 
+function buildAdminWhereConditions(options: GetAdminVodsOptions) {
+	const { search, ...filters } = options;
+	const baseCondition = buildWhereConditions(vods, filters);
+
+	if (!search || search.trim().length === 0) {
+		return baseCondition;
+	}
+
+	const searchPattern = `%${escapeLike(search.trim().toLowerCase())}%`;
+	const searchCondition = or(
+		like(vods.title, searchPattern),
+		like(vods.heroName, searchPattern),
+		like(vods.mapName, searchPattern),
+	);
+
+	return baseCondition ? and(baseCondition, searchCondition) : searchCondition;
+}
+
 export const vodService = {
-	async bulkDelete(
-		input: BulkDeleteVodsInput,
-		context?: DbContext,
-	): Promise<DbResult<BulkOperationResult>> {
+	async bulkDelete(input: BulkDeleteVodsInput, context?: DbContext) {
 		const failed: Array<{ error: string; id: string }> = [];
 		const succeeded: string[] = [];
 
@@ -359,10 +374,7 @@ export const vodService = {
 		return dbSuccess({ failed, succeeded });
 	},
 
-	async bulkPublish(
-		input: BulkPublishVodsInput,
-		context?: DbContext,
-	): Promise<DbResult<BulkOperationResult>> {
+	async bulkPublish(input: BulkPublishVodsInput, context?: DbContext) {
 		const failed: Array<{ error: string; id: string }> = [];
 		const succeeded: string[] = [];
 
@@ -386,10 +398,7 @@ export const vodService = {
 		return dbSuccess({ failed, succeeded });
 	},
 
-	async create(
-		input: CreateVodInput,
-		context?: DbContext,
-	): Promise<DbResult<VodItem>> {
+	async create(input: CreateVodInput, context?: DbContext) {
 		if (input.isPublished === true) {
 			return dbFailure("Cannot publish a VOD with zero scenarios");
 		}
@@ -399,109 +408,103 @@ export const vodService = {
 			return dbFailure(parsed.error.issues[0].message);
 		}
 
-		try {
-			const db = await getDb(context);
-			const [vod] = await db
-				.insert(vods)
-				.values({
-					durationSeconds: input.durationSeconds,
-					heroName: input.heroName,
-					isPublished: false,
-					mapName: input.mapName,
-					rankTier: input.rankTier,
-					role: input.role,
-					title: input.title,
-					youtubeVideoId: input.youtubeVideoId,
-				})
-				.returning();
+		return executeQuery(
+			(async () => {
+				const [vod] = await (await getDb(context))
+					.insert(vods)
+					.values({
+						durationSeconds: input.durationSeconds,
+						heroName: input.heroName,
+						isPublished: false,
+						mapName: input.mapName,
+						rankTier: input.rankTier,
+						role: input.role,
+						title: input.title,
+						youtubeVideoId: input.youtubeVideoId,
+					})
+					.returning();
 
-			if (!vod) {
-				return dbFailure("Failed to create VOD");
-			}
+				if (!vod) {
+					throw new Error("Failed to create VOD");
+				}
 
-			await auditService.create(
-				{
-					action: "VOD_CREATED",
-					actorUserId: input.actorUserId,
-					entityId: vod.id,
-					entityType: "VOD",
-					metadata: {
-						durationSeconds: vod.durationSeconds,
-						heroName: vod.heroName,
-						isPublished: vod.isPublished,
-						mapName: vod.mapName,
-						rankTier: vod.rankTier,
-						role: vod.role,
-						title: vod.title,
-						youtubeVideoId: vod.youtubeVideoId,
+				await auditService.create(
+					{
+						action: "VOD_CREATED",
+						actorUserId: input.actorUserId,
+						entityId: vod.id,
+						entityType: "VOD",
+						metadata: {
+							durationSeconds: vod.durationSeconds,
+							heroName: vod.heroName,
+							isPublished: vod.isPublished,
+							mapName: vod.mapName,
+							rankTier: vod.rankTier,
+							role: vod.role,
+							title: vod.title,
+							youtubeVideoId: vod.youtubeVideoId,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
 
-			return dbSuccess(vod);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to create VOD"));
-		}
+				return vod;
+			})(),
+			"Failed to create VOD",
+		);
 	},
 
-	async createScenario(
-		input: CreateScenarioInput,
-		context?: DbContext,
-	): Promise<DbResult<ScenarioItem>> {
+	async createScenario(input: CreateScenarioInput, context?: DbContext) {
 		const validationError = await validateScenarioCreation(input, context);
 		if (validationError) {
 			return dbFailure(validationError);
 		}
 
-		try {
-			const db = await getDb(context);
-			const [scenario] = await db
-				.insert(scenarios)
-				.values({
-					explanationText: input.explanationText,
-					imageUrl: input.imageUrl ?? null,
-					inputConfig: input.inputConfig,
-					inputType: input.inputType,
-					moduleType: input.moduleType,
-					promptText: input.promptText,
-					timeLimitSeconds: input.timeLimitSeconds ?? null,
-					timestampSeconds: input.timestampSeconds,
-					vodId: input.vodId,
-				})
-				.returning();
+		return executeQuery(
+			(async () => {
+				const [scenario] = await (await getDb(context))
+					.insert(scenarios)
+					.values({
+						explanationText: input.explanationText,
+						imageUrl: input.imageUrl ?? null,
+						inputConfig: input.inputConfig,
+						inputType: input.inputType,
+						moduleType: input.moduleType,
+						promptText: input.promptText,
+						timeLimitSeconds: input.timeLimitSeconds ?? null,
+						timestampSeconds: input.timestampSeconds,
+						vodId: input.vodId,
+					})
+					.returning();
 
-			if (!scenario) {
-				return dbFailure("Failed to create scenario");
-			}
+				if (!scenario) {
+					throw new Error("Failed to create scenario");
+				}
 
-			await auditService.create(
-				{
-					action: "SCENARIO_CREATED",
-					actorUserId: input.actorUserId,
-					entityId: scenario.id,
-					entityType: "SCENARIO",
-					metadata: {
-						inputType: scenario.inputType,
-						moduleType: scenario.moduleType,
-						promptText: scenario.promptText,
-						timestampSeconds: scenario.timestampSeconds,
-						vodId: scenario.vodId,
+				await auditService.create(
+					{
+						action: "SCENARIO_CREATED",
+						actorUserId: input.actorUserId,
+						entityId: scenario.id,
+						entityType: "SCENARIO",
+						metadata: {
+							inputType: scenario.inputType,
+							moduleType: scenario.moduleType,
+							promptText: scenario.promptText,
+							timestampSeconds: scenario.timestampSeconds,
+							vodId: scenario.vodId,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
 
-			return dbSuccess(scenario);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to create scenario"));
-		}
+				return scenario;
+			})(),
+			"Failed to create scenario",
+		);
 	},
 
-	async delete(
-		input: DeleteVodInput,
-		context?: DbContext,
-	): Promise<DbResult<void>> {
+	async delete(input: DeleteVodInput, context?: DbContext) {
 		const existingResult = await vodService.getById({ id: input.id }, context);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
@@ -511,36 +514,33 @@ export const vodService = {
 			return dbFailure("VOD not found");
 		}
 
-		try {
-			const db = await getDb(context);
-			await db.delete(vods).where(eq(vods.id, input.id));
+		return executeQuery(
+			(async () => {
+				await (await getDb(context)).delete(vods).where(eq(vods.id, input.id));
 
-			await auditService.create(
-				{
-					action: "VOD_DELETED",
-					actorUserId: input.actorUserId,
-					entityId: input.id,
-					entityType: "VOD",
-					metadata: {
-						heroName: existing.heroName,
-						mapName: existing.mapName,
-						role: existing.role,
-						title: existing.title,
+				await auditService.create(
+					{
+						action: "VOD_DELETED",
+						actorUserId: input.actorUserId,
+						entityId: input.id,
+						entityType: "VOD",
+						metadata: {
+							heroName: existing.heroName,
+							mapName: existing.mapName,
+							role: existing.role,
+							title: existing.title,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
 
-			return dbSuccess(undefined);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to delete VOD"));
-		}
+				return undefined;
+			})(),
+			"Failed to delete VOD",
+		);
 	},
 
-	async deleteScenario(
-		input: DeleteScenarioInput,
-		context?: DbContext,
-	): Promise<DbResult<void>> {
+	async deleteScenario(input: DeleteScenarioInput, context?: DbContext) {
 		const existingResult = await vodService.getScenarioById(
 			{ id: input.id },
 			context,
@@ -553,223 +553,156 @@ export const vodService = {
 			return dbFailure("Scenario not found");
 		}
 
-		try {
-			const db = await getDb(context);
-			await db.delete(scenarios).where(eq(scenarios.id, input.id));
+		return executeQuery(
+			(async () => {
+				await (await getDb(context))
+					.delete(scenarios)
+					.where(eq(scenarios.id, input.id));
 
-			await auditService.create(
-				{
-					action: "SCENARIO_DELETED",
-					actorUserId: input.actorUserId,
-					entityId: input.id,
-					entityType: "SCENARIO",
-					metadata: {
-						moduleType: existing.moduleType,
-						promptText: existing.promptText,
-						timestampSeconds: existing.timestampSeconds,
-						vodId: existing.vodId,
+				await auditService.create(
+					{
+						action: "SCENARIO_DELETED",
+						actorUserId: input.actorUserId,
+						entityId: input.id,
+						entityType: "SCENARIO",
+						metadata: {
+							moduleType: existing.moduleType,
+							promptText: existing.promptText,
+							timestampSeconds: existing.timestampSeconds,
+							vodId: existing.vodId,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
 
-			return dbSuccess(undefined);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to delete scenario"));
-		}
+				return undefined;
+			})(),
+			"Failed to delete scenario",
+		);
 	},
 
-	async getById(
-		input: { id: string },
-		context?: DbContext,
-	): Promise<DbResult<(VodItem & { scenarios: ScenarioItem[] }) | null>> {
-		try {
-			const db = await getDb(context);
-			const vod = await db.query.vods.findFirst({
-				where: (table, { eq }) => eq(table.id, input.id),
-				with: {
-					scenarios: {
-						orderBy: (scenariosTable, { asc }) => [
-							asc(scenariosTable.timestampSeconds),
-						],
+	async getById(input: { id: string }, context?: DbContext) {
+		return executeQuery(
+			(async () =>
+				(await getDb(context)).query.vods.findFirst({
+					where: (table, { eq }) => eq(table.id, input.id),
+					with: {
+						scenarios: {
+							orderBy: (scenariosTable, { asc }) => [
+								asc(scenariosTable.timestampSeconds),
+							],
+						},
 					},
-				},
-			});
-
-			return dbSuccess(vod ?? null);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve VOD by ID"));
-		}
+				}))(),
+			"Failed to retrieve VOD by ID",
+		);
 	},
 
-	async getScenarioById(
-		input: { id: string },
-		context?: DbContext,
-	): Promise<DbResult<ScenarioItem | null>> {
-		try {
-			const db = await getDb(context);
-			const scenario = await db.query.scenarios.findFirst({
-				where: (table, { eq }) => eq(table.id, input.id),
-			});
-			return dbSuccess(scenario ?? null);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve scenario"));
-		}
+	async getScenarioById(input: { id: string }, context?: DbContext) {
+		return executeQuery(
+			(async () =>
+				(await getDb(context)).query.scenarios.findFirst({
+					where: (table, { eq }) => eq(table.id, input.id),
+				}))(),
+			"Failed to retrieve scenario",
+		);
 	},
 
-	async getScenariosByVodId(
-		input: { vodId: string },
-		context?: DbContext,
-	): Promise<DbResult<ScenarioItem[]>> {
-		try {
-			const db = await getDb(context);
-			const scenarioList = await db.query.scenarios.findMany({
-				orderBy: (table, { asc }) => [asc(table.timestampSeconds)],
-				where: (table, { eq }) => eq(table.vodId, input.vodId),
-			});
-			return dbSuccess(scenarioList);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve scenarios"));
-		}
+	async getScenariosByVodId(input: { vodId: string }, context?: DbContext) {
+		return executeQuery(
+			(async () =>
+				(await getDb(context)).query.scenarios.findMany({
+					orderBy: (table, { asc }) => [asc(table.timestampSeconds)],
+					where: (table, { eq }) => eq(table.vodId, input.vodId),
+				}))(),
+			"Failed to retrieve scenarios",
+		);
 	},
 
 	async getSessionManifest(
 		input: GetSessionManifestInput,
 		context?: DbContext,
-	): Promise<DbResult<(VodItem & { scenarios: ScenarioItem[] }) | null>> {
-		try {
-			const db = await getDb(context);
-			const { id, modules, publishedOnly = true } = input;
+	) {
+		const { id, modules, publishedOnly = true } = input;
 
-			const vod = await db.query.vods.findFirst({
-				where: publishedOnly
-					? (table, { and, eq }) =>
-							and(eq(table.id, id), eq(table.isPublished, true))
-					: (table, { eq }) => eq(table.id, id),
-				with: {
-					scenarios: {
-						orderBy: (scenariosTable, { asc }) => [
-							asc(scenariosTable.timestampSeconds),
-						],
-						where:
-							modules === null
-								? (_scenariosTable, { sql }) => sql`1 = 0`
-								: modules !== undefined && modules.length > 0
-									? (scenariosTable, { inArray }) =>
-											inArray(scenariosTable.moduleType, modules)
-									: undefined,
-					},
-				},
-			});
-
-			return dbSuccess(vod ?? null);
-		} catch (error) {
-			return dbFailure(
-				toErrorMessage(error, "Failed to retrieve session manifest"),
-			);
-		}
-	},
-
-	async listAdmin(
-		options: GetAdminVodsOptions = {},
-		context?: DbContext,
-	): Promise<DbResult<PaginatedResult<AdminVodItem>>> {
-		try {
-			const db = await getDb(context);
-			const { isPublished, role, search } = options;
-			const pagination = clampPagination(options);
-
-			const conditions = [];
-			if (typeof isPublished === "boolean") {
-				conditions.push(eq(vods.isPublished, isPublished));
-			}
-			if (role) {
-				conditions.push(eq(vods.role, role));
-			}
-			if (search && search.trim().length > 0) {
-				const query = `%${escapeLike(search.trim().toLowerCase())}%`;
-				conditions.push(
-					or(
-						like(vods.title, query),
-						like(vods.heroName, query),
-						like(vods.mapName, query),
-					),
-				);
-			}
-			const whereClause =
-				conditions.length > 0 ? and(...conditions) : undefined;
-
-			const [{ value: total = 0 } = {}] = await db
-				.select({ value: count() })
-				.from(vods)
-				.where(whereClause);
-
-			const result = await db.query.vods.findMany({
-				limit: pagination.pageSize,
-				offset: pagination.offset,
-				orderBy: [desc(vods.createdAt), desc(vods.id)],
-				where: (table, { and, eq, like, or }) => {
-					const conds = [];
-					if (typeof isPublished === "boolean") {
-						conds.push(eq(table.isPublished, isPublished));
-					}
-					if (role) {
-						conds.push(eq(table.role, role));
-					}
-					if (search && search.trim().length > 0) {
-						const query = `%${escapeLike(search.trim().toLowerCase())}%`;
-						conds.push(
-							or(
-								like(table.title, query),
-								like(table.heroName, query),
-								like(table.mapName, query),
-							),
-						);
-					}
-					return conds.length > 0 ? and(...conds) : undefined;
-				},
-				with: {
-					scenarios: {
-						columns: {
-							id: true,
+		return executeQuery(
+			(async () =>
+				(await getDb(context)).query.vods.findFirst({
+					where: publishedOnly
+						? (table, { and, eq }) =>
+								and(eq(table.id, id), eq(table.isPublished, true))
+						: (table, { eq }) => eq(table.id, id),
+					with: {
+						scenarios: {
+							orderBy: (scenariosTable, { asc }) => [
+								asc(scenariosTable.timestampSeconds),
+							],
+							where:
+								modules === null
+									? (_scenariosTable, { sql }) => sql`1 = 0`
+									: modules !== undefined && modules.length > 0
+										? (scenariosTable, { inArray }) =>
+												inArray(scenariosTable.moduleType, modules)
+										: undefined,
 						},
 					},
-				},
-			});
-
-			return dbSuccess(buildPaginatedResult(result, total, pagination));
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve admin VODs"));
-		}
+				}))(),
+			"Failed to retrieve session manifest",
+		);
 	},
-	async listPublished(
-		context?: DbContext,
-	): Promise<DbResult<PublishedVodItem[]>> {
-		try {
-			const db = await getDb(context);
-			const result = await db.query.vods.findMany({
-				orderBy: [desc(vods.createdAt), desc(vods.id)],
-				where: (table, { eq }) => eq(table.isPublished, true),
-				with: {
-					scenarios: {
-						columns: {
-							id: true,
+
+	async listAdmin(options: GetAdminVodsOptions = {}, context?: DbContext) {
+		const pagination = clampPagination(options);
+
+		return executeQuery(
+			(async () => {
+				const db = await getDb(context);
+				const combinedWhereClause = buildAdminWhereConditions(options);
+
+				const [{ value: total = 0 } = {}] = await db
+					.select({ value: count() })
+					.from(vods)
+					.where(combinedWhereClause);
+
+				const result = await db.query.vods.findMany({
+					limit: pagination.pageSize,
+					offset: pagination.offset,
+					orderBy: [desc(vods.createdAt), desc(vods.id)],
+					where: combinedWhereClause,
+					with: {
+						scenarios: {
+							columns: {
+								id: true,
+							},
 						},
 					},
-				},
-			});
-			return dbSuccess(result);
-		} catch (error) {
-			return dbFailure(
-				toErrorMessage(error, "Failed to retrieve published VODs"),
-			);
-		}
+				});
+
+				return buildPaginatedResult(result, total, pagination);
+			})(),
+			"Failed to retrieve admin VODs",
+		);
 	},
 
-	async reorderScenarios(
-		input: ReorderScenariosInput,
-		context?: DbContext,
-	): Promise<DbResult<void>> {
+	async listPublished(context?: DbContext) {
+		return executeQuery(
+			(async () =>
+				(await getDb(context)).query.vods.findMany({
+					orderBy: [desc(vods.createdAt), desc(vods.id)],
+					where: (table, { eq }) => eq(table.isPublished, true),
+					with: {
+						scenarios: {
+							columns: {
+								id: true,
+							},
+						},
+					},
+				}))(),
+			"Failed to retrieve published VODs",
+		);
+	},
+
+	async reorderScenarios(input: ReorderScenariosInput, context?: DbContext) {
 		const vodResult = await vodService.getById({ id: input.vodId }, context);
 		if (!vodResult.success) {
 			return dbFailure(vodResult.error);
@@ -788,40 +721,41 @@ export const vodService = {
 			return dbFailure(orderError);
 		}
 
-		try {
-			const db = await getDb(context);
-			await db.transaction(async (tx) => {
-				for (const order of input.scenarioOrders) {
-					await tx
-						.update(scenarios)
-						.set({ timestampSeconds: order.timestampSeconds })
-						.where(eq(scenarios.id, order.id));
-				}
+		return executeQuery(
+			(async () => {
+				const db = await getDb(context);
+				await db.transaction(async (tx) => {
+					for (const order of input.scenarioOrders) {
+						await tx
+							.update(scenarios)
+							.set({ timestampSeconds: order.timestampSeconds })
+							.where(eq(scenarios.id, order.id));
+					}
 
-				await auditService.create(
-					{
-						action: "SCENARIOS_REORDERED",
-						actorUserId: input.actorUserId,
-						entityId: input.vodId,
-						entityType: "VOD",
-						metadata: {
-							scenarioOrders: input.scenarioOrders as unknown as JsonValue,
+					await auditService.create(
+						{
+							action: "SCENARIOS_REORDERED",
+							actorUserId: input.actorUserId,
+							entityId: input.vodId,
+							entityType: "VOD",
+							metadata: {
+								scenarioOrders: input.scenarioOrders as unknown as JsonValue,
+							},
 						},
-					},
-					context,
-				);
-			});
+						context,
+					);
+				});
 
-			return dbSuccess(undefined);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to reorder scenarios"));
-		}
+				return undefined;
+			})(),
+			"Failed to reorder scenarios",
+		);
 	},
 
 	async setPublicationStatus(
 		input: SetVodPublicationStatusInput,
 		context?: DbContext,
-	): Promise<DbResult<VodItem>> {
+	) {
 		return vodService.update(
 			{
 				actorUserId: input.actorUserId,
@@ -832,10 +766,7 @@ export const vodService = {
 		);
 	},
 
-	async update(
-		input: UpdateVodInput,
-		context?: DbContext,
-	): Promise<DbResult<VodItem>> {
+	async update(input: UpdateVodInput, context?: DbContext) {
 		const existingResult = await vodService.getById({ id: input.id }, context);
 		if (!existingResult.success) {
 			return dbFailure(existingResult.error);
@@ -852,29 +783,26 @@ export const vodService = {
 
 		const updateValues = extractVodUpdateValues(input);
 
-		try {
-			const db = await getDb(context);
-			const [updatedVod] = await db
-				.update(vods)
-				.set(updateValues)
-				.where(eq(vods.id, input.id))
-				.returning();
+		return executeQuery(
+			(async () => {
+				const [updatedVod] = await (await getDb(context))
+					.update(vods)
+					.set(updateValues)
+					.where(eq(vods.id, input.id))
+					.returning();
 
-			if (!updatedVod) {
-				return dbFailure("Failed to update VOD");
-			}
+				if (!updatedVod) {
+					throw new Error("Failed to update VOD");
+				}
 
-			await recordVodUpdateAudits(input, existing, updateValues, context);
-			return dbSuccess(updatedVod);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to update VOD"));
-		}
+				await recordVodUpdateAudits(input, existing, updateValues, context);
+				return updatedVod;
+			})(),
+			"Failed to update VOD",
+		);
 	},
 
-	async updateScenario(
-		input: UpdateScenarioInput,
-		context?: DbContext,
-	): Promise<DbResult<ScenarioItem>> {
+	async updateScenario(input: UpdateScenarioInput, context?: DbContext) {
 		const existingResult = await vodService.getScenarioById(
 			{ id: input.id },
 			context,
@@ -894,35 +822,35 @@ export const vodService = {
 
 		const updateValues = extractScenarioUpdateValues(input);
 
-		try {
-			const db = await getDb(context);
-			const [updatedScenario] = await db
-				.update(scenarios)
-				.set(updateValues)
-				.where(eq(scenarios.id, input.id))
-				.returning();
+		return executeQuery(
+			(async () => {
+				const [updatedScenario] = await (await getDb(context))
+					.update(scenarios)
+					.set(updateValues)
+					.where(eq(scenarios.id, input.id))
+					.returning();
 
-			if (!updatedScenario) {
-				return dbFailure("Failed to update scenario");
-			}
+				if (!updatedScenario) {
+					throw new Error("Failed to update scenario");
+				}
 
-			await auditService.create(
-				{
-					action: "SCENARIO_UPDATED",
-					actorUserId: input.actorUserId,
-					entityId: input.id,
-					entityType: "SCENARIO",
-					metadata: {
-						updatedFields: updateValues as Record<string, JsonValue>,
-						vodId: existing.vodId,
+				await auditService.create(
+					{
+						action: "SCENARIO_UPDATED",
+						actorUserId: input.actorUserId,
+						entityId: input.id,
+						entityType: "SCENARIO",
+						metadata: {
+							updatedFields: updateValues as Record<string, JsonValue>,
+							vodId: existing.vodId,
+						},
 					},
-				},
-				context,
-			);
+					context,
+				);
 
-			return dbSuccess(updatedScenario);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to update scenario"));
-		}
+				return updatedScenario;
+			})(),
+			"Failed to update scenario",
+		);
 	},
 };

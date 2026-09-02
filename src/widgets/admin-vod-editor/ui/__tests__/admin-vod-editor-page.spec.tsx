@@ -350,7 +350,7 @@ describe("AdminVodEditorPage", () => {
 	it("handles deleting a scenario via deleteScenario and handles errors", async () => {
 		// Arrange
 		vi.mocked(deleteScenario).mockResolvedValueOnce({
-			data: undefined,
+			data: null,
 			success: true,
 		});
 
@@ -403,7 +403,7 @@ describe("AdminVodEditorPage", () => {
 	it("handles reordering scenarios successfully", async () => {
 		// Arrange
 		vi.mocked(reorderScenarios).mockResolvedValueOnce({
-			data: undefined,
+			data: null,
 			success: true,
 		});
 
@@ -514,7 +514,7 @@ describe("AdminVodEditorPage", () => {
 	it("handles deleting VOD and delete error branches", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
-			data: undefined,
+			data: null,
 			success: true,
 		});
 
