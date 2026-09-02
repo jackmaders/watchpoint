@@ -43,6 +43,57 @@ function HomeRoute() {
 - **Delegation**: Loaders, beforeLoad auth checks, search param validators, request handlers, and route presentations MUST be delegated to dedicated functions in `src/pages/<slice-name>/` or `src/shared/`.
 - **Enforcement**: `plugins/enforce-ultra-thin-routes.grit` enforces this rule via Biome linting.
 
+## Module-Level Documentation (Why-First JSDoc)
+
+Every source file (domain services, UI components, FSD slices, routing adapters, utility modules, and database schemas) MUST begin with a top-of-file, two-paragraph JSDoc module block (`/** ... */`):
+
+1. **The "Why" (Paragraph 1)**: An implementation-agnostic explanation of why the file exists, the domain or architectural problem it solves, and its place in the system. Ground this explanation in repository ubiquitous language (`CONTEXT.md`), architectural standards, or relevant ADRs without mentioning transient implementation details.
+2. **The "How" (Paragraph 2)**: Concrete implementation mechanics, exported symbols, runtime dependencies (e.g. Cloudflare D1, Drizzle ORM, TanStack Start, TanStack Router), caching/lifecycles, mutation invariants, and boundary error-handling rules.
+
+Do NOT include explicit section labels or markdown headers (such as `Why:` or `How:`) inside the docblock; the structure is implicit via the two sequential paragraphs.
+
+### Canonical Examples
+
+#### Domain Service / ADR-0010 Database Layer
+```ts
+/**
+ * Coordinates durable attempt recording and completion telemetry for interactive
+ * VOD training playthroughs, enforcing idempotent submission and user ownership.
+ *
+ * Implements the ADR-0010 domain service contract via `playthroughService`. Wraps
+ * Drizzle ORM operations against Cloudflare D1 inside transactional boundaries,
+ * sanitizes pagination inputs with `escapeLike`, and projects results into `DbResult<T>`.
+ */
+```
+
+#### Feature-Sliced Design (Pages-First Slice / Component)
+```tsx
+/**
+ * Renders the interactive tactical decision overlay presented when a VOD playback
+ * reaches a curated scenario timestamp across all five learning module types.
+ *
+ * Implements the desktop Tactical Drawer and mobile overlay presentations within the
+ * `src/pages/session/` slice. Connects to `useSessionPlayer` to receive scenario manifests,
+ * triggers countdown animations, and delegates user submissions to slice actions.
+ */
+```
+
+#### Ultra-Thin Routing Adapter (`app/routes/`)
+```tsx
+/**
+ * Entrypoint route adapter for the interactive VOD training session view.
+ *
+ * Binds URL parameters and loader data via `@tanstack/react-router` createFileRoute,
+ * delegating all data fetching, auth verification, and UI composition to `src/pages/session/`.
+ */
+```
+
+### Integration Guidelines
+
+- **Anchor in Repository Context**: Reference established domain terminology from `CONTEXT.md` (e.g., *Session Manifest*, *Attempt Outcome*, *Tactical Drawer*), architecture rules from `CODING_STANDARDS.md`, and architectural decisions from `docs/adr/` (e.g., *ADR-0010*).
+- **Feature-Sliced Design (FSD)**: Files inside `src/pages/`, `src/features/`, `src/entities/`, and `src/shared/` must articulate their role in the FSD hierarchy and describe how consumers or cross-slice public APIs interact with them.
+- **Ultra-Thin Routes (`app/routes/`)**: Route files must document their route binding role and explicitly state the delegated target slice in `src/pages/` or `src/shared/`.
+- **Database Services & Schemas (`src/shared/db/`)**: Must document adherence to ADR-0010 (e.g., service object encapsulation, `DbResult<T>` envelope, boundary invariant enforcement, and zero direct Drizzle leakage).
 
 ## Test file location
 
