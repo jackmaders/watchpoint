@@ -14,6 +14,7 @@ import {
 } from "../../lib/metrics";
 import {
 	buildPaginatedResult,
+	buildWhereConditions,
 	clampPagination,
 	D1ErrorKind,
 	type DbContext,
@@ -21,11 +22,12 @@ import {
 	type DrizzleDb,
 	dbFailure,
 	dbSuccess,
+	executeQuery,
 	getDb,
 	type JsonValue,
 	type PaginatedResult,
-	type PaginationOptions,
 	parseD1Error,
+	type TableFilterOptions,
 	toErrorMessage,
 } from "../core";
 import {
@@ -78,10 +80,9 @@ export type PlaythroughWithDetails = PlaythroughItem & {
 	scenarioSnapshots: (typeof scenarioSnapshots.$inferSelect)[];
 };
 
-export interface GetPlayerHistoryOptions extends PaginationOptions {
+export interface GetPlayerHistoryOptions
+	extends TableFilterOptions<typeof playthroughs, "status" | "vodId"> {
 	modules?: readonly ModuleType[];
-	status?: PlaythroughStatus;
-	vodId?: string;
 }
 
 export interface PlayerHistoryItem {
@@ -316,17 +317,19 @@ async function handleAttemptIdempotencyRetry(
 	input: RecordPlaythroughAttemptInput,
 	context?: DbContext,
 ): Promise<DbResult<AttemptRecordItem>> {
-	const db = await getDb(context);
-	const existing = await db.query.attemptRecords.findFirst({
-		where: (table, { and, eq }) =>
-			and(
-				eq(table.idempotencyKey, input.idempotencyKey),
-				eq(table.userId, input.userId),
-			),
-	});
+	const result = await executeQuery(
+		(await getDb(context)).query.attemptRecords.findFirst({
+			where: (table, { and, eq }) =>
+				and(
+					eq(table.idempotencyKey, input.idempotencyKey),
+					eq(table.userId, input.userId),
+				),
+		}),
+		"Failed to retrieve attempt by key",
+	);
 
-	if (existing && isIdenticalAttempt(existing, input)) {
-		return dbSuccess(existing);
+	if (result.success && result.data && isIdenticalAttempt(result.data, input)) {
+		return dbSuccess(result.data);
 	}
 
 	return dbFailure(IDEMPOTENCY_CONFLICT_ERROR);
@@ -337,13 +340,13 @@ function buildHistoryConditions(
 	userId: string,
 	options: GetPlayerHistoryOptions,
 ) {
-	const conditions = [eq(playthroughs.userId, userId)];
-	if (options.status) {
-		conditions.push(eq(playthroughs.status, options.status));
-	}
-	if (options.vodId) {
-		conditions.push(eq(playthroughs.vodId, options.vodId));
-	}
+	const conditions = [
+		eq(playthroughs.userId, userId),
+		buildWhereConditions(playthroughs, {
+			status: options.status,
+			vodId: options.vodId,
+		}),
+	];
 	if (options.modules && options.modules.length > 0) {
 		conditions.push(
 			inArray(
@@ -359,7 +362,7 @@ function buildHistoryConditions(
 			),
 		);
 	}
-	return and(...conditions);
+	return and(...conditions.filter(Boolean));
 }
 
 async function fetchHistoryRows(
@@ -375,8 +378,12 @@ async function fetchHistoryRows(
 		orderBy: [desc(playthroughs.createdAt), desc(playthroughs.id)],
 		where: (table, { and: tableAnd, eq: tableEq, inArray: tableInArray }) => {
 			const conds = [tableEq(table.userId, userId)];
-			if (options.status) conds.push(tableEq(table.status, options.status));
-			if (options.vodId) conds.push(tableEq(table.vodId, options.vodId));
+			if (options.status) {
+				conds.push(tableEq(table.status, options.status));
+			}
+			if (options.vodId) {
+				conds.push(tableEq(table.vodId, options.vodId));
+			}
 			if (options.modules && options.modules.length > 0) {
 				conds.push(
 					tableInArray(
@@ -418,9 +425,21 @@ export const playthroughService = {
 		context?: DbContext,
 	): Promise<DbResult<PlaythroughCompletionItem | null>> {
 		try {
-			const db = await getDb(context);
 			const { id, userId } = input;
 			const completedAt = new Date();
+
+			const db = await getDb(context);
+			const findExistingCompletion = () =>
+				executeQuery(
+					db.query.playthroughCompletions.findFirst({
+						where: (table, { and: tableAnd, eq: tableEq }) =>
+							tableAnd(
+								tableEq(table.playthroughId, id),
+								tableEq(table.userId, userId),
+							),
+					}),
+					"Failed to complete playthrough",
+				);
 
 			const completion = await db.transaction(async (tx) => {
 				const [playthrough] = await tx
@@ -450,27 +469,21 @@ export const playthroughService = {
 
 			if (completion) return dbSuccess(completion);
 
-			const existing = await db.query.playthroughCompletions.findFirst({
-				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(
-						tableEq(table.playthroughId, id),
-						tableEq(table.userId, userId),
-					),
-			});
-
-			return dbSuccess(existing ?? null);
+			return findExistingCompletion();
 		} catch (error) {
 			const parsed = parseD1Error(error);
 			if (parsed.kind === D1ErrorKind.UNIQUE_VIOLATION) {
 				const db = await getDb(context);
-				const existing = await db.query.playthroughCompletions.findFirst({
-					where: (table, { and: tableAnd, eq: tableEq }) =>
-						tableAnd(
-							tableEq(table.playthroughId, input.id),
-							tableEq(table.userId, input.userId),
-						),
-				});
-				return dbSuccess(existing ?? null);
+				return executeQuery(
+					db.query.playthroughCompletions.findFirst({
+						where: (table, { and: tableAnd, eq: tableEq }) =>
+							tableAnd(
+								tableEq(table.playthroughId, input.id),
+								tableEq(table.userId, input.userId),
+							),
+					}),
+					"Failed to complete playthrough",
+				);
 			}
 
 			return dbFailure(toErrorMessage(error, "Failed to complete playthrough"));
@@ -483,7 +496,6 @@ export const playthroughService = {
 	): Promise<DbResult<PlaythroughItem>> {
 		try {
 			const db = await getDb(context);
-
 			const playthrough = await db.transaction(async (tx) => {
 				const [created] = await tx
 					.insert(playthroughs)
@@ -533,14 +545,16 @@ export const playthroughService = {
 	): Promise<DbResult<AttemptRecordItem | null>> {
 		try {
 			const db = await getDb(context);
-			const attempt = await db.query.attemptRecords.findFirst({
-				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(
-						tableEq(table.idempotencyKey, input.idempotencyKey),
-						tableEq(table.userId, input.userId),
-					),
-			});
-			return dbSuccess(attempt ?? null);
+			return executeQuery(
+				db.query.attemptRecords.findFirst({
+					where: (table, { and: tableAnd, eq: tableEq }) =>
+						tableAnd(
+							tableEq(table.idempotencyKey, input.idempotencyKey),
+							tableEq(table.userId, input.userId),
+						),
+				}),
+				"Failed to retrieve attempt by key",
+			);
 		} catch (error) {
 			return dbFailure(
 				toErrorMessage(error, "Failed to retrieve attempt by key"),
@@ -554,15 +568,17 @@ export const playthroughService = {
 	): Promise<DbResult<AttemptRecordItem[]>> {
 		try {
 			const db = await getDb(context);
-			const attempts = await db.query.attemptRecords.findMany({
-				orderBy: (table, { asc }) => [asc(table.createdAt)],
-				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(
-						tableEq(table.playthroughId, input.playthroughId),
-						tableEq(table.userId, input.userId),
-					),
-			});
-			return dbSuccess(attempts);
+			return executeQuery(
+				db.query.attemptRecords.findMany({
+					orderBy: (table, { asc }) => [asc(table.createdAt)],
+					where: (table, { and: tableAnd, eq: tableEq }) =>
+						tableAnd(
+							tableEq(table.playthroughId, input.playthroughId),
+							tableEq(table.userId, input.userId),
+						),
+				}),
+				"Failed to retrieve attempts",
+			);
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve attempts"));
 		}
@@ -574,23 +590,23 @@ export const playthroughService = {
 	): Promise<DbResult<PlaythroughWithDetails | null>> {
 		try {
 			const db = await getDb(context);
-
-			const playthrough = await db.query.playthroughs.findFirst({
-				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(
-						tableEq(table.id, input.id),
-						tableEq(table.userId, input.userId),
-					),
-				with: {
-					attempts: true,
-					moduleSelections: true,
-					scenarioSnapshots: {
-						orderBy: (snapshots, { asc }) => [asc(snapshots.position)],
+			return executeQuery(
+				db.query.playthroughs.findFirst({
+					where: (table, { and: tableAnd, eq: tableEq }) =>
+						tableAnd(
+							tableEq(table.id, input.id),
+							tableEq(table.userId, input.userId),
+						),
+					with: {
+						attempts: true,
+						moduleSelections: true,
+						scenarioSnapshots: {
+							orderBy: (snapshots, { asc }) => [asc(snapshots.position)],
+						},
 					},
-				},
-			});
-
-			return dbSuccess(playthrough ?? null);
+				}),
+				"Failed to retrieve playthrough",
+			);
 		} catch (error) {
 			return dbFailure(toErrorMessage(error, "Failed to retrieve playthrough"));
 		}
