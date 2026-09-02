@@ -3,32 +3,30 @@
  * guardrails across the platform.
  *
  * Implements the ADR-0010 domain service contract via `authService`. Encapsulates Drizzle ORM
- * queries on Cloudflare D1, providing sanitized paginated user searches via `escapeLike`, single-user
- * lookups, and transactional role updates with mandatory last-admin demotion protection and automated audit logging.
+ * queries on Cloudflare D1, providing sanitized paginated user searches via `escapeLike` and
+ * `buildWhereConditions`, single-user lookups, and role updates with mandatory last-admin demotion
+ * protection and automated audit logging, returning non-throwing `DbResult<T>` responses via `executeQuery`.
  */
 
 import { and, count, desc, eq, like, or } from "drizzle-orm";
 import {
 	buildPaginatedResult,
+	buildWhereConditions,
 	clampPagination,
-	type DbContext,
-	type DbResult,
 	dbFailure,
 	dbSuccess,
 	escapeLike,
+	executeQuery,
 	getDb,
-	type PaginatedResult,
-	type PaginationOptions,
-	toErrorMessage,
+	type TableFilterOptions,
 } from "../core";
 import { type UserRole, users } from "../schema/auth";
 import { updateUserRoleInputSchema } from "../validation/auth";
 import { auditService } from "./audit.service";
 
-export interface GetUsersOptions extends PaginationOptions {
-	role?: UserRole;
+export type GetUsersOptions = TableFilterOptions<typeof users, "role"> & {
 	search?: string;
-}
+};
 
 export type UserItem = typeof users.$inferSelect;
 
@@ -41,14 +39,13 @@ export interface UpdateUserRoleParams {
 async function validateDemotionPreconditions(
 	targetUser: UserItem,
 	newRole: UserRole,
-	context?: DbContext,
 ): Promise<string | null> {
 	if (targetUser.role !== "ADMIN" || newRole === "ADMIN") {
 		return null;
 	}
 
-	const db = await getDb(context);
-	const [{ value: adminCount }] = await db
+	const db = await getDb();
+	const [{ value: adminCount = 0 } = {}] = await db
 		.select({ value: count() })
 		.from(users)
 		.where(eq(users.role, "ADMIN"));
@@ -60,129 +57,60 @@ async function validateDemotionPreconditions(
 	return null;
 }
 
-async function applyUserRoleUpdate(
-	targetUserId: string,
-	newRole: UserRole,
-	previousRole: UserRole,
-	actorUserId: string,
-	context?: DbContext,
-): Promise<DbResult<UserItem>> {
-	try {
-		const db = await getDb(context);
-		const [updatedUser] = await db
-			.update(users)
-			.set({
-				role: newRole,
-				updatedAt: new Date(),
-			})
-			.where(eq(users.id, targetUserId))
-			.returning();
-
-		if (!updatedUser) {
-			return dbFailure("Failed to update user role");
-		}
-
-		await auditService.create(
-			{
-				action: "USER_ROLE_UPDATED",
-				actorUserId,
-				entityId: targetUserId,
-				entityType: "USER",
-				metadata: {
-					newRole,
-					previousRole,
-				},
-			},
-			context,
-		);
-
-		return dbSuccess(updatedUser);
-	} catch (error) {
-		return dbFailure(toErrorMessage(error, "Failed to update user role"));
-	}
-}
-
 export const authService = {
-	async count(
-		_options?: Record<string, never>,
-		context?: DbContext,
-	): Promise<DbResult<number>> {
-		try {
-			const db = await getDb(context);
-			const [row] = await db.select({ value: count() }).from(users);
-			return dbSuccess(row?.value ?? 0);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve user count"));
-		}
+	async count() {
+		const db = await getDb();
+		const query = db
+			.select({ value: count() })
+			.from(users)
+			.then(([row]) => row?.value ?? 0);
+
+		return executeQuery(query, "Failed to retrieve user count");
 	},
 
-	async getById(
-		input: { id: string },
-		context?: DbContext,
-	): Promise<DbResult<UserItem | null>> {
-		try {
-			const db = await getDb(context);
-			const user = await db.query.users.findFirst({
-				where: (table, { eq }) => eq(table.id, input.id),
-			});
-			return dbSuccess(user ?? null);
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve user by ID"));
-		}
+	async getById(input: { id: string }) {
+		const db = await getDb();
+		const query = db.query.users.findFirst({
+			where: eq(users.id, input.id),
+		});
+
+		return executeQuery(query, "Failed to retrieve user by ID");
 	},
 
-	async list(
-		options: GetUsersOptions = {},
-		context?: DbContext,
-	): Promise<DbResult<PaginatedResult<UserItem>>> {
-		try {
-			const db = await getDb(context);
-			const { role, search } = options;
-			const pagination = clampPagination(options);
+	async list(options: GetUsersOptions = {}) {
+		const db = await getDb();
+		const pagination = clampPagination(options);
+		const tableFilter = buildWhereConditions(users, options);
+		const search = options.search?.trim();
+		const queryPattern = search
+			? `%${escapeLike(search.toLowerCase())}%`
+			: undefined;
+		const searchFilter = queryPattern
+			? or(like(users.name, queryPattern), like(users.email, queryPattern))
+			: undefined;
 
-			const conditions = [];
-			if (search && search.trim().length > 0) {
-				const query = `%${escapeLike(search.trim().toLowerCase())}%`;
-				conditions.push(or(like(users.name, query), like(users.email, query)));
-			}
-			if (role) {
-				conditions.push(eq(users.role, role));
-			}
-			const whereClause =
-				conditions.length > 0 ? and(...conditions) : undefined;
+		const where =
+			tableFilter && searchFilter
+				? and(tableFilter, searchFilter)
+				: (tableFilter ?? searchFilter);
 
-			const [{ value: total = 0 } = {}] = await db
-				.select({ value: count() })
-				.from(users)
-				.where(whereClause);
-
-			const userList = await db.query.users.findMany({
+		const query = Promise.all([
+			db.select({ value: count() }).from(users).where(where),
+			db.query.users.findMany({
 				limit: pagination.pageSize,
 				offset: pagination.offset,
 				orderBy: [desc(users.createdAt), desc(users.id)],
-				where: (table, { and, eq, like, or }) => {
-					const conds = [];
-					if (search && search.trim().length > 0) {
-						const query = `%${escapeLike(search.trim().toLowerCase())}%`;
-						conds.push(or(like(table.name, query), like(table.email, query)));
-					}
-					if (role) {
-						conds.push(eq(table.role, role));
-					}
-					return conds.length > 0 ? and(...conds) : undefined;
-				},
-			});
+				where,
+			}),
+		]).then(([countRows, items]) => {
+			const total = countRows[0]?.value ?? 0;
+			return buildPaginatedResult(items, total, pagination);
+		});
 
-			return dbSuccess(buildPaginatedResult(userList, total, pagination));
-		} catch (error) {
-			return dbFailure(toErrorMessage(error, "Failed to retrieve users"));
-		}
+		return executeQuery(query, "Failed to retrieve users");
 	},
 
-	async updateUserRole(
-		params: UpdateUserRoleParams,
-		context?: DbContext,
-	): Promise<DbResult<UserItem>> {
+	async updateUserRole(params: UpdateUserRoleParams) {
 		const parsed = updateUserRoleInputSchema.safeParse(params);
 		if (!parsed.success) {
 			return dbFailure(parsed.error.issues[0].message);
@@ -194,10 +122,7 @@ export const authService = {
 			return dbFailure("Cannot demote your own account");
 		}
 
-		const targetUserResult = await authService.getById(
-			{ id: targetUserId },
-			context,
-		);
+		const targetUserResult = await authService.getById({ id: targetUserId });
 		if (!targetUserResult.success) {
 			return dbFailure(targetUserResult.error);
 		}
@@ -213,18 +138,39 @@ export const authService = {
 		const demotionError = await validateDemotionPreconditions(
 			targetUser,
 			newRole,
-			context,
 		);
 		if (demotionError) {
 			return dbFailure(demotionError);
 		}
 
-		return applyUserRoleUpdate(
-			targetUserId,
-			newRole,
-			targetUser.role,
-			actorUserId,
-			context,
-		);
+		const db = await getDb();
+		const query = db
+			.update(users)
+			.set({
+				role: newRole,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, targetUserId))
+			.returning()
+			.then(async ([updatedUser]) => {
+				if (!updatedUser) {
+					throw new Error("Failed to update user role");
+				}
+
+				await auditService.create({
+					action: "USER_ROLE_UPDATED",
+					actorUserId,
+					entityId: targetUserId,
+					entityType: "USER",
+					metadata: {
+						newRole,
+						previousRole: targetUser.role,
+					},
+				});
+
+				return updatedUser;
+			});
+
+		return executeQuery(query, "Failed to update user role");
 	},
 };

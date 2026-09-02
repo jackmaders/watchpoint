@@ -50,12 +50,22 @@ describe("authService", () => {
 
 		it("handles database errors (Error and non-Error)", async () => {
 			// Arrange
-			vi.mocked(getDb)
-				.mockRejectedValueOnce(new Error("D1 count failure"))
-				.mockRejectedValueOnce("String error");
+			const mockDbError = {
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockRejectedValue(new Error("D1 count failure")),
+				}),
+			};
+			const mockDbString = {
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockRejectedValue("String error"),
+				}),
+			};
 
 			// Act
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbError as never);
 			const res1 = await authService.count();
+
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbString as never);
 			const res2 = await authService.count();
 
 			// Assert
@@ -87,12 +97,7 @@ describe("authService", () => {
 			const mockDb = {
 				query: {
 					users: {
-						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
-								options.where({ id: "usr_123" }, { eq: vi.fn() });
-							}
-							return Promise.resolve(mockUser);
-						}),
+						findFirst: vi.fn().mockResolvedValue(mockUser),
 					},
 				},
 			};
@@ -113,12 +118,7 @@ describe("authService", () => {
 			const mockDb = {
 				query: {
 					users: {
-						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
-								options.where({ id: "usr_missing" }, { eq: vi.fn() });
-							}
-							return Promise.resolve(null);
-						}),
+						findFirst: vi.fn().mockResolvedValue(null),
 					},
 				},
 			};
@@ -136,12 +136,26 @@ describe("authService", () => {
 
 		it("handles database error (Error and non-Error)", async () => {
 			// Arrange
-			vi.mocked(getDb)
-				.mockRejectedValueOnce(new Error("Lookup failed"))
-				.mockRejectedValueOnce("String error");
+			const mockDbError = {
+				query: {
+					users: {
+						findFirst: vi.fn().mockRejectedValue(new Error("Lookup failed")),
+					},
+				},
+			};
+			const mockDbString = {
+				query: {
+					users: {
+						findFirst: vi.fn().mockRejectedValue("String error"),
+					},
+				},
+			};
 
 			// Act
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbError as never);
 			const res1 = await authService.getById({ id: "usr_123" });
+
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbString as never);
 			const res2 = await authService.getById({ id: "usr_123" });
 
 			// Assert
@@ -170,15 +184,7 @@ describe("authService", () => {
 			const mockDb = {
 				query: {
 					users: {
-						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
-								options.where(
-									{ email: "email", name: "name", role: "role" },
-									{ and: vi.fn(), eq: vi.fn(), like: vi.fn(), or: vi.fn() },
-								);
-							}
-							return Promise.resolve(mockUsers);
-						}),
+						findMany: vi.fn().mockResolvedValue(mockUsers),
 					},
 				},
 				select: vi.fn().mockReturnValue({
@@ -215,14 +221,70 @@ describe("authService", () => {
 			expect(resultNone).toEqual(expectedPaginated);
 		});
 
-		it("handles database errors (Error and non-Error)", async () => {
+		it("handles empty list results with default count", async () => {
 			// Arrange
-			vi.mocked(getDb)
-				.mockRejectedValueOnce(new Error("Fetch failed"))
-				.mockRejectedValueOnce("String error");
+			const mockDb = {
+				query: {
+					users: {
+						findMany: vi.fn().mockResolvedValue([]),
+					},
+				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([]),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
+			const result = await authService.list();
+
+			// Assert
+			expect(result).toEqual({
+				data: {
+					items: [],
+					page: 1,
+					pageSize: 10,
+					total: 0,
+					totalPages: 1,
+				},
+				success: true,
+			});
+		});
+
+		it("handles database errors (Error and non-Error)", async () => {
+			// Arrange
+			const mockDbError = {
+				query: {
+					users: {
+						findMany: vi.fn().mockResolvedValue([]),
+					},
+				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockRejectedValue(new Error("Fetch failed")),
+					}),
+				}),
+			};
+			const mockDbString = {
+				query: {
+					users: {
+						findMany: vi.fn().mockResolvedValue([]),
+					},
+				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockRejectedValue("String error"),
+					}),
+				}),
+			};
+
+			// Act
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbError as never);
 			const res1 = await authService.list();
+
+			vi.mocked(getDb).mockResolvedValueOnce(mockDbString as never);
 			const res2 = await authService.list();
 
 			// Assert
@@ -403,7 +465,16 @@ describe("authService", () => {
 
 		it("handles getUserById query failure", async () => {
 			// Arrange
-			vi.mocked(getDb).mockRejectedValueOnce(new Error("User lookup failed"));
+			const mockDb = {
+				query: {
+					users: {
+						findFirst: vi
+							.fn()
+							.mockRejectedValue(new Error("User lookup failed")),
+					},
+				},
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
 			// Act
 			const result = await authService.updateUserRole({
