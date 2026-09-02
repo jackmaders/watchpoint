@@ -557,15 +557,6 @@ describe("playthroughService", () => {
 					vodId: "vod_1",
 				},
 			];
-			const createChainable = (res: unknown = [{ value: 1 }]) => {
-				const chain = Promise.resolve(res) as unknown as {
-					from: ReturnType<typeof vi.fn>;
-					where: ReturnType<typeof vi.fn>;
-				};
-				chain.from = vi.fn().mockReturnValue(chain);
-				chain.where = vi.fn().mockReturnValue(chain);
-				return chain;
-			};
 			const mockDb = {
 				query: {
 					playthroughs: {
@@ -596,9 +587,11 @@ describe("playthroughService", () => {
 						}),
 					},
 				},
-				select: vi
-					.fn()
-					.mockImplementation(() => createChainable([{ value: 1 }])),
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([{ value: 1 }]),
+					}),
+				}),
 			};
 			vi.mocked(getDb).mockResolvedValue(mockDb as never);
 
