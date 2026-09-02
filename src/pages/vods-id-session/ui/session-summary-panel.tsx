@@ -1,3 +1,9 @@
+/**
+ * End-of-session performance summary modal presented upon completing an interactive VOD playthrough.
+ *
+ * Implements `SessionSummaryPanel` rendering accuracy tiers, median latency stats, per-module performance breakdowns,
+ * and retry/exit call-to-actions.
+ */
 "use client";
 
 import { useEffect, useRef } from "react";

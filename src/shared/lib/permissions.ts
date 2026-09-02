@@ -1,3 +1,12 @@
+/**
+ * Defines role-based access control (RBAC) capabilities, role mappings, and authorization guards
+ * protecting administrative operations and sensitive catalog mutations.
+ *
+ * Exports `PERMISSIONS` constants, `ROLE_PERMISSIONS` mappings, pure evaluation helpers `hasPermission`
+ * and `getUserPermissions`, and the async `requirePermission` guard which validates request headers
+ * against `getCurrentUser` and throws standard 401/403 HTTP responses on authorization failure.
+ */
+
 import type { DbContext, UserRole } from "../db";
 import { getCurrentUser } from "./auth";
 

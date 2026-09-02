@@ -1,3 +1,10 @@
+/**
+ * Route request handler for serving pre-loaded VOD session manifests filtered by learning module type.
+ *
+ * Provides HTTP endpoint adapters `handleGetVodManifest` and `handleVodManifestRequest` for the timeline
+ * manifest endpoint. Verifies user authentication, parses module query parameters, invokes `vodService.getSessionManifest`,
+ * and serializes the ordered scenario bundle as JSON.
+ */
 import { vodService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { normalizeSessionManifestModules } from "./session-manifest-query";

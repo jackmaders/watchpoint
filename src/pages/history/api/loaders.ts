@@ -1,3 +1,9 @@
+/**
+ * Data loader for the training match history page and search filter state.
+ *
+ * Implements `loadPlayerHistory` and `loadHistoryIndexPage` to concurrently fetch published VODs,
+ * registration configuration, and paginated match history records.
+ */
 import { getPublishedVods } from "@/entities/vod";
 import { isRegistrationOpen } from "@/shared/lib/auth";
 import type { HistorySearchParams } from "../model/search-params";

@@ -1,3 +1,8 @@
+/**
+ * TanStack Start server function for retrieving published training VOD catalog items.
+ *
+ * Implements `getPublishedVods` using `createServerFn` and delegating to `vodService.listPublished`.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { type PublishedVodItem, vodService } from "@/shared/db";
 

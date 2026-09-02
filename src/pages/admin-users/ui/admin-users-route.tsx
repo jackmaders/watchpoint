@@ -1,3 +1,9 @@
+/**
+ * Route presentation component for the admin user management view.
+ *
+ * Implements `AdminUsersRouteComponent` extracting authenticated user context and loader data
+ * from `routeApi` and rendering `AdminUsersPage`.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { AdminUsersPage } from "./admin-users-page";
 

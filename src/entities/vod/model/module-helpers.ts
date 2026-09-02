@@ -1,3 +1,9 @@
+/**
+ * Pure helper functions for inspecting, counting, and filtering learning module types.
+ *
+ * Implements lookup routines (`getModuleDefinition`, `getModuleLabel`, `getModuleBadge`, `getModuleDescription`),
+ * scenario counting (`calculateModuleCounts`), and scenario list filtering (`filterScenariosByModules`) across all 5 learning modules.
+ */
 import type { ModuleType } from "@/shared/db";
 import type { ModuleDefinition } from "./modules";
 import { DEFAULT_MODULE_TYPES, MODULE_MAP } from "./modules";

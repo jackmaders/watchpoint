@@ -1,3 +1,10 @@
+/**
+ * User-scoped database operations for creating, retrieving, and completing interactive training playthroughs.
+ *
+ * Implements user ownership boundary checks around `playthroughService` domain operations. Resolves
+ * the authenticated user context before delegating CRUD, history listing, and playthrough finalization
+ * to the underlying D1 database layer.
+ */
 import type { DbContext } from "@/shared/db";
 import { type CreatePlaythroughInput, playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";

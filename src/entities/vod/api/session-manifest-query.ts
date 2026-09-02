@@ -1,3 +1,9 @@
+/**
+ * Validation and normalization helpers for session manifest query parameters.
+ *
+ * Normalizes incoming learning module filter strings and arrays into canonical `ModuleType[]` tokens,
+ * stripping invalid entries and enforcing Zod schema validation for transport queries.
+ */
 import { z } from "zod";
 import { type ModuleType, moduleTypeEnum } from "@/shared/db";
 

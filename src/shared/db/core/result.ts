@@ -1,10 +1,10 @@
 /**
- * Provides standardized result envelope constructors and query execution wrappers
- * for database service operations across the application.
+ * Defines the canonical result envelope and execution wrappers that encapsulate all database
+ * operations, guaranteeing non-throwing failure semantics across the database layer.
  *
- * Implements the ADR-0010 DbResult contract and execution primitives. Wraps Drizzle
- * query promises with D1 error parsing, normalizes single-record undefined lookups
- * to null, and provides safe operation wrappers.
+ * Implements the ADR-0010 `DbResult<T>` monadic success/failure contract. Exports constructor
+ * helpers `dbSuccess` and `dbFailure`, the higher-order error formatting helper `toErrorMessage`,
+ * `tryDb`, and `executeQuery` to safely wrap asynchronous Drizzle query executions without throwing unchecked exceptions.
  */
 
 import { parseD1Error } from "./errors";

@@ -1,3 +1,11 @@
+/**
+ * Public domain entity API for Video On Demand (VOD) training sessions, playthrough telemetry,
+ * and interactive scenario configuration.
+ *
+ * Re-exports the public interface of the `src/entities/vod/` slice adhering to Feature-Sliced
+ * Design (FSD) architecture. Encapsulates server functions, action handlers, session manifest
+ * normalization, attempt schemas, and module filter controls for consuming pages and features.
+ */
 export {
 	handleGetVodManifest,
 	handleVodManifestRequest,

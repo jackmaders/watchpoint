@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying mathematical calculations and string formatting for playthrough attempt telemetry.
+ *
+ * Validates `calculateAccuracy`, `calculateMedianActiveLatency`, `formatAccuracy`, and `formatLatency`
+ * across edge cases including empty arrays, timeout filtering, and odd/even attempt distributions.
+ */
+
 import { describe, expect, it } from "vitest";
 import {
 	calculateAccuracy,

@@ -1,3 +1,9 @@
+/**
+ * URL search parameter schema and validation for the interactive session player view.
+ *
+ * Implements `sessionSearchSchema` and `validateSessionSearch` to parse active module filters,
+ * playthrough UUIDs, and prototype diagnostic variants.
+ */
 import { z } from "zod";
 
 export const sessionSearchSchema = z.object({

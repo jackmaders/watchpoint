@@ -1,3 +1,10 @@
+/**
+ * Renders accessible text labels for interactive form controls and input fields.
+ *
+ * Wraps Radix UI `Label` primitive (`LabelPrimitive.Root`) with Tailwind CSS typography styling,
+ * ensuring programmatic association and consistent label appearance across form layouts.
+ */
+
 "use client";
 import { Label as LabelPrimitive } from "radix-ui";
 import type * as React from "react";

@@ -1,3 +1,9 @@
+/**
+ * Data-access logic for loading a user's chronological training playthrough history.
+ *
+ * Implements `getPlayerHistoryData` by authenticating the current user and querying
+ * `playthroughService.listHistory` with pagination and status filters.
+ */
 import type {
 	DbContext,
 	GetPlayerHistoryOptions,

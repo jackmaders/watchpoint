@@ -1,10 +1,11 @@
 /**
- * Provides query sanitization, pagination clamping, and dynamic SQL condition
- * builders for Drizzle ORM database operations.
+ * Enforces query sanitization, deterministic sort tiebreaking, bounded pagination,
+ * and dynamic SQL condition building across all collection reads throughout the database layer.
  *
- * Implements standard database query utilities according to ADR-0010. Sanitizes
- * string inputs for SQL LIKE queries, enforces bounded pagination limits, projects
- * paginated query envelopes, and constructs composite WHERE clauses from table filters.
+ * Implements ADR-0010 pagination and query building primitives. Provides `escapeLike` for
+ * wildcard-safe SQL LIKE patterns, `clampPagination` to guarantee page sizes within [1, 50]
+ * bounds, `buildPaginatedResult` for standard envelope construction, and `buildWhereConditions`
+ * alongside `TableFilterOptions` for dynamic query composition.
  */
 
 import {
@@ -16,7 +17,6 @@ import {
 	type SQL,
 	type Table,
 } from "drizzle-orm";
-
 export interface PaginatedResult<T> {
 	items: T[];
 	page: number;

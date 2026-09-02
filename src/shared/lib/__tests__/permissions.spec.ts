@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying role-based access control evaluations and authorization enforcement guards.
+ *
+ * Validates `hasPermission`, `getUserPermissions`, and `requirePermission` against `ADMIN` and `PLAYER`
+ * roles, ensuring unauthorized requests throw appropriate 401/403 HTTP response exceptions.
+ */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../auth");

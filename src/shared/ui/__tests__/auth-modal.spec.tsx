@@ -1,3 +1,10 @@
+/**
+ * Component test suite verifying authentication modal behavior, form submissions, and account controls.
+ *
+ * Tests `AuthModal` and `AccountControls` using React Testing Library and Vitest mocks for `authClient`,
+ * asserting sign-in and sign-up submissions, error alerts, session expiry messaging, and role navigation.
+ */
+
 import {
 	act,
 	fireEvent,

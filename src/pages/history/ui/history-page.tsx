@@ -1,3 +1,9 @@
+/**
+ * Training match history page presenting aggregated performance metrics, filter bars, and playthrough lists.
+ *
+ * Implements `HistoryPage` composing top navigation, summary hero statistics, filter controls (`HistoryFilterBar`),
+ * and paginated lists of `HistoryItemCard` components.
+ */
 import { Link } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type {

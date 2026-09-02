@@ -1,3 +1,9 @@
+/**
+ * Landing view presentation for the Watchpoint game sense learning platform.
+ *
+ * Implements `HomePage` rendering the field briefing overview, links to training match history,
+ * account controls, and the active VOD catalog list.
+ */
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
 import { AccountControls } from "@/shared/ui/auth-modal";

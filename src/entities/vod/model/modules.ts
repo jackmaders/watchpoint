@@ -1,3 +1,9 @@
+/**
+ * Canonical module definitions, visual styling tokens, and descriptors for the 5 interactive game sense learning modules.
+ *
+ * Defines `DEFAULT_MODULE_TYPES`, `MODULE_DEFINITIONS`, and `MODULE_MAP` mapping `STRATEGY`, `TACTICS`,
+ * `ULTIMATE`, `COOLDOWN`, and `SPATIAL` modules to their respective badge classes, theme colors, and user-facing labels.
+ */
 import type { ModuleType } from "@/shared/db";
 
 export interface ModuleDefinition {

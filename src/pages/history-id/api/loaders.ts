@@ -1,3 +1,9 @@
+/**
+ * Route loader for individual playthrough performance history details.
+ *
+ * Implements `loadHistoryIdPage` to fetch detailed playthrough data via `getPlaythroughHistoryDetail`
+ * and handle error states gracefully.
+ */
 import { getPlaythroughHistoryDetail } from "./server-fns";
 
 export async function loadHistoryIdPage({

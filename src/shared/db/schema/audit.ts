@@ -1,3 +1,12 @@
+/**
+ * Defines the immutable audit log table and relation schemas for tracking administrative
+ * mutations and system-wide state changes across domain entities.
+ *
+ * Implements the audit persistence schema for ADR-0010. Configures the `audit_entry` SQLite
+ * table using Drizzle ORM, with UUID identifiers, timestamped action logs, composite indexes on
+ * actor and entity references, polymorphic JSON metadata storage, and relations to the `users` table.
+ */
+
 import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { JsonValue } from "../core/types";

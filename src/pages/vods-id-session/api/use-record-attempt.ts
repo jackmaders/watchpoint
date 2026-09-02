@@ -1,3 +1,9 @@
+/**
+ * React Query mutation hook for resilient client-side scenario attempt telemetry delivery.
+ *
+ * Implements `useRecordAttemptMutation` with exponential backoff (`calculateBackoffDelay`), retry filtering
+ * (`isRetryableAttemptError`), and Sentry exception capture for telemetry delivery errors.
+ */
 import { useMutation } from "@tanstack/react-query";
 import { recordAttempt } from "@/entities/vod";
 import { captureException } from "@/shared/lib/sentry";

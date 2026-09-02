@@ -1,3 +1,9 @@
+/**
+ * Route component adapter for the administrative content management page.
+ *
+ * Implements `AdminContentRouteComponent` extracting authenticated user context and loader data
+ * from `routeApi` and rendering `AdminContentPage`.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { AdminContentPage } from "./admin-content-page";
 

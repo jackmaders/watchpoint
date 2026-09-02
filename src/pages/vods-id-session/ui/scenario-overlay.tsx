@@ -1,3 +1,9 @@
+/**
+ * Decision overlay component presented when VOD playback pauses at an interactive scenario timestamp.
+ *
+ * Implements `ScenarioOverlay` with countdown gauges (`ScenarioTimerGauge`), keyboard shortcut listeners,
+ * contextual replay triggers, educational explanations, and resume actions across all 5 learning module types.
+ */
 "use client";
 
 import { useEffect, useId, useRef } from "react";

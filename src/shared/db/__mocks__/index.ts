@@ -1,3 +1,12 @@
+/**
+ * Provides pre-configured mock domain database services and connection providers for isolated
+ * unit and integration testing across consumer modules.
+ *
+ * Implements the mock isolation standard for ADR-0010. Exports `mockAuditService`, `mockAuthService`,
+ * `mockPlaythroughService`, and `mockVodService` instances backed by Vitest `vi.fn()` spies returning
+ * `DbResult<T>` success envelopes without invoking real SQLite or Cloudflare D1 operations.
+ */
+
 import { vi } from "vitest";
 import { getDb } from "../core/__mocks__/client";
 import { dbSuccess } from "../core/result";

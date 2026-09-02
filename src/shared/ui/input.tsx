@@ -1,3 +1,10 @@
+/**
+ * Renders styled form text inputs for user data entry across search, authentication, and editorial forms.
+ *
+ * Implements `Input` as a styled HTML input element wrapper styled with Tailwind CSS, establishing standardized
+ * focus rings, placeholder states, disabled appearances, and responsive typography.
+ */
+
 import type * as React from "react";
 import { cn } from "@/shared/lib/utils";
 

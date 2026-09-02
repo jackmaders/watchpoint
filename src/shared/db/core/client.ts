@@ -1,3 +1,12 @@
+/**
+ * Resolves Cloudflare D1 database connections and instantiates the application-wide
+ * Drizzle ORM instance across edge runtime, test runner, and development proxy environments.
+ *
+ * Implements the core database client factory for ADR-0010. Resolves `D1Database` bindings
+ * dynamically from `DbContext` parameters, global runtime environments, or local Wrangler
+ * platform proxies, caching instances in development and exposing the strongly-typed `DrizzleDb` client.
+ */
+
 import type { D1Database } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../schema";

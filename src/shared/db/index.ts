@@ -1,3 +1,12 @@
+/**
+ * Entrypoint public API barrel exposing the complete database layer including core primitives,
+ * relational schemas, seed fixtures, and domain services.
+ *
+ * Implements the layered database architecture public contract defined in ADR-0010. Re-exports
+ * Cloudflare D1 connection resolvers and `DbResult<T>` wrappers from `core/`, Drizzle table definitions
+ * and enums from `schema/`, domain service instances from `services/`, and validation schemas from `validation/`.
+ */
+
 export {
 	buildPaginatedResult,
 	buildWhereConditions,
