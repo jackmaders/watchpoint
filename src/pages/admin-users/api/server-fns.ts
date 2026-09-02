@@ -1,3 +1,9 @@
+/**
+ * Server functions for administrative user account management and role changes.
+ *
+ * Implements `getAdminUsers` and `updateUserRole` server functions using TanStack Start `createServerFn`,
+ * checking permission guards (`users:view`, `users:manage_roles`) and delegating mutations to `authService`.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {

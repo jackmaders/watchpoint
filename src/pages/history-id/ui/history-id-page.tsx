@@ -1,3 +1,9 @@
+/**
+ * Detailed playthrough performance review page displaying overall metrics and scenario-by-scenario attempts.
+ *
+ * Implements `HistoryIdPage` along with loading skeletons, error boundaries, and empty state presentations
+ * to render accuracy metrics, median active-response latency, and chronological scenario breakdowns.
+ */
 import { Link } from "@tanstack/react-router";
 import type { PlayerHistoryItem } from "@/shared/db";
 import { formatAccuracy, formatLatency } from "@/shared/lib/metrics";

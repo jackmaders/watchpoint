@@ -1,3 +1,9 @@
+/**
+ * Client-side mutation hooks for single and bulk VOD publication and deletion operations.
+ *
+ * Implements `usePublicationMutations`, `useDeletionMutations`, and `useAdminContentMutations` to coordinate
+ * optimistic updates, error state reporting, and bulk operation summaries against `admin-vod-editor` server actions.
+ */
 "use client";
 
 import { useCallback, useState } from "react";

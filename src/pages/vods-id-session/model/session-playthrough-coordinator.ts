@@ -1,3 +1,10 @@
+/**
+ * Pure state machine reducer and coordinator for interactive VOD training playthroughs.
+ *
+ * Implements `sessionPlaythroughReducer`, `resolveNewStatusState`, and `createSessionPlaythroughState` managing
+ * generation lifecycles, phase transitions (`LOADING`, `PLAYING`, `SCENARIO_ACTIVE`, `FEEDBACK`, `COMPLETED`),
+ * timer expirations, attempt outcome arbitration, and effect emissions.
+ */
 import type { ModuleType } from "@/shared/db";
 import { type MediaFailure, PlaybackStatus } from "@/shared/media";
 import type { AttemptOutcome } from "./attempt";

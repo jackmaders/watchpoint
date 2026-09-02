@@ -1,3 +1,9 @@
+/**
+ * Column definition hook configuring `@tanstack/react-table` column models for the admin VOD table.
+ *
+ * Implements `useContentColumns` and `RowSelectionCell` providing headers, sorting handlers, duration formatting,
+ * status badges, and action menus for table rows.
+ */
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";

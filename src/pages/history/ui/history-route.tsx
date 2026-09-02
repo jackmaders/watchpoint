@@ -1,3 +1,9 @@
+/**
+ * Route component adapter for the training match history page.
+ *
+ * Implements `HistoryRouteComponent` extracting loader data and URL search parameters from `routeApi`
+ * and rendering `HistoryPage`.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { HistorySearchParams } from "../model/search-params";

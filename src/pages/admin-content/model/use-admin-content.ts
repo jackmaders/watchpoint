@@ -1,3 +1,9 @@
+/**
+ * Composite state management hook coordinating search filters, table sorting, selection, and mutations.
+ *
+ * Implements `useAdminContentState` and `useContentFilterControls` to synchronize local filter inputs
+ * with URL search params and orchestrate table row selections and bulk mutations.
+ */
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";

@@ -1,3 +1,10 @@
+/**
+ * TanStack Start server functions for VOD discovery, manifest loading, attempt recording, and playthrough lifecycles.
+ *
+ * Exposes RPC endpoints (`getPublishedVods`, `getVodById`, `getSessionManifest`, `getProtectedSessionManifest`,
+ * `startPlaythrough`, `recordAttempt`, `completePlaythrough`) bridging client components and server actions
+ * to `vodService` and `playthroughService`.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import {
 	type PublishedVodItem,

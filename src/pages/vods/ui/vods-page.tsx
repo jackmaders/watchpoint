@@ -1,3 +1,9 @@
+/**
+ * Catalog browser view presenting all published Overwatch 2 training VODs.
+ *
+ * Implements `VodsPage` rendering hero tags, rank tier badges, map names, video durations,
+ * and navigation links to pre-session setup pages.
+ */
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";

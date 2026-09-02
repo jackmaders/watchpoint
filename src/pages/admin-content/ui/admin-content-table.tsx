@@ -1,3 +1,9 @@
+/**
+ * Tabular data grid rendering administrative VOD records with selection, sorting, and bulk actions.
+ *
+ * Implements `AdminContentTable` using `@tanstack/react-table` to render sortable columns, row selection checkboxes,
+ * and bulk action trigger toolbars (`BulkActionsToolbar`).
+ */
 "use client";
 
 import {

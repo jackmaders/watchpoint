@@ -1,3 +1,10 @@
+/**
+ * Primary React hook managing the interactive VOD training session player lifecycle.
+ *
+ * Implements `useSessionPlayer` binding semantic media events, time synchronization polling,
+ * pause interception, interactive scenario overlays, and asynchronous telemetry recording to the
+ * private session playthrough coordinator state machine.
+ */
 "use client";
 
 import {

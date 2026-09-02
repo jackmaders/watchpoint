@@ -1,3 +1,9 @@
+/**
+ * Interactive filter pill card grid for selecting active learning module types before initiating a playthrough.
+ *
+ * Implements the pre-session module filter UI with individual module toggle cards (`ModulePillCard`),
+ * batch select/deselect controls, and scenario count indicators. Notifies parent forms via `onChange` callback.
+ */
 "use client";
 
 import { useCallback } from "react";

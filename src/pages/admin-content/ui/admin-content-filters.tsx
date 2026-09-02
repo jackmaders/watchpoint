@@ -1,3 +1,9 @@
+/**
+ * Search and filter bar UI for the administrative VOD content management view.
+ *
+ * Implements `AdminContentFilters` rendering text input search, publication status toggle buttons,
+ * and hero role category filters.
+ */
 "use client";
 
 import { useCallback } from "react";

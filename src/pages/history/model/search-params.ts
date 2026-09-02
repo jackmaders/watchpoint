@@ -1,3 +1,9 @@
+/**
+ * Search schema and validation logic for the player history filtering state.
+ *
+ * Implements `historySearchSchema` and `validateHistorySearch` to parse active module filters,
+ * pagination parameters (`page`, `pageSize`), playthrough status (`COMPLETED`, `IN_PROGRESS`), and VOD IDs.
+ */
 import { z } from "zod";
 
 const moduleEnumSchema = z.enum([

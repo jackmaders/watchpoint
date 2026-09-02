@@ -1,3 +1,9 @@
+/**
+ * Interactive administrative audit log page component rendering system events, filters, and diff details.
+ *
+ * Implements `AdminAuditPage` with expandable log row entries, actor identification, action badge styling,
+ * text search filtering, and action category selectors.
+ */
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";

@@ -1,3 +1,9 @@
+/**
+ * Query parameter definitions, enums, and transformers for the admin content catalog.
+ *
+ * Implements `contentSearchSchema`, enum constants (`contentPublicationStatusEnum`, `contentHeroRoleFilterEnum`),
+ * `validateContentSearch`, and `toGetAdminVodsQuery` to parse URL search state.
+ */
 import { z } from "zod";
 import { heroRoleEnum } from "@/shared/db";
 

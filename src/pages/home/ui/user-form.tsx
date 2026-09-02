@@ -1,3 +1,9 @@
+/**
+ * Interactive authentication form supporting sign-in, registration, and session management.
+ *
+ * Implements `UserForm` using `@tanstack/react-form` and `better-auth` client, handling form validation,
+ * error presentation, and active session sign-out controls.
+ */
 import { useForm } from "@tanstack/react-form";
 import type * as React from "react";
 import { useCallback, useId, useState } from "react";

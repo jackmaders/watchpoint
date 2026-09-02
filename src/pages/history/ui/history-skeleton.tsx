@@ -1,3 +1,8 @@
+/**
+ * Loading skeleton and error state components for the training match history view.
+ *
+ * Implements `HistoryLoadingSkeleton` and `HistoryErrorState` with accessible roles and retry buttons.
+ */
 export function HistoryLoadingSkeleton() {
 	return (
 		<div

@@ -1,3 +1,9 @@
+/**
+ * Route component adapter for the interactive VOD training session view.
+ *
+ * Implements `VodsIdSessionRouteComponent` reading URL route parameters, session loader data, and search state
+ * from `routeApi` and rendering `SessionPlayerRouteView`.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { SessionSearch } from "../model/session-search";

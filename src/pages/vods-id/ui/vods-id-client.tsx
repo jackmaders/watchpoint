@@ -1,3 +1,9 @@
+/**
+ * Interactive client coordinator for the pre-session VOD overview and module selection.
+ *
+ * Implements `VodsIdClient` managing module filter selection state, auth gate modals (`AuthModal`),
+ * scenario count recalculations, and session playthrough launch URLs.
+ */
 "use client";
 
 import { Link, useNavigate } from "@tanstack/react-router";

@@ -1,3 +1,9 @@
+/**
+ * Route presentation component for the administrative audit trail page.
+ *
+ * Implements `AdminAuditRouteComponent` by extracting loaded audit logs and search params from `routeApi`,
+ * passing them into `AdminAuditPage` and handling filter updates via router navigation.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { AuditSearchParams } from "../model/search-params";

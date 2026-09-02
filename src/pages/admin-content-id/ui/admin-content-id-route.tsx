@@ -1,3 +1,9 @@
+/**
+ * Route presentation component for the admin VOD content editor view.
+ *
+ * Implements `AdminContentIdRouteComponent` by reading loaded VOD, scenario, and audit details from `routeApi`
+ * and rendering the `AdminVodEditorPage` widget.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { AdminVodEditorPage } from "@/widgets/admin-vod-editor";
 

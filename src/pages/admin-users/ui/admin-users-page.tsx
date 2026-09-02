@@ -1,3 +1,9 @@
+/**
+ * Main admin page component for reviewing user accounts, searching users, and updating role privileges.
+ *
+ * Implements `AdminUsersPage` with role badge indicators, search filtering, self-demotion guards,
+ * and role mutation triggers.
+ */
 "use client";
 
 import { useCallback, useMemo, useState } from "react";

@@ -1,3 +1,9 @@
+/**
+ * Route loader initializing the session manifest and durable playthrough generation.
+ *
+ * Implements `loadVodsIdSessionPage` to fetch the protected session manifest via `getProtectedSessionManifest`,
+ * create a new playthrough generation via `startPlaythroughAction`, and initialize scenario snapshot IDs.
+ */
 import {
 	getProtectedSessionManifest,
 	normalizeSessionManifestModules,

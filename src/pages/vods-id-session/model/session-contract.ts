@@ -1,3 +1,9 @@
+/**
+ * Data contracts and normalization utilities for interactive scenario inputs and overlay states.
+ *
+ * Implements `normalizeScenario`, `normalizeScenarioInput`, and `toScenarioOverlayData` to transform
+ * raw database scenario records into strongly-typed multiple-choice or unsupported option structures.
+ */
 import { type InputType, inputTypeEnum, type ModuleType } from "@/shared/db";
 
 export interface ScenarioOption {
