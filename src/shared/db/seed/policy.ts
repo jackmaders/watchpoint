@@ -1,3 +1,12 @@
+/**
+ * Enforces safety guardrails and credential extraction policies to prevent database seed
+ * operations against non-local or production environments.
+ *
+ * Implements seed execution safety rules. Exports `assertLocalSeedTarget` to inspect environment
+ * variables and throw immediately if execution targets production or remote bindings, and `getSeedCredentials`
+ * to resolve default or configured admin and player credentials for local testing.
+ */
+
 export interface SeedEnvironment {
 	CLOUDFLARE_ENV?: string;
 	DB?: string;

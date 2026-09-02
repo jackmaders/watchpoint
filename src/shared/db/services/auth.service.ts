@@ -1,3 +1,12 @@
+/**
+ * Coordinates user identity management, role administration, and administrative demotion
+ * guardrails across the platform.
+ *
+ * Implements the ADR-0010 domain service contract via `authService`. Encapsulates Drizzle ORM
+ * queries on Cloudflare D1, providing sanitized paginated user searches via `escapeLike`, single-user
+ * lookups, and transactional role updates with mandatory last-admin demotion protection and automated audit logging.
+ */
+
 import { and, count, desc, eq, like, or } from "drizzle-orm";
 import {
 	buildPaginatedResult,

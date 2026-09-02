@@ -1,3 +1,12 @@
+/**
+ * Defines the canonical result envelope and execution wrappers that encapsulate all database
+ * operations, guaranteeing non-throwing failure semantics across the database layer.
+ *
+ * Implements the ADR-0010 `DbResult<T>` monadic success/failure contract. Exports constructor
+ * helpers `dbSuccess` and `dbFailure`, the higher-order error formatting helper `toErrorMessage`,
+ * and `tryDb` to safely wrap asynchronous Drizzle query executions without throwing unchecked exceptions.
+ */
+
 import { parseD1Error } from "./errors";
 
 export type DbResult<T> =

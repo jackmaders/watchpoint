@@ -1,3 +1,12 @@
+/**
+ * Defines database schemas, enumerations, and relational mappings for authentication,
+ * session management, OAuth accounts, and role-based access control.
+ *
+ * Implements Better Auth compatible tables and Watchpoint role assignments for ADR-0010.
+ * Configures Drizzle ORM schemas for `users`, `sessions`, `accounts`, and `verifications`,
+ * exporting the `userRoleEnum` ("PLAYER" | "ADMIN") alongside relational bindings across users, accounts, and sessions.
+ */
+
 import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
