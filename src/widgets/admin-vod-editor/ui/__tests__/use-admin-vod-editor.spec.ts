@@ -189,7 +189,7 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 				success: true,
 			});
 			vi.mocked(deleteVod).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 
@@ -435,7 +435,7 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
 			vi.mocked(deleteScenario).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 			vi.mocked(deleteScenario).mockResolvedValueOnce({
@@ -485,7 +485,7 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
 			vi.mocked(reorderScenarios).mockResolvedValueOnce({
-				data: undefined,
+				data: null,
 				success: true,
 			});
 

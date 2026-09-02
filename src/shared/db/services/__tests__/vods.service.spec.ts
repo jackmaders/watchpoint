@@ -68,21 +68,7 @@ describe("vodService", () => {
 			const mockDb = {
 				query: {
 					vods: {
-						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
-								options.where(
-									{
-										heroName: "Ana",
-										isPublished: false,
-										mapName: "Map",
-										role: "SUPPORT",
-										title: "Title",
-									},
-									{ and: vi.fn(), eq: vi.fn(), like: vi.fn(), or: vi.fn() },
-								);
-							}
-							return Promise.resolve(mockVods);
-						}),
+						findMany: vi.fn().mockResolvedValue(mockVods),
 					},
 				},
 				select: vi.fn().mockReturnValue({
@@ -115,20 +101,47 @@ describe("vodService", () => {
 			});
 		});
 
+		it("filters by search query only without base conditions", async () => {
+			// Arrange
+			const mockVods = [{ id: "vod_admin", title: "Admin VOD" }];
+			const mockDb = {
+				query: {
+					vods: {
+						findMany: vi.fn().mockResolvedValue(mockVods),
+					},
+				},
+				select: vi.fn().mockReturnValue({
+					from: vi.fn().mockReturnValue({
+						where: vi.fn().mockResolvedValue([{ value: 1 }]),
+					}),
+				}),
+			};
+			vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
+			// Act
+			const result = await vodService.listAdmin({
+				search: "Ana",
+			});
+
+			// Assert
+			expect(result).toEqual({
+				data: {
+					items: mockVods,
+					page: 1,
+					pageSize: 10,
+					total: 1,
+					totalPages: 1,
+				},
+				success: true,
+			});
+		});
+
 		it("handles empty options", async () => {
 			// Arrange
 			const mockDb = {
 				query: {
 					vods: {
-						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
-								options.where(
-									{},
-									{ and: vi.fn(), eq: vi.fn(), like: vi.fn(), or: vi.fn() },
-								);
-							}
-							return Promise.resolve([]);
-						}),
+						findMany: vi.fn().mockResolvedValue([]),
 					},
 				},
 				select: vi.fn().mockReturnValue({
@@ -774,7 +787,7 @@ describe("vodService", () => {
 			});
 
 			// Assert
-			expect(result).toEqual({ data: undefined, success: true });
+			expect(result).toEqual({ data: null, success: true });
 		});
 
 		it("handles delete exceptions (Error and non-Error)", async () => {
@@ -1342,7 +1355,7 @@ describe("vodService", () => {
 			vi.mocked(getDb).mockResolvedValue(mockDbSuccess as never);
 
 			const resSuccess = await vodService.deleteScenario({ id: "sc_1" });
-			expect(resSuccess).toEqual({ data: undefined, success: true });
+			expect(resSuccess).toEqual({ data: null, success: true });
 
 			// Act 3: Exception during delete
 			const mockDbDeleteErr = {
@@ -1465,7 +1478,7 @@ describe("vodService", () => {
 				scenarioOrders: [{ id: "sc_1", timestampSeconds: 25 }],
 				vodId: "vod_1",
 			});
-			expect(resSuccess).toEqual({ data: undefined, success: true });
+			expect(resSuccess).toEqual({ data: null, success: true });
 
 			// Act 5: Reorder update error (Error and non-Error)
 			const mockTxError = {
