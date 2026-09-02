@@ -1,3 +1,9 @@
+/**
+ * Hero taxonomy and URL generation utilities for pre-session module filtering and navigation.
+ *
+ * Provides Overwatch 2 hero catalogs (`OVERWATCH_HEROES`), title hero extraction (`extractHeroFromTitle`),
+ * and session query string builders (`buildSessionUrl`, `serializeModulesParam`) for the pre-session setup view.
+ */
 import type { ModuleType } from "@/shared/db";
 
 export const OVERWATCH_HEROES = [

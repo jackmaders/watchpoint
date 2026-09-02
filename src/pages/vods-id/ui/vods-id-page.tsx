@@ -1,3 +1,9 @@
+/**
+ * Pre-session briefing page presenting VOD metadata, hero information, and module configuration.
+ *
+ * Implements `VodsIdPage` rendering map details, rank requirements, hero extraction tags,
+ * and mounting `VodsIdClient` with interactive module filter pills.
+ */
 import { Link } from "@tanstack/react-router";
 import { extractHeroFromTitle } from "@/entities/vod";
 import type { SessionManifest } from "@/shared/db";

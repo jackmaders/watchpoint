@@ -1,3 +1,9 @@
+/**
+ * Empty state presentation component rendered when no training match history records exist.
+ *
+ * Implements `HistoryEmptyState` tailoring its prompt and call-to-action to either completed or
+ * in-progress training sessions.
+ */
 import { Link } from "@tanstack/react-router";
 import type { PlaythroughStatus } from "@/shared/db";
 

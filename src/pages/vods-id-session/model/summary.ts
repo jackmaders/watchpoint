@@ -1,3 +1,9 @@
+/**
+ * Aggregator and metric calculator for completed training session summary reports.
+ *
+ * Implements `calculateSessionSummary` to compute aggregate accuracy percentages, average response latency,
+ * and per-learning-module statistics across all recorded attempts.
+ */
 import { MODULE_DEFINITIONS } from "@/entities/vod";
 import type { ModuleType } from "@/shared/db";
 

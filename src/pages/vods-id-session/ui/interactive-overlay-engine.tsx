@@ -1,3 +1,9 @@
+/**
+ * Interactive decision input engine rendering scenario options and capturing user answers.
+ *
+ * Implements `InteractiveOverlayEngine` rendering multiple-choice answer option buttons (`MultipleChoiceOptionButton`)
+ * with keyboard shortcut badges, selection feedback styling, and correct answer highlights.
+ */
 "use client";
 
 import { useCallback } from "react";

@@ -1,3 +1,9 @@
+/**
+ * Experimental diagnostic prototype demonstrating resilient media recovery UX patterns for VOD playback.
+ *
+ * Implements `SessionPlayerMediaRecoveryPrototype` exploring overlay, status rail, and recovery dock variants
+ * for handling buffering stalls, network recovery, and media errors.
+ */
 "use client";
 
 import {

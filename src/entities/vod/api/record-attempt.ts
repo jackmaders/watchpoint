@@ -1,3 +1,10 @@
+/**
+ * Action handler for validating and persisting user scenario attempt telemetry during a training session.
+ *
+ * Implements `recordAttemptAction` to enforce schema validation via `RecordAttemptInputSchema`, verify
+ * authenticated user ownership of the active playthrough snapshot, and idempotently persist the attempt
+ * outcome using `playthroughService.recordAttempt`.
+ */
 import { type DbContext, playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {

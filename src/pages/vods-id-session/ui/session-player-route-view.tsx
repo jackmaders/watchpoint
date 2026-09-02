@@ -1,3 +1,8 @@
+/**
+ * Router view controller delegating between the production session player and media recovery prototypes.
+ *
+ * Implements `SessionPlayerRouteView` switching views based on URL search params (`search.prototype === "media-recovery"`).
+ */
 import { useCallback } from "react";
 import type { SessionSearch } from "../model/session-search";
 import type { ManifestVod } from "../model/use-session-player";

@@ -1,3 +1,9 @@
+/**
+ * Data loader for retrieving individual VOD details, scenario collections, and audit logs for editing.
+ *
+ * Implements `loadAdminContentIdPage` to fetch VOD records via `getAdminVodById` and related audit entries
+ * via `getAdminAuditLogs`, redirecting to `/admin/content` if the requested VOD does not exist.
+ */
 import { redirect } from "@tanstack/react-router";
 import { getAdminAuditLogs } from "@/shared/lib/audit";
 import { getAdminVodById } from "@/widgets/admin-vod-editor";

@@ -1,3 +1,9 @@
+/**
+ * Domain types and validation schemas for interactive scenario attempt outcomes and telemetry recording.
+ *
+ * Defines the `AttemptOutcome` interface, `RecordAttemptInputSchema` Zod schema, and associated result
+ * contracts used across playthrough coordinators, server actions, and persistence boundaries.
+ */
 import { z } from "zod";
 import type { JsonValue, ModuleType } from "@/shared/db";
 

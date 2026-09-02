@@ -1,3 +1,9 @@
+/**
+ * Filter controls bar for narrowing match history by VOD title, playthrough status, and learning module types.
+ *
+ * Implements `HistoryFilterBar` with status tabs (`COMPLETED`, `IN_PROGRESS`), a VOD selector dropdown,
+ * and individual module toggle buttons.
+ */
 import { type ChangeEvent, useCallback } from "react";
 import type {
 	ModuleType,

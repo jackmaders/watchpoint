@@ -1,3 +1,9 @@
+/**
+ * Client-side layout and player shell component for interactive VOD decision training playthroughs.
+ *
+ * Implements `SessionPlayerClient` coordinating the YouTube media container, tactical scenario overlays,
+ * playback status rails, and terminal summary panels (`SessionSummaryPanel`).
+ */
 "use client";
 
 import { Link } from "@tanstack/react-router";

@@ -1,3 +1,9 @@
+/**
+ * Public API for the admin VOD content management dashboard page slice.
+ *
+ * Re-exports the public interface of `src/pages/admin-content/` adhering to Feature-Sliced Design (FSD).
+ * Exposes loaders, filtering helpers, state hooks, mutation controllers, table subcomponents, and route options.
+ */
 export { loadAdminContent } from "./api/loaders";
 export {
 	compareContentVods,

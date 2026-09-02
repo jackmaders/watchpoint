@@ -1,3 +1,8 @@
+/**
+ * Route presentation component for the VOD detail and briefing view.
+ *
+ * Implements `VodsIdRouteComponent` extracting loaded VOD data from `routeApi` and rendering `VodsIdPage`.
+ */
 import { getRouteApi } from "@tanstack/react-router";
 import { VodsIdPage } from "./vods-id-page";
 

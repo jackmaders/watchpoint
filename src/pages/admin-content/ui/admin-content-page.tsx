@@ -1,3 +1,9 @@
+/**
+ * Main administrative dashboard page for managing VOD catalog training sessions and scenarios.
+ *
+ * Implements `AdminContentPage` composing header statistics, filter bars, tabular data displays,
+ * bulk operation notifications, and deletion confirmation dialogs.
+ */
 "use client";
 
 import type { AdminVodItem } from "@/shared/db";

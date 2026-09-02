@@ -1,3 +1,9 @@
+/**
+ * Pure predicate and comparator functions for filtering and sorting administrative VOD collections.
+ *
+ * Implements `matchesContentFilters` and `compareContentVods` to evaluate publication status, hero role,
+ * text search queries, and multi-column sorting (e.g., scenario count, creation date, map name).
+ */
 import type { AdminVodItem } from "@/shared/db";
 import type {
 	ContentHeroRoleFilter,

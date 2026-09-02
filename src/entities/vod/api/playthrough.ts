@@ -1,3 +1,10 @@
+/**
+ * Domain actions for initializing and finalizing interactive VOD training playthrough sessions.
+ *
+ * Implements `startPlaythroughAction` and `completePlaythroughAction` with user authentication checks
+ * and graceful fallback semantics. Coordinates with `playthroughService` to create playthrough runs,
+ * snapshot scenario states, and compute summary metrics including accuracy and median active-response latency.
+ */
 import type {
 	CreatePlaythroughInput,
 	JsonValue,

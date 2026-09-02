@@ -1,3 +1,9 @@
+/**
+ * Summary card component displaying a single playthrough record with accuracy, latency, and module badges.
+ *
+ * Implements `HistoryItemCard` linking to `/history/$id` and rendering completion timestamps, accuracy ratings,
+ * median active-response latency, and map/rank badges.
+ */
 import { Link } from "@tanstack/react-router";
 import type { PlayerHistoryItem } from "@/shared/db";
 import { formatAccuracy, formatLatency } from "@/shared/lib/metrics";

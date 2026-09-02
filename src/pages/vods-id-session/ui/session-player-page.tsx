@@ -1,3 +1,9 @@
+/**
+ * Session player page wrapper handling missing VOD fallbacks and mounting the client player.
+ *
+ * Implements `SessionPlayerPage` verifying VOD presence, rendering not-found notifications,
+ * and initializing `SessionPlayerClient` with playthrough IDs and scenario snapshot collections.
+ */
 import { Link } from "@tanstack/react-router";
 import type { SessionManifest } from "@/shared/db";
 import { SessionPlayerClient } from "./session-player-client";

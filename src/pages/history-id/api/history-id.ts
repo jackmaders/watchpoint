@@ -1,3 +1,9 @@
+/**
+ * Data-access logic for loading detailed performance telemetry for a specific training playthrough.
+ *
+ * Implements `getPlaythroughHistoryDetailData` verifying user authentication and querying
+ * `playthroughService.getHistoryDetail` for snapshot-level attempt outcomes and metrics.
+ */
 import type { DbContext, PlayerHistoryItem } from "@/shared/db";
 import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";

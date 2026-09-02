@@ -1,3 +1,9 @@
+/**
+ * Table cell and header components for the administrative VOD content table.
+ *
+ * Implements interactive table primitives including `SortHeaderButton`, `StatusBadgeCell`, `RoleBadgeCell`,
+ * and `RowActionsCell` for publication toggles and deletion actions.
+ */
 "use client";
 
 import { ArrowDown, ArrowUp, ArrowUpDown, Trash2 } from "lucide-react";

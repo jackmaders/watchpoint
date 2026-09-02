@@ -1,3 +1,9 @@
+/**
+ * Validation schema and query transformer for administrative audit log search parameters.
+ *
+ * Implements `auditSearchSchema`, `validateAuditSearch`, and `toGetAdminAuditLogsQuery` to validate
+ * URL search queries and map action filters for audit data loaders.
+ */
 import { z } from "zod";
 
 export const auditSearchSchema = z.object({
