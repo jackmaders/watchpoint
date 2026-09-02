@@ -1,3 +1,22 @@
+/**
+ * Provides query sanitization, pagination clamping, and dynamic SQL condition
+ * builders for Drizzle ORM database operations.
+ *
+ * Implements standard database query utilities according to ADR-0010. Sanitizes
+ * string inputs for SQL LIKE queries, enforces bounded pagination limits, projects
+ * paginated query envelopes, and constructs composite WHERE clauses from table filters.
+ */
+
+import {
+	and,
+	Column,
+	eq,
+	getTableColumns,
+	is,
+	type SQL,
+	type Table,
+} from "drizzle-orm";
+
 export interface PaginatedResult<T> {
 	items: T[];
 	page: number;
@@ -16,6 +35,14 @@ export interface ClampedPagination {
 	page: number;
 	pageSize: number;
 }
+
+/**
+ * Derives query options directly from selectable Drizzle table columns merged with `PaginationOptions`.
+ */
+export type TableFilterOptions<
+	TTable extends Table,
+	K extends keyof TTable["$inferSelect"] = keyof TTable["$inferSelect"],
+> = PaginationOptions & Partial<Pick<TTable["$inferSelect"], K>>;
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
@@ -78,4 +105,33 @@ export function buildPaginatedResult<T>(
 		total,
 		totalPages,
 	};
+}
+
+/**
+ * Dynamically builds an `and(...conditions)` SQL clause from matching table columns and filter values.
+ * Ignores undefined filter values and keys that do not correspond to columns on the table.
+ */
+export function buildWhereConditions<
+	TTable extends Table,
+	TFilters extends object = Record<string, unknown>,
+>(table: TTable, filters?: TFilters): SQL | undefined {
+	if (!filters) {
+		return undefined;
+	}
+
+	const conditions: SQL[] = [];
+	const columns = getTableColumns(table);
+
+	for (const [key, value] of Object.entries(filters)) {
+		if (value === undefined) {
+			continue;
+		}
+
+		const column = columns[key];
+		if (column && is(column, Column)) {
+			conditions.push(eq(column, value));
+		}
+	}
+
+	return conditions.length > 0 ? and(...conditions) : undefined;
 }

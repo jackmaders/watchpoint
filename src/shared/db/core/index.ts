@@ -8,16 +8,19 @@ export {
 } from "./errors";
 export {
 	buildPaginatedResult,
+	buildWhereConditions,
 	type ClampedPagination,
 	clampPagination,
 	escapeLike,
 	type PaginatedResult,
 	type PaginationOptions,
+	type TableFilterOptions,
 } from "./query";
 export {
 	type DbResult,
 	dbFailure,
 	dbSuccess,
+	executeQuery,
 	toErrorMessage,
 	tryDb,
 } from "./result";

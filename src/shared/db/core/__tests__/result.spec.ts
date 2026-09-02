@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { dbFailure, dbSuccess, toErrorMessage, tryDb } from "../result";
+import {
+	dbFailure,
+	dbSuccess,
+	executeQuery,
+	toErrorMessage,
+	tryDb,
+} from "../result";
 
 describe("dbResult helpers", () => {
 	it("constructs a successful result object with data", () => {
@@ -105,6 +111,64 @@ describe("dbResult helpers", () => {
 		// Assert
 		expect(result).toEqual({
 			error: "Custom fallback error",
+			success: false,
+		});
+	});
+
+	it("executeQuery returns success with data when query resolves with a value", async () => {
+		// Arrange
+		const query = Promise.resolve({ id: "user_123", name: "Tracer" });
+
+		// Act
+		const result = await executeQuery(query);
+
+		// Assert
+		expect(result).toEqual({
+			data: { id: "user_123", name: "Tracer" },
+			success: true,
+		});
+	});
+
+	it("executeQuery normalizes undefined to null on single-record lookups", async () => {
+		// Arrange
+		const query = Promise.resolve(undefined);
+
+		// Act
+		const result = await executeQuery(query);
+
+		// Assert
+		expect(result).toEqual({
+			data: null,
+			success: true,
+		});
+	});
+
+	it("executeQuery catches D1 constraint error and returns parsed failure", async () => {
+		// Arrange
+		const query = Promise.reject(
+			new Error("UNIQUE constraint failed: user.email"),
+		);
+
+		// Act
+		const result = await executeQuery(query);
+
+		// Assert
+		expect(result).toEqual({
+			error: "A record with this email already exists",
+			success: false,
+		});
+	});
+
+	it("executeQuery uses fallback message when error cannot be parsed or is unknown", async () => {
+		// Arrange
+		const query = Promise.reject("unexpected error");
+
+		// Act
+		const result = await executeQuery(query, "Failed to execute query");
+
+		// Assert
+		expect(result).toEqual({
+			error: "Failed to execute query",
 			success: false,
 		});
 	});

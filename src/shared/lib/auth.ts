@@ -1,7 +1,7 @@
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import * as schema from "@/shared/db/schema";
 import { authService, type DbContext, getDb } from "../db";
-import * as schema from "../db/schema";
 
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
