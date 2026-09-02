@@ -100,7 +100,6 @@ export type {
 	AuditEntryWithActor,
 	CreateAuditEntryInput,
 	GetAuditLogsOptions,
-	ListAuditEntriesByEntityInput,
 } from "./services/audit.service";
 // Auth & Users
 export type {
