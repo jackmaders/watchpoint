@@ -1,3 +1,12 @@
+/**
+ * Standardizes database and driver error classification across Cloudflare D1 and SQLite
+ * execution boundaries, translating raw error strings into domain-actionable error types.
+ *
+ * Implements the error handling taxonomy defined in ADR-0010. Exports `D1ErrorKind` classifications,
+ * the typed `D1DatabaseError` exception class, regex-based constraint parsers for unique, foreign key,
+ * and check constraints, and higher-order `parseD1Error` and `catchDbError` adapters.
+ */
+
 export const D1ErrorKind = {
 	BUSY: "BUSY",
 	CHECK_VIOLATION: "CHECK_VIOLATION",

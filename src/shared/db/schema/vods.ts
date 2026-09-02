@@ -1,3 +1,12 @@
+/**
+ * Defines database schemas, enumerations, and relations for Overwatch 2 gameplay VODs
+ * and curated interactive decision scenario timestamps.
+ *
+ * Implements the core content domain schema for ADR-0002, ADR-0003, and ADR-0010. Configures
+ * Drizzle ORM tables for `vods` and `scenarios`, exporting enums for `heroRoleEnum`, `moduleTypeEnum`,
+ * and `inputTypeEnum` alongside polymorphic JSON input config definitions and publication indexes.
+ */
+
 import { relations } from "drizzle-orm";
 import {
 	index,

@@ -1,3 +1,12 @@
+/**
+ * Defines Zod validation schemas and type parsers for user records, authentication inputs,
+ * and administrative role change operations.
+ *
+ * Implements data validation rules for authentication and user management domains. Uses `drizzle-zod`
+ * and Zod to generate `selectUserSchema`, `insertUserSchema`, and `updateUserRoleInputSchema`, verifying
+ * email formats, mandatory names, and strict role enumerations ("PLAYER" | "ADMIN").
+ */
+
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { userRoleEnum, users } from "../schema/auth";
