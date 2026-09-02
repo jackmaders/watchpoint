@@ -1,3 +1,10 @@
+/**
+ * Renders accessible tabbed navigation interfaces for organizing switchable content panels within the same view.
+ *
+ * Wraps Radix UI `Tabs` primitives (`TabsPrimitive.Root`, `List`, `Trigger`, `Content`) with Tailwind CSS styling,
+ * managing keyboard navigation, active state highlights, and accessible ARIA tabpanel semantics.
+ */
+
 "use client";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import type * as React from "react";

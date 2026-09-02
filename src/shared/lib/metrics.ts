@@ -1,3 +1,12 @@
+/**
+ * Computes and formats performance telemetry for interactive VOD playthrough attempts,
+ * quantifying player accuracy percentages and median response latencies.
+ *
+ * Exports pure computation and formatting utilities including `calculateAccuracy`,
+ * `calculateMedianActiveLatency`, `formatAccuracy`, and `formatLatency`, filtering out timed-out
+ * attempts and rounding metrics deterministically for UI presentation and data persistence.
+ */
+
 export interface AttemptMetricItem {
 	isTimedOut: boolean;
 	responseTimeMs: number;

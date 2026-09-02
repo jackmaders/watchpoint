@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying test environment network isolation and unmocked fetch prevention.
+ *
+ * Validates that global fetch traps intercept unmocked network requests with string URLs, `URL` instances,
+ * and `Request` objects, enforcing strict test isolation across unit test suites.
+ */
+
 import { describe, expect, it } from "vitest";
 
 describe("network guard setup", () => {

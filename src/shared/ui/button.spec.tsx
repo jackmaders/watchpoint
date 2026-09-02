@@ -1,3 +1,10 @@
+/**
+ * Component test suite verifying rendering, styling variants, and slot delegation of the Button primitive.
+ *
+ * Tests `Button` using React Testing Library to assert correct text rendering, variant CSS class application,
+ * and polymorphic anchor rendering via the `asChild` slot prop.
+ */
+
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Button } from "./button";

@@ -1,3 +1,10 @@
+/**
+ * Test mock for role-based permission verification and capability enforcement guards.
+ *
+ * Exports mocked implementations of `hasPermission`, `getUserPermissions`, and `requirePermission` alongside
+ * authentic `PERMISSIONS` constants, defaulting authorization checks to pass with mock admin credentials.
+ */
+
 import { vi } from "vitest";
 import { PERMISSIONS, ROLE_PERMISSIONS } from "../permissions";
 

@@ -1,3 +1,10 @@
+/**
+ * Renders structured alert callouts for communicating contextual feedback, warnings, and system status messages.
+ *
+ * Implements `Alert`, `AlertTitle`, and `AlertDescription` styled with Tailwind CSS and class-variance-authority (`cva`),
+ * supporting default and destructive visual variants with accessible ARIA role semantics.
+ */
+
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { cn } from "@/shared/lib/utils";

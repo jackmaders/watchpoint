@@ -1,3 +1,10 @@
+/**
+ * Unit test suite verifying error and message telemetry logging via the shared Sentry wrapper.
+ *
+ * Tests `captureException` and `captureMessage` using Vitest mocks for `@sentry/react`, asserting proper
+ * argument forwarding and event identifier returns.
+ */
+
 import { describe, expect, it, vi } from "vitest";
 import { captureException, captureMessage } from "./sentry";
 

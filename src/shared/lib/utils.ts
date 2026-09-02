@@ -1,3 +1,10 @@
+/**
+ * Provides general-purpose string manipulation, Tailwind CSS class composition, and duration formatting helpers.
+ *
+ * Exports the `cn` utility combining `clsx` and `tailwind-merge` for conflict-free className resolution,
+ * alongside `formatDuration` for rendering raw seconds into standardized minute-and-second strings.
+ */
+
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
