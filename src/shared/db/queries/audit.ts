@@ -28,7 +28,7 @@ export function queryAuditEntries(
 		.select()
 		.from(auditEntries)
 		.where(filterToSQL(auditEntries, filter))
-		.orderBy(orderToSQL(auditEntries, order, "id"))
+		.orderBy(orderToSQL(auditEntries, order))
 		.limit(limit)
 		.all();
 }

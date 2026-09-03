@@ -25,22 +25,42 @@ export type QueryOptions<T extends Table> = {
 /** Turns a table's filter options into a WHERE clause. */
 export function filterToSQL<T extends Table>(
 	table: T,
-	filter: TableFilter<T> = {},
+	filter?: TableFilter<T>,
 ) {
 	// the cast is unavoidable: AnyTableFilter is index-signed and invariant
-	return relationsFilterToSQL(table, filter as AnyTableFilter);
+	return relationsFilterToSQL(table, (filter ?? {}) as AnyTableFilter);
 }
 
-/** Turns a table's order options into an ORDER BY clause. */
+/** Turns a table's order options into an ORDER BY clause with a default "id" tiebreaker. */
 export function orderToSQL<T extends Table>(
 	table: T,
+	order?: QueryOptions<T>["order"],
+): "id" extends keyof InferSelectModel<T>
+	? NonNullable<ReturnType<typeof relationsOrderToSQL>>
+	: never;
+
+/** Turns a table's order options into an ORDER BY clause with an explicit tiebreaker column. */
+export function orderToSQL<
+	T extends Table,
+	K extends keyof InferSelectModel<T> & string,
+>(
+	table: T,
 	order: QueryOptions<T>["order"],
-	tiebreak: keyof InferSelectModel<T> & string,
+	tiebreak: K,
+): NonNullable<ReturnType<typeof relationsOrderToSQL>>;
+
+export function orderToSQL<T extends Table>(
+	table: T,
+	order?: QueryOptions<T>["order"],
+	tiebreak?: keyof InferSelectModel<T> & string,
 ) {
+	const tiebreakerKey =
+		tiebreak ?? ("id" as keyof InferSelectModel<T> & string);
+
 	// the tiebreak always adds an entry, so the result is never undefined
 	// biome-ignore lint/style/noNonNullAssertion: relationsOrderToSQL is non-null when order has at least one entry
 	return relationsOrderToSQL(table, {
 		...order,
-		[tiebreak]: order?.[tiebreak] ?? "asc",
+		[tiebreakerKey]: order?.[tiebreakerKey] ?? "asc",
 	})!;
 }

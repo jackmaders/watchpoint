@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_LIMIT, filterToSQL, orderToSQL } from "../query";
 import { auditEntries } from "../schema/audit";
+import { playthroughModuleSelections } from "../schema/playthroughs";
 
 describe("query helper primitives", () => {
 	it("exposes DEFAULT_LIMIT as 100", () => {
@@ -22,16 +23,18 @@ describe("query helper primitives", () => {
 	});
 
 	describe("filterToSQL", () => {
-		it("returns undefined for empty or absent filter without throwing", () => {
+		it("returns undefined for empty, absent, or explicitly undefined filter without throwing", () => {
 			// Arrange
 			const table = auditEntries;
 
 			// Act
-			const sqlUndefined = filterToSQL(table);
+			const sqlUndefinedArg = filterToSQL(table, undefined);
+			const sqlAbsent = filterToSQL(table);
 			const sqlEmpty = filterToSQL(table, {});
 
 			// Assert
-			expect(sqlUndefined).toBeUndefined();
+			expect(sqlUndefinedArg).toBeUndefined();
+			expect(sqlAbsent).toBeUndefined();
 			expect(sqlEmpty).toBeUndefined();
 		});
 
@@ -50,12 +53,25 @@ describe("query helper primitives", () => {
 	});
 
 	describe("orderToSQL", () => {
-		it("applies tiebreaker when order is absent or undefined", () => {
+		it("defaults tiebreaker to id when tiebreak argument is omitted", () => {
 			// Arrange
 			const table = auditEntries;
 
 			// Act
-			const sql = orderToSQL(table, undefined, "id");
+			const sqlWithoutOrder = orderToSQL(table);
+			const sqlWithOrder = orderToSQL(table, { createdAt: "desc" });
+
+			// Assert
+			expect(sqlWithoutOrder).toBeDefined();
+			expect(sqlWithOrder).toBeDefined();
+		});
+
+		it("applies explicit tiebreaker when tiebreak parameter is passed", () => {
+			// Arrange
+			const table = playthroughModuleSelections;
+
+			// Act
+			const sql = orderToSQL(table, undefined, "playthroughId");
 
 			// Assert
 			expect(sql).toBeDefined();
