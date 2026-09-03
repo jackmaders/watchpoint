@@ -2,12 +2,12 @@
  * Defines Zod validation schemas and type assertions for interactive playthrough sessions,
  * scenario snapshots, and attempt telemetry records.
  *
- * Implements data validation rules for session coordination and telemetry ingestion. Uses `drizzle-zod`
+ * Implements data validation rules for session coordination and telemetry ingestion. Uses `drizzle-orm/zod`
  * and Zod to construct `selectPlaythroughSchema`, `insertPlaythroughSchema`, `selectAttemptRecordSchema`,
  * `insertAttemptRecordSchema`, and `scenarioSnapshotInputSchema`, validating non-negative timestamps and latency values.
  */
 
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 import {
 	attemptRecords,

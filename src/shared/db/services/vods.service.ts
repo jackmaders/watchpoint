@@ -8,7 +8,7 @@
  * readiness validation, reordering operations, and automatic audit logging.
  */
 
-import { and, count, desc, eq, like, or } from "drizzle-orm";
+import { and, count, eq, like, or, sql } from "drizzle-orm";
 import {
 	buildPaginatedResult,
 	buildWhereConditions,
@@ -585,12 +585,10 @@ export const vodService = {
 		return executeQuery(
 			(async () =>
 				(await getDb(context)).query.vods.findFirst({
-					where: (table, { eq }) => eq(table.id, input.id),
+					where: { id: input.id },
 					with: {
 						scenarios: {
-							orderBy: (scenariosTable, { asc }) => [
-								asc(scenariosTable.timestampSeconds),
-							],
+							orderBy: { timestampSeconds: "asc" },
 						},
 					},
 				}))(),
@@ -602,7 +600,7 @@ export const vodService = {
 		return executeQuery(
 			(async () =>
 				(await getDb(context)).query.scenarios.findFirst({
-					where: (table, { eq }) => eq(table.id, input.id),
+					where: { id: input.id },
 				}))(),
 			"Failed to retrieve scenario",
 		);
@@ -612,8 +610,8 @@ export const vodService = {
 		return executeQuery(
 			(async () =>
 				(await getDb(context)).query.scenarios.findMany({
-					orderBy: (table, { asc }) => [asc(table.timestampSeconds)],
-					where: (table, { eq }) => eq(table.vodId, input.vodId),
+					orderBy: { timestampSeconds: "asc" },
+					where: { vodId: input.vodId },
 				}))(),
 			"Failed to retrieve scenarios",
 		);
@@ -628,21 +626,15 @@ export const vodService = {
 		return executeQuery(
 			(async () =>
 				(await getDb(context)).query.vods.findFirst({
-					where: publishedOnly
-						? (table, { and, eq }) =>
-								and(eq(table.id, id), eq(table.isPublished, true))
-						: (table, { eq }) => eq(table.id, id),
+					where: publishedOnly ? { id, isPublished: true } : { id },
 					with: {
 						scenarios: {
-							orderBy: (scenariosTable, { asc }) => [
-								asc(scenariosTable.timestampSeconds),
-							],
+							orderBy: { timestampSeconds: "asc" },
 							where:
 								modules === null
-									? (_scenariosTable, { sql }) => sql`1 = 0`
+									? { RAW: sql`1 = 0` }
 									: modules !== undefined && modules.length > 0
-										? (scenariosTable, { inArray }) =>
-												inArray(scenariosTable.moduleType, modules)
+										? { moduleType: { in: [...modules] } }
 										: undefined,
 						},
 					},
@@ -667,8 +659,8 @@ export const vodService = {
 				const result = await db.query.vods.findMany({
 					limit: pagination.pageSize,
 					offset: pagination.offset,
-					orderBy: [desc(vods.createdAt), desc(vods.id)],
-					where: combinedWhereClause,
+					orderBy: { createdAt: "desc", id: "desc" },
+					where: combinedWhereClause ? { RAW: combinedWhereClause } : undefined,
 					with: {
 						scenarios: {
 							columns: {
@@ -688,8 +680,8 @@ export const vodService = {
 		return executeQuery(
 			(async () =>
 				(await getDb(context)).query.vods.findMany({
-					orderBy: [desc(vods.createdAt), desc(vods.id)],
-					where: (table, { eq }) => eq(table.isPublished, true),
+					orderBy: { createdAt: "desc", id: "desc" },
+					where: { isPublished: true },
 					with: {
 						scenarios: {
 							columns: {

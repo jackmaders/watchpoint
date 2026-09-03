@@ -7,7 +7,6 @@
  * exporting the `userRoleEnum` ("PLAYER" | "ADMIN") alongside relational bindings across users, accounts, and sessions.
  */
 
-import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const userRoleEnum = ["PLAYER", "ADMIN"] as const;
@@ -48,13 +47,6 @@ export const sessions = sqliteTable("session", {
 		.references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-	user: one(users, {
-		fields: [sessions.userId],
-		references: [users.id],
-	}),
-}));
-
 export const accounts = sqliteTable("account", {
 	accessToken: text("accessToken"),
 	accessTokenExpiresAt: integer("accessTokenExpiresAt", {
@@ -78,13 +70,6 @@ export const accounts = sqliteTable("account", {
 		.references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const accountsRelations = relations(accounts, ({ one }) => ({
-	user: one(users, {
-		fields: [accounts.userId],
-		references: [users.id],
-	}),
-}));
-
 export const verifications = sqliteTable("verification", {
 	createdAt: integer("createdAt", { mode: "timestamp" }),
 	expiresAt: integer("expiresAt", { mode: "timestamp" }).notNull(),
@@ -93,8 +78,3 @@ export const verifications = sqliteTable("verification", {
 	updatedAt: integer("updatedAt", { mode: "timestamp" }),
 	value: text("value").notNull(),
 });
-
-export const usersRelations = relations(users, ({ many }) => ({
-	accounts: many(accounts),
-	sessions: many(sessions),
-}));

@@ -8,7 +8,7 @@
  * protection and automated audit logging, returning non-throwing `DbResult<T>` responses via `executeQuery`.
  */
 
-import { and, count, desc, eq, like, or } from "drizzle-orm";
+import { and, count, eq, like, or } from "drizzle-orm";
 import {
 	buildPaginatedResult,
 	buildWhereConditions,
@@ -71,7 +71,7 @@ export const authService = {
 	async getById(input: { id: string }) {
 		const db = await getDb();
 		const query = db.query.users.findFirst({
-			where: eq(users.id, input.id),
+			where: { id: input.id },
 		});
 
 		return executeQuery(query, "Failed to retrieve user by ID");
@@ -99,8 +99,8 @@ export const authService = {
 			db.query.users.findMany({
 				limit: pagination.pageSize,
 				offset: pagination.offset,
-				orderBy: [desc(users.createdAt), desc(users.id)],
-				where,
+				orderBy: { createdAt: "desc", id: "desc" },
+				where: where ? { RAW: where } : undefined,
 			}),
 		]).then(([countRows, items]) => {
 			const total = countRows[0]?.value ?? 0;

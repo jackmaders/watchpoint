@@ -10,4 +10,5 @@
 export * from "./audit";
 export * from "./auth";
 export * from "./playthroughs";
+export * from "./relations";
 export * from "./vods";

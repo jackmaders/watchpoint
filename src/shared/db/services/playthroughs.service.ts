@@ -7,7 +7,7 @@
  * attempt recording and user ownership invariants, calculates playthrough accuracy and latency metrics, and projects results into `DbResult<T>`.
  */
 
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import {
 	calculateAccuracy,
 	calculateMedianActiveLatency,
@@ -319,11 +319,10 @@ async function handleAttemptIdempotencyRetry(
 ): Promise<DbResult<AttemptRecordItem>> {
 	const result = await executeQuery(
 		(await getDb(context)).query.attemptRecords.findFirst({
-			where: (table, { and, eq }) =>
-				and(
-					eq(table.idempotencyKey, input.idempotencyKey),
-					eq(table.userId, input.userId),
-				),
+			where: {
+				idempotencyKey: input.idempotencyKey,
+				userId: input.userId,
+			},
 		}),
 		"Failed to retrieve attempt by key",
 	);
@@ -372,44 +371,18 @@ async function fetchHistoryRows(
 	pageSize: number,
 	offset: number,
 ) {
+	const whereClause = buildHistoryConditions(db, userId, options);
 	return db.query.playthroughs.findMany({
 		limit: pageSize,
 		offset,
-		orderBy: [desc(playthroughs.createdAt), desc(playthroughs.id)],
-		where: (table, { and: tableAnd, eq: tableEq, inArray: tableInArray }) => {
-			const conds = [tableEq(table.userId, userId)];
-			if (options.status) {
-				conds.push(tableEq(table.status, options.status));
-			}
-			if (options.vodId) {
-				conds.push(tableEq(table.vodId, options.vodId));
-			}
-			if (options.modules && options.modules.length > 0) {
-				conds.push(
-					tableInArray(
-						table.id,
-						db
-							.select({
-								playthroughId: playthroughModuleSelections.playthroughId,
-							})
-							.from(playthroughModuleSelections)
-							.where(
-								inArray(
-									playthroughModuleSelections.moduleType,
-									options.modules,
-								),
-							),
-					),
-				);
-			}
-			return tableAnd(...conds);
-		},
+		orderBy: { createdAt: "desc", id: "desc" },
+		where: { RAW: whereClause },
 		with: {
 			attempts: true,
 			completion: true,
 			moduleSelections: true,
 			scenarioSnapshots: {
-				orderBy: (snapshots, { asc }) => [asc(snapshots.position)],
+				orderBy: { position: "asc" },
 			},
 			user: {
 				columns: { isTestAccount: true },
@@ -432,11 +405,10 @@ export const playthroughService = {
 			const findExistingCompletion = () =>
 				executeQuery(
 					db.query.playthroughCompletions.findFirst({
-						where: (table, { and: tableAnd, eq: tableEq }) =>
-							tableAnd(
-								tableEq(table.playthroughId, id),
-								tableEq(table.userId, userId),
-							),
+						where: {
+							playthroughId: id,
+							userId,
+						},
 					}),
 					"Failed to complete playthrough",
 				);
@@ -476,11 +448,10 @@ export const playthroughService = {
 				const db = await getDb(context);
 				return executeQuery(
 					db.query.playthroughCompletions.findFirst({
-						where: (table, { and: tableAnd, eq: tableEq }) =>
-							tableAnd(
-								tableEq(table.playthroughId, input.id),
-								tableEq(table.userId, input.userId),
-							),
+						where: {
+							playthroughId: input.id,
+							userId: input.userId,
+						},
 					}),
 					"Failed to complete playthrough",
 				);
@@ -547,11 +518,10 @@ export const playthroughService = {
 			const db = await getDb(context);
 			return executeQuery(
 				db.query.attemptRecords.findFirst({
-					where: (table, { and: tableAnd, eq: tableEq }) =>
-						tableAnd(
-							tableEq(table.idempotencyKey, input.idempotencyKey),
-							tableEq(table.userId, input.userId),
-						),
+					where: {
+						idempotencyKey: input.idempotencyKey,
+						userId: input.userId,
+					},
 				}),
 				"Failed to retrieve attempt by key",
 			);
@@ -570,12 +540,11 @@ export const playthroughService = {
 			const db = await getDb(context);
 			return executeQuery(
 				db.query.attemptRecords.findMany({
-					orderBy: (table, { asc }) => [asc(table.createdAt)],
-					where: (table, { and: tableAnd, eq: tableEq }) =>
-						tableAnd(
-							tableEq(table.playthroughId, input.playthroughId),
-							tableEq(table.userId, input.userId),
-						),
+					orderBy: { createdAt: "asc" },
+					where: {
+						playthroughId: input.playthroughId,
+						userId: input.userId,
+					},
 				}),
 				"Failed to retrieve attempts",
 			);
@@ -592,16 +561,15 @@ export const playthroughService = {
 			const db = await getDb(context);
 			return executeQuery(
 				db.query.playthroughs.findFirst({
-					where: (table, { and: tableAnd, eq: tableEq }) =>
-						tableAnd(
-							tableEq(table.id, input.id),
-							tableEq(table.userId, input.userId),
-						),
+					where: {
+						id: input.id,
+						userId: input.userId,
+					},
 					with: {
 						attempts: true,
 						moduleSelections: true,
 						scenarioSnapshots: {
-							orderBy: (snapshots, { asc }) => [asc(snapshots.position)],
+							orderBy: { position: "asc" },
 						},
 					},
 				}),
@@ -619,17 +587,16 @@ export const playthroughService = {
 		try {
 			const db = await getDb(context);
 			const playthrough = await db.query.playthroughs.findFirst({
-				where: (table, { and: tableAnd, eq: tableEq }) =>
-					tableAnd(
-						tableEq(table.id, input.playthroughId),
-						tableEq(table.userId, input.userId),
-					),
+				where: {
+					id: input.playthroughId,
+					userId: input.userId,
+				},
 				with: {
 					attempts: true,
 					completion: true,
 					moduleSelections: true,
 					scenarioSnapshots: {
-						orderBy: (snapshots, { asc }) => [asc(snapshots.position)],
+						orderBy: { position: "asc" },
 					},
 					user: {
 						columns: { isTestAccount: true },
@@ -661,7 +628,7 @@ export const playthroughService = {
 
 			const user = await db.query.users.findFirst({
 				columns: { isTestAccount: true },
-				where: (table, { eq: userEq }) => userEq(table.id, userId),
+				where: { id: userId },
 			});
 
 			if (!user || user.isTestAccount) {

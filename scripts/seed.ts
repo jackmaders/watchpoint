@@ -1,7 +1,7 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/d1";
 import { getPlatformProxy } from "wrangler";
-import * as schema from "../src/shared/db/schema/index";
+import { relations } from "../src/shared/db/schema/relations";
 import { assertLocalSeedTarget, executeSeed } from "../src/shared/db/seed";
 
 async function main() {
@@ -9,7 +9,7 @@ async function main() {
 	const proxy = await getPlatformProxy<{ DB: D1Database }>();
 
 	try {
-		const db = drizzle(proxy.env.DB, { schema });
+		const db = drizzle(proxy.env.DB, { relations });
 		const result = await executeSeed(db);
 		console.log(
 			`Seeded local fixtures: ${result.playerEmail}, ${result.adminEmail}, and ${result.scenariosCount} module scenarios.`,

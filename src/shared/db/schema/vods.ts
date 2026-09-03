@@ -7,7 +7,6 @@
  * and `inputTypeEnum` alongside polymorphic JSON input config definitions and publication indexes.
  */
 
-import { relations } from "drizzle-orm";
 import {
 	index,
 	integer,
@@ -97,14 +96,3 @@ export const scenarios = sqliteTable(
 		),
 	}),
 );
-
-export const vodsRelations = relations(vods, ({ many }) => ({
-	scenarios: many(scenarios),
-}));
-
-export const scenariosRelations = relations(scenarios, ({ one }) => ({
-	vod: one(vods, {
-		fields: [scenarios.vodId],
-		references: [vods.id],
-	}),
-}));

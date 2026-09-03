@@ -34,35 +34,25 @@ export {
 	tryDb,
 } from "./core";
 // Schema
-export {
-	auditEntries,
-	auditEntriesRelations,
-} from "./schema/audit";
+export { auditEntries } from "./schema/audit";
 export {
 	accounts,
-	accountsRelations,
 	sessions,
-	sessionsRelations,
 	type UserRole,
 	userRoleEnum,
 	users,
-	usersRelations,
 	verifications,
 } from "./schema/auth";
 export {
 	attemptRecords,
-	attemptRecordsRelations,
 	type PlaythroughStatus,
 	playthroughCompletions,
-	playthroughCompletionsRelations,
 	playthroughModuleSelections,
-	playthroughModuleSelectionsRelations,
 	playthroughStatusEnum,
 	playthroughs,
-	playthroughsRelations,
 	scenarioSnapshots,
-	scenarioSnapshotsRelations,
 } from "./schema/playthroughs";
+export { relations } from "./schema/relations";
 export {
 	type HeroRole,
 	heroRoleEnum,
@@ -71,9 +61,7 @@ export {
 	type ModuleType,
 	moduleTypeEnum,
 	scenarios,
-	scenariosRelations,
 	vods,
-	vodsRelations,
 } from "./schema/vods";
 // Seed
 export {

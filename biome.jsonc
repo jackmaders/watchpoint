@@ -30,7 +30,7 @@
 			"!storybook-static",
 			"!cloudflare-env.d.ts",
 			"!app/routeTree.gen.ts",
-			"!drizzle/meta",
+			"!drizzle",
 			"!**/*.grit"
 		]
 	},
