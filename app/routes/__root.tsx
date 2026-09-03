@@ -1,6 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import {
-	createRootRoute,
+	createRootRouteWithContext,
 	HeadContent,
 	Link,
 	Outlet,
@@ -9,9 +9,11 @@ import {
 import type { ReactNode } from "react";
 import appCss from "@/app/styles/globals.css?url";
 
-const queryClient = new QueryClient();
+export interface RouterContext {
+	queryClient: QueryClient;
+}
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
 	component: RootComponent,
 	head: () => ({
 		links: [
@@ -43,9 +45,7 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<RootDocument>
-			<QueryClientProvider client={queryClient}>
-				<Outlet />
-			</QueryClientProvider>
+			<Outlet />
 		</RootDocument>
 	);
 }
