@@ -2,6 +2,12 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	resolve: {
+		alias: {
+			"cloudflare:workers": new URL(
+				"./src/shared/db/__mocks__/cloudflare-workers.ts",
+				import.meta.url,
+			).pathname,
+		},
 		tsconfigPaths: true,
 	},
 	test: {
