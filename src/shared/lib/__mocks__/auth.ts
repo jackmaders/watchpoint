@@ -11,3 +11,12 @@ export const getAuthConfig = vi.fn();
 export const getAuth = vi.fn();
 export const getCurrentUser = vi.fn().mockResolvedValue(null);
 export const isRegistrationOpen = vi.fn().mockResolvedValue(true);
+export const handleAuthRequest = vi.fn();
+export const authApiRouteOptions = {
+	server: {
+		handlers: {
+			GET: handleAuthRequest,
+			POST: handleAuthRequest,
+		},
+	},
+};

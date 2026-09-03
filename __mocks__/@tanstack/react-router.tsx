@@ -29,22 +29,36 @@ export const Link = function MockLink({
 	);
 };
 
-export const createFileRoute = vi.fn(
-	(path: string) => (config: Record<string, unknown>) => ({
+const createMockRouteObject = (config: Record<string, unknown> = {}) => {
+	const obj: Record<string, unknown> = {
+		_addFileChildren: vi.fn((_children: unknown) => obj),
+		_addFileTypes: vi.fn(() => obj),
 		options: config,
-		path,
+		update: vi.fn((_updateConfig: Record<string, unknown>) => obj),
 		useLoaderData: vi.fn(() => ({})),
 		useNavigate: vi.fn(() => vi.fn()),
 		useParams: vi.fn(() => ({})),
 		useRouteContext: vi.fn(() => ({})),
 		useSearch: vi.fn(() => ({})),
 		...config,
+	};
+	return obj;
+};
+
+export const createFileRoute = vi.fn(
+	(path: string) => (config: Record<string, unknown>) => ({
+		...createMockRouteObject(config),
+		path,
 	}),
 );
 
-export const createRootRoute = vi.fn((config: Record<string, unknown>) => ({
-	...config,
-}));
+export const createRootRoute = vi.fn((config: Record<string, unknown>) =>
+	createMockRouteObject(config),
+);
+
+export const createRootRouteWithContext = vi.fn(
+	() => (config: Record<string, unknown>) => createMockRouteObject(config),
+);
 
 export const createRouter = vi.fn((config: Record<string, unknown>) => ({
 	...config,
