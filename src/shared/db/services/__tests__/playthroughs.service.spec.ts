@@ -373,13 +373,15 @@ describe("playthroughService", () => {
 				query: {
 					playthroughs: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ id: "pt_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
 								);
 							}
-							if (options?.with?.scenarioSnapshots?.orderBy) {
+							if (
+								typeof options?.with?.scenarioSnapshots?.orderBy === "function"
+							) {
 								options.with.scenarioSnapshots.orderBy({}, { asc: vi.fn() });
 							}
 							return Promise.resolve(mockPlaythrough);
@@ -561,7 +563,7 @@ describe("playthroughService", () => {
 				query: {
 					playthroughs: {
 						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{
 										id: "run_1",
@@ -572,7 +574,9 @@ describe("playthroughService", () => {
 									{ and: vi.fn(), eq: vi.fn(), inArray: vi.fn() },
 								);
 							}
-							if (options?.with?.scenarioSnapshots?.orderBy) {
+							if (
+								typeof options?.with?.scenarioSnapshots?.orderBy === "function"
+							) {
 								options.with.scenarioSnapshots.orderBy({}, { asc: vi.fn() });
 							}
 							return Promise.resolve(mockRuns);
@@ -580,7 +584,7 @@ describe("playthroughService", () => {
 					},
 					users: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where({ id: "usr_1" }, { eq: vi.fn() });
 							}
 							return Promise.resolve({ isTestAccount: false });
@@ -702,13 +706,15 @@ describe("playthroughService", () => {
 				query: {
 					playthroughs: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ id: "run_1", userId: "player_1" },
 									{ and: vi.fn(), eq: vi.fn() },
 								);
 							}
-							if (options?.with?.scenarioSnapshots?.orderBy) {
+							if (
+								typeof options?.with?.scenarioSnapshots?.orderBy === "function"
+							) {
 								options.with.scenarioSnapshots.orderBy({}, { asc: vi.fn() });
 							}
 							return Promise.resolve(detail);
@@ -854,7 +860,7 @@ describe("playthroughService", () => {
 				query: {
 					playthroughCompletions: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ playthroughId: "pt_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
@@ -927,7 +933,7 @@ describe("playthroughService", () => {
 				query: {
 					playthroughCompletions: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ playthroughId: "pt_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
@@ -1124,7 +1130,7 @@ describe("playthroughService", () => {
 				query: {
 					attemptRecords: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ idempotencyKey: "idem_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
@@ -1187,7 +1193,7 @@ describe("playthroughService", () => {
 				query: {
 					attemptRecords: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ idempotencyKey: "idem_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
@@ -1331,13 +1337,13 @@ describe("playthroughService", () => {
 				query: {
 					attemptRecords: {
 						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where(
 									{ playthroughId: "pt_1", userId: "usr_1" },
 									{ and: vi.fn(), eq: vi.fn() },
 								);
 							}
-							if (options?.orderBy) {
+							if (typeof options?.orderBy === "function") {
 								options.orderBy({}, { asc: vi.fn() });
 							}
 							return Promise.resolve(mockAttempts);
@@ -1393,7 +1399,7 @@ describe("playthroughService", () => {
 						findFirst: vi
 							.fn()
 							.mockImplementationOnce((options) => {
-								if (options?.where) {
+								if (typeof options?.where === "function") {
 									options.where(
 										{ idempotencyKey: "key_1", userId: "usr_1" },
 										{ and: vi.fn(), eq: vi.fn() },
@@ -1402,7 +1408,7 @@ describe("playthroughService", () => {
 								return Promise.resolve(mockAttempt);
 							})
 							.mockImplementationOnce((options) => {
-								if (options?.where) {
+								if (typeof options?.where === "function") {
 									options.where(
 										{ idempotencyKey: "key_missing", userId: "usr_1" },
 										{ and: vi.fn(), eq: vi.fn() },

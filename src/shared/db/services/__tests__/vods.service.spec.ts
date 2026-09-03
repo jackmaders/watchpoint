@@ -19,7 +19,7 @@ describe("vodService", () => {
 				query: {
 					vods: {
 						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where({ isPublished: true }, { eq: vi.fn() });
 							}
 							return Promise.resolve(mockVods);
@@ -201,10 +201,10 @@ describe("vodService", () => {
 				query: {
 					vods: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where({ id: "vod_1" }, { eq: vi.fn() });
 							}
-							if (options?.with?.scenarios?.orderBy) {
+							if (typeof options?.with?.scenarios?.orderBy === "function") {
 								options.with.scenarios.orderBy({}, { asc: vi.fn() });
 							}
 							return Promise.resolve(mockVod);
@@ -278,18 +278,7 @@ describe("vodService", () => {
 			const mockDb = {
 				query: {
 					vods: {
-						findFirst: vi.fn().mockImplementation((options) => {
-							options?.where?.(
-								{ id: "vod_1", isPublished: true },
-								{ and: vi.fn(), eq: vi.fn() },
-							);
-							options?.with?.scenarios?.where?.(
-								{ moduleType: "STRATEGY" },
-								{ inArray: vi.fn(), sql: vi.fn() },
-							);
-							options?.with?.scenarios?.orderBy?.({}, { asc: vi.fn() });
-							return Promise.resolve(mockVod);
-						}),
+						findFirst: vi.fn().mockResolvedValue(mockVod),
 					},
 				},
 			};
@@ -975,16 +964,16 @@ describe("vodService", () => {
 				query: {
 					scenarios: {
 						findFirst: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where({ id: "sc_1" }, { eq: vi.fn() });
 							}
 							return Promise.resolve(mockScenario);
 						}),
 						findMany: vi.fn().mockImplementation((options) => {
-							if (options?.where) {
+							if (typeof options?.where === "function") {
 								options.where({ vodId: "vod_1" }, { eq: vi.fn() });
 							}
-							if (options?.orderBy) {
+							if (typeof options?.orderBy === "function") {
 								options.orderBy({ timestampSeconds: 10 }, { asc: vi.fn() });
 							}
 							return Promise.resolve([mockScenario]);

@@ -9,9 +9,9 @@
 
 import type { D1Database } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/d1";
-import * as schema from "../schema";
+import { relations } from "../schema/relations";
 
-export type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
+export type DrizzleDb = ReturnType<typeof drizzle<typeof relations>>;
 
 export type DbContext =
 	| {
@@ -35,7 +35,7 @@ export async function getDb(context?: DbContext): Promise<DrizzleDb> {
 			?.DB;
 
 	if (explicitBinding) {
-		return drizzle(explicitBinding, { schema });
+		return drizzle(explicitBinding, { relations });
 	}
 
 	const globalEnv = globalThis as unknown as {
@@ -65,7 +65,7 @@ export async function getDb(context?: DbContext): Promise<DrizzleDb> {
 		throw new Error("Cloudflare D1 database binding (DB) not found");
 	}
 
-	const client = drizzle(d1Binding, { schema });
+	const client = drizzle(d1Binding, { relations });
 
 	if (process.env.NODE_ENV === "development") {
 		globalEnv.db = client;

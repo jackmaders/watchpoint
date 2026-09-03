@@ -8,7 +8,7 @@
  * and Zod-validated `create` log insertion wrapped in `executeQuery`.
  */
 
-import { count, desc, eq } from "drizzle-orm";
+import { count } from "drizzle-orm";
 import {
 	buildPaginatedResult,
 	buildWhereConditions,
@@ -84,7 +84,7 @@ export const auditService = {
 		const db = await getDb(context);
 		return executeQuery(
 			db.query.auditEntries.findFirst({
-				where: eq(auditEntries.id, input.id),
+				where: { id: input.id },
 				with: {
 					actor: true,
 				},
@@ -107,8 +107,8 @@ export const auditService = {
 			db.query.auditEntries.findMany({
 				limit: pagination.pageSize,
 				offset: pagination.offset,
-				orderBy: [desc(auditEntries.createdAt), desc(auditEntries.id)],
-				where,
+				orderBy: { createdAt: "desc", id: "desc" },
+				where: where ? { RAW: where } : undefined,
 				with: {
 					actor: true,
 				},

@@ -13,6 +13,7 @@ import {
 	Column,
 	eq,
 	getTableColumns,
+	type InferSelectModel,
 	is,
 	type SQL,
 	type Table,
@@ -41,8 +42,8 @@ export interface ClampedPagination {
  */
 export type TableFilterOptions<
 	TTable extends Table,
-	K extends keyof TTable["$inferSelect"] = keyof TTable["$inferSelect"],
-> = PaginationOptions & Partial<Pick<TTable["$inferSelect"], K>>;
+	K extends keyof InferSelectModel<TTable> = keyof InferSelectModel<TTable>,
+> = PaginationOptions & Partial<Pick<InferSelectModel<TTable>, K>>;
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;

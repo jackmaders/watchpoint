@@ -7,7 +7,7 @@
  * as well as publication invariants via `validateVodForPublishing` ensuring every active module has valid scenarios.
  */
 
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 import {
 	heroRoleEnum,

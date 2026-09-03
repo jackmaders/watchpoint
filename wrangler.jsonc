@@ -12,7 +12,7 @@
 			"database_id": "f7d563c1-aa9f-4a83-9efb-3d379b263821",
 			"database_name": "watchpoint-db",
 			"migrations_dir": "drizzle",
-			"migrations_pattern": "drizzle/*.sql"
+			"migrations_pattern": "drizzle/*/migration.sql"
 		}
 	],
 	"main": "dist/server/server.js",

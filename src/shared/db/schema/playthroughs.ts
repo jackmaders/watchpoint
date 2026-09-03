@@ -7,7 +7,6 @@
  * `scenarioSnapshots`, and `attemptRecords`, with idempotency indexes, foreign key cascades to `users` and `vods`, and polymorphic response payload columns.
  */
 
-import { relations } from "drizzle-orm";
 import {
 	index,
 	integer,
@@ -168,71 +167,3 @@ export const attemptRecords = sqliteTable(
 		userIdx: index("attempt_record_user_idx").on(table.userId, table.createdAt),
 	}),
 );
-
-export const playthroughsRelations = relations(
-	playthroughs,
-	({ many, one }) => ({
-		attempts: many(attemptRecords),
-		completion: one(playthroughCompletions),
-		moduleSelections: many(playthroughModuleSelections),
-		scenarioSnapshots: many(scenarioSnapshots),
-		user: one(users, {
-			fields: [playthroughs.userId],
-			references: [users.id],
-		}),
-		vod: one(vods, {
-			fields: [playthroughs.vodId],
-			references: [vods.id],
-		}),
-	}),
-);
-
-export const playthroughCompletionsRelations = relations(
-	playthroughCompletions,
-	({ one }) => ({
-		playthrough: one(playthroughs, {
-			fields: [playthroughCompletions.playthroughId],
-			references: [playthroughs.id],
-		}),
-		user: one(users, {
-			fields: [playthroughCompletions.userId],
-			references: [users.id],
-		}),
-	}),
-);
-
-export const playthroughModuleSelectionsRelations = relations(
-	playthroughModuleSelections,
-	({ one }) => ({
-		playthrough: one(playthroughs, {
-			fields: [playthroughModuleSelections.playthroughId],
-			references: [playthroughs.id],
-		}),
-	}),
-);
-
-export const scenarioSnapshotsRelations = relations(
-	scenarioSnapshots,
-	({ many, one }) => ({
-		attempts: many(attemptRecords),
-		playthrough: one(playthroughs, {
-			fields: [scenarioSnapshots.playthroughId],
-			references: [playthroughs.id],
-		}),
-	}),
-);
-
-export const attemptRecordsRelations = relations(attemptRecords, ({ one }) => ({
-	playthrough: one(playthroughs, {
-		fields: [attemptRecords.playthroughId],
-		references: [playthroughs.id],
-	}),
-	scenario: one(scenarios, {
-		fields: [attemptRecords.scenarioId],
-		references: [scenarios.id],
-	}),
-	user: one(users, {
-		fields: [attemptRecords.userId],
-		references: [users.id],
-	}),
-}));
