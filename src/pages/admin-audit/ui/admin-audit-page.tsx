@@ -18,7 +18,7 @@ export type AdminAuditLogItem = typeof auditEntries.$inferSelect & {
 };
 
 export interface AdminAuditPageProps {
-	initialLogs: AdminAuditLogItem[];
+	logs: AdminAuditLogItem[];
 	onFilterChange?: (newParams: AuditSearchParams) => void;
 	searchParams?: AuditSearchParams;
 }
@@ -136,11 +136,10 @@ function AdminAuditTableRow({
 }
 
 export function AdminAuditPage({
-	initialLogs,
+	logs,
 	onFilterChange,
 	searchParams = {},
 }: AdminAuditPageProps) {
-	const [logs] = useState<AdminAuditLogItem[]>(initialLogs);
 	const [searchQuery, setSearchQuery] = useState(searchParams.search ?? "");
 	const [selectedAction, setSelectedAction] = useState<string>(
 		searchParams.action ?? "ALL",

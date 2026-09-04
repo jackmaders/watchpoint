@@ -10,13 +10,15 @@ import { queryKeys } from "../query-keys";
 describe("queryKeys", () => {
 	it("exposes canonical cache key arrays", () => {
 		// Arrange
+		const expectedAudit = ["audit"];
 		const expectedPosts = ["posts"];
 		const expectedUsers = ["users"];
 
 		// Act
-		const { posts, users } = queryKeys;
+		const { audit, posts, users } = queryKeys;
 
 		// Assert
+		expect(audit).toEqual(expectedAudit);
 		expect(posts).toEqual(expectedPosts);
 		expect(users).toEqual(expectedUsers);
 	});
