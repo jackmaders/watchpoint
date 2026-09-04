@@ -6,6 +6,7 @@
  */
 
 export const queryKeys = {
+	audit: ["audit"],
 	posts: ["posts"],
 	users: ["users"],
 } as const;

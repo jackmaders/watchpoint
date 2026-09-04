@@ -48,7 +48,7 @@ const mockAuditLogs: AdminAuditLogItem[] = [
 describe("AdminAuditPage", () => {
 	it("renders audit header, logs table, actors, actions, and timestamps", () => {
 		// Arrange & Act
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 
 		// Assert
 		expect(screen.getByText("Audit Log")).toBeDefined();
@@ -62,7 +62,7 @@ describe("AdminAuditPage", () => {
 
 	it("filters audit logs by free-text search query across action, actor, entity, and metadata", () => {
 		// Arrange
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 		const searchInput = screen.getByPlaceholderText(
 			/search by actor, action, or entity…/i,
 		);
@@ -91,7 +91,7 @@ describe("AdminAuditPage", () => {
 
 	it("filters audit logs by action type selection", () => {
 		// Arrange
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 
 		// Act: select action filter
 		const select = screen.getByLabelText(/filter by action/i);
@@ -104,7 +104,7 @@ describe("AdminAuditPage", () => {
 
 	it("expands and collapses metadata details when clicking View Details", () => {
 		// Arrange
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 
 		// Assert: metadata not visible initially
 		expect(screen.queryByText(/"heroName": "Reinhardt"/i)).toBeNull();
@@ -128,7 +128,7 @@ describe("AdminAuditPage", () => {
 
 	it("renders empty state when no audit logs match search criteria", () => {
 		// Arrange
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 		const searchInput = screen.getByPlaceholderText(
 			/search by actor, action, or entity…/i,
 		);
@@ -178,7 +178,7 @@ describe("AdminAuditPage", () => {
 		];
 
 		// Act
-		render(<AdminAuditPage initialLogs={diverseLogs} />);
+		render(<AdminAuditPage logs={diverseLogs} />);
 
 		// Assert
 		expect(screen.getByText("VOD: vod_del")).toBeDefined();
@@ -191,7 +191,7 @@ describe("AdminAuditPage", () => {
 		const onFilterChange = vi.fn();
 		const { rerender } = render(
 			<AdminAuditPage
-				initialLogs={mockAuditLogs}
+				logs={mockAuditLogs}
 				onFilterChange={onFilterChange}
 				searchParams={{ action: "VOD_CREATED", search: "admin" }}
 			/>,
@@ -226,7 +226,7 @@ describe("AdminAuditPage", () => {
 		// Act: Rerender with new searchParams (e.g. browser back button)
 		rerender(
 			<AdminAuditPage
-				initialLogs={mockAuditLogs}
+				logs={mockAuditLogs}
 				onFilterChange={onFilterChange}
 				searchParams={{ action: "ALL", search: "" }}
 			/>,
@@ -272,7 +272,7 @@ describe("AdminAuditPage", () => {
 
 	it("handles filter changes without onFilterChange callback", () => {
 		// Arrange
-		render(<AdminAuditPage initialLogs={mockAuditLogs} />);
+		render(<AdminAuditPage logs={mockAuditLogs} />);
 
 		// Act
 		fireEvent.change(screen.getByPlaceholderText(/search by actor/i), {
