@@ -2,27 +2,28 @@
  * Server functions for administrative user account management and role changes.
  *
  * Implements `getAdminUsers` and `updateUserRole` server functions using TanStack Start `createServerFn`,
- * checking permission guards (`users:view`, `users:manage_roles`) and delegating mutations to `authService`.
+ * checking permission guards (`users:view`, `users:manage-roles`) and delegating mutations to model rules.
  */
+
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-	authService,
-	type DbResult,
-	type UserItem,
-	userRoleEnum,
-} from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
+import { getAdminUsersRule } from "../model/get-admin-users";
+import type { UserItem } from "../model/types";
+import {
+	type UpdateUserRoleResult,
+	updateUserRoleRule,
+} from "../model/update-user-role";
 
 export const GetAdminUsersSchema = z.object({
-	role: z.enum(userRoleEnum).optional(),
+	role: z.enum(["PLAYER", "ADMIN"]).optional(),
 	search: z.string().optional(),
 });
 
 export type GetAdminUsersPayload = z.infer<typeof GetAdminUsersSchema>;
 
 export const UpdateUserRoleSchema = z.object({
-	newRole: z.enum(userRoleEnum),
+	newRole: z.enum(["PLAYER", "ADMIN"]),
 	targetUserId: z.string().min(1),
 });
 
@@ -38,11 +39,7 @@ export const getAdminUsers = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<UserItem[]> => {
 		await requirePermission("users:view");
-		const result = await authService.list(data);
-		if (!result.success) {
-			throw new Error(result.error);
-		}
-		return result.data.items;
+		return getAdminUsersRule(data);
 	});
 
 export const updateUserRole = createServerFn({ method: "POST" })
@@ -53,9 +50,9 @@ export const updateUserRole = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<UserItem>> => {
+	.handler(async ({ data }): Promise<UpdateUserRoleResult> => {
 		const actor = await requirePermission("users:manage-roles");
-		return authService.updateUserRole({
+		return updateUserRoleRule({
 			actorUserId: actor.id,
 			newRole: data.newRole,
 			targetUserId: data.targetUserId,

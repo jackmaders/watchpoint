@@ -10,8 +10,8 @@
 import { vi } from "vitest";
 import { getDb } from "../core/__mocks__/client";
 import { dbSuccess } from "../core/result";
-import { userRoleEnum } from "../schema/auth";
 import { playthroughStatusEnum } from "../schema/playthroughs";
+import { userRoleEnum } from "../schema/user";
 import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema/vods";
 
 export { getDb };
@@ -194,6 +194,35 @@ export const playthroughService = mockPlaythroughService;
 
 export const validateScenarioConfig = vi.fn(() => ({ valid: true }));
 export const validateVodForPublishing = vi.fn(() => ({ valid: true }));
+
+// Audit domain queries
+export const queryAuditEntries = vi.fn(async () => []);
+export const createAuditEntry = vi.fn(async () => ({ id: "mock_audit_id" }));
+export const getAuditEntryById = vi.fn(async () => null);
+export const deleteAuditEntry = vi.fn(async () => ({ id: "mock_audit_id" }));
+
+// User domain queries
+export const queryUsers = vi.fn(async () => []);
+export const createUser = vi.fn(async () => ({
+	createdAt: new Date(),
+	email: "user@example.com",
+	emailVerified: false,
+	id: "mock_user_id",
+	image: null,
+	isTestAccount: false,
+	name: "Mock User",
+	role: "PLAYER" as const,
+	updatedAt: new Date(),
+}));
+export const getUserById = vi.fn(async () => null);
+export const getUserByEmail = vi.fn(async () => null);
+export const updateUser = vi.fn(async () => null);
+export const deleteUser = vi.fn(async () => null);
+
+// Client & query helpers
+export const createDbClient = vi.fn();
+export const filterToSQL = vi.fn();
+export const orderToSQL = vi.fn();
 
 export {
 	heroRoleEnum,

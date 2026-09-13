@@ -8,8 +8,8 @@
  */
 
 import { defineRelations } from "drizzle-orm";
+import { accounts } from "./account";
 import { auditEntries } from "./audit";
-import { accounts, sessions, users, verifications } from "./auth";
 import {
 	attemptRecords,
 	playthroughCompletions,
@@ -17,6 +17,9 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "./playthroughs";
+import { sessions } from "./session";
+import { users } from "./user";
+import { verifications } from "./verification";
 import { scenarios, vods } from "./vods";
 
 const schema = {

@@ -9,8 +9,16 @@
 
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import * as schema from "@/shared/db/schema";
-import { authService, type DbContext, getDb } from "../db";
+import {
+	accounts,
+	authService,
+	type DbContext,
+	getDb,
+	sessions,
+	type UserRole,
+	users,
+	verifications,
+} from "../db";
 
 export function getAuthConfig(
 	env: Record<string, string | undefined> = process.env,
@@ -50,10 +58,10 @@ export function createAuthInstance(
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
 			schema: {
-				account: schema.accounts,
-				session: schema.sessions,
-				user: schema.users,
-				verification: schema.verifications,
+				account: accounts,
+				session: sessions,
+				user: users,
+				verification: verifications,
 			},
 		}),
 		databaseHooks: {
@@ -116,7 +124,7 @@ export interface CurrentUser {
 	email?: string;
 	id: string;
 	name?: string;
-	role?: schema.UserRole;
+	role?: UserRole;
 }
 
 async function resolveRequestHeaders(
@@ -152,8 +160,7 @@ export async function getCurrentUser(
 			headers,
 		});
 		if (session?.user?.id) {
-			const role =
-				(session.user as { role?: schema.UserRole }).role ?? "PLAYER";
+			const role = (session.user as { role?: UserRole }).role ?? "PLAYER";
 			return {
 				email: session.user.email ?? undefined,
 				id: session.user.id,

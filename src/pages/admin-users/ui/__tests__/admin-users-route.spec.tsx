@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@tanstack/react-query");
 vi.mock("@tanstack/react-router");
 vi.mock("../admin-users-page");
 
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { AdminUsersPage } from "../admin-users-page";
 import { AdminUsersRouteComponent } from "../admin-users-route";
@@ -20,7 +22,7 @@ describe("AdminUsersRouteComponent", () => {
 		// Arrange
 		const routeApi = getRouteApi("/admin/users");
 		vi.mocked(routeApi.useRouteContext).mockReturnValue({ user: null });
-		vi.mocked(routeApi.useLoaderData).mockReturnValue({ users: [] });
+		vi.mocked(useSuspenseQuery).mockReturnValue({ data: [] } as never);
 
 		// Act
 		const { container } = render(<AdminUsersRouteComponent />);
@@ -53,7 +55,7 @@ describe("AdminUsersRouteComponent", () => {
 		];
 		const routeApi = getRouteApi("/admin/users");
 		vi.mocked(routeApi.useRouteContext).mockReturnValue({ user: mockUser });
-		vi.mocked(routeApi.useLoaderData).mockReturnValue({ users: mockUsers });
+		vi.mocked(useSuspenseQuery).mockReturnValue({ data: mockUsers } as never);
 
 		// Act
 		render(<AdminUsersRouteComponent />);
@@ -63,7 +65,7 @@ describe("AdminUsersRouteComponent", () => {
 		expect(AdminUsersPage).toHaveBeenCalledWith(
 			{
 				currentUser: mockUser,
-				initialUsers: mockUsers,
+				users: mockUsers,
 			},
 			undefined,
 		);

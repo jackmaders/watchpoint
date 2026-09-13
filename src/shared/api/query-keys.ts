@@ -7,6 +7,7 @@
 
 export const queryKeys = {
 	audit: ["audit"],
+	home: ["home"],
 	posts: ["posts"],
 	users: ["users"],
 } as const;

@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-router");
+vi.mock("@tanstack/react-query");
 vi.mock("../home-page");
 
-import { getRouteApi } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { HomePage } from "../home-page";
 import { HomeRouteComponent } from "../home-route";
 
@@ -16,14 +16,15 @@ describe("HomeRouteComponent", () => {
 		);
 	});
 
-	it("renders HomePage with loader data from route api", () => {
+	it("renders HomePage with query data from useSuspenseQuery", () => {
 		// Arrange
-		const mockLoaderData = {
+		const mockQueryData = {
 			registrationEnabled: true,
 			vods: [{ id: "vod_1" }],
 		};
-		const routeApi = getRouteApi("/");
-		vi.mocked(routeApi.useLoaderData).mockReturnValue(mockLoaderData);
+		vi.mocked(useSuspenseQuery).mockReturnValue({
+			data: mockQueryData,
+		} as never);
 
 		// Act
 		render(<HomeRouteComponent />);
@@ -33,7 +34,7 @@ describe("HomeRouteComponent", () => {
 		expect(HomePage).toHaveBeenCalledWith(
 			{
 				registrationEnabled: true,
-				vods: mockLoaderData.vods,
+				vods: mockQueryData.vods,
 			},
 			undefined,
 		);

@@ -1,11 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminUsersPage } from "../admin-users-page";
 
 vi.mock("@tanstack/react-router");
-vi.mock("../../api/server-fns");
+vi.mock("../../api/loaders");
 
-import { updateUserRole } from "../../api/server-fns";
+import { useUpdateUserRole } from "../../api/loaders";
 
 describe("AdminUsersPage", () => {
 	const currentAdmin = {
@@ -51,15 +51,23 @@ describe("AdminUsersPage", () => {
 		},
 	];
 
+	const defaultMutation = {
+		data: undefined,
+		error: null,
+		isError: false,
+		isPending: false,
+		mutate: vi.fn(),
+		variables: undefined,
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(useUpdateUserRole).mockReturnValue(defaultMutation as never);
 	});
 
 	it("renders user table with user list, summary, and filter controls", () => {
 		// Arrange & Act
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 
 		// Assert
 		expect(
@@ -76,9 +84,7 @@ describe("AdminUsersPage", () => {
 
 	it("filters users by search query on name and email", () => {
 		// Arrange
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 		const searchInput = screen.getByPlaceholderText(/search by name or email/i);
 
 		// Act: Search by name
@@ -105,9 +111,7 @@ describe("AdminUsersPage", () => {
 
 	it("filters users by role selection for Admin, Player, and All", () => {
 		// Arrange
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 		const adminFilterBtn = screen.getByRole("button", { name: /^admins$/i });
 		const playerFilterBtn = screen.getByRole("button", { name: /^players$/i });
 		const allFilterBtn = screen.getByRole("button", { name: /^all$/i });
@@ -138,9 +142,7 @@ describe("AdminUsersPage", () => {
 
 	it("renders empty state when no users match search filter", () => {
 		// Arrange
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 		const searchInput = screen.getByPlaceholderText(/search by name or email/i);
 
 		// Act
@@ -152,18 +154,15 @@ describe("AdminUsersPage", () => {
 		).toBeDefined();
 	});
 
-	it("promotes player to admin on promote button click", async () => {
+	it("promotes player to admin on promote button click", () => {
 		// Arrange
-		vi.mocked(updateUserRole).mockResolvedValueOnce({
-			data: {
-				...initialUsers[1],
-				role: "ADMIN",
-			} as never,
-			success: true,
-		});
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		const mutateMock = vi.fn();
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			mutate: mutateMock,
+		} as never);
+
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 		const promoteBtn = screen.getByRole("button", {
 			name: /make admin - tracer main/i,
 		});
@@ -172,21 +171,15 @@ describe("AdminUsersPage", () => {
 		fireEvent.click(promoteBtn);
 
 		// Assert
-		await waitFor(() => {
-			expect(updateUserRole).toHaveBeenCalledWith({
-				data: {
-					newRole: "ADMIN",
-					targetUserId: "usr_player1",
-				},
-			});
+		expect(mutateMock).toHaveBeenCalledWith({
+			newRole: "ADMIN",
+			targetUserId: "usr_player1",
 		});
 	});
 
 	it("disables demotion button for current user", () => {
 		// Arrange & Act
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 
 		// Assert
 		const selfDemoteBtn = screen.getByRole("button", {
@@ -195,12 +188,16 @@ describe("AdminUsersPage", () => {
 		expect((selfDemoteBtn as HTMLButtonElement).disabled).toBe(true);
 	});
 
-	it("displays error message when server mutation fails", async () => {
+	it("displays error message when mutation result is rejected", () => {
 		// Arrange
-		vi.mocked(updateUserRole).mockResolvedValueOnce({
-			error: "Cannot demote the last remaining administrator",
-			success: false,
-		});
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			data: {
+				reason: "Cannot demote the last remaining administrator",
+				status: "rejected",
+			},
+		} as never);
+
 		const twoAdmins = [
 			initialUsers[0],
 			{
@@ -208,73 +205,25 @@ describe("AdminUsersPage", () => {
 				role: "ADMIN" as const,
 			},
 		];
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={twoAdmins} />,
-		);
-		const demoteBtn = screen.getByRole("button", {
-			name: /demote to player - tracer main/i,
-		});
-
-		// Act
-		fireEvent.click(demoteBtn);
+		render(<AdminUsersPage currentUser={currentAdmin} users={twoAdmins} />);
 
 		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText("Cannot demote the last remaining administrator"),
-			).toBeDefined();
-		});
+		expect(
+			screen.getByText("Cannot demote the last remaining administrator"),
+		).toBeDefined();
 	});
 
-	it("displays default fallback error message when server returns success false without message", async () => {
+	it("displays error message when mutation errors", () => {
 		// Arrange
-		vi.mocked(updateUserRole).mockResolvedValueOnce({
-			error: "Failed to update role",
-			success: false,
-		});
-		const twoAdmins = [
-			initialUsers[0],
-			{
-				...initialUsers[1],
-				role: "ADMIN" as const,
-			},
-		];
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={twoAdmins} />,
-		);
-		const demoteBtn = screen.getByRole("button", {
-			name: /demote to player - tracer main/i,
-		});
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			error: new Error("Network failure"),
+			isError: true,
+		} as never);
 
-		// Act
-		fireEvent.click(demoteBtn);
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 
 		// Assert
-		await waitFor(() => {
-			expect(screen.getByText("Failed to update role")).toBeDefined();
-		});
-	});
-
-	it("displays generic error message when server fn throws", async () => {
-		// Arrange
-		vi.mocked(updateUserRole).mockRejectedValueOnce(
-			new Error("Network failure"),
-		);
-		render(
-			<AdminUsersPage currentUser={currentAdmin} initialUsers={initialUsers} />,
-		);
-		const promoteBtn = screen.getByRole("button", {
-			name: /make admin - tracer main/i,
-		});
-
-		// Act
-		fireEvent.click(promoteBtn);
-
-		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText("Unable to update user role. Please try again."),
-			).toBeDefined();
-		});
+		expect(screen.getByText("Network failure")).toBeDefined();
 	});
 });
