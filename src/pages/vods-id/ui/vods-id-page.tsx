@@ -1,13 +1,14 @@
 /**
  * Pre-session briefing page presenting VOD metadata, hero information, and module configuration.
  *
- * Implements `VodsIdPage` rendering map details, rank requirements, hero extraction tags,
+ * Implements `VodsIdPage` wrapped in `AppLayout`, rendering map details, rank requirements, hero extraction tags,
  * and mounting `VodsIdClient` with interactive module filter pills.
  */
 import { Link } from "@tanstack/react-router";
 import { extractHeroFromTitle } from "@/entities/vod";
 import type { SessionManifest } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import { AppLayout } from "@/widgets/layout-main";
 import { VodsIdClient } from "./vods-id-client";
 
 export function VodsIdPage({
@@ -19,30 +20,34 @@ export function VodsIdPage({
 }) {
 	if (!vod) {
 		return (
-			<main className="min-h-screen bg-background text-foreground px-4 py-8 sm:px-6 sm:py-12 flex items-center justify-center">
-				<div className="max-w-md w-full text-center p-6 sm:p-8 border border-border rounded-lg bg-card shadow-lg space-y-4">
-					<div className="inline-block p-3 rounded-md bg-secondary text-secondary-foreground border border-border">
-						⚠️
+			<AppLayout registrationEnabled={registrationEnabled}>
+				<div className="flex items-center justify-center p-8">
+					<div className="max-w-md w-full text-center p-6 sm:p-8 border border-border rounded-lg bg-card shadow-lg space-y-4">
+						<div className="inline-block p-3 rounded-md bg-secondary text-secondary-foreground border border-border">
+							⚠️
+						</div>
+						<h1 className="text-2xl font-bold text-foreground">
+							VOD Not Found
+						</h1>
+						<p className="text-muted-foreground text-sm">
+							The requested VOD training session is unavailable or unpublished.
+						</p>
+						<Link
+							className="inline-block mt-4 px-4 py-2 bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-sm font-semibold rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+							to="/vods"
+						>
+							Back to VOD Catalog
+						</Link>
 					</div>
-					<h1 className="text-2xl font-bold text-foreground">VOD Not Found</h1>
-					<p className="text-muted-foreground text-sm">
-						The requested VOD training session is unavailable or unpublished.
-					</p>
-					<Link
-						className="inline-block mt-4 px-4 py-2 bg-secondary hover:bg-accent hover:text-accent-foreground text-secondary-foreground text-sm font-semibold rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-						to="/vods"
-					>
-						Back to VOD Catalog
-					</Link>
 				</div>
-			</main>
+			</AppLayout>
 		);
 	}
 
 	const hero = extractHeroFromTitle(vod.title);
 
 	return (
-		<main className="min-h-screen bg-background text-foreground px-4 py-8 sm:px-6 sm:py-12">
+		<AppLayout registrationEnabled={registrationEnabled}>
 			<div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
 				<div className="space-y-4">
 					<Link
@@ -81,6 +86,6 @@ export function VodsIdPage({
 
 				<VodsIdClient registrationEnabled={registrationEnabled} vod={vod} />
 			</div>
-		</main>
+		</AppLayout>
 	);
 }

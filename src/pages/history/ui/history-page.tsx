@@ -1,10 +1,9 @@
 /**
  * Training match history page presenting aggregated performance metrics, filter bars, and playthrough lists.
  *
- * Implements `HistoryPage` composing top navigation, summary hero statistics, filter controls (`HistoryFilterBar`),
+ * Implements `HistoryPage` wrapped in `AppLayout`, composing summary hero statistics, filter controls (`HistoryFilterBar`),
  * and paginated lists of `HistoryItemCard` components.
  */
-import { Link } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type {
 	ModuleType,
@@ -12,8 +11,8 @@ import type {
 	PlaythroughStatus,
 	PublishedVodItem,
 } from "@/shared/db";
-import { AccountControls } from "@/shared/ui/auth-modal";
 import { Button } from "@/shared/ui/button";
+import { AppLayout } from "@/widgets/layout-main";
 import type { HistorySearchParams } from "../model/search-params";
 import { HistoryEmptyState } from "./history-empty-state";
 import { HistoryFilterBar } from "./history-filter-bar";
@@ -33,15 +32,12 @@ export interface HistoryPageProps {
 
 export function HistoryPage(props: HistoryPageProps) {
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<AppLayout registrationEnabled={props.registrationEnabled ?? true}>
 			<div className="mx-auto max-w-6xl space-y-8">
-				<HistoryTopNav
-					registrationEnabled={props.registrationEnabled ?? true}
-				/>
 				<HistoryHeader />
 				<HistoryMainContent {...props} />
 			</div>
-		</main>
+		</AppLayout>
 	);
 }
 
@@ -58,10 +54,11 @@ function HistoryMainContent(props: HistoryPageProps) {
 function HistoryFilteredList({
 	data,
 	onFilterChange,
-	searchParams = {},
-	vods = [],
+	searchParams,
+	vods,
 }: HistoryPageProps) {
-	const currentStatus = searchParams.status ?? "COMPLETED";
+	const items = data?.items ?? [];
+	const currentStatus = searchParams?.status ?? "COMPLETED";
 
 	const handleStatusChange = useCallback(
 		(status: PlaythroughStatus) => {
@@ -75,7 +72,7 @@ function HistoryFilteredList({
 	);
 
 	const handleVodChange = useCallback(
-		(vodId: string) => {
+		(vodId: string | undefined) => {
 			onFilterChange?.({
 				...searchParams,
 				page: 1,
@@ -86,16 +83,16 @@ function HistoryFilteredList({
 	);
 
 	const handleModuleToggle = useCallback(
-		(moduleKey: ModuleType) => {
-			const selectedModules = searchParams.modules ?? [];
-			const isSelected = selectedModules.includes(moduleKey);
-			const newModules = isSelected
-				? selectedModules.filter((m) => m !== moduleKey)
-				: [...selectedModules, moduleKey];
+		(module: ModuleType) => {
+			const currentModules = searchParams?.modules ?? [];
+			const exists = currentModules.includes(module);
+			const nextModules = exists
+				? currentModules.filter((m) => m !== module)
+				: [...currentModules, module];
 
 			onFilterChange?.({
 				...searchParams,
-				modules: newModules.length > 0 ? newModules : undefined,
+				modules: nextModules.length > 0 ? nextModules : undefined,
 				page: 1,
 			});
 		},
@@ -119,49 +116,26 @@ function HistoryFilteredList({
 				onModuleToggle={handleModuleToggle}
 				onStatusChange={handleStatusChange}
 				onVodChange={handleVodChange}
-				selectedModules={searchParams.modules ?? []}
-				selectedVodId={searchParams.vodId ?? ""}
-				vods={vods}
+				selectedModules={searchParams?.modules ?? []}
+				selectedVodId={searchParams?.vodId ?? ""}
+				vods={vods ?? []}
 			/>
 
-			{data && data.items.length > 0 ? (
+			{items.length === 0 ? (
+				<HistoryEmptyState currentStatus={currentStatus} />
+			) : (
 				<div className="space-y-4">
-					{data.items.map((item) => (
-						<HistoryItemCard item={item} key={item.id} />
-					))}
-					{data.totalPages > 1 ? (
+					<div className="grid grid-cols-1 gap-4">
+						{items.map((item) => (
+							<HistoryItemCard item={item} key={item.id} />
+						))}
+					</div>
+
+					{data && data.totalPages > 1 ? (
 						<HistoryPaginationBar data={data} onPageChange={handlePageChange} />
 					) : null}
 				</div>
-			) : (
-				<HistoryEmptyState currentStatus={currentStatus} />
 			)}
-		</div>
-	);
-}
-
-function HistoryTopNav({
-	registrationEnabled,
-}: {
-	registrationEnabled: boolean;
-}) {
-	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div className="flex items-center gap-4">
-				<Link
-					className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
-					to="/"
-				>
-					&larr; Watchpoint Home
-				</Link>
-				<Link
-					className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:underline"
-					to="/vods"
-				>
-					VOD Catalog
-				</Link>
-			</div>
-			<AccountControls registrationEnabled={registrationEnabled} />
 		</div>
 	);
 }

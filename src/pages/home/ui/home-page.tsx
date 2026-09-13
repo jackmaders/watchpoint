@@ -1,11 +1,11 @@
 /**
  * Landing view presentation for the Watchpoint game sense learning platform.
  *
- * Implements `HomePage` rendering the field briefing overview, links to training match history,
- * account controls, and the active VOD catalog list.
+ * Implements `HomePage` wrapped in `AppLayout`, rendering the field briefing overview,
+ * quick catalog preview, and links to interactive training modules.
  */
 import { Link } from "@tanstack/react-router";
-import { AccountControls } from "@/shared/ui/auth-modal";
+import { AppLayout } from "@/widgets/layout-main";
 import type { PublishedVodItem } from "../model/types";
 
 export function HomePage(props?: {
@@ -15,19 +15,8 @@ export function HomePage(props?: {
 	const vods = props?.vods ?? [];
 
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-foreground sm:p-12 lg:p-24">
-			<div className="w-full max-w-4xl space-y-12">
-				<div className="flex items-center justify-between">
-					<Link
-						className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
-						to="/history"
-					>
-						Training History &rarr;
-					</Link>
-					<AccountControls
-						registrationEnabled={props?.registrationEnabled ?? true}
-					/>
-				</div>
+		<AppLayout registrationEnabled={props?.registrationEnabled ?? true}>
+			<div className="mx-auto max-w-4xl space-y-12 py-6 sm:py-12">
 				<div className="space-y-4 text-center">
 					<p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
 						Watchpoint / Field Briefing
@@ -68,26 +57,24 @@ export function HomePage(props?: {
 									key={vod.id}
 								>
 									<div className="space-y-2">
-										<div className="flex items-center gap-2">
-											<span className="rounded-sm border border-secondary bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
+										<div className="flex items-center justify-between text-xs font-semibold">
+											<span className="text-muted-foreground">
 												{vod.mapName}
 											</span>
-											<span className="rounded-sm border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-												{vod.rankTier}
-											</span>
+											<span className="text-primary">{vod.rankTier}</span>
 										</div>
-										<h3 className="text-base font-semibold text-card-foreground">
+										<h3 className="line-clamp-2 text-base font-semibold">
 											{vod.title}
 										</h3>
 									</div>
-									<div className="flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
+									<div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
 										<span>{vod.scenarios.length} Scenarios</span>
 										<Link
-											className="font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+											className="text-xs font-semibold text-primary hover:underline"
 											params={{ id: vod.id }}
 											to="/vods/$id"
 										>
-											Start Training
+											Briefing &rarr;
 										</Link>
 									</div>
 								</div>
@@ -96,6 +83,6 @@ export function HomePage(props?: {
 					)}
 				</section>
 			</div>
-		</main>
+		</AppLayout>
 	);
 }

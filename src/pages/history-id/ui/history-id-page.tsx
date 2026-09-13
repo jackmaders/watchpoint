@@ -9,6 +9,7 @@ import type { PlayerHistoryItem } from "@/shared/db";
 import { formatAccuracy, formatLatency } from "@/shared/lib/metrics";
 import { formatDuration } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { AppLayout } from "@/widgets/layout-main";
 
 export interface HistoryIdPageProps {
 	error?: string | null;
@@ -24,19 +25,31 @@ export function HistoryIdPage({
 	playthrough,
 }: HistoryIdPageProps) {
 	if (error) {
-		return <HistoryDetailErrorState error={error} onRetry={onRetry} />;
+		return (
+			<AppLayout>
+				<HistoryDetailErrorState error={error} onRetry={onRetry} />
+			</AppLayout>
+		);
 	}
 
 	if (isLoading) {
-		return <HistoryDetailLoadingSkeleton />;
+		return (
+			<AppLayout>
+				<HistoryDetailLoadingSkeleton />
+			</AppLayout>
+		);
 	}
 
 	if (!playthrough) {
-		return <HistoryDetailNotFound />;
+		return (
+			<AppLayout>
+				<HistoryDetailNotFound />
+			</AppLayout>
+		);
 	}
 
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<AppLayout>
 			<div className="mx-auto max-w-4xl space-y-8">
 				<div>
 					<Link
@@ -73,7 +86,7 @@ export function HistoryIdPage({
 					</div>
 				</section>
 			</div>
-		</main>
+		</AppLayout>
 	);
 }
 
@@ -274,7 +287,7 @@ function ScenarioOptionItem({
 
 function HistoryDetailLoadingSkeleton() {
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<div className="bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div
 				aria-label="Loading session details"
 				className="mx-auto max-w-4xl space-y-6"
@@ -284,13 +297,13 @@ function HistoryDetailLoadingSkeleton() {
 				<div className="h-32 w-full animate-pulse rounded-lg bg-card/60" />
 				<div className="h-48 w-full animate-pulse rounded-lg bg-card/60" />
 			</div>
-		</main>
+		</div>
 	);
 }
 
 function HistoryDetailNotFound() {
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<div className="bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div className="mx-auto max-w-2xl space-y-6 text-center py-12">
 				<div className="inline-flex rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
 					Not Found
@@ -311,7 +324,7 @@ function HistoryDetailNotFound() {
 					</Link>
 				</div>
 			</div>
-		</main>
+		</div>
 	);
 }
 
@@ -323,7 +336,7 @@ function HistoryDetailErrorState({
 	onRetry?: () => void;
 }) {
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<div className="bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
 			<div className="mx-auto max-w-md rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center space-y-4">
 				<p className="text-sm font-medium text-destructive">{error}</p>
 				{onRetry ? (
@@ -332,6 +345,6 @@ function HistoryDetailErrorState({
 					</Button>
 				) : null}
 			</div>
-		</main>
+		</div>
 	);
 }
