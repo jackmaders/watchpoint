@@ -48,4 +48,37 @@ describe("AuditHistoryPanel", () => {
 			screen.getByText("No audit history found for this VOD."),
 		).toBeDefined();
 	});
+
+	it("renders entries with missing actor, null metadata, and empty metadata gracefully", () => {
+		// Arrange
+		const entries: AuditEntryItem[] = [
+			{
+				action: "VOD_UPDATED",
+				actor: null,
+				actorUserId: null,
+				createdAt: new Date("2026-08-20T11:00:00Z"),
+				entityId: "vod_123",
+				entityType: "VOD",
+				id: "audit_3",
+				metadata: null,
+			},
+			{
+				action: "VOD_DELETED",
+				actor: { email: "no-name@example.com" },
+				actorUserId: "usr_4",
+				createdAt: new Date("2026-08-20T11:30:00Z"),
+				entityId: "vod_123",
+				entityType: "VOD",
+				id: "audit_4",
+				metadata: {},
+			},
+		];
+
+		// Act
+		render(<AuditHistoryPanel auditEntries={entries} />);
+
+		// Assert
+		expect(screen.getByText("System / Admin")).toBeDefined();
+		expect(screen.getByText("no-name@example.com")).toBeDefined();
+	});
 });

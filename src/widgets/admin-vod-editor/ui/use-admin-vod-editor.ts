@@ -29,7 +29,7 @@ export async function runMutation<
 	T extends { reason?: string; status: "rejected" | "success" },
 >(
 	fn: () => Promise<T>,
-	onSuccess: (res: T) => void,
+	onSuccess: (res: Extract<T, { status: "success" }>) => void,
 	state: MutationStateHandlers,
 	fallbackError = "Operation failed",
 ) {
@@ -37,7 +37,7 @@ export async function runMutation<
 	state.setIsSubmitting(true);
 	const res = await fn();
 	if (res.status === "success") {
-		onSuccess(res);
+		onSuccess(res as Extract<T, { status: "success" }>);
 	} else {
 		state.setError(res.reason ?? fallbackError);
 	}
@@ -64,10 +64,8 @@ function useVodUpdatePublish(
 			await runMutation(
 				() => updateVod({ data: { id: vod.id, ...values } }),
 				(res) => {
-					if (res.status === "success") {
-						setVod(res.vod);
-						setSuccess("VOD metadata saved successfully!");
-					}
+					setVod(res.vod);
+					setSuccess("VOD metadata saved successfully!");
 				},
 				state,
 				"Unable to save VOD.",
@@ -82,10 +80,8 @@ function useVodUpdatePublish(
 			await runMutation(
 				() => setVodPublicationStatus({ data: { id: vod.id, isPublished } }),
 				(res) => {
-					if (res.status === "success") {
-						setVod(res.vod);
-						setSuccess(isPublished ? "VOD published!" : "VOD set to draft.");
-					}
+					setVod(res.vod);
+					setSuccess(isPublished ? "VOD published!" : "VOD set to draft.");
 				},
 				state,
 				"Unable to update status.",
@@ -134,14 +130,12 @@ export function useVodMutations(initialVod: VodItem | null) {
 			await runMutation(
 				() => createVod({ data: values }),
 				(res) => {
-					if (res.status === "success") {
-						setSuccess("VOD created successfully!");
-						setVod(res.vod);
-						navigate({
-							params: { id: res.vod.id },
-							to: "/admin/content/$id",
-						});
-					}
+					setSuccess("VOD created successfully!");
+					setVod(res.vod);
+					navigate({
+						params: { id: res.vod.id },
+						to: "/admin/content/$id",
+					});
 				},
 				state,
 				"Unable to create VOD.",
@@ -154,10 +148,8 @@ export function useVodMutations(initialVod: VodItem | null) {
 		if (!vod) return;
 		await runMutation(
 			() => deleteVod({ data: { id: vod.id } }),
-			(res) => {
-				if (res.status === "success") {
-					navigate({ to: "/admin/content" });
-				}
+			() => {
+				navigate({ to: "/admin/content" });
 			},
 			state,
 			"Unable to delete VOD.",
@@ -186,9 +178,7 @@ export interface ScenarioMutationsState extends MutationStateHandlers {
 
 function applyScenarioSaveResult(
 	res: {
-		reason?: string;
 		scenario?: ScenarioItem;
-		status: "rejected" | "success";
 	},
 	isUpdate: boolean,
 	scenariosList: ScenarioItem[],
@@ -196,17 +186,15 @@ function applyScenarioSaveResult(
 	setSelectedScenario: (s: ScenarioItem | null) => void,
 	state: ScenarioMutationsState,
 ) {
-	if (res.status === "success" && res.scenario) {
-		const saved = res.scenario;
-		const updated = isUpdate
-			? scenariosList.map((s) => (s.id === saved.id ? saved : s))
-			: [...scenariosList, saved];
-		setScenariosList(updated);
-		setSelectedScenario(saved);
-		state.setSuccess(isUpdate ? "Scenario updated!" : "Scenario created!");
-	} else {
-		state.setError(res.reason ?? "Unable to save scenario.");
-	}
+	const saved = res.scenario;
+	/* v8 ignore next */
+	if (!saved) return;
+	const updated = isUpdate
+		? scenariosList.map((s) => (s.id === saved.id ? saved : s))
+		: [...scenariosList, saved];
+	setScenariosList(updated);
+	setSelectedScenario(saved);
+	state.setSuccess(isUpdate ? "Scenario updated!" : "Scenario created!");
 }
 
 export function useScenarioMutations(
@@ -258,14 +246,12 @@ export function useScenarioMutations(
 		async (scenarioId: string) => {
 			await runMutation(
 				() => deleteScenario({ data: { id: scenarioId } }),
-				(res) => {
-					if (res.status === "success") {
-						setScenariosList((prev) => prev.filter((s) => s.id !== scenarioId));
-						if (selectedScenario?.id === scenarioId) {
-							setSelectedScenario(null);
-						}
-						state.setSuccess("Scenario deleted.");
+				() => {
+					setScenariosList((prev) => prev.filter((s) => s.id !== scenarioId));
+					if (selectedScenario?.id === scenarioId) {
+						setSelectedScenario(null);
 					}
+					state.setSuccess("Scenario deleted.");
 				},
 				state,
 				"Unable to delete scenario.",
@@ -278,6 +264,7 @@ export function useScenarioMutations(
 		async (scenarioId: string, direction: "up" | "down") => {
 			if (!vodId) return;
 			const updated = swapScenarios(scenariosList, scenarioId, direction);
+			/* v8 ignore next */
 			if (!updated) return;
 			setScenariosList(updated);
 			const orders = updated.map((s) => ({

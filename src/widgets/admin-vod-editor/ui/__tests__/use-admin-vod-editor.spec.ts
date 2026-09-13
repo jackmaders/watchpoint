@@ -445,6 +445,23 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			});
 			expect(state.setError).toHaveBeenCalledWith("Failed to create");
 
+			// Act: create failure with fallback reason
+			vi.mocked(createScenario).mockResolvedValueOnce({
+				status: "rejected",
+			} as never);
+			await act(async () => {
+				await result.current.handleSaveScenario({
+					explanationText: "Explanation",
+					inputConfig: {},
+					inputType: "PERCENT_SLIDER",
+					moduleType: "ULTIMATE",
+					promptText: "Prompt",
+					timestampSeconds: 90,
+					vodId: "vod_1",
+				});
+			});
+			expect(state.setError).toHaveBeenCalledWith("Unable to save scenario.");
+
 			// Act: delete failure
 			vi.mocked(deleteScenario).mockResolvedValueOnce({
 				reason: "Failed to delete",
@@ -464,6 +481,17 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 				await result.current.handleMoveScenario("s2", "up");
 			});
 			expect(state.setError).toHaveBeenCalledWith("Failed to reorder");
+
+			// Act: reorder failure with fallback reason
+			vi.mocked(reorderScenarios).mockResolvedValueOnce({
+				status: "rejected",
+			} as never);
+			await act(async () => {
+				await result.current.handleMoveScenario("s1", "up");
+			});
+			expect(state.setError).toHaveBeenCalledWith(
+				"Failed to reorder scenarios",
+			);
 		});
 
 		it("handles no-op reorder when vodId is undefined", async () => {

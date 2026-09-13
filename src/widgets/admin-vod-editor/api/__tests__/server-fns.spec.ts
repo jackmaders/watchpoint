@@ -69,6 +69,22 @@ describe("admin-vod-editor server functions", () => {
 			expect(result).toEqual(mockVods);
 		});
 
+		it("handles default undefined payload in validator", async () => {
+			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
+				id: "admin_1",
+				name: "Admin",
+				role: "ADMIN",
+			});
+			vi.mocked(getAdminVodsRule).mockResolvedValueOnce([]);
+
+			const result = await (
+				getAdminVods as unknown as (ctx: { data?: unknown }) => Promise<unknown>
+			)({ data: undefined });
+
+			expect(result).toEqual([]);
+		});
+
 		it("throws error on invalid query payload", async () => {
 			await expect(
 				(

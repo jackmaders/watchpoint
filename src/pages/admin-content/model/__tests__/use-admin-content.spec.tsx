@@ -356,6 +356,15 @@ describe("useAdminContentState", () => {
 
 		// Assert
 		expect(result.current.error).toBe("Bulk publish rejected");
+
+		// Act: with fallback reason
+		vi.mocked(bulkPublishVods).mockResolvedValueOnce({
+			status: "rejected",
+		} as never);
+		await act(async () => {
+			await result.current.handleBulkPublish(["vod_1"]);
+		});
+		expect(result.current.error).toBe("Failed to perform bulk publication.");
 	});
 
 	it("handles bulk delete error response", async () => {
@@ -378,5 +387,74 @@ describe("useAdminContentState", () => {
 
 		// Assert
 		expect(result.current.error).toBe("Bulk delete rejected");
+
+		// Act: with fallback reason
+		vi.mocked(bulkDeleteVods).mockResolvedValueOnce({
+			status: "rejected",
+		} as never);
+		act(() => {
+			result.current.handleOpenBulkDelete(["vod_1", "vod_2"]);
+		});
+		await act(async () => {
+			await result.current.handleConfirmDelete();
+		});
+		expect(result.current.error).toBe("Failed to delete VODs.");
+	});
+
+	it("handles toggle publish and single delete error responses", async () => {
+		// Arrange
+		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+			reason: "Toggle rejected",
+			status: "rejected",
+		});
+		const { result } = renderHook(() =>
+			useAdminContentState({ initialVods: mockInitialVods }),
+		);
+
+		// Act: Toggle publish error
+		await act(async () => {
+			await result.current.handleTogglePublish(
+				mockInitialVods[0] as AdminVodItem,
+				false,
+			);
+		});
+		expect(result.current.error).toBe("Toggle rejected");
+
+		// Act: Toggle publish error fallback
+		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
+			status: "rejected",
+		} as never);
+		await act(async () => {
+			await result.current.handleTogglePublish(
+				mockInitialVods[0] as AdminVodItem,
+				false,
+			);
+		});
+		expect(result.current.error).toBe("Failed to update publication status.");
+
+		// Act: Single delete error
+		vi.mocked(deleteVod).mockResolvedValueOnce({
+			reason: "Delete rejected",
+			status: "rejected",
+		});
+		act(() => {
+			result.current.handleOpenSingleDelete(mockInitialVods[0] as AdminVodItem);
+		});
+		await act(async () => {
+			await result.current.handleConfirmDelete();
+		});
+		expect(result.current.error).toBe("Delete rejected");
+
+		// Act: Single delete error fallback
+		vi.mocked(deleteVod).mockResolvedValueOnce({
+			status: "rejected",
+		} as never);
+		act(() => {
+			result.current.handleOpenSingleDelete(mockInitialVods[0] as AdminVodItem);
+		});
+		await act(async () => {
+			await result.current.handleConfirmDelete();
+		});
+		expect(result.current.error).toBe("Failed to delete VOD.");
 	});
 });

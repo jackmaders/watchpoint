@@ -70,6 +70,22 @@ describe("scenario-rules", () => {
 			});
 		});
 
+		it("rejects with default message when validation error message is empty", async () => {
+			// Arrange
+			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+				valid: false,
+			});
+
+			// Act
+			const result = await createScenarioRule(sampleScenario);
+
+			// Assert
+			expect(result).toEqual({
+				reason: "Invalid scenario configuration",
+				status: "rejected",
+			});
+		});
+
 		it("rejects when VOD does not exist", async () => {
 			// Arrange
 			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
@@ -143,6 +159,42 @@ describe("scenario-rules", () => {
 			);
 		});
 
+		it("creates scenario with null timeLimitSeconds when omitted", async () => {
+			// Arrange
+			const scenarioWithoutTimeLimit = {
+				...sampleScenario,
+				timeLimitSeconds: null,
+			};
+			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+				valid: true,
+			});
+			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
+			vi.spyOn(dbQueries, "createScenario").mockResolvedValueOnce(
+				scenarioWithoutTimeLimit,
+			);
+			vi.spyOn(dbQueries, "createAuditEntry").mockResolvedValueOnce(
+				sampleAuditEntry,
+			);
+
+			// Act
+			const result = await createScenarioRule({
+				...sampleScenario,
+				timeLimitSeconds: undefined,
+			});
+
+			// Assert
+			expect(result).toEqual({
+				scenario: scenarioWithoutTimeLimit,
+				status: "success",
+			});
+			expect(dbQueries.createScenario).toHaveBeenCalledWith(
+				expect.objectContaining({
+					timeLimitSeconds: null,
+				}),
+				undefined,
+			);
+		});
+
 		it("returns rejected when db insert fails", async () => {
 			// Arrange
 			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
@@ -195,6 +247,25 @@ describe("scenario-rules", () => {
 			// Assert
 			expect(result).toEqual({
 				reason: "Invalid config",
+				status: "rejected",
+			});
+		});
+
+		it("rejects with default message when update validation error message is empty", async () => {
+			// Arrange
+			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([
+				sampleScenario,
+			]);
+			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+				valid: false,
+			});
+
+			// Act
+			const result = await updateScenarioRule({ id: "sc-1" });
+
+			// Assert
+			expect(result).toEqual({
+				reason: "Invalid scenario configuration",
 				status: "rejected",
 			});
 		});

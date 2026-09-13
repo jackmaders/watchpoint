@@ -70,6 +70,38 @@ describe("get-admin-vods rules", () => {
 			// Assert
 			expect(result).toEqual([]);
 		});
+
+		it("matches search query by heroName or mapName", async () => {
+			// Arrange
+			vi.spyOn(dbQueries, "queryVods").mockResolvedValueOnce([sampleVod]);
+			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
+
+			// Act
+			const matchHero = await getAdminVodsRule({ search: "ana" });
+			expect(matchHero).toHaveLength(1);
+
+			vi.spyOn(dbQueries, "queryVods").mockResolvedValueOnce([sampleVod]);
+			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
+			const matchMap = await getAdminVodsRule({ search: "dorado" });
+			expect(matchMap).toHaveLength(1);
+		});
+
+		it("handles default undefined params without search and returns empty scenarios array", async () => {
+			// Arrange
+			vi.spyOn(dbQueries, "queryVods").mockResolvedValueOnce([sampleVod]);
+			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
+
+			// Act
+			const result = await getAdminVodsRule();
+
+			// Assert
+			expect(result).toEqual([
+				{
+					...sampleVod,
+					scenarios: [],
+				},
+			]);
+		});
 	});
 
 	describe("getAdminVodByIdRule", () => {

@@ -137,6 +137,24 @@ describe("vod-rules", () => {
 			});
 		});
 
+		it("rejects publication with fallback message when validation error is empty", async () => {
+			// Arrange
+			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
+			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
+			vi.spyOn(dbQueries, "validateVodForPublishing").mockReturnValueOnce({
+				valid: false,
+			});
+
+			// Act
+			const result = await updateVodRule({ id: "vod-1", isPublished: true });
+
+			// Assert
+			expect(result).toEqual({
+				reason: "Invalid publishing state",
+				status: "rejected",
+			});
+		});
+
 		it("updates VOD successfully, logs audit, and returns success", async () => {
 			// Arrange
 			const updatedVod = { ...sampleVod, title: "New Title" };
@@ -191,6 +209,36 @@ describe("vod-rules", () => {
 			expect(dbQueries.createAuditEntry).toHaveBeenCalledWith(
 				expect.objectContaining({
 					action: "VOD_UPDATED",
+				}),
+				undefined,
+			);
+		});
+
+		it("updates VOD to unpublished and records VOD_UNPUBLISHED audit log", async () => {
+			// Arrange
+			const publishedVod = { ...sampleVod, isPublished: true };
+			const unpubVod = { ...sampleVod, isPublished: false };
+			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(publishedVod);
+			vi.spyOn(dbQueries, "updateVod").mockResolvedValueOnce(unpubVod);
+			vi.spyOn(dbQueries, "createAuditEntry").mockResolvedValue(
+				sampleAuditEntry,
+			);
+
+			// Act
+			const result = await updateVodRule({
+				actorUserId: "admin-1",
+				id: "vod-1",
+				isPublished: false,
+			});
+
+			// Assert
+			expect(result).toEqual({
+				status: "success",
+				vod: unpubVod,
+			});
+			expect(dbQueries.createAuditEntry).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: "VOD_UNPUBLISHED",
 				}),
 				undefined,
 			);
