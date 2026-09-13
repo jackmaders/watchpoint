@@ -7,8 +7,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { AdminVodItem, BulkOperationResult } from "@/shared/db";
 import {
+	type AdminVodItem,
+	type BulkOperationResult,
 	bulkDeleteVods,
 	bulkPublishVods,
 	deleteVod,
@@ -32,22 +33,17 @@ export function usePublicationMutations(
 			setError(null);
 			setOperationResult(null);
 			setIsOperating(true);
-			try {
-				const result = await setVodPublicationStatus({
-					data: { id: vod.id, isPublished },
-				});
-				if (!result.success) {
-					setError(result.error);
-					return;
-				}
+			const result = await setVodPublicationStatus({
+				data: { id: vod.id, isPublished },
+			});
+			if (result.status === "rejected") {
+				setError(result.reason ?? "Failed to update publication status.");
+			} else {
 				setVods((prev) =>
 					prev.map((v) => (v.id === vod.id ? { ...v, isPublished } : v)),
 				);
-			} catch {
-				setError("Failed to update publication status. Please try again.");
-			} finally {
-				setIsOperating(false);
 			}
+			setIsOperating(false);
 		},
 		[setError, setIsOperating, setOperationResult, setVods],
 	);
@@ -57,15 +53,13 @@ export function usePublicationMutations(
 			setError(null);
 			setOperationResult(null);
 			setIsOperating(true);
-			try {
-				const res = await bulkPublishVods({
-					data: { ids, isPublished },
-				});
-				if (!res.success) {
-					setError(res.error);
-					return;
-				}
-				const result = res.data;
+			const res = await bulkPublishVods({
+				data: { ids, isPublished },
+			});
+			if (res.status === "rejected") {
+				setError(res.reason ?? "Failed to perform bulk publication.");
+			} else {
+				const result = res.result;
 				setOperationResult({ label, result });
 				if (result.succeeded.length > 0) {
 					setVods((prev) =>
@@ -77,11 +71,8 @@ export function usePublicationMutations(
 						prev.filter((id) => !result.succeeded.includes(id)),
 					);
 				}
-			} catch {
-				setError("Failed to perform bulk publication. Please try again.");
-			} finally {
-				setIsOperating(false);
 			}
+			setIsOperating(false);
 		},
 		[setError, setIsOperating, setOperationResult, setSelectedIds, setVods],
 	);
@@ -114,8 +105,8 @@ export function useDeletionMutations(
 	const executeDeleteSingle = useCallback(
 		async (id: string) => {
 			const result = await deleteVod({ data: { id } });
-			if (!result.success) {
-				setError(result.error);
+			if (result.status === "rejected") {
+				setError(result.reason ?? "Failed to delete VOD.");
 			} else {
 				setVods((prev) => prev.filter((v) => v.id !== id));
 				setSelectedIds((prev) => prev.filter((item) => item !== id));
@@ -127,11 +118,11 @@ export function useDeletionMutations(
 	const executeDeleteBulk = useCallback(
 		async (ids: string[]) => {
 			const res = await bulkDeleteVods({ data: { ids } });
-			if (!res.success) {
-				setError(res.error);
+			if (res.status === "rejected") {
+				setError(res.reason ?? "Failed to delete VODs.");
 				return;
 			}
-			const result = res.data;
+			const result = res.result;
 			setOperationResult({ label: "Bulk Delete", result });
 			if (result.succeeded.length > 0) {
 				setVods((prev) => prev.filter((v) => !result.succeeded.includes(v.id)));
@@ -148,17 +139,12 @@ export function useDeletionMutations(
 			setError(null);
 			setOperationResult(null);
 			setIsOperating(true);
-			try {
-				if (ids.length === 1) {
-					await executeDeleteSingle(ids[0] as string);
-				} else {
-					await executeDeleteBulk(ids);
-				}
-			} catch {
-				setError("Failed to delete VOD. Please try again.");
-			} finally {
-				setIsOperating(false);
+			if (ids.length === 1) {
+				await executeDeleteSingle(ids[0] as string);
+			} else {
+				await executeDeleteBulk(ids);
 			}
+			setIsOperating(false);
 		},
 		[
 			executeDeleteBulk,

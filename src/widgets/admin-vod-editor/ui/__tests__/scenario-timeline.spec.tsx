@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { scenarios } from "@/shared/db";
+import type { ScenarioItem } from "../../model";
 import { ScenarioTimeline } from "../scenario-timeline";
 
 describe("ScenarioTimeline", () => {
-	const mockScenarios: Array<typeof scenarios.$inferSelect> = [
+	const mockScenarios: ScenarioItem[] = [
 		{
 			explanationText: "Use high ground",
 			id: "scen_1",

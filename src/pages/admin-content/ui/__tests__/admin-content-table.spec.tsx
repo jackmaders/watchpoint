@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { AdminVodItem } from "@/shared/db";
+import type { AdminVodItem } from "@/widgets/admin-vod-editor";
 import { AdminContentTable } from "../admin-content-table";
 import { HeaderSelectionCell } from "../use-content-columns";
 

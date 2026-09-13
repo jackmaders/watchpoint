@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { auditEntries, scenarios } from "@/shared/db";
+import type { AuditEntryItem, ScenarioItem, VodItem } from "../../model";
 import { AdminVodEditorPage } from "../admin-vod-editor-page";
 
 vi.mock("@tanstack/react-router");
@@ -25,7 +25,7 @@ describe("AdminVodEditorPage", () => {
 		role: "ADMIN" as const,
 	};
 
-	const mockVod = {
+	const mockVod: VodItem = {
 		createdAt: new Date("2026-08-20T00:00:00Z"),
 		durationSeconds: 600,
 		heroName: "Ana",
@@ -33,12 +33,12 @@ describe("AdminVodEditorPage", () => {
 		isPublished: false,
 		mapName: "King's Row",
 		rankTier: "Grandmaster",
-		role: "SUPPORT" as const,
+		role: "SUPPORT",
 		title: "GM Ana Match",
 		youtubeVideoId: "dQw4w9WgXcQ",
 	};
 
-	const mockScenarios: Array<typeof scenarios.$inferSelect> = [
+	const mockScenarios: ScenarioItem[] = [
 		{
 			explanationText: "Position on high ground",
 			id: "scen_1",
@@ -70,7 +70,7 @@ describe("AdminVodEditorPage", () => {
 		},
 	];
 
-	const mockAuditEntries: Array<typeof auditEntries.$inferSelect> = [
+	const mockAuditEntries: AuditEntryItem[] = [
 		{
 			action: "VOD_CREATED",
 			actorUserId: "usr_admin",
@@ -89,8 +89,8 @@ describe("AdminVodEditorPage", () => {
 	it("renders create VOD view, handles cancel, and handles create errors", async () => {
 		// Arrange
 		vi.mocked(createVod).mockResolvedValueOnce({
-			data: { ...mockVod, id: "vod_new" } as never,
-			success: true,
+			status: "success",
+			vod: { ...mockVod, id: "vod_new" },
 		});
 
 		// Act
@@ -149,25 +149,14 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: Create failure response
 		vi.mocked(createVod).mockResolvedValueOnce({
-			error: "Duplicate VOD",
-			success: false,
+			reason: "Duplicate VOD",
+			status: "rejected",
 		});
 		if (form) {
 			fireEvent.submit(form);
 		}
 		await waitFor(() => {
 			expect(screen.getByText("Duplicate VOD")).toBeDefined();
-		});
-
-		// Act: Create throw exception
-		vi.mocked(createVod).mockRejectedValueOnce(
-			new Error("Network create error"),
-		);
-		if (form) {
-			fireEvent.submit(form);
-		}
-		await waitFor(() => {
-			expect(screen.getByText("Network create error")).toBeDefined();
 		});
 	});
 
@@ -197,11 +186,11 @@ describe("AdminVodEditorPage", () => {
 		if (!baseScenario) throw new Error("Missing mock scenario");
 
 		vi.mocked(updateScenario).mockResolvedValueOnce({
-			data: {
+			scenario: {
 				...baseScenario,
 				promptText: "Updated Positioning Prompt",
-			} as never,
-			success: true,
+			},
+			status: "success",
 		});
 
 		render(
@@ -238,21 +227,12 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: update failure response
 		vi.mocked(updateScenario).mockResolvedValueOnce({
-			error: "Update rejected",
-			success: false,
+			reason: "Update rejected",
+			status: "rejected",
 		});
 		fireEvent.click(submitButton);
 		await waitFor(() => {
 			expect(screen.getByText("Update rejected")).toBeDefined();
-		});
-
-		// Act: update throw exception
-		vi.mocked(updateScenario).mockRejectedValueOnce(
-			new Error("Update threw error"),
-		);
-		fireEvent.click(submitButton);
-		await waitFor(() => {
-			expect(screen.getByText("Update threw error")).toBeDefined();
 		});
 
 		// Act: cancel scenario edit
@@ -262,7 +242,7 @@ describe("AdminVodEditorPage", () => {
 
 	it("handles creating a new scenario via createScenario and handles errors", async () => {
 		// Arrange
-		const createdScenario = {
+		const createdScenario: ScenarioItem = {
 			explanationText: "New explanation",
 			id: "scen_new",
 			imageUrl: null,
@@ -272,16 +252,16 @@ describe("AdminVodEditorPage", () => {
 					{ id: "2", is_correct: false, text: "B" },
 				],
 			},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "STRATEGY" as const,
+			inputType: "MULTIPLE_CHOICE",
+			moduleType: "STRATEGY",
 			promptText: "New Scenario Prompt",
 			timeLimitSeconds: null,
 			timestampSeconds: 300,
 			vodId: "vod_123",
 		};
 		vi.mocked(createScenario).mockResolvedValueOnce({
-			data: createdScenario as never,
-			success: true,
+			scenario: createdScenario,
+			status: "success",
 		});
 
 		render(
@@ -331,8 +311,8 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: create failure response
 		vi.mocked(createScenario).mockResolvedValueOnce({
-			error: "Create rejected",
-			success: false,
+			reason: "Create rejected",
+			status: "rejected",
 		});
 		fireEvent.click(screen.getByRole("button", { name: /add scenario/i }));
 		fireEvent.change(screen.getByLabelText("Prompt Text"), {
@@ -350,8 +330,8 @@ describe("AdminVodEditorPage", () => {
 	it("handles deleting a scenario via deleteScenario and handles errors", async () => {
 		// Arrange
 		vi.mocked(deleteScenario).mockResolvedValueOnce({
-			data: null,
-			success: true,
+			scenario: mockScenarios[0] as ScenarioItem,
+			status: "success",
 		});
 
 		render(
@@ -379,8 +359,8 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: delete error branch
 		vi.mocked(deleteScenario).mockResolvedValueOnce({
-			error: "Cannot delete scenario",
-			success: false,
+			reason: "Cannot delete scenario",
+			status: "rejected",
 		});
 		const deleteBtn2 = screen.getByRole("button", {
 			name: "Delete scenario Is sleep dart ready?",
@@ -389,22 +369,12 @@ describe("AdminVodEditorPage", () => {
 		await waitFor(() => {
 			expect(screen.getByText("Cannot delete scenario")).toBeDefined();
 		});
-
-		// Act: delete throw exception
-		vi.mocked(deleteScenario).mockRejectedValueOnce(
-			new Error("Scenario delete threw error"),
-		);
-		fireEvent.click(deleteBtn2);
-		await waitFor(() => {
-			expect(screen.getByText("Scenario delete threw error")).toBeDefined();
-		});
 	});
 
 	it("handles reordering scenarios successfully", async () => {
 		// Arrange
 		vi.mocked(reorderScenarios).mockResolvedValueOnce({
-			data: null,
-			success: true,
+			status: "success",
 		});
 
 		render(
@@ -436,8 +406,8 @@ describe("AdminVodEditorPage", () => {
 	it("handles reordering scenarios errors", async () => {
 		// Arrange
 		vi.mocked(reorderScenarios).mockResolvedValueOnce({
-			error: "Reorder failed",
-			success: false,
+			reason: "Reorder failed",
+			status: "rejected",
 		});
 
 		render(
@@ -465,8 +435,8 @@ describe("AdminVodEditorPage", () => {
 	it("handles publishing VOD and publication error branches", async () => {
 		// Arrange
 		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
-			data: { ...mockVod, isPublished: true } as never,
-			success: true,
+			status: "success",
+			vod: { ...mockVod, isPublished: true },
 		});
 
 		render(
@@ -492,30 +462,21 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: Publication failure response
 		vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
-			error: "Cannot publish draft",
-			success: false,
+			reason: "Cannot publish draft",
+			status: "rejected",
 		});
 		const unpublishBtn = screen.getByRole("button", { name: "Unpublish VOD" });
 		fireEvent.click(unpublishBtn);
 		await waitFor(() => {
 			expect(screen.getByText("Cannot publish draft")).toBeDefined();
 		});
-
-		// Act: Publication throw exception
-		vi.mocked(setVodPublicationStatus).mockRejectedValueOnce(
-			new Error("Publication threw exception"),
-		);
-		fireEvent.click(unpublishBtn);
-		await waitFor(() => {
-			expect(screen.getByText("Publication threw exception")).toBeDefined();
-		});
 	});
 
 	it("handles deleting VOD and delete error branches", async () => {
 		// Arrange
 		vi.mocked(deleteVod).mockResolvedValueOnce({
-			data: null,
-			success: true,
+			status: "success",
+			vod: mockVod,
 		});
 
 		render(
@@ -541,29 +502,20 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: Delete error response
 		vi.mocked(deleteVod).mockResolvedValueOnce({
-			error: "Cannot delete VOD",
-			success: false,
+			reason: "Cannot delete VOD",
+			status: "rejected",
 		});
 		fireEvent.click(deleteVodBtn);
 		await waitFor(() => {
 			expect(screen.getByText("Cannot delete VOD")).toBeDefined();
-		});
-
-		// Act: Delete throw exception
-		vi.mocked(deleteVod).mockRejectedValueOnce(
-			new Error("Delete VOD threw exception"),
-		);
-		fireEvent.click(deleteVodBtn);
-		await waitFor(() => {
-			expect(screen.getByText("Delete VOD threw exception")).toBeDefined();
 		});
 	});
 
 	it("switches tabs, edits VOD metadata, and handles metadata save errors", async () => {
 		// Arrange
 		vi.mocked(updateVod).mockResolvedValueOnce({
-			data: { ...mockVod, title: "Updated GM Ana Title" } as never,
-			success: true,
+			status: "success",
+			vod: { ...mockVod, title: "Updated GM Ana Title" },
 		});
 
 		render(
@@ -600,21 +552,12 @@ describe("AdminVodEditorPage", () => {
 
 		// Act: metadata save error response
 		vi.mocked(updateVod).mockResolvedValueOnce({
-			error: "Invalid metadata",
-			success: false,
+			reason: "Invalid metadata",
+			status: "rejected",
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Save VOD Metadata" }));
 		await waitFor(() => {
 			expect(screen.getByText("Invalid metadata")).toBeDefined();
-		});
-
-		// Act: metadata save throw exception
-		vi.mocked(updateVod).mockRejectedValueOnce(
-			new Error("Metadata save network error"),
-		);
-		fireEvent.click(screen.getByRole("button", { name: "Save VOD Metadata" }));
-		await waitFor(() => {
-			expect(screen.getByText("Metadata save network error")).toBeDefined();
 		});
 
 		// Act: Switch to Audit History

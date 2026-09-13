@@ -5,8 +5,8 @@
  * video durations, and navigation links to pre-session setup pages.
  */
 import { Link } from "@tanstack/react-router";
-import type { PublishedVodItem } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import type { PublishedVodItem } from "@/widgets/admin-vod-editor";
 import { AppLayout } from "@/widgets/layout-main";
 
 export type VodItem = PublishedVodItem;

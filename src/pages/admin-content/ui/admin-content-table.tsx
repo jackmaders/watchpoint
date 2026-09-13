@@ -13,8 +13,8 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 import { useCallback } from "react";
-import type { AdminVodItem } from "@/shared/db";
 import { Button } from "@/shared/ui/button";
+import type { AdminVodItem } from "@/widgets/admin-vod-editor";
 import type {
 	ContentSortColumn,
 	ContentSortOrder,

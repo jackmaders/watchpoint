@@ -3,10 +3,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, FileText, History, Layers, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
-import type { HeroRole, scenarios, vods } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import type {
+	HeroRole,
+	InputType,
+	ModuleType,
+	ScenarioItem,
+	VodItem,
+} from "../model";
 import { type AuditEntryItem, AuditHistoryPanel } from "./audit-history-panel";
 import { PublicationStatusControl } from "./publication-status-control";
 import { ScenarioEditorForm } from "./scenario-editor-form";
@@ -17,8 +23,8 @@ import { VodMetadataForm } from "./vod-metadata-form";
 export interface AdminVodEditorPageProps {
 	auditEntries?: AuditEntryItem[];
 	currentUser?: AuthenticatedUser;
-	initialScenarios?: Array<typeof scenarios.$inferSelect>;
-	initialVod?: typeof vods.$inferSelect | null;
+	initialScenarios?: ScenarioItem[];
+	initialVod?: VodItem | null;
 	isCreate?: boolean;
 }
 
@@ -203,17 +209,17 @@ interface VodEditorScenariosTabProps {
 		id?: string;
 		imageUrl?: string | null;
 		inputConfig: Record<string, unknown>;
-		inputType: (typeof scenarios.$inferSelect)["inputType"];
-		moduleType: (typeof scenarios.$inferSelect)["moduleType"];
+		inputType: InputType;
+		moduleType: ModuleType;
 		promptText: string;
 		timeLimitSeconds?: number | null;
 		timestampSeconds: number;
 		vodId: string;
 	}) => void;
-	onSelectScenario: (scenario: typeof scenarios.$inferSelect) => void;
-	scenariosList: Array<typeof scenarios.$inferSelect>;
-	selectedScenario: typeof scenarios.$inferSelect | null;
-	vod: typeof vods.$inferSelect;
+	onSelectScenario: (scenario: ScenarioItem) => void;
+	scenariosList: Array<ScenarioItem>;
+	selectedScenario: ScenarioItem | null;
+	vod: VodItem;
 }
 
 function VodEditorScenariosTab({
@@ -264,7 +270,7 @@ interface VodEditorBodyProps {
 	onDeleteScenario: (id: string) => void;
 	onMoveScenario: (id: string, direction: "up" | "down") => void;
 	onSaveScenario: VodEditorScenariosTabProps["onSaveScenario"];
-	onSelectScenario: (s: typeof scenarios.$inferSelect) => void;
+	onSelectScenario: (s: ScenarioItem) => void;
 	onUpdateMetadata: (values: {
 		durationSeconds: number;
 		heroName: string;
@@ -274,9 +280,9 @@ interface VodEditorBodyProps {
 		title: string;
 		youtubeVideoId: string;
 	}) => void;
-	scenariosList: Array<typeof scenarios.$inferSelect>;
-	selectedScenario: typeof scenarios.$inferSelect | null;
-	vod: typeof vods.$inferSelect;
+	scenariosList: Array<ScenarioItem>;
+	selectedScenario: ScenarioItem | null;
+	vod: VodItem;
 }
 
 function VodEditorBody({
@@ -294,40 +300,36 @@ function VodEditorBody({
 	selectedScenario,
 	vod,
 }: VodEditorBodyProps) {
-	if (activeTab === "scenarios") {
-		return (
-			<VodEditorScenariosTab
-				isSubmitting={isSubmitting}
-				onAddScenario={onAddScenario}
-				onCancelEdit={onCancelEdit}
-				onDeleteScenario={onDeleteScenario}
-				onMoveScenario={onMoveScenario}
-				onSaveScenario={onSaveScenario}
-				onSelectScenario={onSelectScenario}
-				scenariosList={scenariosList}
-				selectedScenario={selectedScenario}
-				vod={vod}
-			/>
-		);
-	}
-	if (activeTab === "details") {
-		return (
-			<div className="max-w-3xl">
-				<VodMetadataForm
-					disabled={isSubmitting}
-					isCreate={false}
+	switch (activeTab) {
+		case "scenarios":
+			return (
+				<VodEditorScenariosTab
 					isSubmitting={isSubmitting}
-					onSave={onUpdateMetadata}
+					onAddScenario={onAddScenario}
+					onCancelEdit={onCancelEdit}
+					onDeleteScenario={onDeleteScenario}
+					onMoveScenario={onMoveScenario}
+					onSaveScenario={onSaveScenario}
+					onSelectScenario={onSelectScenario}
+					scenariosList={scenariosList}
+					selectedScenario={selectedScenario}
 					vod={vod}
 				/>
-			</div>
-		);
+			);
+		case "details":
+			return (
+				<div className="max-w-2xl">
+					<VodMetadataForm
+						disabled={isSubmitting}
+						isSubmitting={isSubmitting}
+						onSave={onUpdateMetadata}
+						vod={vod}
+					/>
+				</div>
+			);
+		case "audit":
+			return <AuditHistoryPanel auditEntries={auditEntries} />;
 	}
-	return (
-		<div className="max-w-4xl">
-			<AuditHistoryPanel auditEntries={auditEntries} />
-		</div>
-	);
 }
 
 interface VodEditorLayoutProps {
@@ -341,16 +343,16 @@ interface VodEditorLayoutProps {
 	onDeleteVod: () => void;
 	onMoveScenario: (id: string, direction: "up" | "down") => void;
 	onSaveScenario: VodEditorScenariosTabProps["onSaveScenario"];
-	onSelectScenario: (s: typeof scenarios.$inferSelect) => void;
+	onSelectScenario: (s: ScenarioItem) => void;
 	onTabSelect: (tab: TabKey) => void;
 	onTogglePublish: (pub: boolean) => void;
 	onUpdateMetadata: (
 		v: Parameters<VodEditorBodyProps["onUpdateMetadata"]>[0],
 	) => void;
-	scenariosList: Array<typeof scenarios.$inferSelect>;
-	selectedScenario: typeof scenarios.$inferSelect | null;
+	scenariosList: Array<ScenarioItem>;
+	selectedScenario: ScenarioItem | null;
 	success: string | null;
-	vod: typeof vods.$inferSelect;
+	vod: VodItem;
 }
 
 function VodEditorLayout({

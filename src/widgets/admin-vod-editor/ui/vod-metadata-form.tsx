@@ -1,11 +1,11 @@
 "use client";
 
 import { useId } from "react";
-import { type HeroRole, heroRoleEnum, type vods } from "@/shared/db";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { FieldDescription, FieldLabel } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
+import { type HeroRole, heroRoleEnum, type VodItem } from "../model";
 import { useVodMetadataFormState } from "./use-vod-metadata-form";
 
 export interface VodMetadataFormProps {
@@ -22,7 +22,7 @@ export interface VodMetadataFormProps {
 		title: string;
 		youtubeVideoId: string;
 	}) => void;
-	vod?: typeof vods.$inferSelect | null;
+	vod?: VodItem | null;
 }
 
 export function validateVodMetadata(values: {

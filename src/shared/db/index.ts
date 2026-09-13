@@ -41,6 +41,13 @@ export {
 	queryAuditEntries,
 } from "./queries/audit";
 export {
+	createScenario,
+	deleteScenario,
+	queryScenarios,
+	reorderScenarios,
+	updateScenario,
+} from "./queries/scenarios";
+export {
 	createUser,
 	deleteUser,
 	getUserByEmail,
@@ -48,6 +55,15 @@ export {
 	queryUsers,
 	updateUser,
 } from "./queries/users";
+export {
+	bulkDeleteVods,
+	bulkPublishVods,
+	createVod,
+	deleteVod,
+	getVodById,
+	queryVods,
+	updateVod,
+} from "./queries/vods";
 export {
 	DEFAULT_LIMIT,
 	filterToSQL,
@@ -67,6 +83,13 @@ export {
 	scenarioSnapshots,
 } from "./schema/playthroughs";
 export { relations } from "./schema/relations";
+export {
+	type InputType,
+	inputTypeEnum,
+	type ModuleType,
+	moduleTypeEnum,
+	scenarios,
+} from "./schema/scenario";
 export { sessions } from "./schema/session";
 export {
 	type UserRole,
@@ -77,13 +100,8 @@ export { verifications } from "./schema/verification";
 export {
 	type HeroRole,
 	heroRoleEnum,
-	type InputType,
-	inputTypeEnum,
-	type ModuleType,
-	moduleTypeEnum,
-	scenarios,
 	vods,
-} from "./schema/vods";
+} from "./schema/vod";
 // Seed
 export {
 	assertLocalSeedTarget,

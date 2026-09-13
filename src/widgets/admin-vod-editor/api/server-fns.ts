@@ -1,135 +1,44 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+import { requirePermission } from "@/shared/lib/permissions";
 import {
 	type AdminVodItem,
-	type BulkOperationResult,
-	type DbResult,
-	heroRoleEnum,
-	inputTypeEnum,
-	moduleTypeEnum,
+	type BulkDeleteVodsResult,
+	BulkDeleteVodsSchema,
+	type BulkPublishVodsResult,
+	BulkPublishVodsSchema,
+	bulkDeleteVodsRule,
+	bulkPublishVodsRule,
+	type CreateScenarioResult,
+	CreateScenarioSchema,
+	type CreateVodResult,
+	CreateVodSchema,
+	createScenarioRule,
+	createVodRule,
+	type DeleteScenarioResult,
+	DeleteScenarioSchema,
+	type DeleteVodResult,
+	DeleteVodSchema,
+	deleteScenarioRule,
+	deleteVodRule,
+	GetAdminVodByIdSchema,
+	GetAdminVodsQuerySchema,
+	getAdminVodByIdRule,
+	getAdminVodsRule,
+	type ReorderScenariosResult,
+	ReorderScenariosSchema,
+	reorderScenariosRule,
 	type ScenarioItem,
+	type SetVodPublicationStatusResult,
+	SetVodPublicationStatusSchema,
+	setVodPublicationStatusRule,
+	type UpdateScenarioResult,
+	UpdateScenarioSchema,
+	type UpdateVodResult,
+	UpdateVodSchema,
+	updateScenarioRule,
+	updateVodRule,
 	type VodItem,
-	vodService,
-} from "@/shared/db";
-import { requirePermission } from "@/shared/lib/permissions";
-
-export const GetAdminVodsQuerySchema = z.object({
-	isPublished: z.boolean().optional(),
-	limit: z.number().int().positive().optional(),
-	offset: z.number().int().nonnegative().optional(),
-	role: z.enum(heroRoleEnum).optional(),
-	search: z.string().optional(),
-});
-
-export type GetAdminVodsQueryPayload = z.infer<typeof GetAdminVodsQuerySchema>;
-
-export const GetAdminVodByIdSchema = z.object({
-	id: z.string().min(1),
-});
-
-export type GetAdminVodByIdPayload = z.infer<typeof GetAdminVodByIdSchema>;
-
-export const CreateVodSchema = z.object({
-	durationSeconds: z.number().int().positive(),
-	heroName: z.string().min(1),
-	mapName: z.string().min(1),
-	rankTier: z.string().min(1),
-	role: z.enum(heroRoleEnum),
-	title: z.string().min(1),
-	youtubeVideoId: z.string().min(1),
-});
-
-export type CreateVodPayload = z.infer<typeof CreateVodSchema>;
-
-export const UpdateVodSchema = z.object({
-	durationSeconds: z.number().int().positive().optional(),
-	heroName: z.string().min(1).optional(),
-	id: z.string().min(1),
-	isPublished: z.boolean().optional(),
-	mapName: z.string().min(1).optional(),
-	rankTier: z.string().min(1).optional(),
-	role: z.enum(heroRoleEnum).optional(),
-	title: z.string().min(1).optional(),
-	youtubeVideoId: z.string().min(1).optional(),
-});
-
-export type UpdateVodPayload = z.infer<typeof UpdateVodSchema>;
-
-export const DeleteVodSchema = z.object({
-	id: z.string().min(1),
-});
-
-export type DeleteVodPayload = z.infer<typeof DeleteVodSchema>;
-
-export const SetVodPublicationStatusSchema = z.object({
-	id: z.string().min(1),
-	isPublished: z.boolean(),
-});
-
-export type SetVodPublicationStatusPayload = z.infer<
-	typeof SetVodPublicationStatusSchema
->;
-
-export const BulkPublishVodsSchema = z.object({
-	ids: z.array(z.string().min(1)).min(1),
-	isPublished: z.boolean(),
-});
-
-export type BulkPublishVodsPayload = z.infer<typeof BulkPublishVodsSchema>;
-
-export const BulkDeleteVodsSchema = z.object({
-	ids: z.array(z.string().min(1)).min(1),
-});
-
-export type BulkDeleteVodsPayload = z.infer<typeof BulkDeleteVodsSchema>;
-
-export const CreateScenarioSchema = z.object({
-	explanationText: z.string().min(1),
-	imageUrl: z.string().nullable().optional(),
-	inputConfig: z.record(z.string(), z.any()),
-	inputType: z.enum(inputTypeEnum),
-	moduleType: z.enum(moduleTypeEnum),
-	promptText: z.string().min(1),
-	timeLimitSeconds: z.number().int().positive().nullable().optional(),
-	timestampSeconds: z.number().nonnegative(),
-	vodId: z.string().min(1),
-});
-
-export type CreateScenarioPayload = z.infer<typeof CreateScenarioSchema>;
-
-export const UpdateScenarioSchema = z.object({
-	explanationText: z.string().min(1).optional(),
-	id: z.string().min(1),
-	imageUrl: z.string().nullable().optional(),
-	inputConfig: z.record(z.string(), z.any()).optional(),
-	inputType: z.enum(inputTypeEnum).optional(),
-	moduleType: z.enum(moduleTypeEnum).optional(),
-	promptText: z.string().min(1).optional(),
-	timeLimitSeconds: z.number().int().positive().nullable().optional(),
-	timestampSeconds: z.number().nonnegative().optional(),
-});
-
-export type UpdateScenarioPayload = z.infer<typeof UpdateScenarioSchema>;
-
-export const DeleteScenarioSchema = z.object({
-	id: z.string().min(1),
-});
-
-export type DeleteScenarioPayload = z.infer<typeof DeleteScenarioSchema>;
-
-export const ReorderScenariosSchema = z.object({
-	scenarioOrders: z
-		.array(
-			z.object({
-				id: z.string().min(1),
-				timestampSeconds: z.number().nonnegative(),
-			}),
-		)
-		.min(1),
-	vodId: z.string().min(1),
-});
-
-export type ReorderScenariosPayload = z.infer<typeof ReorderScenariosSchema>;
+} from "../model";
 
 export const getAdminVods = createServerFn({ method: "GET" })
 	.validator((data: unknown) => {
@@ -141,11 +50,7 @@ export const getAdminVods = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<AdminVodItem[]> => {
 		await requirePermission("catalog:manage");
-		const result = await vodService.listAdmin(data);
-		if (!result.success) {
-			throw new Error(result.error);
-		}
-		return result.data.items;
+		return getAdminVodsRule(data);
 	});
 
 export const getAdminVodById = createServerFn({ method: "GET" })
@@ -161,11 +66,7 @@ export const getAdminVodById = createServerFn({ method: "GET" })
 			data,
 		}): Promise<(VodItem & { scenarios: ScenarioItem[] }) | null> => {
 			await requirePermission("catalog:manage");
-			const result = await vodService.getById({ id: data.id });
-			if (!result.success) {
-				throw new Error(result.error);
-			}
-			return result.data;
+			return getAdminVodByIdRule(data);
 		},
 	);
 
@@ -177,9 +78,9 @@ export const createVod = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<VodItem>> => {
+	.handler(async ({ data }): Promise<CreateVodResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.create({
+		return createVodRule({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -193,11 +94,11 @@ export const updateVod = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<VodItem>> => {
+	.handler(async ({ data }): Promise<UpdateVodResult> => {
 		const permission =
 			data.isPublished !== undefined ? "catalog:publish" : "catalog:manage";
 		const actor = await requirePermission(permission);
-		return vodService.update({
+		return updateVodRule({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -211,9 +112,9 @@ export const deleteVod = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<null>> => {
+	.handler(async ({ data }): Promise<DeleteVodResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.delete({
+		return deleteVodRule({
 			actorUserId: actor.id,
 			id: data.id,
 		});
@@ -227,9 +128,9 @@ export const setVodPublicationStatus = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<VodItem>> => {
+	.handler(async ({ data }): Promise<SetVodPublicationStatusResult> => {
 		const actor = await requirePermission("catalog:publish");
-		return vodService.setPublicationStatus({
+		return setVodPublicationStatusRule({
 			actorUserId: actor.id,
 			id: data.id,
 			isPublished: data.isPublished,
@@ -244,9 +145,9 @@ export const bulkPublishVods = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<BulkOperationResult>> => {
+	.handler(async ({ data }): Promise<BulkPublishVodsResult> => {
 		const actor = await requirePermission("catalog:publish");
-		return vodService.bulkPublish({
+		return bulkPublishVodsRule({
 			actorUserId: actor.id,
 			ids: data.ids,
 			isPublished: data.isPublished,
@@ -261,9 +162,9 @@ export const bulkDeleteVods = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<BulkOperationResult>> => {
+	.handler(async ({ data }): Promise<BulkDeleteVodsResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.bulkDelete({
+		return bulkDeleteVodsRule({
 			actorUserId: actor.id,
 			ids: data.ids,
 		});
@@ -277,9 +178,9 @@ export const createScenario = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<ScenarioItem>> => {
+	.handler(async ({ data }): Promise<CreateScenarioResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.createScenario({
+		return createScenarioRule({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -293,9 +194,9 @@ export const updateScenario = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<ScenarioItem>> => {
+	.handler(async ({ data }): Promise<UpdateScenarioResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.updateScenario({
+		return updateScenarioRule({
 			...data,
 			actorUserId: actor.id,
 		});
@@ -309,9 +210,9 @@ export const deleteScenario = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<null>> => {
+	.handler(async ({ data }): Promise<DeleteScenarioResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.deleteScenario({
+		return deleteScenarioRule({
 			actorUserId: actor.id,
 			id: data.id,
 		});
@@ -325,9 +226,9 @@ export const reorderScenarios = createServerFn({ method: "POST" })
 		}
 		return parsed.data;
 	})
-	.handler(async ({ data }): Promise<DbResult<null>> => {
+	.handler(async ({ data }): Promise<ReorderScenariosResult> => {
 		const actor = await requirePermission("catalog:manage");
-		return vodService.reorderScenarios({
+		return reorderScenariosRule({
 			actorUserId: actor.id,
 			scenarioOrders: data.scenarioOrders,
 			vodId: data.vodId,

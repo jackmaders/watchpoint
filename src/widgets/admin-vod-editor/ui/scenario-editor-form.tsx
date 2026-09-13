@@ -1,18 +1,18 @@
 "use client";
 
 import { useId } from "react";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { FieldDescription, FieldLabel } from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
 import {
 	type InputType,
 	inputTypeEnum,
 	type ModuleType,
 	moduleTypeEnum,
-	type scenarios,
-	type vods,
-} from "@/shared/db";
-import { Alert, AlertDescription } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
-import { FieldDescription, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+	type ScenarioItem,
+	type VodItem,
+} from "../model";
 import { MapPinEditor } from "./polymorphic-inputs/map-pin-editor";
 import { MultipleChoiceEditor } from "./polymorphic-inputs/multiple-choice-editor";
 import { PercentSliderEditor } from "./polymorphic-inputs/percent-slider-editor";
@@ -39,8 +39,8 @@ export interface ScenarioEditorFormProps {
 		timestampSeconds: number;
 		vodId: string;
 	}) => void;
-	scenario?: typeof scenarios.$inferSelect | null;
-	vod: Pick<typeof vods.$inferSelect, "durationSeconds" | "id">;
+	scenario?: ScenarioItem | null;
+	vod: Pick<VodItem, "durationSeconds" | "id">;
 }
 
 export function validateScenarioForm(

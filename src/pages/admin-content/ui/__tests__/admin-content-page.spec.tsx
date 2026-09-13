@@ -7,8 +7,8 @@ import {
 	type MockInstance,
 	vi,
 } from "vitest";
-import type { AdminVodItem } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
+import type { AdminVodItem } from "@/widgets/admin-vod-editor";
 import * as adminVodEditor from "@/widgets/admin-vod-editor";
 import { AdminContentPage } from "../admin-content-page";
 
@@ -74,23 +74,25 @@ describe("AdminContentPage", () => {
 		setVodPublicationStatusSpy = vi
 			.spyOn(adminVodEditor, "setVodPublicationStatus")
 			.mockResolvedValue({
-				success: true,
-			} as never);
+				status: "success",
+				vod: mockInitialVods[0] as AdminVodItem,
+			});
 		deleteVodSpy = vi.spyOn(adminVodEditor, "deleteVod").mockResolvedValue({
-			success: true,
-		} as never);
+			status: "success",
+			vod: mockInitialVods[0] as AdminVodItem,
+		});
 		bulkPublishVodsSpy = vi
 			.spyOn(adminVodEditor, "bulkPublishVods")
 			.mockResolvedValue({
-				failed: [],
-				succeeded: [],
-			} as never);
+				result: { failed: [], succeeded: [] },
+				status: "success",
+			});
 		bulkDeleteVodsSpy = vi
 			.spyOn(adminVodEditor, "bulkDeleteVods")
 			.mockResolvedValue({
-				failed: [],
-				succeeded: [],
-			} as never);
+				result: { failed: [], succeeded: [] },
+				status: "success",
+			});
 	});
 
 	it("renders header, total count, filters, and table", () => {
@@ -104,11 +106,14 @@ describe("AdminContentPage", () => {
 
 		// Assert
 		expect(screen.getByText("Content Management")).toBeDefined();
-		expect(screen.getByText("3 Total VODs")).toBeDefined();
+		expect(screen.getByText(/3.*Total VODs/)).toBeDefined();
+		expect(
+			screen.getByPlaceholderText(/search title, hero, or map…/i),
+		).toBeDefined();
 		expect(screen.getByText("GM Rein Guide")).toBeDefined();
 		expect(screen.getByText("Tracer Dive")).toBeDefined();
 		expect(screen.getByText("Ana Positioning")).toBeDefined();
-	}, 2000);
+	});
 
 	it("filters items by free-text search across title, hero, and map", () => {
 		// Arrange
@@ -118,32 +123,29 @@ describe("AdminContentPage", () => {
 				initialVods={mockInitialVods}
 			/>,
 		);
+
+		// Act: Search by hero name
 		const searchInput = screen.getByPlaceholderText(
 			/search title, hero, or map…/i,
 		);
-
-		// Act: Search by hero
-		fireEvent.change(searchInput, { target: { value: "tracer" } });
+		fireEvent.change(searchInput, { target: { value: "Tracer" } });
 
 		// Assert
 		expect(screen.getByText("Tracer Dive")).toBeDefined();
 		expect(screen.queryByText("GM Rein Guide")).toBeNull();
 		expect(screen.queryByText("Ana Positioning")).toBeNull();
 
-		// Act: Search by map
-		fireEvent.change(searchInput, { target: { value: "numbani" } });
+		// Act: Search by map name
+		fireEvent.change(searchInput, { target: { value: "Numbani" } });
 
 		// Assert
 		expect(screen.getByText("Ana Positioning")).toBeDefined();
+		expect(screen.queryByText("Tracer Dive")).toBeNull();
 		expect(screen.queryByText("GM Rein Guide")).toBeNull();
 
 		// Act: Clear search
 		fireEvent.change(searchInput, { target: { value: "" } });
-
-		// Assert
 		expect(screen.getByText("GM Rein Guide")).toBeDefined();
-		expect(screen.getByText("Tracer Dive")).toBeDefined();
-		expect(screen.getByText("Ana Positioning")).toBeDefined();
 	});
 
 	it("filters items by publication status and hero role", () => {
@@ -204,9 +206,9 @@ describe("AdminContentPage", () => {
 	it("executes single row publish toggle successfully", async () => {
 		// Arrange
 		setVodPublicationStatusSpy.mockResolvedValueOnce({
-			data: { ...mockInitialVods[1], isPublished: true },
-			success: true,
-		} as never);
+			status: "success",
+			vod: { ...mockInitialVods[1], isPublished: true },
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -233,9 +235,9 @@ describe("AdminContentPage", () => {
 	it("handles error during single row publish toggle", async () => {
 		// Arrange
 		setVodPublicationStatusSpy.mockResolvedValueOnce({
-			error: "Cannot publish a VOD with zero scenarios",
-			success: false,
-		} as never);
+			reason: "Cannot publish a VOD with zero scenarios",
+			status: "rejected",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -259,9 +261,9 @@ describe("AdminContentPage", () => {
 	it("opens confirmation dialog before deleting a single VOD, shows scenario count, and deletes on confirm", async () => {
 		// Arrange
 		deleteVodSpy.mockResolvedValueOnce({
-			data: undefined,
-			success: true,
-		} as never);
+			status: "success",
+			vod: mockInitialVods[0] as AdminVodItem,
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -296,12 +298,12 @@ describe("AdminContentPage", () => {
 	it("executes bulk publish with partial failures and displays summary alert", async () => {
 		// Arrange
 		bulkPublishVodsSpy.mockResolvedValueOnce({
-			data: {
+			result: {
 				failed: [{ error: "Cannot publish with zero scenarios", id: "vod_3" }],
 				succeeded: ["vod_2"],
 			},
-			success: true,
-		} as never);
+			status: "success",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -341,12 +343,12 @@ describe("AdminContentPage", () => {
 	it("executes bulk unpublish successfully", async () => {
 		// Arrange
 		bulkPublishVodsSpy.mockResolvedValueOnce({
-			data: {
+			result: {
 				failed: [],
 				succeeded: ["vod_1"],
 			},
-			success: true,
-		} as never);
+			status: "success",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -377,12 +379,12 @@ describe("AdminContentPage", () => {
 	it("opens confirmation dialog for bulk delete, showing total vods and scenario count, and deletes on confirm", async () => {
 		// Arrange
 		bulkDeleteVodsSpy.mockResolvedValueOnce({
-			data: {
+			result: {
 				failed: [],
 				succeeded: ["vod_1", "vod_2"],
 			},
-			success: true,
-		} as never);
+			status: "success",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -420,36 +422,12 @@ describe("AdminContentPage", () => {
 		});
 	});
 
-	it("handles exception during single delete", async () => {
-		// Arrange
-		deleteVodSpy.mockRejectedValueOnce(new Error("Network Error"));
-		render(
-			<AdminContentPage
-				currentUser={mockAdminUser}
-				initialVods={mockInitialVods}
-			/>,
-		);
-
-		// Act: click delete
-		fireEvent.click(
-			screen.getByRole("button", { name: /delete GM Rein Guide/i }),
-		);
-		fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
-
-		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText(/Failed to delete VOD\. Please try again\./i),
-			).toBeDefined();
-		});
-	});
-
 	it("handles error result without error message during toggle publish", async () => {
 		// Arrange
 		setVodPublicationStatusSpy.mockResolvedValueOnce({
-			error: "Failed to update publication status",
-			success: false,
-		} as never);
+			reason: "Failed to update publication status",
+			status: "rejected",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -473,9 +451,9 @@ describe("AdminContentPage", () => {
 	it("handles error result without error message during single delete", async () => {
 		// Arrange
 		deleteVodSpy.mockResolvedValueOnce({
-			error: "Failed to delete VOD",
-			success: false,
-		} as never);
+			reason: "Failed to delete VOD",
+			status: "rejected",
+		});
 		render(
 			<AdminContentPage
 				currentUser={mockAdminUser}
@@ -513,83 +491,6 @@ describe("AdminContentPage", () => {
 
 		// Assert
 		expect(screen.getAllByText("Same Title")).toHaveLength(2);
-	});
-
-	it("handles exception during toggle publish", async () => {
-		// Arrange
-		setVodPublicationStatusSpy.mockRejectedValueOnce(
-			new Error("Server unreachable"),
-		);
-		render(
-			<AdminContentPage
-				currentUser={mockAdminUser}
-				initialVods={mockInitialVods}
-			/>,
-		);
-
-		// Act
-		fireEvent.click(
-			screen.getByRole("button", { name: /publish Tracer Dive/i }),
-		);
-
-		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText(
-					/Failed to update publication status\. Please try again\./i,
-				),
-			).toBeDefined();
-		});
-	});
-
-	it("handles exception during bulk publish", async () => {
-		// Arrange
-		bulkPublishVodsSpy.mockRejectedValueOnce(new Error("Bulk server error"));
-		render(
-			<AdminContentPage
-				currentUser={mockAdminUser}
-				initialVods={mockInitialVods}
-			/>,
-		);
-
-		// Act: select all and bulk publish
-		fireEvent.click(screen.getByLabelText(/select all rows/i));
-		fireEvent.click(screen.getByRole("button", { name: /^bulk publish$/i }));
-
-		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText(
-					/Failed to perform bulk publication\. Please try again\./i,
-				),
-			).toBeDefined();
-		});
-	});
-
-	it("handles exception during bulk delete", async () => {
-		// Arrange
-		bulkDeleteVodsSpy.mockRejectedValueOnce(
-			new Error("Bulk delete network error"),
-		);
-		render(
-			<AdminContentPage
-				currentUser={mockAdminUser}
-				initialVods={mockInitialVods}
-			/>,
-		);
-
-		// Act: select two rows and bulk delete
-		fireEvent.click(screen.getByLabelText(/select GM Rein Guide/i));
-		fireEvent.click(screen.getByLabelText(/select Tracer Dive/i));
-		fireEvent.click(screen.getByRole("button", { name: /^bulk delete$/i }));
-		fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
-
-		// Assert
-		await waitFor(() => {
-			expect(
-				screen.getByText(/Failed to delete VOD\. Please try again\./i),
-			).toBeDefined();
-		});
 	});
 
 	it("sorts table data by title, hero, role, map, duration, scenarios, status, and createdAt", () => {

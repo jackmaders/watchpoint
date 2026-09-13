@@ -1,8 +1,8 @@
 "use client";
 
-import type { BulkOperationResult } from "@/shared/db";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import type { BulkOperationResult } from "../model";
 
 export interface BulkSummaryAlertProps {
 	onDismiss: () => void;

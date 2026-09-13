@@ -1,13 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { scenarios } from "@/shared/db";
+import type { ScenarioItem } from "../../model";
 import {
 	useScenarioFormHandlers,
 	useScenarioFormInit,
 } from "../use-scenario-form";
 
 function useTestScenarioForm(
-	scenario: typeof scenarios.$inferSelect | null,
+	scenario: ScenarioItem | null,
 	vod: { durationSeconds: number; id: string },
 	onSave: (payload: unknown) => void,
 ) {
@@ -27,7 +27,7 @@ describe("use-scenario-form hooks", () => {
 		id: "vod_1",
 	};
 
-	const mockScenario: typeof scenarios.$inferSelect = {
+	const mockScenario: ScenarioItem = {
 		explanationText: "Use high ground",
 		id: "scen_1",
 		imageUrl: "https://example.com/image.png",
@@ -46,7 +46,7 @@ describe("use-scenario-form hooks", () => {
 			({ scenario }) => useScenarioFormInit(scenario),
 			{
 				initialProps: {
-					scenario: mockScenario as typeof scenarios.$inferSelect | null,
+					scenario: mockScenario as ScenarioItem | null,
 				},
 			},
 		);

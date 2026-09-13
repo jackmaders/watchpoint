@@ -7,8 +7,8 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SessionManifest } from "@/shared/db";
 import { authClient } from "@/shared/lib/auth-client";
+import type { SessionManifest } from "@/widgets/admin-vod-editor";
 import { VodsIdPage } from "../vods-id-page";
 
 vi.mock("@tanstack/react-router");

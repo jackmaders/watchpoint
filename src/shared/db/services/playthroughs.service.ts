@@ -38,7 +38,7 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "../schema/playthroughs";
-import type { ModuleType } from "../schema/vods";
+import type { ModuleType } from "../schema/scenario";
 
 export const PLAYTHROUGH_START_CONFLICT_ERROR = "Playthrough start conflict";
 export const PLAYTHROUGH_NOT_IN_PROGRESS_ERROR =

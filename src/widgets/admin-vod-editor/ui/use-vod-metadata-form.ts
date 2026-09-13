@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { HeroRole, vods } from "@/shared/db";
+import type { HeroRole, VodItem } from "../model";
 import {
 	type VodMetadataFormProps,
 	validateVodMetadata,
 } from "./vod-metadata-form";
 
-function useVodFormState(vod: typeof vods.$inferSelect | null | undefined) {
+function useVodFormState(vod: VodItem | null | undefined) {
 	const [title, setTitle] = useState(vod ? vod.title : "");
 	const [youtubeVideoId, setYoutubeVideoId] = useState(
 		vod ? vod.youtubeVideoId : "",
@@ -51,7 +51,7 @@ function useVodFormState(vod: typeof vods.$inferSelect | null | undefined) {
 }
 
 export function useVodMetadataFormState(
-	vod: typeof vods.$inferSelect | null | undefined,
+	vod: VodItem | null | undefined,
 	onSave: VodMetadataFormProps["onSave"],
 ) {
 	const state = useVodFormState(vod);

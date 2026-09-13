@@ -9,13 +9,8 @@
 
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
-import {
-	heroRoleEnum,
-	inputTypeEnum,
-	moduleTypeEnum,
-	scenarios,
-	vods,
-} from "../schema/vods";
+import { inputTypeEnum, moduleTypeEnum, scenarios } from "../schema/scenario";
+import { heroRoleEnum, vods } from "../schema/vod";
 
 export const multipleChoiceOptionSchema = z.object({
 	id: z.string().min(1),
