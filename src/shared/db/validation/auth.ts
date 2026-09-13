@@ -9,7 +9,7 @@
 
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
-import { userRoleEnum, users } from "../schema/auth";
+import { userRoleEnum, users } from "../schema/user";
 
 export const selectUserSchema = createSelectSchema(users);
 export const insertUserSchema = createInsertSchema(users, {

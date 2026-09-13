@@ -9,8 +9,8 @@
 
 import { hashPassword } from "better-auth/crypto";
 import type { DrizzleDb } from "../core/client";
+import { accounts } from "../schema/account";
 import { auditEntries } from "../schema/audit";
-import { accounts, sessions, users } from "../schema/auth";
 import {
 	attemptRecords,
 	playthroughCompletions,
@@ -18,6 +18,8 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "../schema/playthroughs";
+import { sessions } from "../schema/session";
+import { users } from "../schema/user";
 import { scenarios, vods } from "../schema/vods";
 import {
 	FIXTURE_IDS,

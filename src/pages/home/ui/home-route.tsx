@@ -1,14 +1,18 @@
 /**
  * Route presentation component for the root homepage.
  *
- * Implements `HomeRouteComponent` extracting loader data from `routeApi` and rendering `HomePage`.
+ * Implements `HomeRouteComponent` subscribing to live cache data from `homePageQueryOptions` and rendering `HomePage`.
  */
-import { getRouteApi } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { homePageQueryOptions } from "../api/loaders";
 import { HomePage } from "./home-page";
 
-const routeApi = getRouteApi("/");
-
 export function HomeRouteComponent() {
-	const { registrationEnabled, vods } = routeApi.useLoaderData();
-	return <HomePage registrationEnabled={registrationEnabled} vods={vods} />;
+	const { data } = useSuspenseQuery(homePageQueryOptions());
+	return (
+		<HomePage
+			registrationEnabled={data?.registrationEnabled}
+			vods={data?.vods}
+		/>
+	);
 }

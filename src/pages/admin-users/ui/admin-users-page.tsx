@@ -7,16 +7,16 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import type { UserItem, UserRole } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { updateUserRole } from "../api/server-fns";
+import { useUpdateUserRole } from "../api/loaders";
+import type { UserItem, UserRole } from "../model/types";
 
 export interface AdminUsersPageProps {
 	currentUser: AuthenticatedUser;
-	initialUsers: UserItem[];
+	users: UserItem[];
 }
 
 interface AdminUsersHeaderProps {
@@ -260,15 +260,10 @@ function AdminUsersTable({
 	);
 }
 
-export function AdminUsersPage({
-	currentUser,
-	initialUsers,
-}: AdminUsersPageProps) {
-	const [users, setUsers] = useState<UserItem[]>(initialUsers);
+export function AdminUsersPage({ currentUser, users }: AdminUsersPageProps) {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [roleFilter, setRoleFilter] = useState<"ALL" | UserRole>("ALL");
-	const [error, setError] = useState<string | null>(null);
-	const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+	const updateUserRoleMutation = useUpdateUserRole();
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -297,41 +292,37 @@ export function AdminUsersPage({
 		});
 	}, [users, roleFilter, searchQuery]);
 
-	const handleRoleToggle = useCallback(async (user: UserItem) => {
-		const newRole: UserRole = user.role === "ADMIN" ? "PLAYER" : "ADMIN";
-		setError(null);
-		setUpdatingUserId(user.id);
-
-		try {
-			const result = await updateUserRole({
-				data: {
-					newRole,
-					targetUserId: user.id,
-				},
+	const handleRoleToggle = useCallback(
+		(user: UserItem) => {
+			const newRole: UserRole = user.role === "ADMIN" ? "PLAYER" : "ADMIN";
+			updateUserRoleMutation.mutate({
+				newRole,
+				targetUserId: user.id,
 			});
+		},
+		[updateUserRoleMutation],
+	);
 
-			if (!result.success) {
-				setError(result.error);
-				return;
-			}
+	const updatingUserId = updateUserRoleMutation.isPending
+		? (updateUserRoleMutation.variables?.targetUserId ?? null)
+		: null;
 
-			setUsers((prev) =>
-				prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u)),
-			);
-		} catch {
-			setError("Unable to update user role. Please try again.");
-		} finally {
-			setUpdatingUserId(null);
-		}
-	}, []);
+	const errorMessage =
+		updateUserRoleMutation.data?.status === "rejected"
+			? updateUserRoleMutation.data.reason
+			: updateUserRoleMutation.isError
+				? updateUserRoleMutation.error instanceof Error
+					? updateUserRoleMutation.error.message
+					: "Unable to update user role. Please try again."
+				: null;
 
 	return (
 		<div className="space-y-6">
 			<AdminUsersHeader totalCount={users.length} />
 
-			{error ? (
+			{errorMessage ? (
 				<Alert aria-live="assertive" variant="destructive">
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription>{errorMessage}</AlertDescription>
 				</Alert>
 			) : null}
 

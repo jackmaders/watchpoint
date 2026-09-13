@@ -5,8 +5,8 @@
  * account controls, and the active VOD catalog list.
  */
 import { Link } from "@tanstack/react-router";
-import type { PublishedVodItem } from "@/shared/db";
 import { AccountControls } from "@/shared/ui/auth-modal";
+import type { PublishedVodItem } from "../model/types";
 
 export function HomePage(props?: {
 	registrationEnabled?: boolean;

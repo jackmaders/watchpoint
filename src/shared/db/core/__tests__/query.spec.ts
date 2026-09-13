@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { users, vods } from "../../schema";
+import { users, vods } from "../..";
 import {
 	buildPaginatedResult,
 	buildWhereConditions,

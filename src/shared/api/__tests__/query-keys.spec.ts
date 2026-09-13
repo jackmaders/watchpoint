@@ -11,14 +11,16 @@ describe("queryKeys", () => {
 	it("exposes canonical cache key arrays", () => {
 		// Arrange
 		const expectedAudit = ["audit"];
+		const expectedHome = ["home"];
 		const expectedPosts = ["posts"];
 		const expectedUsers = ["users"];
 
 		// Act
-		const { audit, posts, users } = queryKeys;
+		const { audit, home, posts, users } = queryKeys;
 
 		// Assert
 		expect(audit).toEqual(expectedAudit);
+		expect(home).toEqual(expectedHome);
 		expect(posts).toEqual(expectedPosts);
 		expect(users).toEqual(expectedUsers);
 	});

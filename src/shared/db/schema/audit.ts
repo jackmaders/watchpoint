@@ -9,7 +9,7 @@
 
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { JsonValue } from "../core/types";
-import { users } from "./auth";
+import { users } from "./user";
 
 export const auditEntries = sqliteTable(
 	"audit_entry",

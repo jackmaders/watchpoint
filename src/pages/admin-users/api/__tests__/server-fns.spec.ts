@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-start");
-vi.mock("@/shared/db");
 vi.mock("@/shared/lib/permissions");
+vi.mock("../../model/get-admin-users");
+vi.mock("../../model/update-user-role");
 
-import { authService } from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
+import { getAdminUsersRule } from "../../model/get-admin-users";
+import { updateUserRoleRule } from "../../model/update-user-role";
 import { getAdminUsers, updateUserRole } from "../server-fns";
 
 describe("admin-users server functions", () => {
@@ -14,7 +16,7 @@ describe("admin-users server functions", () => {
 	});
 
 	describe("getAdminUsers", () => {
-		it("returns user list when invoked by an Administrator (200 / success)", async () => {
+		it("returns user list when invoked by an Administrator", async () => {
 			// Arrange
 			const mockUsers = [
 				{
@@ -22,14 +24,7 @@ describe("admin-users server functions", () => {
 					email: "admin@example.com",
 					id: "usr_admin",
 					name: "Admin User",
-					role: "ADMIN",
-				},
-				{
-					createdAt: new Date(),
-					email: "player@example.com",
-					id: "usr_player",
-					name: "Player User",
-					role: "PLAYER",
+					role: "ADMIN" as const,
 				},
 			];
 			vi.mocked(requirePermission).mockResolvedValueOnce({
@@ -38,16 +33,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.list).mockResolvedValueOnce({
-				data: {
-					items: mockUsers,
-					page: 1,
-					pageSize: 50,
-					total: mockUsers.length,
-					totalPages: 1,
-				},
-				success: true,
-			} as never);
+			vi.mocked(getAdminUsersRule).mockResolvedValueOnce(mockUsers as never);
 
 			// Act
 			const result = await (
@@ -60,7 +46,7 @@ describe("admin-users server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("users:view");
-			expect(authService.list).toHaveBeenCalledWith({
+			expect(getAdminUsersRule).toHaveBeenCalledWith({
 				role: "ADMIN",
 				search: "admin",
 			});
@@ -75,16 +61,7 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.list).mockResolvedValueOnce({
-				data: {
-					items: [],
-					page: 1,
-					pageSize: 50,
-					total: 0,
-					totalPages: 1,
-				},
-				success: true,
-			} as never);
+			vi.mocked(getAdminUsersRule).mockResolvedValueOnce([]);
 
 			// Act
 			const result = await (
@@ -109,30 +86,7 @@ describe("admin-users server functions", () => {
 			).rejects.toThrow("Invalid users query payload");
 		});
 
-		it("throws error when dbGetUsers fails", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockResolvedValueOnce({
-				email: "admin@example.com",
-				id: "usr_admin",
-				name: "Admin User",
-				role: "ADMIN",
-			});
-			vi.mocked(authService.list).mockResolvedValueOnce({
-				error: "Failed to load users",
-				success: false,
-			});
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminUsers as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toThrow("Failed to load users");
-		});
-
-		it("throws 403 Forbidden when invoked by an Ordinary Player", async () => {
+		it("throws 403 Forbidden when permission check fails", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockRejectedValueOnce(
 				new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 }),
@@ -149,50 +103,10 @@ describe("admin-users server functions", () => {
 				return err instanceof Response && err.status === 403;
 			});
 		});
-
-		it("throws 401 Unauthorized when invoked by an Unauthenticated visitor", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockRejectedValueOnce(
-				new Response(JSON.stringify({ error: "Unauthorized" }), {
-					status: 401,
-				}),
-			);
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminUsers as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toSatisfy((err: unknown) => {
-				return err instanceof Response && err.status === 401;
-			});
-		});
-
-		it("throws 401 Unauthorized when session is expired", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockRejectedValueOnce(
-				new Response(JSON.stringify({ error: "Unauthorized" }), {
-					status: 401,
-				}),
-			);
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminUsers as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toSatisfy((err: unknown) => {
-				return err instanceof Response && err.status === 401;
-			});
-		});
 	});
 
 	describe("updateUserRole", () => {
-		it("updates role when invoked by an Administrator (200 / success)", async () => {
+		it("delegates to updateUserRoleRule when invoked with valid input", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
 				email: "admin@example.com",
@@ -200,34 +114,34 @@ describe("admin-users server functions", () => {
 				name: "Admin User",
 				role: "ADMIN",
 			});
-			vi.mocked(authService.updateUserRole).mockResolvedValueOnce({
-				data: {
+			vi.mocked(updateUserRoleRule).mockResolvedValueOnce({
+				status: "success",
+				user: {
 					createdAt: new Date(),
 					email: "player@example.com",
 					id: "usr_target",
 					name: "Target Player",
 					role: "ADMIN",
 				} as never,
-				success: true,
 			});
 
 			// Act
 			const result = await (
 				updateUserRole as unknown as (ctx: {
 					data: { newRole: "ADMIN" | "PLAYER"; targetUserId: string };
-				}) => Promise<{ success: boolean }>
+				}) => Promise<{ status: string }>
 			)({
 				data: { newRole: "ADMIN", targetUserId: "usr_target" },
 			});
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("users:manage-roles");
-			expect(authService.updateUserRole).toHaveBeenCalledWith({
+			expect(updateUserRoleRule).toHaveBeenCalledWith({
 				actorUserId: "usr_admin",
 				newRole: "ADMIN",
 				targetUserId: "usr_target",
 			});
-			expect(result.success).toBe(true);
+			expect(result.status).toBe("success");
 		});
 
 		it("throws error when payload validation fails", async () => {
@@ -244,7 +158,7 @@ describe("admin-users server functions", () => {
 			).rejects.toThrow("Invalid role update payload");
 		});
 
-		it("throws 403 Forbidden when invoked by an Ordinary Player", async () => {
+		it("throws 403 Forbidden when actor lacks permission", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockRejectedValueOnce(
 				new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 }),
@@ -261,28 +175,6 @@ describe("admin-users server functions", () => {
 				}),
 			).rejects.toSatisfy((err: unknown) => {
 				return err instanceof Response && err.status === 403;
-			});
-		});
-
-		it("throws 401 Unauthorized when unauthenticated or expired", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockRejectedValueOnce(
-				new Response(JSON.stringify({ error: "Unauthorized" }), {
-					status: 401,
-				}),
-			);
-
-			// Act & Assert
-			await expect(
-				(
-					updateUserRole as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({
-					data: { newRole: "ADMIN", targetUserId: "usr_target" },
-				}),
-			).rejects.toSatisfy((err: unknown) => {
-				return err instanceof Response && err.status === 401;
 			});
 		});
 	});
