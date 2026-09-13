@@ -21,7 +21,7 @@ import {
 	type TableFilterOptions,
 } from "../core";
 import { auditEntries } from "../schema/audit";
-import type { users } from "../schema/auth";
+import type { users } from "../schema/user";
 import {
 	type CreateAuditEntryInput,
 	insertAuditEntrySchema,

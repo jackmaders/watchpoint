@@ -7,6 +7,7 @@
  * and enums from `schema/`, domain service instances from `services/`, and validation schemas from `validation/`.
  */
 
+// Queries & Helpers
 export {
 	buildPaginatedResult,
 	buildWhereConditions,
@@ -33,16 +34,29 @@ export {
 	toErrorMessage,
 	tryDb,
 } from "./core";
+export {
+	createAuditEntry,
+	deleteAuditEntry,
+	getAuditEntryById,
+	queryAuditEntries,
+} from "./queries/audit";
+export {
+	createUser,
+	deleteUser,
+	getUserByEmail,
+	getUserById,
+	queryUsers,
+	updateUser,
+} from "./queries/users";
+export {
+	DEFAULT_LIMIT,
+	filterToSQL,
+	orderToSQL,
+	type QueryOptions,
+} from "./query";
+export { accounts } from "./schema/account";
 // Schema
 export { auditEntries } from "./schema/audit";
-export {
-	accounts,
-	sessions,
-	type UserRole,
-	userRoleEnum,
-	users,
-	verifications,
-} from "./schema/auth";
 export {
 	attemptRecords,
 	type PlaythroughStatus,
@@ -53,6 +67,13 @@ export {
 	scenarioSnapshots,
 } from "./schema/playthroughs";
 export { relations } from "./schema/relations";
+export { sessions } from "./schema/session";
+export {
+	type UserRole,
+	userRoleEnum,
+	users,
+} from "./schema/user";
+export { verifications } from "./schema/verification";
 export {
 	type HeroRole,
 	heroRoleEnum,

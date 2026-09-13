@@ -20,7 +20,7 @@ import {
 	getDb,
 	type TableFilterOptions,
 } from "../core";
-import { type UserRole, users } from "../schema/auth";
+import { type UserRole, users } from "../schema/user";
 import { updateUserRoleInputSchema } from "../validation/auth";
 import { auditService } from "./audit.service";
 

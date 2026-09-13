@@ -5,8 +5,8 @@
  * quick catalog preview, and links to interactive training modules.
  */
 import { Link } from "@tanstack/react-router";
-import type { PublishedVodItem } from "@/shared/db";
 import { AppLayout } from "@/widgets/layout-main";
+import type { PublishedVodItem } from "../model/types";
 
 export function HomePage(props?: {
 	registrationEnabled?: boolean;
