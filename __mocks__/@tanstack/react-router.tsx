@@ -2,6 +2,7 @@ import type React from "react";
 import { vi } from "vitest";
 
 export const Link = function MockLink({
+	activeOptions: _activeOptions,
 	activeProps: _activeProps,
 	children,
 	to,
@@ -10,6 +11,7 @@ export const Link = function MockLink({
 	ref,
 	...props
 }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+	activeOptions?: Record<string, unknown>;
 	activeProps?: Record<string, unknown>;
 	href?: string;
 	params?: Record<string, string>;
@@ -83,6 +85,7 @@ export const useNavigate = vi.fn(() => vi.fn());
 export const useParams = vi.fn(() => ({}));
 export const useRouteContext = vi.fn(() => ({}));
 export const useSearch = vi.fn(() => ({}));
+export const useLocation = vi.fn(() => ({ pathname: "/" }));
 
 const routeApiRegistry = new Map<
 	string,

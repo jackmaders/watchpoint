@@ -1,13 +1,13 @@
 /**
  * Catalog browser view presenting all published Overwatch 2 training VODs.
  *
- * Implements `VodsPage` rendering hero tags, rank tier badges, map names, video durations,
- * and navigation links to pre-session setup pages.
+ * Implements `VodsPage` wrapped in `AppLayout`, rendering hero tags, rank tier badges, map names,
+ * video durations, and navigation links to pre-session setup pages.
  */
 import { Link } from "@tanstack/react-router";
 import type { PublishedVodItem } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
-import { AccountControls } from "@/shared/ui/auth-modal";
+import { AppLayout } from "@/widgets/layout-main";
 
 export type VodItem = PublishedVodItem;
 export { formatDuration };
@@ -19,27 +19,8 @@ export function VodsPage(props?: {
 	const vods = props?.vods ?? [];
 
 	return (
-		<main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12 lg:px-12">
+		<AppLayout registrationEnabled={props?.registrationEnabled}>
 			<div className="mx-auto max-w-6xl space-y-8">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<Link
-							className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-							to="/"
-						>
-							&larr; Home
-						</Link>
-						<Link
-							className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:underline"
-							to="/history"
-						>
-							Training History &rarr;
-						</Link>
-					</div>
-					<AccountControls
-						registrationEnabled={props?.registrationEnabled ?? true}
-					/>
-				</div>
 				<header className="space-y-3 border-b border-border pb-6">
 					<div className="inline-flex rounded-sm border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
 						Interactive Training Engine
@@ -103,6 +84,6 @@ export function VodsPage(props?: {
 					</div>
 				)}
 			</div>
-		</main>
+		</AppLayout>
 	);
 }

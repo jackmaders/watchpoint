@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/shared/lib/auth-client";
-import { formatError, UserForm } from "./user-form";
+import { formatError, UserForm } from "../user-form";
 
 vi.mock("@/shared/lib/auth-client");
 

@@ -8,6 +8,7 @@ import type {
 import { HistoryPage } from "../history-page";
 
 vi.mock("@tanstack/react-router");
+vi.mock("@/shared/lib/auth-client");
 
 const mockVod: PublishedVodItem = {
 	createdAt: new Date("2026-01-01"),
@@ -419,5 +420,15 @@ describe("HistoryPage component", () => {
 		expect(screen.getByText("Unknown Map")).toBeDefined();
 		expect(screen.getByText("Rank")).toBeDefined();
 		expect(screen.getByText("VOD Training Session")).toBeDefined();
+	});
+
+	it("renders default empty view when props are undefined", () => {
+		// Arrange & Act
+		render(<HistoryPage registrationEnabled={false} />);
+
+		// Assert
+		expect(
+			screen.getByText(/no completed training sessions yet/i),
+		).toBeDefined();
 	});
 });
