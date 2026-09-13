@@ -117,6 +117,60 @@ describe("updateUserRoleRule", () => {
 		expect(updateUser).not.toHaveBeenCalled();
 	});
 
+	it("allows demoting administrator when other administrators exist", async () => {
+		// Arrange
+		const admin1 = {
+			createdAt: new Date(),
+			email: "admin1@example.com",
+			emailVerified: true,
+			id: "usr_admin1",
+			image: null,
+			isTestAccount: false,
+			name: "Admin One",
+			role: "ADMIN" as const,
+			updatedAt: new Date(),
+		};
+		const admin2 = {
+			createdAt: new Date(),
+			email: "admin2@example.com",
+			emailVerified: true,
+			id: "usr_admin2",
+			image: null,
+			isTestAccount: false,
+			name: "Admin Two",
+			role: "ADMIN" as const,
+			updatedAt: new Date(),
+		};
+		const demotedAdmin2 = {
+			...admin2,
+			role: "PLAYER" as const,
+		};
+		vi.mocked(getUserById).mockResolvedValueOnce(admin2);
+		vi.mocked(queryUsers).mockResolvedValueOnce([admin1, admin2]);
+		vi.mocked(updateUser).mockResolvedValueOnce(demotedAdmin2);
+		vi.mocked(createAuditEntry).mockResolvedValueOnce({
+			id: "audit_2",
+		} as never);
+
+		// Act
+		const result = await updateUserRoleRule({
+			actorUserId: "usr_admin1",
+			newRole: "PLAYER",
+			targetUserId: "usr_admin2",
+		});
+
+		// Assert
+		expect(result).toEqual({
+			status: "success",
+			user: demotedAdmin2,
+		});
+		expect(updateUser).toHaveBeenCalledWith(
+			"usr_admin2",
+			expect.objectContaining({ role: "PLAYER" }),
+			undefined,
+		);
+	});
+
 	it("successfully updates role and creates audit entry", async () => {
 		// Arrange
 		const playerUser = {

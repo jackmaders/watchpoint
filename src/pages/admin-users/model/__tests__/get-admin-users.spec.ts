@@ -52,6 +52,18 @@ describe("getAdminUsersRule", () => {
 		expect(queryUsers).toHaveBeenCalledWith({ filter: { role: "ADMIN" } });
 	});
 
+	it("passes explicit db client to queryUsers when provided", async () => {
+		// Arrange
+		const mockDb = {} as never;
+		vi.mocked(queryUsers).mockResolvedValueOnce([]);
+
+		// Act
+		await getAdminUsersRule(undefined, mockDb);
+
+		// Assert
+		expect(queryUsers).toHaveBeenCalledWith({ filter: undefined }, mockDb);
+	});
+
 	it("filters by search term against name and email", async () => {
 		// Arrange
 		const mockUsers = [

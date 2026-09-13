@@ -70,4 +70,30 @@ describe("AdminUsersRouteComponent", () => {
 			undefined,
 		);
 	});
+
+	it("renders AdminUsersPage with empty list when query returns undefined", () => {
+		// Arrange
+		const mockUser = {
+			createdAt: new Date(),
+			email: "admin@example.com",
+			id: "usr_1",
+			name: "Admin",
+			role: "ADMIN" as const,
+		};
+		const routeApi = getRouteApi("/admin/users");
+		vi.mocked(routeApi.useRouteContext).mockReturnValue({ user: mockUser });
+		vi.mocked(useSuspenseQuery).mockReturnValue({ data: undefined } as never);
+
+		// Act
+		render(<AdminUsersRouteComponent />);
+
+		// Assert
+		expect(AdminUsersPage).toHaveBeenCalledWith(
+			{
+				currentUser: mockUser,
+				users: [],
+			},
+			undefined,
+		);
+	});
 });

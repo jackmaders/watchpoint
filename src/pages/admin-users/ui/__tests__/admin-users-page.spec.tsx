@@ -213,17 +213,117 @@ describe("AdminUsersPage", () => {
 		).toBeDefined();
 	});
 
-	it("displays error message when mutation errors", () => {
+	it("demotes other admin to player on demote button click", () => {
+		// Arrange
+		const mutateMock = vi.fn();
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			mutate: mutateMock,
+		} as never);
+
+		const twoAdmins = [
+			initialUsers[0],
+			{
+				...initialUsers[1],
+				role: "ADMIN" as const,
+			},
+		];
+		render(<AdminUsersPage currentUser={currentAdmin} users={twoAdmins} />);
+		const demoteBtn = screen.getByRole("button", {
+			name: /demote to player - tracer main/i,
+		});
+
+		// Act
+		fireEvent.click(demoteBtn);
+
+		// Assert
+		expect(mutateMock).toHaveBeenCalledWith({
+			newRole: "PLAYER",
+			targetUserId: "usr_player1",
+		});
+	});
+
+	it("shows saving state when mutation is pending for target user", () => {
 		// Arrange
 		vi.mocked(useUpdateUserRole).mockReturnValue({
 			...defaultMutation,
-			error: new Error("Network failure"),
-			isError: true,
+			isPending: true,
+			variables: { newRole: "ADMIN", targetUserId: "usr_player1" },
 		} as never);
 
+		// Act
 		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
 
 		// Assert
-		expect(screen.getByText("Network failure")).toBeDefined();
+		expect(screen.getByText("Saving…")).toBeDefined();
+	});
+
+	it("shows saving state when mutation is pending for target admin", () => {
+		// Arrange
+		const twoAdmins = [
+			initialUsers[0],
+			{
+				...initialUsers[1],
+				role: "ADMIN" as const,
+			},
+		];
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			isPending: true,
+			variables: { newRole: "PLAYER", targetUserId: "usr_player1" },
+		} as never);
+
+		// Act
+		render(<AdminUsersPage currentUser={currentAdmin} users={twoAdmins} />);
+
+		// Assert
+		expect(screen.getByText("Saving…")).toBeDefined();
+	});
+
+	it("handles pending state when variables are undefined", () => {
+		// Arrange
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			isPending: true,
+			variables: undefined,
+		} as never);
+
+		// Act
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
+
+		// Assert
+		expect(screen.queryByText("Saving…")).toBeNull();
+	});
+
+	it("displays error message when mutation error is an Error instance", () => {
+		// Arrange
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			error: new Error("Network request failed"),
+			isError: true,
+		} as never);
+
+		// Act
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
+
+		// Assert
+		expect(screen.getByText("Network request failed")).toBeDefined();
+	});
+
+	it("displays default error message when mutation error is not an Error instance", () => {
+		// Arrange
+		vi.mocked(useUpdateUserRole).mockReturnValue({
+			...defaultMutation,
+			error: "Some string error",
+			isError: true,
+		} as never);
+
+		// Act
+		render(<AdminUsersPage currentUser={currentAdmin} users={initialUsers} />);
+
+		// Assert
+		expect(
+			screen.getByText("Unable to update user role. Please try again."),
+		).toBeDefined();
 	});
 });

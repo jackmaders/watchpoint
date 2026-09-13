@@ -8,7 +8,6 @@
  */
 
 // Queries & Helpers
-export { createDbClient } from "./client";
 export {
 	buildPaginatedResult,
 	buildWhereConditions,
