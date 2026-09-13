@@ -17,16 +17,16 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useCallback } from "react";
-import type { InputType, ModuleType, scenarios } from "@/shared/db";
 import { Button } from "@/shared/ui/button";
+import type { InputType, ModuleType, ScenarioItem } from "../model";
 
 export interface ScenarioTimelineProps {
 	disabled?: boolean;
 	onAddScenario: () => void;
 	onDeleteScenario: (scenarioId: string) => void;
 	onMoveScenario: (scenarioId: string, direction: "up" | "down") => void;
-	onSelectScenario: (scenario: typeof scenarios.$inferSelect) => void;
-	scenarios: Array<typeof scenarios.$inferSelect>;
+	onSelectScenario: (scenario: ScenarioItem) => void;
+	scenarios: Array<ScenarioItem>;
 	selectedScenarioId: string | null;
 }
 
@@ -107,8 +107,8 @@ interface ScenarioTimelineItemProps {
 	isSelected: boolean;
 	onDelete: (id: string) => void;
 	onMove: (id: string, direction: "up" | "down") => void;
-	onSelect: (scenario: typeof scenarios.$inferSelect) => void;
-	scenario: typeof scenarios.$inferSelect;
+	onSelect: (scenario: ScenarioItem) => void;
+	scenario: ScenarioItem;
 }
 
 function ScenarioTimelineItem({

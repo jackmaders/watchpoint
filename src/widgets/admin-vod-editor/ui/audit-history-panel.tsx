@@ -1,11 +1,9 @@
 "use client";
 
 import { Clock, History, User } from "lucide-react";
-import type { auditEntries } from "@/shared/db";
+import type { AuditEntryItem } from "../model";
 
-export type AuditEntryItem = typeof auditEntries.$inferSelect & {
-	actor?: { email?: string | null; name?: string | null } | null;
-};
+export type { AuditEntryItem };
 
 export interface AuditHistoryPanelProps {
 	auditEntries: AuditEntryItem[];
@@ -62,11 +60,13 @@ export function AuditHistoryPanel({
 									</span>
 								</div>
 
-								{entry.metadata && Object.keys(entry.metadata).length > 0 && (
+								{entry.metadata &&
+								typeof entry.metadata === "object" &&
+								Object.keys(entry.metadata).length > 0 ? (
 									<pre className="rounded bg-muted/50 p-2 font-mono text-[10px] text-muted-foreground overflow-x-auto">
 										{JSON.stringify(entry.metadata, null, 2)}
 									</pre>
-								)}
+								) : null}
 							</div>
 						);
 					})}

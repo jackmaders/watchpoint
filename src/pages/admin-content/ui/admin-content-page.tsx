@@ -6,10 +6,10 @@
  */
 "use client";
 
-import type { AdminVodItem } from "@/shared/db";
 import type { AuthenticatedUser } from "@/shared/lib/permissions";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import {
+	type AdminVodItem,
 	BulkSummaryAlert,
 	DeleteConfirmationDialog,
 } from "@/widgets/admin-vod-editor";

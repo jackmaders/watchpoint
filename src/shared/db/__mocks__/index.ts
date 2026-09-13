@@ -11,8 +11,9 @@ import { vi } from "vitest";
 import { getDb } from "../core/__mocks__/client";
 import { dbSuccess } from "../core/result";
 import { playthroughStatusEnum } from "../schema/playthroughs";
+import { inputTypeEnum, moduleTypeEnum } from "../schema/scenario";
 import { userRoleEnum } from "../schema/user";
-import { heroRoleEnum, inputTypeEnum, moduleTypeEnum } from "../schema/vods";
+import { heroRoleEnum } from "../schema/vod";
 
 export { getDb };
 

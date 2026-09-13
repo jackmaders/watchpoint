@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { vods } from "@/shared/db";
+import type { VodItem } from "../../model";
 import { VodMetadataForm } from "../vod-metadata-form";
 
 describe("VodMetadataForm", () => {
@@ -24,7 +24,7 @@ describe("VodMetadataForm", () => {
 
 	it("renders existing VOD values in edit mode and handles cancel", () => {
 		// Arrange
-		const existingVod: typeof vods.$inferSelect = {
+		const existingVod: VodItem = {
 			createdAt: new Date("2026-01-01"),
 			durationSeconds: 720,
 			heroName: "Tracer",

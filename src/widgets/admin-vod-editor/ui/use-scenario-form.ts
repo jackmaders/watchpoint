@@ -1,15 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { InputType, ModuleType, scenarios } from "@/shared/db";
+import type { InputType, ModuleType, ScenarioItem } from "../model";
 import {
 	type ScenarioEditorFormProps,
 	validateScenarioForm,
 } from "./scenario-editor-form";
 
-export function useScenarioFormInit(
-	scenario: typeof scenarios.$inferSelect | null | undefined,
-) {
+export function useScenarioFormInit(scenario: ScenarioItem | null | undefined) {
 	const [promptText, setPromptText] = useState(scenario?.promptText ?? "");
 	const [explanationText, setExplanationText] = useState(
 		scenario?.explanationText ?? "",

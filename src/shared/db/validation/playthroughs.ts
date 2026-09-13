@@ -14,7 +14,7 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "../schema/playthroughs";
-import { moduleTypeEnum } from "../schema/vods";
+import { moduleTypeEnum } from "../schema/scenario";
 
 export const selectPlaythroughSchema = createSelectSchema(playthroughs);
 export const insertPlaythroughSchema = createInsertSchema(playthroughs);

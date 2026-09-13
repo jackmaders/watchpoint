@@ -2,15 +2,15 @@
 
 import { AlertCircle, CheckCircle2, Globe, Lock } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import { type scenarios, validateVodForPublishing } from "@/shared/db";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { type ScenarioItem, validateVodForPublishing } from "../model";
 
 export interface PublicationStatusControlProps {
 	disabled?: boolean;
 	isSubmitting?: boolean;
 	onTogglePublish: (isPublished: boolean) => void;
-	scenarios: ReadonlyArray<typeof scenarios.$inferSelect>;
+	scenarios: ReadonlyArray<ScenarioItem>;
 	vod: {
 		durationSeconds: number;
 		id: string;

@@ -6,8 +6,11 @@
  */
 
 export const queryKeys = {
+	adminVods: ["admin-vods"],
 	audit: ["audit"],
 	home: ["home"],
 	posts: ["posts"],
+	scenarios: ["scenarios"],
 	users: ["users"],
+	vods: ["vods"],
 } as const;

@@ -17,10 +17,11 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "./playthroughs";
+import { scenarios } from "./scenario";
 import { sessions } from "./session";
 import { users } from "./user";
 import { verifications } from "./verification";
-import { scenarios, vods } from "./vods";
+import { vods } from "./vod";
 
 const schema = {
 	accounts,

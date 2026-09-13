@@ -18,9 +18,10 @@ import {
 	playthroughs,
 	scenarioSnapshots,
 } from "../schema/playthroughs";
+import { scenarios } from "../schema/scenario";
 import { sessions } from "../schema/session";
 import { users } from "../schema/user";
-import { scenarios, vods } from "../schema/vods";
+import { vods } from "../schema/vod";
 import {
 	FIXTURE_IDS,
 	getLocalFixtureScenarios,

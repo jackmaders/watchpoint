@@ -8,8 +8,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
-import type { AdminVodItem } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import type { AdminVodItem } from "@/widgets/admin-vod-editor";
 import type {
 	ContentSortColumn,
 	ContentSortOrder,

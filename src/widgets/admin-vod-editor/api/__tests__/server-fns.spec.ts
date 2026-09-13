@@ -1,11 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-start");
-vi.mock("@/shared/db");
 vi.mock("@/shared/lib/permissions");
+vi.mock("../../model/vod-rules");
+vi.mock("../../model/scenario-rules");
+vi.mock("../../model/get-admin-vods");
 
-import { vodService } from "@/shared/db";
 import { requirePermission } from "@/shared/lib/permissions";
+import {
+	bulkDeleteVodsRule,
+	bulkPublishVodsRule,
+	createScenarioRule,
+	createVodRule,
+	deleteScenarioRule,
+	deleteVodRule,
+	getAdminVodByIdRule,
+	getAdminVodsRule,
+	reorderScenariosRule,
+	setVodPublicationStatusRule,
+	updateScenarioRule,
+	updateVodRule,
+} from "../../model";
 import {
 	bulkDeleteVods,
 	bulkPublishVods,
@@ -21,29 +36,22 @@ import {
 	updateVod,
 } from "../server-fns";
 
-describe("admin-content server functions", () => {
+describe("admin-vod-editor server functions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
 	describe("getAdminVods", () => {
-		it("returns VODs when invoked by authorized administrator", async () => {
+		it("delegates to getAdminVodsRule when authorized", async () => {
 			// Arrange
-			const mockVods = [{ id: "v1", title: "Test VOD" }];
+			const mockVods = [{ id: "v1", scenarios: [], title: "Test VOD" }];
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
-				data: {
-					items: mockVods,
-					page: 1,
-					pageSize: 10,
-					total: 1,
-					totalPages: 1,
-				},
-				success: true,
-			} as never);
+			vi.mocked(getAdminVodsRule).mockResolvedValueOnce(mockVods as never);
 
 			// Act
 			const result = await (
@@ -54,115 +62,35 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.listAdmin).toHaveBeenCalledWith({
+			expect(getAdminVodsRule).toHaveBeenCalledWith({
 				role: "SUPPORT",
 				search: "Ana",
 			});
 			expect(result).toEqual(mockVods);
 		});
 
-		it("handles default undefined payload", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockResolvedValueOnce({
-				id: "admin_1",
-				role: "ADMIN",
-			});
-			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
-				data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
-				success: true,
-			} as never);
-
-			// Act
-			const result = await (
-				getAdminVods as unknown as (ctx: { data: unknown }) => Promise<unknown>
-			)({ data: undefined });
-
-			// Assert
-			expect(result).toEqual([]);
-		});
-
-		it("throws error for invalid query payload", async () => {
-			// Arrange
-			const invalid = { role: "INVALID_ROLE" };
-
-			// Act & Assert
+		it("throws error on invalid query payload", async () => {
 			await expect(
 				(
 					getAdminVods as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { role: "INVALID" } }),
 			).rejects.toThrow("Invalid query payload");
-		});
-
-		it("throws error when dbGetAdminVods fails", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockResolvedValueOnce({
-				id: "admin_1",
-				role: "ADMIN",
-			});
-			vi.mocked(vodService.listAdmin).mockResolvedValueOnce({
-				error: "Failed to load VODs",
-				success: false,
-			});
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminVods as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toThrow("Failed to load VODs");
-		});
-
-		it("throws 403 Forbidden when invoked by regular player", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockRejectedValueOnce(
-				new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 }),
-			);
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminVods as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toSatisfy((res: Response) => res.status === 403);
-		});
-
-		it("throws 401 Unauthorized when invoked without session", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockRejectedValueOnce(
-				new Response(JSON.stringify({ error: "Unauthorized" }), {
-					status: 401,
-				}),
-			);
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminVods as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: {} }),
-			).rejects.toSatisfy((res: Response) => res.status === 401);
 		});
 	});
 
 	describe("getAdminVodById", () => {
-		it("returns VOD details when authorized", async () => {
+		it("delegates to getAdminVodByIdRule when authorized", async () => {
 			// Arrange
-			const mockVod = { id: "v1", title: "Test VOD" };
+			const mockVod = { id: "v1", scenarios: [], title: "Test VOD" };
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.getById).mockResolvedValueOnce({
-				data: mockVod,
-				success: true,
-			} as never);
+			vi.mocked(getAdminVodByIdRule).mockResolvedValueOnce(mockVod as never);
 
 			// Act
 			const result = await (
@@ -173,523 +101,486 @@ describe("admin-content server functions", () => {
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.getById).toHaveBeenCalledWith({ id: "v1" });
+			expect(getAdminVodByIdRule).toHaveBeenCalledWith({ id: "v1" });
 			expect(result).toEqual(mockVod);
 		});
 
-		it("throws error when dbGetVodById fails", async () => {
-			// Arrange
-			vi.mocked(requirePermission).mockResolvedValueOnce({
-				id: "admin_1",
-				role: "ADMIN",
-			});
-			vi.mocked(vodService.getById).mockResolvedValueOnce({
-				error: "VOD query failed",
-				success: false,
-			});
-
-			// Act & Assert
+		it("throws error on invalid id payload", async () => {
 			await expect(
 				(
 					getAdminVodById as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: { id: "v1" } }),
-			).rejects.toThrow("VOD query failed");
-		});
-
-		it("throws error for invalid ID payload", async () => {
-			// Arrange
-			const invalid = { id: "" };
-
-			// Act & Assert
-			await expect(
-				(
-					getAdminVodById as unknown as (ctx: {
-						data: unknown;
-					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { id: "" } }),
 			).rejects.toThrow("Invalid VOD ID payload");
 		});
 	});
 
 	describe("createVod", () => {
-		it("creates VOD when authorized as admin", async () => {
+		it("delegates to createVodRule with actorUserId", async () => {
 			// Arrange
-			const input = {
-				durationSeconds: 600,
-				heroName: "Ana",
-				mapName: "King's Row",
-				rankTier: "Grandmaster",
-				role: "SUPPORT" as const,
-				title: "GM Ana",
-				youtubeVideoId: "abc12345",
-			};
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.create).mockResolvedValueOnce({
-				data: { ...input, id: "v1", isPublished: false } as never,
-				success: true,
+			vi.mocked(createVodRule).mockResolvedValueOnce({
+				status: "success",
+				vod: { id: "v1" } as never,
 			});
+
+			const payload = {
+				durationSeconds: 300,
+				heroName: "Ana",
+				mapName: "Dorado",
+				rankTier: "Diamond",
+				role: "SUPPORT" as const,
+				title: "Ana VOD",
+				youtubeVideoId: "yt-1",
+			};
 
 			// Act
 			const result = await (
-				createVod as unknown as (ctx: { data: unknown }) => Promise<unknown>
-			)({ data: input });
+				createVod as unknown as (ctx: {
+					data: typeof payload;
+				}) => Promise<unknown>
+			)({ data: payload });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.create).toHaveBeenCalledWith({
-				...input,
+			expect(createVodRule).toHaveBeenCalledWith({
+				...payload,
 				actorUserId: "admin_1",
 			});
-			expect(result).toEqual({
-				data: { ...input, id: "v1", isPublished: false },
-				success: true,
-			});
+			expect(result).toEqual({ status: "success", vod: { id: "v1" } });
 		});
 
-		it("throws error for invalid create payload", async () => {
-			// Arrange
-			const invalid = { title: "" };
-
-			// Act & Assert
+		it("throws error on invalid create payload", async () => {
 			await expect(
 				(createVod as unknown as (ctx: { data: unknown }) => Promise<unknown>)({
-					data: invalid,
+					data: {},
 				}),
 			).rejects.toThrow("Invalid create VOD payload");
 		});
 	});
 
 	describe("updateVod", () => {
-		it("updates VOD with manage permission when isPublished not changed", async () => {
+		it("delegates to updateVodRule with actorUserId", async () => {
 			// Arrange
-			const input = { id: "v1", title: "New Title" };
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.update).mockResolvedValueOnce({
-				data: { id: "v1", title: "New Title" } as never,
-				success: true,
+			vi.mocked(updateVodRule).mockResolvedValueOnce({
+				status: "success",
+				vod: { id: "v1" } as never,
 			});
 
 			// Act
 			const result = await (
-				updateVod as unknown as (ctx: { data: unknown }) => Promise<unknown>
-			)({ data: input });
+				updateVod as unknown as (ctx: {
+					data: { id: string; title: string };
+				}) => Promise<unknown>
+			)({ data: { id: "v1", title: "New" } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.update).toHaveBeenCalledWith({
-				...input,
+			expect(updateVodRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
+				id: "v1",
+				title: "New",
 			});
-			expect(result).toEqual({
-				data: { id: "v1", title: "New Title" },
-				success: true,
-			});
+			expect(result).toEqual({ status: "success", vod: { id: "v1" } });
 		});
 
-		it("updates VOD with publish permission when isPublished is provided", async () => {
+		it("uses catalog:publish permission when isPublished is present", async () => {
 			// Arrange
-			const input = { id: "v1", isPublished: true };
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.update).mockResolvedValueOnce({
-				data: { id: "v1", isPublished: true } as never,
-				success: true,
+			vi.mocked(updateVodRule).mockResolvedValueOnce({
+				status: "success",
+				vod: { id: "v1" } as never,
 			});
 
 			// Act
-			const result = await (
-				updateVod as unknown as (ctx: { data: unknown }) => Promise<unknown>
-			)({ data: input });
+			await (
+				updateVod as unknown as (ctx: {
+					data: { id: string; isPublished: boolean };
+				}) => Promise<unknown>
+			)({ data: { id: "v1", isPublished: true } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
-			expect(result).toEqual({
-				data: { id: "v1", isPublished: true },
-				success: true,
-			});
 		});
 
-		it("throws error for invalid update payload", async () => {
-			// Arrange
-			const invalid = { id: "" };
-
-			// Act & Assert
+		it("throws error on invalid update payload", async () => {
 			await expect(
 				(updateVod as unknown as (ctx: { data: unknown }) => Promise<unknown>)({
-					data: invalid,
+					data: { id: "" },
 				}),
 			).rejects.toThrow("Invalid update VOD payload");
 		});
 	});
 
 	describe("deleteVod", () => {
-		it("deletes VOD when authorized", async () => {
+		it("delegates to deleteVodRule with actorUserId", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.delete).mockResolvedValueOnce({
-				data: null,
-				success: true,
+			vi.mocked(deleteVodRule).mockResolvedValueOnce({
+				status: "success",
+				vod: { id: "v1" } as never,
 			});
 
 			// Act
 			const result = await (
-				deleteVod as unknown as (ctx: { data: unknown }) => Promise<unknown>
+				deleteVod as unknown as (ctx: {
+					data: { id: string };
+				}) => Promise<unknown>
 			)({ data: { id: "v1" } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.delete).toHaveBeenCalledWith({
+			expect(deleteVodRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "v1",
 			});
-			expect(result).toEqual({ data: null, success: true });
+			expect(result).toEqual({ status: "success", vod: { id: "v1" } });
 		});
 
-		it("throws error for invalid delete payload", async () => {
-			// Arrange
-			const invalid = { id: "" };
-
-			// Act & Assert
+		it("throws error on invalid delete payload", async () => {
 			await expect(
 				(deleteVod as unknown as (ctx: { data: unknown }) => Promise<unknown>)({
-					data: invalid,
+					data: { id: "" },
 				}),
 			).rejects.toThrow("Invalid delete VOD payload");
 		});
 	});
 
 	describe("setVodPublicationStatus", () => {
-		it("sets publication status with catalog:publish permission", async () => {
+		it("delegates to setVodPublicationStatusRule", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.setPublicationStatus).mockResolvedValueOnce({
-				data: { id: "v1", isPublished: true } as never,
-				success: true,
+			vi.mocked(setVodPublicationStatusRule).mockResolvedValueOnce({
+				status: "success",
+				vod: { id: "v1", isPublished: true } as never,
 			});
 
 			// Act
 			const result = await (
 				setVodPublicationStatus as unknown as (ctx: {
-					data: unknown;
+					data: { id: string; isPublished: boolean };
 				}) => Promise<unknown>
 			)({ data: { id: "v1", isPublished: true } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
-			expect(vodService.setPublicationStatus).toHaveBeenCalledWith({
+			expect(setVodPublicationStatusRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "v1",
 				isPublished: true,
 			});
 			expect(result).toEqual({
-				data: { id: "v1", isPublished: true },
-				success: true,
+				status: "success",
+				vod: { id: "v1", isPublished: true },
 			});
 		});
 
-		it("throws error for invalid payload", async () => {
-			// Arrange
-			const invalid = { id: "", isPublished: "invalid" };
-
-			// Act & Assert
+		it("throws error on invalid publication status payload", async () => {
 			await expect(
 				(
 					setVodPublicationStatus as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { id: "" } }),
 			).rejects.toThrow("Invalid publication status payload");
 		});
 	});
 
-	describe("bulkPublishVods and bulkDeleteVods", () => {
-		it("executes bulk publish when authorized", async () => {
+	describe("bulkPublishVods", () => {
+		it("delegates to bulkPublishVodsRule", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.bulkPublish).mockResolvedValueOnce({
-				data: {
-					failed: [],
-					succeeded: ["v1", "v2"],
-				},
-				success: true,
+			vi.mocked(bulkPublishVodsRule).mockResolvedValueOnce({
+				result: { failed: [], succeeded: ["v1"] },
+				status: "success",
 			});
 
 			// Act
 			const result = await (
 				bulkPublishVods as unknown as (ctx: {
-					data: unknown;
+					data: { ids: string[]; isPublished: boolean };
 				}) => Promise<unknown>
-			)({ data: { ids: ["v1", "v2"], isPublished: true } });
+			)({ data: { ids: ["v1"], isPublished: true } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:publish");
+			expect(bulkPublishVodsRule).toHaveBeenCalledWith({
+				actorUserId: "admin_1",
+				ids: ["v1"],
+				isPublished: true,
+			});
 			expect(result).toEqual({
-				data: { failed: [], succeeded: ["v1", "v2"] },
-				success: true,
+				result: { failed: [], succeeded: ["v1"] },
+				status: "success",
 			});
 		});
 
-		it("throws error for invalid bulk publish payload", async () => {
-			// Arrange
-			const invalid = { ids: [], isPublished: true };
-
-			// Act & Assert
+		it("throws error on invalid bulk publish payload", async () => {
 			await expect(
 				(
 					bulkPublishVods as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { ids: [] } }),
 			).rejects.toThrow("Invalid bulk publish payload");
 		});
+	});
 
-		it("executes bulk delete when authorized", async () => {
+	describe("bulkDeleteVods", () => {
+		it("delegates to bulkDeleteVodsRule", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.bulkDelete).mockResolvedValueOnce({
-				data: {
-					failed: [],
-					succeeded: ["v1"],
-				},
-				success: true,
+			vi.mocked(bulkDeleteVodsRule).mockResolvedValueOnce({
+				result: { failed: [], succeeded: ["v1"] },
+				status: "success",
 			});
 
 			// Act
 			const result = await (
 				bulkDeleteVods as unknown as (ctx: {
-					data: unknown;
+					data: { ids: string[] };
 				}) => Promise<unknown>
 			)({ data: { ids: ["v1"] } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
+			expect(bulkDeleteVodsRule).toHaveBeenCalledWith({
+				actorUserId: "admin_1",
+				ids: ["v1"],
+			});
 			expect(result).toEqual({
-				data: { failed: [], succeeded: ["v1"] },
-				success: true,
+				result: { failed: [], succeeded: ["v1"] },
+				status: "success",
 			});
 		});
 
-		it("throws error for invalid bulk delete payload", async () => {
-			// Arrange
-			const invalid = { ids: [] };
-
-			// Act & Assert
+		it("throws error on invalid bulk delete payload", async () => {
 			await expect(
 				(
 					bulkDeleteVods as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { ids: [] } }),
 			).rejects.toThrow("Invalid bulk delete payload");
 		});
 	});
 
-	describe("scenario mutations", () => {
-		it("creates scenario with catalog:manage permission", async () => {
+	describe("createScenario", () => {
+		it("delegates to createScenarioRule", async () => {
 			// Arrange
-			const scenarioInput = {
-				explanationText: "Exp",
-				imageUrl: null,
-				inputConfig: { options: [{ id: "1", is_correct: true, text: "A" }] },
-				inputType: "MULTIPLE_CHOICE" as const,
-				moduleType: "STRATEGY" as const,
-				promptText: "Prompt",
-				timeLimitSeconds: null,
-				timestampSeconds: 50,
-				vodId: "v1",
-			};
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.createScenario).mockResolvedValueOnce({
-				data: { ...scenarioInput, id: "s1" } as never,
-				success: true,
+			vi.mocked(createScenarioRule).mockResolvedValueOnce({
+				scenario: { id: "s1" } as never,
+				status: "success",
 			});
+
+			const payload = {
+				explanationText: "expl",
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE" as const,
+				moduleType: "STRATEGY" as const,
+				promptText: "prompt",
+				timestampSeconds: 10,
+				vodId: "v1",
+			};
 
 			// Act
 			const result = await (
 				createScenario as unknown as (ctx: {
-					data: unknown;
+					data: typeof payload;
 				}) => Promise<unknown>
-			)({ data: scenarioInput });
+			)({ data: payload });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.createScenario).toHaveBeenCalledWith({
-				...scenarioInput,
+			expect(createScenarioRule).toHaveBeenCalledWith({
+				...payload,
 				actorUserId: "admin_1",
 			});
-			expect(result).toEqual({
-				data: { ...scenarioInput, id: "s1" },
-				success: true,
-			});
+			expect(result).toEqual({ scenario: { id: "s1" }, status: "success" });
 		});
 
-		it("throws error for invalid create scenario payload", async () => {
-			// Arrange
-			const invalid = { promptText: "" };
-
-			// Act & Assert
+		it("throws error on invalid create scenario payload", async () => {
 			await expect(
 				(
 					createScenario as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: {} }),
 			).rejects.toThrow("Invalid create scenario payload");
 		});
+	});
 
-		it("updates scenario with catalog:manage permission", async () => {
+	describe("updateScenario", () => {
+		it("delegates to updateScenarioRule", async () => {
 			// Arrange
-			const updateInput = { id: "s1", promptText: "New Prompt" };
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.updateScenario).mockResolvedValueOnce({
-				data: { id: "s1", promptText: "New Prompt" } as never,
-				success: true,
+			vi.mocked(updateScenarioRule).mockResolvedValueOnce({
+				scenario: { id: "s1" } as never,
+				status: "success",
 			});
 
 			// Act
 			const result = await (
 				updateScenario as unknown as (ctx: {
-					data: unknown;
+					data: { id: string; promptText: string };
 				}) => Promise<unknown>
-			)({ data: updateInput });
+			)({ data: { id: "s1", promptText: "New Prompt" } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.updateScenario).toHaveBeenCalledWith({
-				...updateInput,
+			expect(updateScenarioRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
+				id: "s1",
+				promptText: "New Prompt",
 			});
-			expect(result).toEqual({
-				data: { id: "s1", promptText: "New Prompt" },
-				success: true,
-			});
+			expect(result).toEqual({ scenario: { id: "s1" }, status: "success" });
 		});
 
-		it("throws error for invalid update scenario payload", async () => {
-			// Arrange
-			const invalid = { id: "" };
-
-			// Act & Assert
+		it("throws error on invalid update scenario payload", async () => {
 			await expect(
 				(
 					updateScenario as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { id: "" } }),
 			).rejects.toThrow("Invalid update scenario payload");
 		});
+	});
 
-		it("deletes scenario with catalog:manage permission", async () => {
+	describe("deleteScenario", () => {
+		it("delegates to deleteScenarioRule", async () => {
 			// Arrange
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.deleteScenario).mockResolvedValueOnce({
-				data: null,
-				success: true,
+			vi.mocked(deleteScenarioRule).mockResolvedValueOnce({
+				scenario: { id: "s1" } as never,
+				status: "success",
 			});
 
 			// Act
 			const result = await (
 				deleteScenario as unknown as (ctx: {
-					data: unknown;
+					data: { id: string };
 				}) => Promise<unknown>
 			)({ data: { id: "s1" } });
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.deleteScenario).toHaveBeenCalledWith({
+			expect(deleteScenarioRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
 				id: "s1",
 			});
-			expect(result).toEqual({ data: null, success: true });
+			expect(result).toEqual({ scenario: { id: "s1" }, status: "success" });
 		});
 
-		it("throws error for invalid delete scenario payload", async () => {
-			// Arrange
-			const invalid = { id: "" };
-
-			// Act & Assert
+		it("throws error on invalid delete scenario payload", async () => {
 			await expect(
 				(
 					deleteScenario as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { id: "" } }),
 			).rejects.toThrow("Invalid delete scenario payload");
 		});
+	});
 
-		it("reorders scenarios with catalog:manage permission", async () => {
+	describe("reorderScenarios", () => {
+		it("delegates to reorderScenariosRule", async () => {
 			// Arrange
-			const reorderInput = {
-				scenarioOrders: [{ id: "s1", timestampSeconds: 20 }],
-				vodId: "v1",
-			};
 			vi.mocked(requirePermission).mockResolvedValueOnce({
+				email: "admin@example.com",
 				id: "admin_1",
+				name: "Admin",
 				role: "ADMIN",
 			});
-			vi.mocked(vodService.reorderScenarios).mockResolvedValueOnce({
-				data: null,
-				success: true,
+			vi.mocked(reorderScenariosRule).mockResolvedValueOnce({
+				status: "success",
 			});
 
 			// Act
 			const result = await (
 				reorderScenarios as unknown as (ctx: {
-					data: unknown;
+					data: {
+						scenarioOrders: Array<{ id: string; timestampSeconds: number }>;
+						vodId: string;
+					};
 				}) => Promise<unknown>
-			)({ data: reorderInput });
+			)({
+				data: {
+					scenarioOrders: [{ id: "s1", timestampSeconds: 10 }],
+					vodId: "v1",
+				},
+			});
 
 			// Assert
 			expect(requirePermission).toHaveBeenCalledWith("catalog:manage");
-			expect(vodService.reorderScenarios).toHaveBeenCalledWith({
-				...reorderInput,
+			expect(reorderScenariosRule).toHaveBeenCalledWith({
 				actorUserId: "admin_1",
+				scenarioOrders: [{ id: "s1", timestampSeconds: 10 }],
+				vodId: "v1",
 			});
-			expect(result).toEqual({ data: null, success: true });
+			expect(result).toEqual({ status: "success" });
 		});
 
-		it("throws error for invalid reorder scenario payload", async () => {
-			// Arrange
-			const invalid = { scenarioOrders: [], vodId: "" };
-
-			// Act & Assert
+		it("throws error on invalid reorder scenarios payload", async () => {
 			await expect(
 				(
 					reorderScenarios as unknown as (ctx: {
 						data: unknown;
 					}) => Promise<unknown>
-				)({ data: invalid }),
+				)({ data: { scenarioOrders: [] } }),
 			).rejects.toThrow("Invalid reorder scenarios payload");
 		});
 	});

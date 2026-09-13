@@ -6,8 +6,8 @@
  */
 import { Link } from "@tanstack/react-router";
 import { extractHeroFromTitle } from "@/entities/vod";
-import type { SessionManifest } from "@/shared/db";
 import { formatDuration } from "@/shared/lib/utils";
+import type { SessionManifest } from "@/widgets/admin-vod-editor";
 import { AppLayout } from "@/widgets/layout-main";
 import { VodsIdClient } from "./vods-id-client";
 

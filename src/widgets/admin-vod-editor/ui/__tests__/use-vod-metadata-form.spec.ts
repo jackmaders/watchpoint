@@ -1,10 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { HeroRole, vods } from "@/shared/db";
+import type { HeroRole, VodItem } from "../../model";
 import { useVodMetadataFormState } from "../use-vod-metadata-form";
 
 describe("useVodMetadataFormState hook", () => {
-	const mockVod: typeof vods.$inferSelect = {
+	const mockVod: VodItem = {
 		createdAt: new Date("2026-01-01"),
 		durationSeconds: 700,
 		heroName: "Winston",

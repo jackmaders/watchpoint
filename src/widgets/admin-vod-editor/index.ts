@@ -12,6 +12,7 @@ export {
 	updateScenario,
 	updateVod,
 } from "./api/server-fns";
+export * from "./model";
 export {
 	AdminVodEditorPage,
 	type AdminVodEditorPageProps,

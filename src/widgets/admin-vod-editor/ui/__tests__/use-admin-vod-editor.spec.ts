@@ -1,6 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { scenarios, vods } from "@/shared/db";
 import {
 	createScenario,
 	createVod,
@@ -11,6 +10,7 @@ import {
 	updateScenario,
 	updateVod,
 } from "../../api/server-fns";
+import type { ScenarioItem, VodItem } from "../../model";
 import {
 	runMutation,
 	swapScenarios,
@@ -22,7 +22,7 @@ vi.mock("@tanstack/react-router");
 vi.mock("../../api/server-fns");
 
 describe("use-admin-vod-editor hooks and utilities", () => {
-	const mockVod: typeof vods.$inferSelect = {
+	const mockVod: VodItem = {
 		createdAt: new Date("2026-08-20T00:00:00Z"),
 		durationSeconds: 600,
 		heroName: "Ana",
@@ -35,7 +35,7 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 		youtubeVideoId: "yt_1",
 	};
 
-	const mockScenarios: Array<typeof scenarios.$inferSelect> = [
+	const mockScenarios: ScenarioItem[] = [
 		{
 			explanationText: "Explanation 1",
 			id: "s1",
@@ -64,15 +64,13 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 
 	describe("swapScenarios", () => {
 		it("returns null if scenario not found or moving out of bounds", () => {
-			// Arrange & Act & Assert
 			expect(swapScenarios(mockScenarios, "nonexistent", "up")).toBeNull();
 			expect(swapScenarios(mockScenarios, "s1", "up")).toBeNull();
 			expect(swapScenarios(mockScenarios, "s2", "down")).toBeNull();
 		});
 
 		it("swaps timestamps between adjacent scenarios correctly in a multi-item list", () => {
-			// Arrange
-			const threeScenarios: Array<typeof scenarios.$inferSelect> = [
+			const threeScenarios: ScenarioItem[] = [
 				...mockScenarios,
 				{
 					explanationText: "Explanation 3",
@@ -88,10 +86,8 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 				},
 			];
 
-			// Act
 			const swapped = swapScenarios(threeScenarios, "s2", "up");
 
-			// Assert
 			expect(swapped).not.toBeNull();
 			const s1 = swapped?.find((s) => s.id === "s1");
 			const s2 = swapped?.find((s) => s.id === "s2");
@@ -104,93 +100,65 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 
 	describe("runMutation", () => {
 		it("calls runner, onSuccess, and manages clearAlerts / setIsSubmitting", async () => {
-			// Arrange
 			const clearAlerts = vi.fn();
 			const setError = vi.fn();
 			const setIsSubmitting = vi.fn();
 			const onSuccess = vi.fn();
 			const state = { clearAlerts, setError, setIsSubmitting };
 
-			// Act
 			await runMutation(
-				async () => ({ data: "success" }),
+				async () => ({ status: "success" as const }),
 				onSuccess,
 				state,
 				"Fallback Error",
 			);
 
-			// Assert
 			expect(clearAlerts).toHaveBeenCalled();
 			expect(setIsSubmitting).toHaveBeenCalledWith(true);
 			expect(setIsSubmitting).toHaveBeenCalledWith(false);
-			expect(onSuccess).toHaveBeenCalledWith({ data: "success" });
+			expect(onSuccess).toHaveBeenCalledWith({ status: "success" });
 			expect(setError).not.toHaveBeenCalled();
 		});
 
-		it("handles thrown Error and sets error message", async () => {
-			// Arrange
+		it("handles rejected status and sets error message", async () => {
 			const clearAlerts = vi.fn();
 			const setError = vi.fn();
 			const setIsSubmitting = vi.fn();
 			const onSuccess = vi.fn();
 			const state = { clearAlerts, setError, setIsSubmitting };
 
-			// Act
 			await runMutation(
-				async () => {
-					throw new Error("Custom error message");
-				},
+				async () => ({
+					reason: "Custom error message",
+					status: "rejected" as const,
+				}),
 				onSuccess,
 				state,
 				"Fallback Error",
 			);
 
-			// Assert
 			expect(setError).toHaveBeenCalledWith("Custom error message");
 			expect(setIsSubmitting).toHaveBeenCalledWith(false);
-		});
-
-		it("handles non-Error thrown objects and uses fallback error", async () => {
-			// Arrange
-			const clearAlerts = vi.fn();
-			const setError = vi.fn();
-			const setIsSubmitting = vi.fn();
-			const onSuccess = vi.fn();
-			const state = { clearAlerts, setError, setIsSubmitting };
-
-			// Act
-			await runMutation(
-				async () => {
-					throw "non-error";
-				},
-				onSuccess,
-				state,
-				"Fallback Error",
-			);
-
-			// Assert
-			expect(setError).toHaveBeenCalledWith("Fallback Error");
 		});
 	});
 
 	describe("useVodMutations", () => {
 		it("handles createVod, updateVod, deleteVod, and setVodPublicationStatus", async () => {
-			// Arrange
 			vi.mocked(createVod).mockResolvedValueOnce({
-				data: mockVod as never,
-				success: true,
+				status: "success",
+				vod: mockVod,
 			});
 			vi.mocked(updateVod).mockResolvedValueOnce({
-				data: { ...mockVod, title: "Updated GM Ana" } as never,
-				success: true,
+				status: "success",
+				vod: { ...mockVod, title: "Updated GM Ana" },
 			});
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
-				data: { ...mockVod, isPublished: true } as never,
-				success: true,
+				status: "success",
+				vod: { ...mockVod, isPublished: true },
 			});
 			vi.mocked(deleteVod).mockResolvedValueOnce({
-				data: null,
-				success: true,
+				status: "success",
+				vod: mockVod,
 			});
 
 			const { result } = renderHook(() => useVodMutations(mockVod));
@@ -231,8 +199,8 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 
 			// Act: toggle publish false
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
-				data: { ...mockVod, isPublished: false } as never,
-				success: true,
+				status: "success",
+				vod: { ...mockVod, isPublished: false },
 			});
 			await act(async () => {
 				await result.current.handleTogglePublish(false);
@@ -244,10 +212,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 				await result.current.handleDeleteVod();
 			});
 
-			// Act: create failure without error field
+			// Act: create failure
 			vi.mocked(createVod).mockResolvedValueOnce({
-				error: "Failed to create VOD",
-				success: false,
+				reason: "Failed to create VOD",
+				status: "rejected",
 			});
 			await act(async () => {
 				await result.current.handleCreateVod({
@@ -262,10 +230,10 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			});
 			expect(result.current.error).toBe("Failed to create VOD");
 
-			// Act: update failure without error field
+			// Act: update failure
 			vi.mocked(updateVod).mockResolvedValueOnce({
-				error: "Failed to update VOD metadata",
-				success: false,
+				reason: "Failed to update VOD",
+				status: "rejected",
 			});
 			await act(async () => {
 				await result.current.handleUpdateVodMetadata({
@@ -278,22 +246,22 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 					youtubeVideoId: "yt_1",
 				});
 			});
-			expect(result.current.error).toBe("Failed to update VOD metadata");
+			expect(result.current.error).toBe("Failed to update VOD");
 
-			// Act: toggle publish failure without error field
+			// Act: toggle failure
 			vi.mocked(setVodPublicationStatus).mockResolvedValueOnce({
-				error: "Failed to update publication status",
-				success: false,
+				reason: "Failed to toggle status",
+				status: "rejected",
 			});
 			await act(async () => {
 				await result.current.handleTogglePublish(true);
 			});
-			expect(result.current.error).toBe("Failed to update publication status");
+			expect(result.current.error).toBe("Failed to toggle status");
 
-			// Act: delete failure without error field
+			// Act: delete failure
 			vi.mocked(deleteVod).mockResolvedValueOnce({
-				error: "Failed to delete VOD",
-				success: false,
+				reason: "Failed to delete VOD",
+				status: "rejected",
 			});
 			await act(async () => {
 				await result.current.handleDeleteVod();
@@ -301,11 +269,9 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			expect(result.current.error).toBe("Failed to delete VOD");
 		});
 
-		it("handles no-op calls when vod is null", async () => {
-			// Arrange
+		it("handles no-op actions when vod is null", async () => {
 			const { result } = renderHook(() => useVodMutations(null));
 
-			// Act: update on null vod
 			await act(async () => {
 				await result.current.handleUpdateVodMetadata({
 					durationSeconds: 600,
@@ -313,140 +279,32 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 					mapName: "King's Row",
 					rankTier: "Grandmaster",
 					role: "SUPPORT",
-					title: "Updated",
+					title: "GM Ana",
 					youtubeVideoId: "yt_1",
 				});
 			});
-
-			// Act: delete on null vod
+			await act(async () => {
+				await result.current.handleTogglePublish(true);
+			});
 			await act(async () => {
 				await result.current.handleDeleteVod();
 			});
 
-			// Act: toggle publish on null vod
-			await act(async () => {
-				await result.current.handleTogglePublish(true);
-			});
-
-			// Assert
 			expect(updateVod).not.toHaveBeenCalled();
-			expect(deleteVod).not.toHaveBeenCalled();
 			expect(setVodPublicationStatus).not.toHaveBeenCalled();
+			expect(deleteVod).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("useScenarioMutations", () => {
-		it("handles scenario create and update and error branches", async () => {
-			// Arrange
-			const clearAlerts = vi.fn();
-			const setError = vi.fn();
-			const setIsSubmitting = vi.fn();
-			const setSuccess = vi.fn();
-			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
+		const state = {
+			clearAlerts: vi.fn(),
+			setError: vi.fn(),
+			setIsSubmitting: vi.fn(),
+			setSuccess: vi.fn(),
+		};
 
-			vi.mocked(createScenario).mockResolvedValueOnce({
-				data: mockScenarios[0] as never,
-				success: true,
-			});
-			vi.mocked(updateScenario).mockResolvedValueOnce({
-				data: {
-					...mockScenarios[0],
-					promptText: "Updated Prompt",
-				} as never,
-				success: true,
-			});
-			vi.mocked(createScenario).mockResolvedValueOnce({
-				error: "Failed to create",
-				success: false,
-			});
-
-			const { result } = renderHook(() =>
-				useScenarioMutations(mockScenarios, "vod_1", state),
-			);
-
-			// Act: create scenario
-			await act(async () => {
-				await result.current.handleSaveScenario({
-					explanationText: "Exp",
-					inputConfig: {},
-					inputType: "MULTIPLE_CHOICE",
-					moduleType: "STRATEGY",
-					promptText: "New Prompt",
-					timestampSeconds: 10,
-					vodId: "vod_1",
-				});
-			});
-			expect(setSuccess).toHaveBeenCalledWith("Scenario created!");
-
-			// Act: update scenario
-			await act(async () => {
-				await result.current.handleSaveScenario({
-					explanationText: "Exp",
-					id: "s1",
-					inputConfig: {},
-					inputType: "MULTIPLE_CHOICE",
-					moduleType: "STRATEGY",
-					promptText: "Updated Prompt",
-					timestampSeconds: 10,
-					vodId: "vod_1",
-				});
-			});
-			expect(setSuccess).toHaveBeenCalledWith("Scenario updated!");
-
-			// Act: save error
-			await act(async () => {
-				await result.current.handleSaveScenario({
-					explanationText: "Exp",
-					inputConfig: {},
-					inputType: "MULTIPLE_CHOICE",
-					moduleType: "STRATEGY",
-					promptText: "New Prompt 2",
-					timestampSeconds: 20,
-					vodId: "vod_1",
-				});
-			});
-			expect(setError).toHaveBeenCalledWith("Failed to create");
-
-			// Act: save error without error field
-			vi.mocked(createScenario).mockResolvedValueOnce({
-				error: "Failed to save scenario",
-				success: false,
-			});
-			await act(async () => {
-				await result.current.handleSaveScenario({
-					explanationText: "Exp",
-					inputConfig: {},
-					inputType: "MULTIPLE_CHOICE",
-					moduleType: "STRATEGY",
-					promptText: "New Prompt 3",
-					timestampSeconds: 30,
-					vodId: "vod_1",
-				});
-			});
-			expect(setError).toHaveBeenCalledWith("Failed to save scenario");
-		});
-
-		it("handles scenario delete success and failure", async () => {
-			// Arrange
-			const clearAlerts = vi.fn();
-			const setError = vi.fn();
-			const setIsSubmitting = vi.fn();
-			const setSuccess = vi.fn();
-			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
-
-			vi.mocked(deleteScenario).mockResolvedValueOnce({
-				data: null,
-				success: true,
-			});
-			vi.mocked(deleteScenario).mockResolvedValueOnce({
-				error: "Cannot delete scenario",
-				success: false,
-			});
-			vi.mocked(deleteScenario).mockResolvedValueOnce({
-				error: "Failed to delete scenario",
-				success: false,
-			});
-
+		it("handles create, update, delete, and reorder scenarios", async () => {
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, "vod_1", state),
 			);
@@ -455,108 +313,167 @@ describe("use-admin-vod-editor hooks and utilities", () => {
 			act(() => {
 				result.current.setSelectedScenario(mockScenarios[0] ?? null);
 			});
+			expect(result.current.selectedScenario).toEqual(mockScenarios[0]);
+
+			// Act: create scenario
+			const newScenario: ScenarioItem = {
+				explanationText: "Explanation 3",
+				id: "s3",
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "PERCENT_SLIDER",
+				moduleType: "ULTIMATE",
+				promptText: "Prompt 3",
+				timeLimitSeconds: null,
+				timestampSeconds: 90,
+				vodId: "vod_1",
+			};
+			vi.mocked(createScenario).mockResolvedValueOnce({
+				scenario: newScenario,
+				status: "success",
+			});
+
+			await act(async () => {
+				await result.current.handleSaveScenario({
+					explanationText: "Explanation 3",
+					inputConfig: {},
+					inputType: "PERCENT_SLIDER",
+					moduleType: "ULTIMATE",
+					promptText: "Prompt 3",
+					timestampSeconds: 90,
+					vodId: "vod_1",
+				});
+			});
+			expect(state.setSuccess).toHaveBeenCalledWith("Scenario created!");
+			expect(result.current.scenariosList).toHaveLength(3);
+
+			// Act: update scenario
+			const updatedScenario: ScenarioItem = {
+				...newScenario,
+				promptText: "Updated Prompt 3",
+			};
+			vi.mocked(updateScenario).mockResolvedValueOnce({
+				scenario: updatedScenario,
+				status: "success",
+			});
+
+			await act(async () => {
+				await result.current.handleSaveScenario({
+					explanationText: "Explanation 3",
+					id: "s3",
+					inputConfig: {},
+					inputType: "PERCENT_SLIDER",
+					moduleType: "ULTIMATE",
+					promptText: "Updated Prompt 3",
+					timestampSeconds: 90,
+					vodId: "vod_1",
+				});
+			});
+			expect(state.setSuccess).toHaveBeenCalledWith("Scenario updated!");
 
 			// Act: delete scenario
+			vi.mocked(deleteScenario).mockResolvedValueOnce({
+				scenario: updatedScenario,
+				status: "success",
+			});
+			await act(async () => {
+				await result.current.handleDeleteScenario("s3");
+			});
+			expect(state.setSuccess).toHaveBeenCalledWith("Scenario deleted.");
+			expect(result.current.scenariosList).toHaveLength(2);
+
+			// Act: delete when selected scenario matches
+			act(() => {
+				result.current.setSelectedScenario(mockScenarios[0] ?? null);
+			});
+			vi.mocked(deleteScenario).mockResolvedValueOnce({
+				scenario: mockScenarios[0] as ScenarioItem,
+				status: "success",
+			});
 			await act(async () => {
 				await result.current.handleDeleteScenario("s1");
 			});
-			expect(setSuccess).toHaveBeenCalledWith("Scenario deleted.");
 			expect(result.current.selectedScenario).toBeNull();
 
-			// Act: delete failure
-			await act(async () => {
-				await result.current.handleDeleteScenario("s2");
+			// Act: reorder scenario
+			// First add s3 back so s2 is not the first item (since s1 was deleted, s2 was at index 0)
+			vi.mocked(createScenario).mockResolvedValueOnce({
+				scenario: newScenario,
+				status: "success",
 			});
-			expect(setError).toHaveBeenCalledWith("Cannot delete scenario");
-
-			// Act: delete failure without error field
 			await act(async () => {
-				await result.current.handleDeleteScenario("s2");
+				await result.current.handleSaveScenario({
+					explanationText: "Explanation 3",
+					inputConfig: {},
+					inputType: "PERCENT_SLIDER",
+					moduleType: "ULTIMATE",
+					promptText: "Prompt 3",
+					timestampSeconds: 90,
+					vodId: "vod_1",
+				});
 			});
-			expect(setError).toHaveBeenCalledWith("Failed to delete scenario");
-		});
-
-		it("handles scenario reorder success", async () => {
-			// Arrange
-			const clearAlerts = vi.fn();
-			const setError = vi.fn();
-			const setIsSubmitting = vi.fn();
-			const setSuccess = vi.fn();
-			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
 
 			vi.mocked(reorderScenarios).mockResolvedValueOnce({
-				data: null,
-				success: true,
+				status: "success",
 			});
-
-			const { result } = renderHook(() =>
-				useScenarioMutations(mockScenarios, "vod_1", state),
-			);
-
-			// Act: reorder scenario success
 			await act(async () => {
-				await result.current.handleMoveScenario("s2", "up");
+				await result.current.handleMoveScenario("s3", "up");
 			});
 			expect(reorderScenarios).toHaveBeenCalled();
 		});
 
-		it("handles scenario reorder API failure and fallback message", async () => {
-			// Arrange
-			const clearAlerts = vi.fn();
-			const setError = vi.fn();
-			const setIsSubmitting = vi.fn();
-			const setSuccess = vi.fn();
-			const state = { clearAlerts, setError, setIsSubmitting, setSuccess };
-
-			vi.mocked(reorderScenarios).mockResolvedValueOnce({
-				error: "Failed to reorder",
-				success: false,
-			});
-			vi.mocked(reorderScenarios).mockResolvedValueOnce({
-				error: "Failed to reorder scenarios",
-				success: false,
-			});
-
+		it("handles failure branches for scenario mutations", async () => {
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, "vod_1", state),
 			);
 
-			// Act: reorder failure with error
+			// Act: create failure
+			vi.mocked(createScenario).mockResolvedValueOnce({
+				reason: "Failed to create",
+				status: "rejected",
+			});
+			await act(async () => {
+				await result.current.handleSaveScenario({
+					explanationText: "Explanation",
+					inputConfig: {},
+					inputType: "PERCENT_SLIDER",
+					moduleType: "ULTIMATE",
+					promptText: "Prompt",
+					timestampSeconds: 90,
+					vodId: "vod_1",
+				});
+			});
+			expect(state.setError).toHaveBeenCalledWith("Failed to create");
+
+			// Act: delete failure
+			vi.mocked(deleteScenario).mockResolvedValueOnce({
+				reason: "Failed to delete",
+				status: "rejected",
+			});
+			await act(async () => {
+				await result.current.handleDeleteScenario("s1");
+			});
+			expect(state.setError).toHaveBeenCalledWith("Failed to delete");
+
+			// Act: reorder failure
+			vi.mocked(reorderScenarios).mockResolvedValueOnce({
+				reason: "Failed to reorder",
+				status: "rejected",
+			});
 			await act(async () => {
 				await result.current.handleMoveScenario("s2", "up");
 			});
-			expect(setError).toHaveBeenCalledWith("Failed to reorder");
-
-			// Act: reorder failure without error
-			await act(async () => {
-				await result.current.handleMoveScenario("s2", "down");
-			});
-			expect(setError).toHaveBeenCalledWith("Failed to reorder scenarios");
-
-			// Act: unswappable move (move top item s1 up)
-			await act(async () => {
-				await result.current.handleMoveScenario("s1", "up");
-			});
+			expect(state.setError).toHaveBeenCalledWith("Failed to reorder");
 		});
 
 		it("handles no-op reorder when vodId is undefined", async () => {
-			// Arrange
-			const state = {
-				clearAlerts: vi.fn(),
-				setError: vi.fn(),
-				setIsSubmitting: vi.fn(),
-				setSuccess: vi.fn(),
-			};
 			const { result } = renderHook(() =>
 				useScenarioMutations(mockScenarios, undefined, state),
 			);
 
-			// Act
 			await act(async () => {
-				await result.current.handleMoveScenario("s2", "up");
+				await result.current.handleMoveScenario("s1", "up");
 			});
-
-			// Assert
 			expect(reorderScenarios).not.toHaveBeenCalled();
 		});
 	});

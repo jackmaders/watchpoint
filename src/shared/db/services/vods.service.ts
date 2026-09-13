@@ -22,13 +22,8 @@ import {
 	type JsonValue,
 	type TableFilterOptions,
 } from "../core";
-import {
-	type HeroRole,
-	type InputType,
-	type ModuleType,
-	scenarios,
-	vods,
-} from "../schema/vods";
+import { type InputType, type ModuleType, scenarios } from "../schema/scenario";
+import { type HeroRole, vods } from "../schema/vod";
 import {
 	insertVodSchema,
 	validateScenarioConfig,
