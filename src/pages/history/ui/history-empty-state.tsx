@@ -5,7 +5,7 @@
  * in-progress training sessions.
  */
 import { Link } from "@tanstack/react-router";
-import type { PlaythroughStatus } from "@/shared/db";
+import type { PlaythroughStatus } from "../model/types";
 
 export function HistoryEmptyState({
 	currentStatus,

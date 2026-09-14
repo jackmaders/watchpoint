@@ -5,11 +5,11 @@
  * to render accuracy metrics, median active-response latency, and chronological scenario breakdowns.
  */
 import { Link } from "@tanstack/react-router";
-import type { PlayerHistoryItem } from "@/shared/db";
 import { formatAccuracy, formatLatency } from "@/shared/lib/metrics";
 import { formatDuration } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { AppLayout } from "@/widgets/layout-main";
+import type { PlayerHistoryItem } from "../model/types";
 
 export interface HistoryIdPageProps {
 	error?: string | null;

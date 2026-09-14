@@ -4,7 +4,10 @@
  * Re-exports the public interface of `src/pages/vods-id-session/` adhering to Feature-Sliced Design (FSD).
  * Exposes loaders, attempt retry hooks, playthrough reducer actions, contracts, overlays, and player components.
  */
-export { loadVodsIdSessionPage } from "./api/loaders";
+export {
+	loadVodsIdSessionPage,
+	sessionPlaythroughQueryOptions,
+} from "./api/loaders";
 export {
 	calculateBackoffDelay,
 	executeRecordAttempt,

@@ -30,15 +30,12 @@ import {
 	type TableFilterOptions,
 	toErrorMessage,
 } from "../core";
-import {
-	attemptRecords,
-	type PlaythroughStatus,
-	playthroughCompletions,
-	playthroughModuleSelections,
-	playthroughs,
-	scenarioSnapshots,
-} from "../schema/playthroughs";
+import { attemptRecords } from "../schema/attempt-record";
+import { type PlaythroughStatus, playthroughs } from "../schema/playthrough";
+import { playthroughCompletions } from "../schema/playthrough-completion";
+import { playthroughModuleSelections } from "../schema/playthrough-module-selection";
 import type { ModuleType } from "../schema/scenario";
+import { scenarioSnapshots } from "../schema/scenario-snapshot";
 
 export const PLAYTHROUGH_START_CONFLICT_ERROR = "Playthrough start conflict";
 export const PLAYTHROUGH_NOT_IN_PROGRESS_ERROR =

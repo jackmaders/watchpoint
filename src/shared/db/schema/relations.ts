@@ -9,15 +9,13 @@
 
 import { defineRelations } from "drizzle-orm";
 import { accounts } from "./account";
+import { attemptRecords } from "./attempt-record";
 import { auditEntries } from "./audit";
-import {
-	attemptRecords,
-	playthroughCompletions,
-	playthroughModuleSelections,
-	playthroughs,
-	scenarioSnapshots,
-} from "./playthroughs";
+import { playthroughs } from "./playthrough";
+import { playthroughCompletions } from "./playthrough-completion";
+import { playthroughModuleSelections } from "./playthrough-module-selection";
 import { scenarios } from "./scenario";
+import { scenarioSnapshots } from "./scenario-snapshot";
 import { sessions } from "./session";
 import { users } from "./user";
 import { verifications } from "./verification";

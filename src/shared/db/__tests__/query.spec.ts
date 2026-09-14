@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_LIMIT, filterToSQL, orderToSQL } from "../query";
 import { auditEntries } from "../schema/audit";
-import { playthroughModuleSelections } from "../schema/playthroughs";
+import { playthroughModuleSelections } from "../schema/playthrough-module-selection";
 
 describe("query helper primitives", () => {
 	it("exposes DEFAULT_LIMIT as 100", () => {

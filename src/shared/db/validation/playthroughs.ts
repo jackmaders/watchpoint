@@ -9,12 +9,10 @@
 
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
-import {
-	attemptRecords,
-	playthroughs,
-	scenarioSnapshots,
-} from "../schema/playthroughs";
+import { attemptRecords } from "../schema/attempt-record";
+import { playthroughs } from "../schema/playthrough";
 import { moduleTypeEnum } from "../schema/scenario";
+import { scenarioSnapshots } from "../schema/scenario-snapshot";
 
 export const selectPlaythroughSchema = createSelectSchema(playthroughs);
 export const insertPlaythroughSchema = createInsertSchema(playthroughs);

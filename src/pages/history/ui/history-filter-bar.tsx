@@ -9,7 +9,7 @@ import type {
 	ModuleType,
 	PlaythroughStatus,
 	PublishedVodItem,
-} from "@/shared/db";
+} from "../model/types";
 
 export const MODULE_LABEL_MAP: Record<ModuleType, string> = {
 	COOLDOWN: "Cooldown",

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { PlayerHistoryItem } from "@/shared/db";
+import type { PlayerHistoryItem } from "../../model/types";
 import { HistoryIdPage } from "../history-id-page";
 
 vi.mock("@tanstack/react-router");

@@ -10,7 +10,7 @@
 import { vi } from "vitest";
 import { getDb } from "../core/__mocks__/client";
 import { dbSuccess } from "../core/result";
-import { playthroughStatusEnum } from "../schema/playthroughs";
+import { playthroughStatusEnum } from "../schema/playthrough";
 import { inputTypeEnum, moduleTypeEnum } from "../schema/scenario";
 import { userRoleEnum } from "../schema/user";
 import { heroRoleEnum } from "../schema/vod";
@@ -219,6 +219,40 @@ export const getUserById = vi.fn(async () => null);
 export const getUserByEmail = vi.fn(async () => null);
 export const updateUser = vi.fn(async () => null);
 export const deleteUser = vi.fn(async () => null);
+
+// Playthrough domain queries
+export const queryPlaythroughs = vi.fn(async () => []);
+export const getPlaythroughById = vi.fn(async () => null);
+export const createPlaythrough = vi.fn(async () => ({
+	id: "mock_playthrough_id",
+}));
+export const updatePlaythrough = vi.fn(async () => ({
+	id: "mock_playthrough_id",
+}));
+export const deletePlaythrough = vi.fn(async () => ({
+	id: "mock_playthrough_id",
+}));
+export const createPlaythroughCompletion = vi.fn(async () => ({
+	id: "mock_comp_id",
+}));
+export const queryPlaythroughCompletions = vi.fn(async () => []);
+export const createPlaythroughModuleSelections = vi.fn(async () => []);
+export const queryPlaythroughModuleSelections = vi.fn(async () => []);
+export const createScenarioSnapshots = vi.fn(async () => []);
+export const queryScenarioSnapshots = vi.fn(async () => []);
+
+// Attempt domain queries
+export const queryAttemptRecords = vi.fn(async () => []);
+export const getAttemptRecordById = vi.fn(async () => null);
+export const createAttemptRecord = vi.fn(async () => ({
+	id: "mock_attempt_id",
+}));
+export const updateAttemptRecord = vi.fn(async () => ({
+	id: "mock_attempt_id",
+}));
+export const deleteAttemptRecord = vi.fn(async () => ({
+	id: "mock_attempt_id",
+}));
 
 // Client & query helpers
 export const createDbClient = vi.fn();

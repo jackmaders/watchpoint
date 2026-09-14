@@ -1,23 +1,51 @@
 /**
  * Route loader initializing the session manifest and durable playthrough generation.
  *
- * Implements `loadVodsIdSessionPage` to fetch the protected session manifest via `getProtectedSessionManifest`,
- * create a new playthrough generation via `startPlaythroughAction`, and initialize scenario snapshot IDs.
+ * Implements `sessionPlaythroughQueryOptions` and `loadVodsIdSessionPage` to fetch the protected session manifest
+ * via `getProtectedSessionManifest`, create a new playthrough generation via `startPlaythroughAction`, and initialize scenario snapshot IDs.
  */
+
+import type { QueryClient } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import {
 	getProtectedSessionManifest,
 	normalizeSessionManifestModules,
 	startPlaythroughAction,
 } from "@/entities/vod";
+import { queryKeys } from "@/shared/api";
 import type { SessionSearch } from "../model/session-search";
 
+export const sessionPlaythroughQueryOptions = (
+	vodId: string,
+	modules?: string,
+) =>
+	queryOptions({
+		queryFn: () =>
+			getProtectedSessionManifest({
+				data: {
+					modules,
+					vodId,
+				},
+			}),
+		queryKey: [...queryKeys.sessionPlaythrough, vodId, modules ?? ""] as const,
+	});
+
 export async function loadVodsIdSessionPage({
+	context,
 	deps,
 	params,
 }: {
+	context?: { queryClient: QueryClient };
 	deps: SessionSearch;
 	params: { id: string };
 }) {
+	if (context?.queryClient) {
+		await context.queryClient.query({
+			...sessionPlaythroughQueryOptions(params.id, deps.modules),
+			staleTime: "static",
+		});
+	}
+
 	const vod = await getProtectedSessionManifest({
 		data: {
 			modules: deps.modules,
