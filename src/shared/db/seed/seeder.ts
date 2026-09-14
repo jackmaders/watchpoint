@@ -8,7 +8,7 @@
  */
 
 import { hashPassword } from "better-auth/crypto";
-import { createDbClient } from "../client";
+import type { createDbClient } from "../client";
 import { accounts } from "../schema/account";
 import { attemptRecords } from "../schema/attempt-record";
 import { auditEntries } from "../schema/audit";
@@ -27,9 +27,7 @@ import {
 } from "./fixtures";
 import { assertLocalSeedTarget, getSeedCredentials } from "./policy";
 
-export async function executeSeed(
-	db: ReturnType<typeof createDbClient> = createDbClient(),
-) {
+export async function executeSeed(db: ReturnType<typeof createDbClient>) {
 	assertLocalSeedTarget();
 	const credentials = getSeedCredentials();
 	const now = new Date();
