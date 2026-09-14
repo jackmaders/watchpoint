@@ -71,6 +71,15 @@ export {
 	type ModuleDefinition,
 } from "./model/modules";
 export { vodManifestApiRouteOptions } from "./model/route-options";
+export type {
+	HeroRole,
+	InputType,
+	ModuleType,
+	PublishedVodItem,
+	ScenarioItem,
+	SessionManifest,
+	VodItem,
+} from "./model/types";
 export {
 	ModuleFilterPills,
 	type ModuleFilterPillsProps,

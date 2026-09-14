@@ -15,7 +15,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { SessionManifest } from "@/shared/db";
+import type { SessionManifest } from "@/entities/vod";
 import {
 	type PlaybackStatus,
 	type SessionMediaAdapterResult,

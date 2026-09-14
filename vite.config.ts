@@ -6,6 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	build: {
 		rollupOptions: {
+			external: ["cloudflare:workers"],
 			onwarn(warning, defaultHandler) {
 				if (
 					warning.message?.includes(

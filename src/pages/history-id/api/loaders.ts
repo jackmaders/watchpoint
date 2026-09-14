@@ -30,9 +30,9 @@ export async function loadHistoryIdPage({
 		});
 	}
 
-	const result = await getPlaythroughHistoryDetail({
+	const result = (await getPlaythroughHistoryDetail({
 		data: { id: params.id },
-	});
+	})) as unknown as import("../model/types").GetHistoryDetailResult;
 
 	return {
 		error: result.status === "rejected" ? result.reason : null,

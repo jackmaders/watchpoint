@@ -12,6 +12,7 @@ import {
 	reorderScenariosRule,
 	updateScenarioRule,
 } from "../scenario-rules";
+import * as validationModule from "../validation";
 
 describe("scenario-rules", () => {
 	const sampleVod = {
@@ -55,7 +56,7 @@ describe("scenario-rules", () => {
 	describe("createScenarioRule", () => {
 		it("rejects when scenario config is invalid", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				error: "Invalid scenario config",
 				valid: false,
 			});
@@ -72,7 +73,7 @@ describe("scenario-rules", () => {
 
 		it("rejects with default message when validation error message is empty", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: false,
 			});
 
@@ -88,7 +89,7 @@ describe("scenario-rules", () => {
 
 		it("rejects when VOD does not exist", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(undefined);
@@ -105,7 +106,7 @@ describe("scenario-rules", () => {
 
 		it("rejects when scenario timestamp exceeds VOD duration", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce({
@@ -128,7 +129,7 @@ describe("scenario-rules", () => {
 
 		it("creates scenario, writes audit log when actorUserId provided, and returns success", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
@@ -165,7 +166,7 @@ describe("scenario-rules", () => {
 				...sampleScenario,
 				timeLimitSeconds: null,
 			};
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
@@ -197,7 +198,7 @@ describe("scenario-rules", () => {
 
 		it("returns rejected when db insert fails", async () => {
 			// Arrange
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
@@ -236,7 +237,7 @@ describe("scenario-rules", () => {
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([
 				sampleScenario,
 			]);
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				error: "Invalid config",
 				valid: false,
 			});
@@ -256,7 +257,7 @@ describe("scenario-rules", () => {
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([
 				sampleScenario,
 			]);
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: false,
 			});
 
@@ -276,7 +277,7 @@ describe("scenario-rules", () => {
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([
 				sampleScenario,
 			]);
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "updateScenario").mockResolvedValueOnce(
@@ -318,7 +319,7 @@ describe("scenario-rules", () => {
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([
 				sampleScenario,
 			]);
-			vi.spyOn(dbQueries, "validateScenarioConfig").mockReturnValueOnce({
+			vi.spyOn(validationModule, "validateScenarioConfig").mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "updateScenario").mockResolvedValueOnce(

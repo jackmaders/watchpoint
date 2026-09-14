@@ -7,7 +7,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AdminVodItem } from "@/shared/db";
 import { compareContentVods, matchesContentFilters } from "./content-filters";
 import type {
 	ContentHeroRoleFilter,
@@ -16,6 +15,7 @@ import type {
 	ContentSortColumn,
 	ContentSortOrder,
 } from "./search-params";
+import type { AdminVodItem } from "./types";
 import { useAdminContentMutations } from "./use-admin-content-mutations";
 
 export interface UseAdminContentOptions {

@@ -10,15 +10,9 @@ const mockAuditLogs: AdminAuditLogItem[] = [
 	{
 		action: "VOD_CREATED",
 		actor: {
-			createdAt: new Date("2026-01-01"),
 			email: "admin@example.com",
-			emailVerified: false,
 			id: "usr_admin",
-			image: null,
-			isTestAccount: false,
 			name: "Admin User",
-			role: "ADMIN",
-			updatedAt: new Date("2026-01-01"),
 		},
 		actorUserId: "usr_admin",
 		createdAt: new Date("2026-01-01T12:00:00Z"),

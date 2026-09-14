@@ -6,6 +6,8 @@
  */
 import type { ModuleType } from "@/shared/db";
 
+export type { ModuleType };
+
 export interface ModuleDefinition {
 	badge: string;
 	color: string;

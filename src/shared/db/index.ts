@@ -1,39 +1,11 @@
 /**
- * Entrypoint public API barrel exposing the complete database layer including core primitives,
- * relational schemas, seed fixtures, and domain services.
- *
- * Implements the layered database architecture public contract defined in ADR-0010. Re-exports
- * Cloudflare D1 connection resolvers and `DbResult<T>` wrappers from `core/`, Drizzle table definitions
- * and enums from `schema/`, domain service instances from `services/`, and validation schemas from `validation/`.
+ * Entrypoint public API barrel exposing the database layer:
+ * single-table schemas, relations, query functions, client factory, query helpers, and seed fixtures.
  */
 
-// Queries & Helpers
-export {
-	buildPaginatedResult,
-	buildWhereConditions,
-	type ClampedPagination,
-	catchDbError,
-	clampPagination,
-	D1DatabaseError,
-	type D1DatabaseErrorOptions,
-	D1ErrorKind,
-	type DbContext,
-	type DbResult,
-	type DrizzleDb,
-	dbFailure,
-	dbSuccess,
-	escapeLike,
-	executeQuery,
-	getDb,
-	type JsonPrimitive,
-	type JsonValue,
-	type PaginatedResult,
-	type PaginationOptions,
-	parseD1Error,
-	type TableFilterOptions,
-	toErrorMessage,
-	tryDb,
-} from "./core";
+// Client factory
+export { createDbClient } from "./client";
+// Queries
 export {
 	createAttemptRecord,
 	deleteAttemptRecord,
@@ -62,7 +34,9 @@ export {
 } from "./queries/playthroughs";
 export {
 	createScenario,
+	createScenarios,
 	deleteScenario,
+	getScenarioById,
 	queryScenarios,
 	reorderScenarios,
 	updateScenario,
@@ -84,15 +58,16 @@ export {
 	queryVods,
 	updateVod,
 } from "./queries/vods";
+// Query helpers
 export {
 	DEFAULT_LIMIT,
 	filterToSQL,
 	orderToSQL,
 	type QueryOptions,
 } from "./query";
+// Schema definitions & enums
 export { accounts } from "./schema/account";
 export { attemptRecords } from "./schema/attempt-record";
-// Schema
 export { auditEntries } from "./schema/audit";
 export {
 	type PlaythroughStatus,
@@ -122,7 +97,7 @@ export {
 	heroRoleEnum,
 	vods,
 } from "./schema/vod";
-// Seed
+// Seed fixtures & runner
 export {
 	assertLocalSeedTarget,
 	executeSeed,
@@ -134,95 +109,5 @@ export {
 	type SeedCredentials,
 	type SeedEnvironment,
 } from "./seed";
-// Domain Services
-export {
-	auditService,
-	authService,
-	playthroughService,
-	vodService,
-} from "./services";
-// Audit
-export type {
-	AuditEntryItem,
-	AuditEntryWithActor,
-	CreateAuditEntryInput,
-	GetAuditLogsOptions,
-} from "./services/audit.service";
-// Auth & Users
-export type {
-	GetUsersOptions,
-	UpdateUserRoleParams,
-	UserItem,
-} from "./services/auth.service";
-// Playthroughs & Telemetry
-export type {
-	AttemptRecordItem,
-	CreatePlaythroughInput,
-	GetPlayerHistoryOptions,
-	PlayerHistoryItem,
-	PlayerHistoryResult,
-	PlaythroughCompletionItem,
-	PlaythroughItem,
-	PlaythroughWithDetails,
-	RecordPlaythroughAttemptInput,
-	ScenarioSnapshotInput,
-} from "./services/playthroughs.service";
-export {
-	IDEMPOTENCY_CONFLICT_ERROR,
-	PLAYTHROUGH_NOT_IN_PROGRESS_ERROR,
-	PLAYTHROUGH_START_CONFLICT_ERROR,
-} from "./services/playthroughs.service";
-// VODs & Scenarios
-export type {
-	AdminVodItem,
-	BulkDeleteVodsInput,
-	BulkOperationResult,
-	BulkPublishVodsInput,
-	CreateScenarioInput,
-	CreateVodInput,
-	DeleteScenarioInput,
-	DeleteVodInput,
-	GetAdminVodsOptions,
-	GetSessionManifestInput,
-	GetSessionManifestOptions,
-	PublishedVodItem,
-	ReorderScenariosInput,
-	ScenarioItem,
-	SessionManifest,
-	SetVodPublicationStatusInput,
-	UpdateScenarioInput,
-	UpdateVodInput,
-	VodItem,
-} from "./services/vods.service";
-export {
-	insertAuditEntrySchema,
-	selectAuditEntrySchema,
-} from "./validation/audit";
-export {
-	insertUserSchema,
-	selectUserSchema,
-	type UpdateUserRoleInput,
-	updateUserRoleInputSchema,
-} from "./validation/auth";
-export {
-	insertAttemptRecordSchema,
-	insertPlaythroughSchema,
-	scenarioSnapshotInputSchema,
-	selectAttemptRecordSchema,
-	selectPlaythroughSchema,
-} from "./validation/playthroughs";
-export {
-	boundedSliderConfigSchema,
-	insertScenarioSchema,
-	insertVodSchema,
-	mapPinConfigSchema,
-	multipleChoiceConfigSchema,
-	multipleChoiceOptionSchema,
-	percentSliderConfigSchema,
-	selectScenarioSchema,
-	selectVodSchema,
-	timeSliderConfigSchema,
-	validateInputConfigByType,
-	validateScenarioConfig,
-	validateVodForPublishing,
-} from "./validation/vods";
+// Type primitives
+export type { JsonPrimitive, JsonValue } from "./types";

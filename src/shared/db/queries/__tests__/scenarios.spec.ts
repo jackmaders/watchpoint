@@ -8,7 +8,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	createScenario,
+	createScenarios,
 	deleteScenario,
+	getScenarioById,
 	queryScenarios,
 	reorderScenarios,
 	updateScenario,
@@ -158,5 +160,66 @@ describe("scenarios domain queries", () => {
 			{ timestampSeconds: 10 },
 			{ timestampSeconds: 20 },
 		]);
+	});
+
+	it("executes createScenarios with empty array returning empty result", async () => {
+		// Act
+		const result = await createScenarios([]);
+
+		// Assert
+		expect(result).toEqual([]);
+	});
+
+	it("executes createScenarios and returns inserted records", async () => {
+		// Arrange
+		const newScenarios = [
+			{
+				explanationText: "Explanation 1",
+				id: "scenario-1",
+				imageUrl: null,
+				inputConfig: { options: [] },
+				inputType: "MULTIPLE_CHOICE" as const,
+				moduleType: "STRATEGY" as const,
+				promptText: "Prompt text 1",
+				timeLimitSeconds: 15,
+				timestampSeconds: 120.5,
+				vodId: "vod-1",
+			},
+		];
+		const mockDb = {
+			insert: () => ({
+				values: (vals: unknown) => ({
+					returning: () => ({
+						all: () => Promise.resolve(vals),
+					}),
+				}),
+			}),
+		} as unknown as Parameters<typeof createScenarios>[1];
+
+		// Act
+		const result = await createScenarios(newScenarios, mockDb);
+
+		// Assert
+		expect(result).toEqual(newScenarios);
+	});
+
+	it("executes getScenarioById and returns scenario row", async () => {
+		// Arrange
+		const mockScenario = { id: "scenario-123", promptText: "Prompt" };
+		const mockDb = {
+			select: () => ({
+				from: () => ({
+					where: () => ({
+						get: () => Promise.resolve(mockScenario),
+					}),
+				}),
+			}),
+		} as unknown as Parameters<typeof getScenarioById>[1];
+
+		// Act
+		const result = await getScenarioById("scenario-123", mockDb);
+
+		// Assert
+		expect(result).toEqual(mockScenario);
 	});
 });

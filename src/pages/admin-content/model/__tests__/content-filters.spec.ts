@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AdminVodItem } from "@/shared/db";
 import { compareContentVods, matchesContentFilters } from "../content-filters";
+import type { AdminVodItem } from "../types";
 
 const mockVods: AdminVodItem[] = [
 	{

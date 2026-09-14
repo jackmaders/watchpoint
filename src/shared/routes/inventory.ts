@@ -1,5 +1,5 @@
 import type { FileRoutesByFullPath } from "../../../app/routeTree.gen";
-import { FIXTURE_IDS } from "../db/seed";
+import { FIXTURE_IDS } from "../db/seed/fixtures";
 
 export const ACCESS_STATES = [
 	"public",

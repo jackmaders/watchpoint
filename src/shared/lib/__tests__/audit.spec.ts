@@ -1,7 +1,7 @@
 /**
  * Unit test suite verifying input validation, authorization guards, and delegation in the audit server function.
  *
- * Validates `getAdminAuditLogs` using Vitest mocks for `requirePermission` and `auditService`, asserting
+ * Validates `getAdminAuditLogs` using Vitest mocks for `requirePermission` and `queryAuditEntries`, asserting
  * schema parsing compliance, error propagation, and correct result payload mapping.
  */
 
@@ -11,7 +11,7 @@ vi.mock("@tanstack/react-start");
 vi.mock("@/shared/db");
 vi.mock("../permissions");
 
-import { auditService } from "@/shared/db";
+import { queryAuditEntries } from "@/shared/db";
 import { getAdminAuditLogs } from "../audit";
 import { requirePermission } from "../permissions";
 
@@ -32,10 +32,7 @@ describe("shared audit server function", () => {
 		// Arrange
 		const mockLogs = [{ action: "UPDATE", id: "audit_1" }];
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(auditService.list).mockResolvedValueOnce({
-			data: { items: mockLogs, page: 1, pageSize: 10, total: 1, totalPages: 1 },
-			success: true,
-		} as never);
+		vi.mocked(queryAuditEntries).mockResolvedValueOnce(mockLogs as never);
 
 		// Act
 		const result = await (
@@ -48,10 +45,10 @@ describe("shared audit server function", () => {
 
 		// Assert
 		expect(requirePermission).toHaveBeenCalledWith("audit:view");
-		expect(auditService.list).toHaveBeenCalledWith({
-			entityId: "vod_1",
+		expect(queryAuditEntries).toHaveBeenCalledWith({
+			filter: { entityId: { eq: "vod_1" } },
 			limit: 10,
-			offset: 0,
+			order: { createdAt: "desc" },
 		});
 		expect(result).toEqual(mockLogs);
 	});
@@ -59,10 +56,7 @@ describe("shared audit server function", () => {
 	it("handles undefined payload defaulting to empty object", async () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(auditService.list).mockResolvedValueOnce({
-			data: { items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 },
-			success: true,
-		} as never);
+		vi.mocked(queryAuditEntries).mockResolvedValueOnce([] as never);
 
 		// Act
 		const result = await (
@@ -75,22 +69,53 @@ describe("shared audit server function", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("throws error when query fails", async () => {
+	it("passes action filter when specified", async () => {
 		// Arrange
 		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
-		vi.mocked(auditService.list).mockResolvedValueOnce({
-			error: "Database error",
-			success: false,
-		} as never);
+		vi.mocked(queryAuditEntries).mockResolvedValueOnce([] as never);
 
-		// Act & Assert
-		await expect(
-			(
-				getAdminAuditLogs as unknown as (ctx: {
-					data?: unknown;
-				}) => Promise<unknown>
-			)({ data: undefined }),
-		).rejects.toThrow("Failed to query audit logs: Database error");
+		// Act
+		await (
+			getAdminAuditLogs as unknown as (ctx: {
+				data?: unknown;
+			}) => Promise<unknown>
+		)({ data: { action: "USER_ROLE_UPDATED" } });
+
+		// Assert
+		expect(queryAuditEntries).toHaveBeenCalledWith({
+			filter: { action: { eq: "USER_ROLE_UPDATED" } },
+			limit: undefined,
+			order: { createdAt: "desc" },
+		});
+	});
+
+	it("passes actorUserId and entityType filters when specified", async () => {
+		// Arrange
+		vi.mocked(requirePermission).mockResolvedValueOnce(mockAdmin);
+		vi.mocked(queryAuditEntries).mockResolvedValueOnce([] as never);
+
+		// Act
+		await (
+			getAdminAuditLogs as unknown as (ctx: {
+				data?: unknown;
+			}) => Promise<unknown>
+		)({
+			data: {
+				action: "ALL",
+				actorUserId: "usr_123",
+				entityType: "VOD",
+			},
+		});
+
+		// Assert
+		expect(queryAuditEntries).toHaveBeenCalledWith({
+			filter: {
+				actorUserId: { eq: "usr_123" },
+				entityType: { eq: "VOD" },
+			},
+			limit: undefined,
+			order: { createdAt: "desc" },
+		});
 	});
 
 	it("throws error for invalid audit payload", async () => {
@@ -98,11 +123,9 @@ describe("shared audit server function", () => {
 		await expect(
 			(
 				getAdminAuditLogs as unknown as (ctx: {
-					data: { limit: number };
+					data: unknown;
 				}) => Promise<unknown>
-			)({
-				data: { limit: -5 },
-			}),
+			)({ data: { limit: -1 } }),
 		).rejects.toThrow("Invalid audit query payload");
 	});
 });

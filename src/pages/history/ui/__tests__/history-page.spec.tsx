@@ -19,7 +19,6 @@ const mockVod: PublishedVodItem = {
 	mapName: "King's Row",
 	rankTier: "Grandmaster",
 	role: "SUPPORT",
-	scenarios: [],
 	title: "GM Ana Gameplay",
 	youtubeVideoId: "yt123",
 };

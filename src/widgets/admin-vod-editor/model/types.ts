@@ -17,8 +17,8 @@ export {
 	heroRoleEnum,
 	inputTypeEnum,
 	moduleTypeEnum,
-	validateVodForPublishing,
 } from "@/shared/db";
+export { validateVodForPublishing } from "./validation";
 export type HeroRole = (typeof heroRoleEnum)[number];
 export type ModuleType = (typeof moduleTypeEnum)[number];
 export type InputType = (typeof inputTypeEnum)[number];

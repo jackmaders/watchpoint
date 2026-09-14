@@ -1,5 +1,5 @@
 /**
- * Defines Zod validation schemas and polymorphic input validators for VOD metadata,
+ * Defines validation schemas and polymorphic input validators for VOD metadata,
  * scenario configurations, and publication readiness checks.
  *
  * Implements domain integrity rules for VOD and scenario authoring. Provides schemas for multiple choice,
@@ -7,10 +7,8 @@
  * as well as publication invariants via `validateVodForPublishing` ensuring every active module has valid scenarios.
  */
 
-import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
-import { inputTypeEnum, moduleTypeEnum, scenarios } from "../schema/scenario";
-import { heroRoleEnum, vods } from "../schema/vod";
+import type { inputTypeEnum, scenarios } from "@/shared/db";
 
 export const multipleChoiceOptionSchema = z.object({
 	id: z.string().min(1),
@@ -112,43 +110,13 @@ export function validateInputConfigByType(
 
 	if (!result.success) {
 		return {
-			/* v8 ignore next */
-			error: result.error.issues[0]?.message ?? "Invalid input configuration",
+			error: result.error.issues[0]?.message,
 			valid: false,
 		};
 	}
 
 	return { valid: true };
 }
-
-export const selectVodSchema = createSelectSchema(vods);
-export const insertVodSchema = createInsertSchema(vods, {
-	durationSeconds: (s) => s.positive("Duration must be a positive integer"),
-	heroName: (s) => s.min(1, "Hero name is required"),
-	mapName: (s) => s.min(1, "Map name is required"),
-	rankTier: (s) => s.min(1, "Rank tier is required"),
-	role: z.enum(heroRoleEnum),
-	title: (s) => s.min(1, "Title is required"),
-	youtubeVideoId: (s) => s.min(1, "YouTube Video ID is required"),
-});
-
-export const selectScenarioSchema = createSelectSchema(scenarios);
-export const insertScenarioSchema = createInsertSchema(scenarios, {
-	explanationText: (s) => s.min(1, "Scenario explanation text is required"),
-	inputType: z.enum(inputTypeEnum),
-	moduleType: z.enum(moduleTypeEnum),
-	promptText: (s) => s.min(1, "Scenario prompt text is required"),
-	timeLimitSeconds: (s) =>
-		s
-			.int("Time limit must be an integer")
-			.positive("Scenario time limit must be a positive integer")
-			.optional()
-			.nullable(),
-	timestampSeconds: (s) =>
-		s
-			.min(0, "Scenario timestamp must be a non-negative number")
-			.refine(Number.isFinite, "Scenario timestamp must be a finite number"),
-});
 
 export function validateScenarioConfig(scenario: {
 	explanationText?: string | null;

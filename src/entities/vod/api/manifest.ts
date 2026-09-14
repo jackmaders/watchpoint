@@ -2,11 +2,12 @@
  * Route request handler for serving pre-loaded VOD session manifests filtered by learning module type.
  *
  * Provides HTTP endpoint adapters `handleGetVodManifest` and `handleVodManifestRequest` for the timeline
- * manifest endpoint. Verifies user authentication, parses module query parameters, invokes `vodService.getSessionManifest`,
+ * manifest endpoint. Verifies user authentication, parses module query parameters, invokes direct query functions,
  * and serializes the ordered scenario bundle as JSON.
  */
-import { vodService } from "@/shared/db";
+import { createDbClient, getVodById, queryScenarios } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
+import type { SessionManifest } from "../model/types";
 import { normalizeSessionManifestModules } from "./session-manifest-query";
 
 export async function handleGetVodManifest(
@@ -19,19 +20,37 @@ export async function handleGetVodManifest(
 
 	const { id } = await params;
 	const url = new URL(request.url);
+	const modules = normalizeSessionManifestModules(
+		url.searchParams.getAll("modules"),
+	);
 
-	const manifestResult = await vodService.getSessionManifest({
-		id,
-		modules: normalizeSessionManifestModules(
-			url.searchParams.getAll("modules"),
-		),
-	});
-
-	if (!manifestResult.success || !manifestResult.data) {
+	const db = createDbClient();
+	const vod = await getVodById(id, db);
+	if (!vod) {
 		return Response.json({ error: "VOD not found" }, { status: 404 });
 	}
 
-	return Response.json(manifestResult.data, { status: 200 });
+	const filter: Record<string, unknown> = {
+		vodId: { eq: id },
+	};
+	if (modules && modules.length > 0) {
+		filter.moduleType = { in: modules };
+	}
+
+	const scenariosList = await queryScenarios(
+		{
+			filter,
+			order: { timestampSeconds: "asc" },
+		},
+		db,
+	);
+
+	const manifest: SessionManifest = {
+		...vod,
+		scenarios: scenariosList,
+	};
+
+	return Response.json(manifest, { status: 200 });
 }
 
 export async function handleVodManifestRequest({

@@ -13,7 +13,7 @@ import {
 	sqliteTable,
 	text,
 } from "drizzle-orm/sqlite-core";
-import type { JsonValue } from "../core/types";
+import type { JsonValue } from "../types";
 import { vods } from "./vod";
 
 export const moduleTypeEnum = [

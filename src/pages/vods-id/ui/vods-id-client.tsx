@@ -14,10 +14,11 @@ import {
 	filterScenariosByModules,
 	MODULE_DEFINITIONS,
 	ModuleFilterPills,
+	type ModuleType,
+	type SessionManifest,
 } from "@/entities/vod";
 import { authClient } from "@/shared/lib/auth-client";
 import { AuthModal } from "@/shared/ui/auth-modal";
-import type { ModuleType, SessionManifest } from "@/widgets/admin-vod-editor";
 
 export interface VodsIdClientProps {
 	registrationEnabled?: boolean;

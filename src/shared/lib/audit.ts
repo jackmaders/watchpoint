@@ -4,20 +4,24 @@
  *
  * Implements `getAdminAuditLogs` as an authenticated TanStack Start server function using `createServerFn`.
  * Enforces the `audit:view` capability via `requirePermission`, validates query pagination and filter parameters
- * through `GetAdminAuditLogsSchema`, and delegates retrieval to `auditService.list` in the shared database layer.
+ * through `GetAdminAuditLogsSchema`, and delegates retrieval to `queryAuditEntries` in the shared database layer.
  */
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { type AuditEntryItem, auditService } from "@/shared/db";
+import { type auditEntries, queryAuditEntries } from "@/shared/db";
 import { requirePermission } from "./permissions";
 
+export type AuditEntryItem = typeof auditEntries.$inferSelect;
+
 export const GetAdminAuditLogsSchema = z.object({
+	action: z.string().optional(),
 	actorUserId: z.string().optional(),
 	entityId: z.string().optional(),
 	entityType: z.string().optional(),
 	limit: z.number().int().positive().optional(),
 	offset: z.number().int().nonnegative().optional(),
+	search: z.string().optional(),
 });
 
 export type GetAdminAuditLogsPayload = z.infer<typeof GetAdminAuditLogsSchema>;
@@ -32,9 +36,17 @@ export const getAdminAuditLogs = createServerFn({ method: "GET" })
 	})
 	.handler(async ({ data }): Promise<AuditEntryItem[]> => {
 		await requirePermission("audit:view");
-		const result = await auditService.list(data);
-		if (!result.success) {
-			throw new Error(`Failed to query audit logs: ${result.error}`);
+		const filter: Record<string, unknown> = {};
+		if (data.actorUserId) filter.actorUserId = { eq: data.actorUserId };
+		if (data.entityId) filter.entityId = { eq: data.entityId };
+		if (data.entityType) filter.entityType = { eq: data.entityType };
+		if (data.action && data.action !== "ALL") {
+			filter.action = { eq: data.action };
 		}
-		return result.data.items;
+
+		return queryAuditEntries({
+			filter,
+			limit: data.limit,
+			order: { createdAt: "desc" },
+		});
 	});

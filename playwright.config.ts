@@ -7,9 +7,7 @@ export default defineConfig({
 		{ name: "chromium", use: { ...devices["Desktop Chrome"] } },
 		{ name: "firefox", use: { ...devices["Desktop Firefox"] } },
 	],
-	reporter: process.env.CI
-		? [["html", { open: "never" }]]
-		: [["html", { open: "on-failure" }]],
+	reporter: [["list"], ["html", { open: "never" }]],
 	retries: process.env.CI ? 2 : 0,
 	testDir: "./e2e",
 	testMatch: "**/*.test.ts",

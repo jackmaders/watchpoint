@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { ModuleType } from "@/shared/db";
+import type { ModuleType } from "../../model/modules";
 import { ModuleFilterPills } from "../module-filter-pills";
 
 describe("ModuleFilterPills", () => {

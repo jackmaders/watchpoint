@@ -1,62 +1,78 @@
 /**
  * User-scoped database operations for creating, retrieving, and completing interactive training playthroughs.
  *
- * Implements user ownership boundary checks around `playthroughService` domain operations. Resolves
+ * Implements user ownership boundary checks around domain operations. Resolves
  * the authenticated user context before delegating CRUD, history listing, and playthrough finalization
- * to the underlying D1 database layer.
+ * to the underlying D1 database layer via direct query functions.
  */
-import type { DbContext } from "@/shared/db";
-import { type CreatePlaythroughInput, playthroughService } from "@/shared/db";
+import {
+	createDbClient,
+	getPlaythroughById,
+	queryAttemptRecords,
+	queryPlaythroughs,
+} from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
+import {
+	completePlaythroughAction,
+	type StartPlaythroughInput,
+	startPlaythroughAction,
+} from "./playthrough";
 
 const AUTHENTICATION_REQUIRED = "Authentication required";
 
-async function requireCurrentUser(
-	context?: DbContext,
-): Promise<{ id: string }> {
-	const user = await getCurrentUser(undefined, context);
+async function requireCurrentUser(): Promise<{ id: string }> {
+	const user = await getCurrentUser();
 	if (!user) throw new Error(AUTHENTICATION_REQUIRED);
 	return user;
 }
 
-type CreateOwnedPlaythroughInput = Omit<CreatePlaythroughInput, "userId">;
-
 export async function createOwnedPlaythrough(
-	input: CreateOwnedPlaythroughInput,
-	context?: DbContext,
+	input: StartPlaythroughInput,
+	db = createDbClient(),
 ) {
-	const user = await requireCurrentUser(context);
-	return playthroughService.create({ ...input, userId: user.id }, context);
+	await requireCurrentUser();
+	return startPlaythroughAction({ ...input }, db);
 }
 
-export async function getOwnedPlaythrough(id: string, context?: DbContext) {
-	const user = await requireCurrentUser(context);
-	return playthroughService.getById({ id, userId: user.id }, context);
+export async function getOwnedPlaythrough(id: string, db = createDbClient()) {
+	const user = await requireCurrentUser();
+	const playthrough = await getPlaythroughById(id, db);
+	if (!playthrough || playthrough.userId !== user.id) {
+		return null;
+	}
+	return playthrough;
 }
 
-export async function getOwnedPlayerHistory(context?: DbContext) {
-	const user = await requireCurrentUser(context);
-	return playthroughService.listHistory({ userId: user.id }, context);
+export async function getOwnedPlayerHistory(db = createDbClient()) {
+	const user = await requireCurrentUser();
+	return queryPlaythroughs({ filter: { userId: { eq: user.id } } }, db);
 }
 
 export async function getOwnedPlaythroughAttempts(
 	playthroughId: string,
-	context?: DbContext,
+	db = createDbClient(),
 ) {
-	const user = await requireCurrentUser(context);
-	return playthroughService.getAttempts(
-		{ playthroughId, userId: user.id },
-		context,
+	const user = await requireCurrentUser();
+	const playthrough = await getPlaythroughById(playthroughId, db);
+	if (!playthrough || playthrough.userId !== user.id) {
+		return [];
+	}
+	return queryAttemptRecords(
+		{
+			filter: {
+				playthroughId: { eq: playthroughId },
+				userId: { eq: user.id },
+			},
+			order: { createdAt: "asc" },
+		},
+		db,
 	);
 }
 
 export async function completeOwnedPlaythrough(
 	playthroughId: string,
-	context?: DbContext,
+	db = createDbClient(),
 ) {
-	const user = await requireCurrentUser(context);
-	return playthroughService.complete(
-		{ id: playthroughId, userId: user.id },
-		context,
-	);
+	await requireCurrentUser();
+	return completePlaythroughAction(playthroughId, db);
 }
