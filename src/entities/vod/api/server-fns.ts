@@ -42,7 +42,27 @@ export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 			},
 			db,
 		);
-		return vodList as PublishedVodItem[];
+		if (vodList.length === 0) {
+			return [];
+		}
+		const scenariosList = await queryScenarios(
+			{
+				filter: {
+					vodId: { in: vodList.map((v) => v.id) },
+				},
+			},
+			db,
+		);
+		const scenariosByVodId = new Map<string, Array<{ id: string }>>();
+		for (const scenario of scenariosList) {
+			const list = scenariosByVodId.get(scenario.vodId) ?? [];
+			list.push({ id: scenario.id });
+			scenariosByVodId.set(scenario.vodId, list);
+		}
+		return vodList.map((vod) => ({
+			...vod,
+			scenarios: scenariosByVodId.get(vod.id) ?? [],
+		}));
 	},
 );
 

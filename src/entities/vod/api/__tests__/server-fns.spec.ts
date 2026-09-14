@@ -29,10 +29,18 @@ describe("entities/vod server-fns", () => {
 		vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_1" });
 	});
 
-	it("fetches published VODs only", async () => {
+	it("fetches published VODs and maps scenarios", async () => {
 		// Arrange
-		const mockVods = [{ id: "vod_1", isPublished: true }] as never;
+		const mockVods = [
+			{ id: "vod_1", isPublished: true },
+			{ id: "vod_2", isPublished: true },
+		] as never;
+		const mockScenarios = [
+			{ id: "sc_1", vodId: "vod_1" },
+			{ id: "sc_2", vodId: "vod_1" },
+		] as never;
 		vi.mocked(queryVods).mockResolvedValueOnce(mockVods);
+		vi.mocked(queryScenarios).mockResolvedValueOnce(mockScenarios);
 
 		// Act
 		const result = await (
@@ -47,7 +55,38 @@ describe("entities/vod server-fns", () => {
 			},
 			expect.anything(),
 		);
-		expect(result).toBe(mockVods);
+		expect(queryScenarios).toHaveBeenCalledWith(
+			{
+				filter: { vodId: { in: ["vod_1", "vod_2"] } },
+			},
+			expect.anything(),
+		);
+		expect(result).toEqual([
+			{
+				id: "vod_1",
+				isPublished: true,
+				scenarios: [{ id: "sc_1" }, { id: "sc_2" }],
+			},
+			{
+				id: "vod_2",
+				isPublished: true,
+				scenarios: [],
+			},
+		]);
+	});
+
+	it("returns empty array when no published VODs exist", async () => {
+		// Arrange
+		vi.mocked(queryVods).mockResolvedValueOnce([]);
+
+		// Act
+		const result = await (
+			getPublishedVods as unknown as () => Promise<unknown>
+		)();
+
+		// Assert
+		expect(result).toEqual([]);
+		expect(queryScenarios).not.toHaveBeenCalled();
 	});
 
 	it("fetches VOD by id", async () => {
