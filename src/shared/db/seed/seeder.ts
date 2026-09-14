@@ -8,7 +8,7 @@
  */
 
 import { hashPassword } from "better-auth/crypto";
-import type { DrizzleDb } from "../core/client";
+import { createDbClient } from "../client";
 import { accounts } from "../schema/account";
 import { attemptRecords } from "../schema/attempt-record";
 import { auditEntries } from "../schema/audit";
@@ -27,7 +27,9 @@ import {
 } from "./fixtures";
 import { assertLocalSeedTarget, getSeedCredentials } from "./policy";
 
-export async function executeSeed(db: DrizzleDb) {
+export async function executeSeed(
+	db: ReturnType<typeof createDbClient> = createDbClient(),
+) {
 	assertLocalSeedTarget();
 	const credentials = getSeedCredentials();
 	const now = new Date();

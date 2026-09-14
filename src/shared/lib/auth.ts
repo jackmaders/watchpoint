@@ -11,9 +11,8 @@ import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
 	accounts,
-	authService,
-	type DbContext,
-	getDb,
+	createDbClient,
+	queryUsers,
 	sessions,
 	type UserRole,
 	users,
@@ -68,9 +67,8 @@ export function createAuthInstance(
 			user: {
 				create: {
 					before: async (user) => {
-						const countResult = await authService.count();
-						const userCount = countResult.success ? countResult.data : 0;
-						if (userCount === 0) {
+						const existingUsers = await queryUsers({ limit: 1 });
+						if (existingUsers.length === 0) {
 							return {
 								data: {
 									...user,
@@ -111,9 +109,8 @@ export function createAuthInstance(
 type AuthInstance = ReturnType<typeof createAuthInstance>;
 let authInstance: AuthInstance | undefined;
 
-export async function getAuth(context?: DbContext): Promise<AuthInstance> {
+export function getAuth(db = createDbClient()): AuthInstance {
 	if (authInstance) return authInstance;
-	const db = await getDb(context);
 	const config = getAuthConfig();
 
 	authInstance = createAuthInstance(db, config);
@@ -146,10 +143,10 @@ async function resolveRequestHeaders(
 
 export async function getCurrentUser(
 	reqHeaders?: Headers | Record<string, string> | null,
-	context?: DbContext,
+	db = createDbClient(),
 ): Promise<CurrentUser | null> {
 	try {
-		const auth = await getAuth(context);
+		const auth = getAuth(db);
 		const headers = await resolveRequestHeaders(reqHeaders);
 
 		if (!headers) {
@@ -175,15 +172,14 @@ export async function getCurrentUser(
 }
 
 export async function isRegistrationOpen(
-	_context?: DbContext,
 	env: Record<string, string | undefined> = process.env,
+	db = createDbClient(),
 ): Promise<boolean> {
 	if (env.BETTER_AUTH_ALLOW_REGISTRATION === "true") {
 		return true;
 	}
-	const countResult = await authService.count();
-	const userCount = countResult.success ? countResult.data : 0;
-	return userCount === 0;
+	const existingUsers = await queryUsers({ limit: 1 }, db);
+	return existingUsers.length === 0;
 }
 
 export async function handleAuthRequest({
@@ -191,7 +187,7 @@ export async function handleAuthRequest({
 }: {
 	request: Request;
 }): Promise<Response> {
-	const auth = await getAuth();
+	const auth = getAuth();
 	return auth.handler(request);
 }
 

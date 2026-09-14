@@ -7,8 +7,11 @@
 "use client";
 
 import { useCallback } from "react";
-import type { ModuleType } from "@/shared/db";
-import { MODULE_DEFINITIONS, type ModuleDefinition } from "../model/modules";
+import {
+	MODULE_DEFINITIONS,
+	type ModuleDefinition,
+	type ModuleType,
+} from "../model/modules";
 
 export interface ModuleFilterPillsProps {
 	availableCounts?: Record<ModuleType, number>;

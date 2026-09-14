@@ -3,13 +3,14 @@
  *
  * Exposes RPC endpoints (`getPublishedVods`, `getVodById`, `getSessionManifest`, `getProtectedSessionManifest`,
  * `startPlaythrough`, `recordAttempt`, `completePlaythrough`) bridging client components and server actions
- * to `vodService` and `playthroughService`.
+ * to D1 query functions.
  */
 import { createServerFn } from "@tanstack/react-start";
 import {
-	type PublishedVodItem,
-	type SessionManifest,
-	vodService,
+	createDbClient,
+	getVodById as dbGetVodById,
+	queryScenarios,
+	queryVods,
 } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
@@ -17,6 +18,7 @@ import {
 	RecordAttemptInputSchema,
 	type RecordAttemptResult,
 } from "../model/attempt";
+import type { PublishedVodItem, SessionManifest } from "../model/types";
 import {
 	completePlaythroughAction,
 	type StartPlaythroughInput,
@@ -32,36 +34,67 @@ export type GetSessionManifestPayload = SessionManifestTransportQuery;
 
 export const getPublishedVods = createServerFn({ method: "GET" }).handler(
 	async (): Promise<PublishedVodItem[]> => {
-		const result = await vodService.listPublished();
-		if (!result.success) {
-			throw new Error(result.error);
-		}
-		return result.data;
+		const db = createDbClient();
+		const vodList = await queryVods(
+			{
+				filter: { isPublished: { eq: true } },
+				order: { createdAt: "desc" },
+			},
+			db,
+		);
+		return vodList as PublishedVodItem[];
 	},
 );
 
 export const getVodById = createServerFn({ method: "GET" })
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await vodService.getById({ id: data.id });
-		if (!result.success) {
-			throw new Error(result.error);
+		const db = createDbClient();
+		const vod = await dbGetVodById(data.id, db);
+		if (!vod) {
+			return null;
 		}
-		return result.data;
+		const scenarios = await queryScenarios(
+			{
+				filter: { vodId: { eq: data.id } },
+				order: { timestampSeconds: "asc" },
+			},
+			db,
+		);
+		return {
+			...vod,
+			scenarios,
+		};
 	});
 
 export const getSessionManifest = createServerFn({ method: "GET" })
 	.validator(normalizeSessionManifestQuery)
 	.handler(async ({ data }): Promise<SessionManifest | null> => {
-		const result = await vodService.getSessionManifest({
-			id: data.vodId,
-			modules: data.modules,
-			publishedOnly: data.publishedOnly,
-		});
-		if (!result.success) {
-			throw new Error(result.error);
+		const db = createDbClient();
+		const vod = await dbGetVodById(data.vodId, db);
+		if (!vod) {
+			return null;
 		}
-		return result.data;
+
+		const filter: Record<string, unknown> = {
+			vodId: { eq: data.vodId },
+		};
+		if (data.modules && data.modules.length > 0) {
+			filter.moduleType = { in: data.modules };
+		}
+
+		const scenarios = await queryScenarios(
+			{
+				filter,
+				order: { timestampSeconds: "asc" },
+			},
+			db,
+		);
+
+		return {
+			...vod,
+			scenarios,
+		};
 	});
 
 export const getProtectedSessionManifest = createServerFn({ method: "GET" })
@@ -71,15 +104,31 @@ export const getProtectedSessionManifest = createServerFn({ method: "GET" })
 			throw new Error("Authentication required");
 		}
 
-		const result = await vodService.getSessionManifest({
-			id: data.vodId,
-			modules: data.modules,
-			publishedOnly: data.publishedOnly,
-		});
-		if (!result.success) {
-			throw new Error(result.error);
+		const db = createDbClient();
+		const vod = await dbGetVodById(data.vodId, db);
+		if (!vod) {
+			return null;
 		}
-		return result.data;
+
+		const filter: Record<string, unknown> = {
+			vodId: { eq: data.vodId },
+		};
+		if (data.modules && data.modules.length > 0) {
+			filter.moduleType = { in: data.modules };
+		}
+
+		const scenarios = await queryScenarios(
+			{
+				filter,
+				order: { timestampSeconds: "asc" },
+			},
+			db,
+		);
+
+		return {
+			...vod,
+			scenarios,
+		};
 	});
 
 export const recordAttempt = createServerFn({ method: "POST" })

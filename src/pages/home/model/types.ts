@@ -1,8 +1,8 @@
 /**
  * Type definitions for home page domain data.
  *
- * Re-exports database PublishedVodItem type for UI presentation isolation.
+ * Re-exports PublishedVodItem type for UI presentation isolation.
  */
-import type { PublishedVodItem } from "@/shared/db";
+import type { PublishedVodItem } from "@/entities/vod";
 
 export type { PublishedVodItem };

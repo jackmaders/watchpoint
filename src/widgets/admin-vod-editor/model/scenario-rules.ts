@@ -13,7 +13,6 @@ import {
 	queryScenarios,
 	reorderScenarios,
 	updateScenario,
-	validateScenarioConfig,
 } from "@/shared/db";
 import type {
 	CreateScenarioPayload,
@@ -26,6 +25,7 @@ import type {
 	UpdateScenarioPayload,
 	UpdateScenarioResult,
 } from "./types";
+import { validateScenarioConfig } from "./validation";
 import type { ActorContext } from "./vod-rules";
 
 export async function createScenarioRule(

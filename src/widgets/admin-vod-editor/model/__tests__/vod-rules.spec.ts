@@ -6,6 +6,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import * as dbQueries from "@/shared/db";
+import * as validationModule from "../validation";
 import {
 	bulkDeleteVodsRule,
 	bulkPublishVodsRule,
@@ -122,7 +123,10 @@ describe("vod-rules", () => {
 			// Arrange
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
-			vi.spyOn(dbQueries, "validateVodForPublishing").mockReturnValueOnce({
+			vi.spyOn(
+				validationModule,
+				"validateVodForPublishing",
+			).mockReturnValueOnce({
 				error: "Cannot publish",
 				valid: false,
 			});
@@ -141,7 +145,10 @@ describe("vod-rules", () => {
 			// Arrange
 			vi.spyOn(dbQueries, "getVodById").mockResolvedValueOnce(sampleVod);
 			vi.spyOn(dbQueries, "queryScenarios").mockResolvedValueOnce([]);
-			vi.spyOn(dbQueries, "validateVodForPublishing").mockReturnValueOnce({
+			vi.spyOn(
+				validationModule,
+				"validateVodForPublishing",
+			).mockReturnValueOnce({
 				valid: false,
 			});
 
@@ -173,7 +180,10 @@ describe("vod-rules", () => {
 					vodId: "vod-1",
 				},
 			]);
-			vi.spyOn(dbQueries, "validateVodForPublishing").mockReturnValueOnce({
+			vi.spyOn(
+				validationModule,
+				"validateVodForPublishing",
+			).mockReturnValueOnce({
 				valid: true,
 			});
 			vi.spyOn(dbQueries, "updateVod").mockResolvedValueOnce(updatedVod);

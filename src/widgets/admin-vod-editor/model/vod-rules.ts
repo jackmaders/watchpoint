@@ -13,7 +13,6 @@ import {
 	type JsonValue,
 	queryScenarios,
 	updateVod,
-	validateVodForPublishing,
 } from "@/shared/db";
 import type {
 	BulkDeleteVodsPayload,
@@ -29,6 +28,7 @@ import type {
 	UpdateVodPayload,
 	UpdateVodResult,
 } from "./types";
+import { validateVodForPublishing } from "./validation";
 
 export interface ActorContext {
 	actorUserId?: string | null;

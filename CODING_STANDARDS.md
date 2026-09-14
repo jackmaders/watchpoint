@@ -93,7 +93,7 @@ Do NOT include explicit section labels or markdown headers (such as `Why:` or `H
 - **Anchor in Repository Context**: Reference established domain terminology from `CONTEXT.md` (e.g., *Session Manifest*, *Attempt Outcome*, *Tactical Drawer*), architecture rules from `CODING_STANDARDS.md`, and architectural decisions from `docs/adr/` (e.g., *ADR-0010*).
 - **Feature-Sliced Design (FSD)**: Files inside `src/pages/`, `src/features/`, `src/entities/`, and `src/shared/` must articulate their role in the FSD hierarchy and describe how consumers or cross-slice public APIs interact with them.
 - **Ultra-Thin Routes (`app/routes/`)**: Route files must document their route binding role and explicitly state the delegated target slice in `src/pages/` or `src/shared/`.
-- **Database Services & Schemas (`src/shared/db/`)**: Must document adherence to ADR-0010 (e.g., service object encapsulation, `DbResult<T>` envelope, boundary invariant enforcement, and zero direct Drizzle leakage).
+- **Database Queries & Schemas (`src/shared/db/`)**: Must document adherence to the D1/Drizzle architecture (e.g., single-table schemas in `schema/`, per-request client passing from `cloudflare:workers`, query functions in `queries/`, zero business logic or service objects in `shared/db`).
 
 ## Test file location
 

@@ -1,200 +1,16 @@
 /**
- * Provides pre-configured mock domain database services and connection providers for isolated
+ * Provides pre-configured mock domain database queries and connection providers for isolated
  * unit and integration testing across consumer modules.
  *
- * Implements the mock isolation standard for ADR-0010. Exports `mockAuditService`, `mockAuthService`,
- * `mockPlaythroughService`, and `mockVodService` instances backed by Vitest `vi.fn()` spies returning
- * `DbResult<T>` success envelopes without invoking real SQLite or Cloudflare D1 operations.
+ * Implements the mock isolation standard for ADR-0010. Backed by Vitest `vi.fn()` spies
+ * without invoking real SQLite or Cloudflare D1 operations.
  */
 
 import { vi } from "vitest";
-import { getDb } from "../core/__mocks__/client";
-import { dbSuccess } from "../core/result";
 import { playthroughStatusEnum } from "../schema/playthrough";
 import { inputTypeEnum, moduleTypeEnum } from "../schema/scenario";
 import { userRoleEnum } from "../schema/user";
 import { heroRoleEnum } from "../schema/vod";
-
-export { getDb };
-
-export const mockAuditService = {
-	count: vi.fn(async () => dbSuccess(0)),
-	create: vi.fn(async () => dbSuccess(null)),
-	getById: vi.fn(async () => dbSuccess(null)),
-	list: vi.fn(async () =>
-		dbSuccess({
-			items: [],
-			page: 1,
-			pageSize: 10,
-			total: 0,
-			totalPages: 1,
-		}),
-	),
-};
-export const auditService = mockAuditService;
-
-export const mockAuthService = {
-	count: vi.fn(async () => dbSuccess(0)),
-	getById: vi.fn(async () => dbSuccess(null)),
-	list: vi.fn(async () =>
-		dbSuccess({
-			items: [],
-			page: 1,
-			pageSize: 10,
-			total: 0,
-			totalPages: 1,
-		}),
-	),
-	updateUserRole: vi.fn(async () =>
-		dbSuccess({
-			createdAt: new Date(),
-			email: "user@example.com",
-			emailVerified: false,
-			id: "mock_user_id",
-			image: null,
-			isTestAccount: false,
-			name: "Mock User",
-			role: "PLAYER" as const,
-			updatedAt: new Date(),
-		}),
-	),
-};
-export const authService = mockAuthService;
-
-export const mockVodService = {
-	bulkDelete: vi.fn(async () =>
-		dbSuccess({
-			failed: [],
-			succeeded: [],
-		}),
-	),
-	bulkPublish: vi.fn(async () =>
-		dbSuccess({
-			failed: [],
-			succeeded: [],
-		}),
-	),
-	create: vi.fn(async () =>
-		dbSuccess({
-			createdAt: new Date(),
-			durationSeconds: 600,
-			heroName: "Ana",
-			id: "mock_vod_id",
-			isPublished: false,
-			mapName: "Kings Row",
-			rankTier: "Grandmaster",
-			role: "SUPPORT" as const,
-			title: "Mock VOD",
-			youtubeVideoId: "mock_video_id",
-		}),
-	),
-	createScenario: vi.fn(async () =>
-		dbSuccess({
-			explanationText: "Mock explanation",
-			id: "mock_scenario_id",
-			imageUrl: null,
-			inputConfig: {},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "STRATEGY" as const,
-			promptText: "Mock prompt",
-			timeLimitSeconds: null,
-			timestampSeconds: 60,
-			vodId: "mock_vod_id",
-		}),
-	),
-	delete: vi.fn(async () => dbSuccess(undefined)),
-	deleteScenario: vi.fn(async () => dbSuccess(undefined)),
-	getById: vi.fn(async () => dbSuccess(null)),
-	getScenarioById: vi.fn(async () => dbSuccess(null)),
-	getScenariosByVodId: vi.fn(async () => dbSuccess([])),
-	getSessionManifest: vi.fn(async () => dbSuccess(null)),
-	listAdmin: vi.fn(async () =>
-		dbSuccess({
-			items: [],
-			page: 1,
-			pageSize: 10,
-			total: 0,
-			totalPages: 1,
-		}),
-	),
-	listPublished: vi.fn(async () => dbSuccess([])),
-	reorderScenarios: vi.fn(async () => dbSuccess(undefined)),
-	setPublicationStatus: vi.fn(async () =>
-		dbSuccess({
-			createdAt: new Date(),
-			durationSeconds: 600,
-			heroName: "Ana",
-			id: "mock_vod_id",
-			isPublished: true,
-			mapName: "Kings Row",
-			rankTier: "Grandmaster",
-			role: "SUPPORT" as const,
-			title: "Mock VOD",
-			youtubeVideoId: "mock_video_id",
-		}),
-	),
-	update: vi.fn(async () =>
-		dbSuccess({
-			createdAt: new Date(),
-			durationSeconds: 600,
-			heroName: "Ana",
-			id: "mock_vod_id",
-			isPublished: false,
-			mapName: "Kings Row",
-			rankTier: "Grandmaster",
-			role: "SUPPORT" as const,
-			title: "Mock VOD",
-			youtubeVideoId: "mock_video_id",
-		}),
-	),
-	updateScenario: vi.fn(async () =>
-		dbSuccess({
-			explanationText: "Updated explanation",
-			id: "mock_scenario_id",
-			imageUrl: null,
-			inputConfig: {},
-			inputType: "MULTIPLE_CHOICE" as const,
-			moduleType: "STRATEGY" as const,
-			promptText: "Updated prompt",
-			timeLimitSeconds: null,
-			timestampSeconds: 60,
-			vodId: "mock_vod_id",
-		}),
-	),
-};
-export const vodService = mockVodService;
-
-export const mockPlaythroughService = {
-	complete: vi.fn(async () => dbSuccess(null)),
-	create: vi.fn(async () =>
-		dbSuccess({
-			completedAt: null,
-			createdAt: new Date(),
-			id: "mock_playthrough_id",
-			status: "IN_PROGRESS" as const,
-			userId: "mock_user_id",
-			vodId: "mock_vod_id",
-		}),
-	),
-	getAttemptByIdempotencyKey: vi.fn(async () => dbSuccess(null)),
-	getAttempts: vi.fn(async () => dbSuccess([])),
-	getById: vi.fn(async () => dbSuccess(null)),
-	getHistoryDetail: vi.fn(async () => dbSuccess(null)),
-	listHistory: vi.fn(async () =>
-		dbSuccess({
-			items: [],
-			page: 1,
-			pageSize: 10,
-			total: 0,
-			totalPages: 1,
-		}),
-	),
-	recordAttempt: vi.fn(async () => dbSuccess(null)),
-};
-export const playthroughService = mockPlaythroughService;
-
-export const validateScenarioConfig = vi.fn(() => ({ valid: true }));
-export const validateVodForPublishing = vi.fn(() => ({ valid: true }));
 
 // Audit domain queries
 export const queryAuditEntries = vi.fn(async () => []);
@@ -219,6 +35,21 @@ export const getUserById = vi.fn(async () => null);
 export const getUserByEmail = vi.fn(async () => null);
 export const updateUser = vi.fn(async () => null);
 export const deleteUser = vi.fn(async () => null);
+
+// VOD domain queries
+export const queryVods = vi.fn(async () => []);
+export const getVodById = vi.fn(async () => null);
+export const createVod = vi.fn(async () => ({ id: "mock_vod_id" }));
+export const updateVod = vi.fn(async () => ({ id: "mock_vod_id" }));
+export const deleteVod = vi.fn(async () => ({ id: "mock_vod_id" }));
+
+// Scenario domain queries
+export const queryScenarios = vi.fn(async () => []);
+export const getScenarioById = vi.fn(async () => null);
+export const createScenario = vi.fn(async () => ({ id: "mock_scenario_id" }));
+export const createScenarios = vi.fn(async () => []);
+export const updateScenario = vi.fn(async () => ({ id: "mock_scenario_id" }));
+export const deleteScenario = vi.fn(async () => ({ id: "mock_scenario_id" }));
 
 // Playthrough domain queries
 export const queryPlaythroughs = vi.fn(async () => []);

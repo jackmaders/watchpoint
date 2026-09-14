@@ -10,13 +10,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/shared/db");
 vi.mock("@/shared/lib/auth");
 
-import { playthroughService } from "@/shared/db";
+import {
+	createDbClient,
+	getPlaythroughById,
+	getUserById,
+	getVodById,
+	queryAttemptRecords,
+	queryPlaythroughCompletions,
+	queryPlaythroughModuleSelections,
+	queryScenarioSnapshots,
+} from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import { getHistoryDetailRule } from "../get-history-detail";
 
 describe("getHistoryDetailRule", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(createDbClient).mockReturnValue({} as never);
 	});
 
 	it("retrieves playthrough history detail for the authenticated user", async () => {
@@ -24,40 +34,126 @@ describe("getHistoryDetailRule", () => {
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({
 			id: "player_123",
 		});
-		const expectedDetail = {
-			accuracy: 100,
-			attempts: [],
-			completedAt: new Date(),
-			completion: null,
-			createdAt: new Date(),
+		vi.mocked(getUserById).mockResolvedValueOnce({
+			id: "player_123",
+			isTestAccount: false,
+		} as never);
+		const createdAt = new Date();
+		const completedAt = new Date();
+		vi.mocked(getPlaythroughById).mockResolvedValueOnce({
+			completedAt,
+			createdAt,
 			id: "playthrough_1",
-			medianLatencyMs: 1200,
-			moduleSelections: [],
-			scenarioSnapshots: [],
-			status: "COMPLETED" as const,
+			status: "COMPLETED",
 			userId: "player_123",
 			vodId: "vod_1",
-		};
-		vi.mocked(playthroughService.getHistoryDetail).mockResolvedValueOnce({
-			data: expectedDetail as never,
-			success: true,
-		});
+		} as never);
+		vi.mocked(queryPlaythroughModuleSelections).mockResolvedValueOnce([
+			{ moduleType: "CALLOUT" },
+		] as never);
+		vi.mocked(queryAttemptRecords).mockResolvedValueOnce([
+			{
+				createdAt,
+				id: "attempt_1",
+				inputValue: null,
+				isCorrect: true,
+				isTimedOut: false,
+				playthroughId: "playthrough_1",
+				responseTimeMs: 1200,
+				scenarioId: "sc_1",
+				scenarioSnapshotId: "snap_1",
+				selectedOptionId: "opt_1",
+				userId: "player_123",
+			},
+		] as never);
+		vi.mocked(queryPlaythroughCompletions).mockResolvedValueOnce([
+			{
+				completedAt,
+				id: "comp_1",
+				playthroughId: "playthrough_1",
+				userId: "player_123",
+			},
+		] as never);
+		vi.mocked(queryScenarioSnapshots).mockResolvedValueOnce([
+			{
+				explanationText: "exp",
+				id: "snap_1",
+				imageUrl: null,
+				inputConfig: {},
+				inputType: "MULTIPLE_CHOICE",
+				moduleType: "CALLOUT",
+				position: 0,
+				promptText: "prompt",
+				scenarioId: "sc_1",
+				timeLimitSeconds: 10,
+				timestampSeconds: 5,
+			},
+		] as never);
+		vi.mocked(getVodById).mockResolvedValueOnce({
+			durationSeconds: 100,
+			id: "vod_1",
+			mapName: "King's Row",
+			rankTier: "GM",
+			title: "VOD 1",
+			youtubeVideoId: "yt123",
+		} as never);
 
 		// Act
 		const result = await getHistoryDetailRule({ id: "playthrough_1" });
 
 		// Assert
 		expect(result).toEqual({
-			data: expectedDetail,
+			data: {
+				accuracy: 100,
+				attempts: [
+					{
+						id: "attempt_1",
+						inputValue: null,
+						isCorrect: true,
+						isTimedOut: false,
+						responseTimeMs: 1200,
+						scenarioSnapshotId: "snap_1",
+						selectedOptionId: "opt_1",
+					},
+				],
+				completedAt,
+				completion: {
+					completedAt,
+					id: "comp_1",
+				},
+				createdAt,
+				id: "playthrough_1",
+				medianLatencyMs: 1200,
+				moduleSelections: [{ moduleType: "CALLOUT" }],
+				scenarioSnapshots: [
+					{
+						explanationText: "exp",
+						id: "snap_1",
+						imageUrl: null,
+						inputConfig: {},
+						inputType: "MULTIPLE_CHOICE",
+						moduleType: "CALLOUT",
+						position: 0,
+						promptText: "prompt",
+						scenarioId: "sc_1",
+						timeLimitSeconds: 10,
+						timestampSeconds: 5,
+					},
+				],
+				status: "COMPLETED",
+				userId: "player_123",
+				vod: {
+					durationSeconds: 100,
+					id: "vod_1",
+					mapName: "King's Row",
+					rankTier: "GM",
+					title: "VOD 1",
+					youtubeVideoId: "yt123",
+				},
+				vodId: "vod_1",
+			},
 			status: "success",
 		});
-		expect(playthroughService.getHistoryDetail).toHaveBeenCalledWith(
-			{
-				playthroughId: "playthrough_1",
-				userId: "player_123",
-			},
-			undefined,
-		);
 	});
 
 	it("returns rejected when user is not authenticated", async () => {
@@ -74,23 +170,79 @@ describe("getHistoryDetailRule", () => {
 		});
 	});
 
-	it("returns rejected when getHistoryDetail returns failure", async () => {
+	it("returns null data when playthrough is not found or belongs to another user", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({
 			id: "player_123",
 		});
-		vi.mocked(playthroughService.getHistoryDetail).mockResolvedValueOnce({
-			error: "Not found",
-			success: false,
-		});
+		vi.mocked(getUserById).mockResolvedValueOnce({
+			id: "player_123",
+			isTestAccount: false,
+		} as never);
+		vi.mocked(getPlaythroughById).mockResolvedValueOnce(undefined as never);
 
 		// Act
 		const result = await getHistoryDetailRule({ id: "playthrough_1" });
 
 		// Assert
 		expect(result).toEqual({
-			reason: "Failed to lookup playthrough detail: Not found",
-			status: "rejected",
+			data: null,
+			status: "success",
 		});
+	});
+
+	it("returns null data when user is a test account", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({
+			id: "player_123",
+		});
+		vi.mocked(getUserById).mockResolvedValueOnce({
+			id: "player_123",
+			isTestAccount: true,
+		} as never);
+
+		// Act
+		const result = await getHistoryDetailRule({ id: "playthrough_1" });
+
+		// Assert
+		expect(result).toEqual({
+			data: null,
+			status: "success",
+		});
+	});
+
+	it("returns item with null completion and null vod when not present", async () => {
+		// Arrange
+		const createdAt = new Date("2026-01-01T00:00:00Z");
+		vi.mocked(getUserById).mockResolvedValueOnce({
+			id: "player_custom",
+			isTestAccount: false,
+		} as never);
+		vi.mocked(getPlaythroughById).mockResolvedValueOnce({
+			completedAt: null,
+			createdAt,
+			id: "playthrough_nulls",
+			status: "IN_PROGRESS",
+			userId: "player_custom",
+			vodId: "vod_missing",
+		} as never);
+		vi.mocked(queryPlaythroughModuleSelections).mockResolvedValueOnce([]);
+		vi.mocked(queryAttemptRecords).mockResolvedValueOnce([]);
+		vi.mocked(queryPlaythroughCompletions).mockResolvedValueOnce([]);
+		vi.mocked(queryScenarioSnapshots).mockResolvedValueOnce([]);
+		vi.mocked(getVodById).mockResolvedValueOnce(undefined);
+
+		// Act
+		const result = await getHistoryDetailRule({
+			id: "playthrough_nulls",
+			userId: "player_custom",
+		});
+
+		// Assert
+		expect(result.status).toBe("success");
+		if (result.status === "success") {
+			expect(result.data?.completion).toBeNull();
+			expect(result.data?.vod).toBeNull();
+		}
 	});
 });

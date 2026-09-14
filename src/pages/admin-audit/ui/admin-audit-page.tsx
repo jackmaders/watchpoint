@@ -8,14 +8,12 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import type { auditEntries, UserItem } from "@/shared/db";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import type { AuditSearchParams } from "../model/search-params";
+import type { AdminAuditLogItem } from "../model/types";
 
-export type AdminAuditLogItem = typeof auditEntries.$inferSelect & {
-	actor?: UserItem | null;
-};
+export type { AdminAuditLogItem };
 
 export interface AdminAuditPageProps {
 	logs: AdminAuditLogItem[];

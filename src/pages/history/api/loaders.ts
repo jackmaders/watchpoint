@@ -32,7 +32,7 @@ export const historyQueryOptions = (deps?: HistorySearchParams) =>
 	});
 
 export async function loadPlayerHistory(deps?: HistorySearchParams) {
-	const historyResult = await getPlayerHistory({
+	const historyResult = (await getPlayerHistory({
 		data: {
 			modules: deps?.modules ? [...deps.modules] : undefined,
 			page: deps?.page,
@@ -40,7 +40,7 @@ export async function loadPlayerHistory(deps?: HistorySearchParams) {
 			status: deps?.status,
 			vodId: deps?.vodId,
 		},
-	});
+	})) as unknown as import("../model/types").GetHistoryResult;
 
 	return {
 		data: historyResult.status === "success" ? historyResult.data : undefined,

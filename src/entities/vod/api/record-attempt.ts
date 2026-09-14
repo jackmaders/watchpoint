@@ -2,10 +2,16 @@
  * Action handler for validating and persisting user scenario attempt telemetry during a training session.
  *
  * Implements `recordAttemptAction` to enforce schema validation via `RecordAttemptInputSchema`, verify
- * authenticated user ownership of the active playthrough snapshot, and idempotently persist the attempt
- * outcome using `playthroughService.recordAttempt`.
+ * authenticated user ownership of the active playthrough snapshot, and persist the attempt
+ * outcome using direct query functions.
  */
-import { type DbContext, playthroughService } from "@/shared/db";
+import {
+	createAttemptRecord,
+	createDbClient,
+	getPlaythroughById,
+	type JsonValue,
+	queryScenarioSnapshots,
+} from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import {
 	type RecordAttemptInput,
@@ -18,25 +24,61 @@ async function belongsToAuthenticatedPlaythrough(
 	scenarioSnapshotId: string,
 	scenarioId: string,
 	userId: string,
-	context?: DbContext,
+	db = createDbClient(),
 ): Promise<boolean> {
-	const result = await playthroughService.getById(
-		{ id: playthroughId, userId },
-		context,
-	);
-	if (!result.success || !result.data) return false;
-	const playthrough = result.data;
+	const playthrough = await getPlaythroughById(playthroughId, db);
+	if (!playthrough || playthrough.userId !== userId) return false;
 	if (playthrough.status !== "IN_PROGRESS") return false;
 
-	return playthrough.scenarioSnapshots.some((snapshot) => {
-		if (snapshot.id !== scenarioSnapshotId) return false;
-		return snapshot.scenarioId === scenarioId;
-	});
+	const snapshots = await queryScenarioSnapshots(
+		{
+			filter: {
+				id: { eq: scenarioSnapshotId },
+				playthroughId: { eq: playthroughId },
+			},
+		},
+		db,
+	);
+
+	return snapshots.some(
+		(snapshot) =>
+			snapshot.id === scenarioSnapshotId && snapshot.scenarioId === scenarioId,
+	);
+}
+
+async function validatePlaythroughOwnership(
+	data: {
+		playthroughId?: string;
+		scenarioSnapshotId?: string;
+		scenarioId: string;
+	},
+	userId: string,
+	db = createDbClient(),
+): Promise<boolean> {
+	const hasPlaythroughId = Boolean(data.playthroughId);
+	const hasScenarioSnapshotId = Boolean(data.scenarioSnapshotId);
+	if (hasPlaythroughId !== hasScenarioSnapshotId) {
+		return false;
+	}
+	if (
+		data.playthroughId &&
+		data.scenarioSnapshotId &&
+		!(await belongsToAuthenticatedPlaythrough(
+			data.playthroughId,
+			data.scenarioSnapshotId,
+			data.scenarioId,
+			userId,
+			db,
+		))
+	) {
+		return false;
+	}
+	return true;
 }
 
 export async function recordAttemptAction(
 	input: RecordAttemptInput,
-	context?: DbContext,
+	db = createDbClient(),
 ): Promise<RecordAttemptResult> {
 	const parsed = RecordAttemptInputSchema.safeParse(input);
 	if (!parsed.success) {
@@ -47,7 +89,7 @@ export async function recordAttemptAction(
 	}
 
 	try {
-		const currentUser = await getCurrentUser(undefined, context);
+		const currentUser = await getCurrentUser();
 		if (!currentUser) {
 			return {
 				error: "Authentication required",
@@ -55,36 +97,24 @@ export async function recordAttemptAction(
 			};
 		}
 		const userId = currentUser.id;
-		const hasPlaythroughId = Boolean(parsed.data.playthroughId);
-		const hasScenarioSnapshotId = Boolean(parsed.data.scenarioSnapshotId);
-		if (hasPlaythroughId !== hasScenarioSnapshotId) {
+		const isValidOwnership = await validatePlaythroughOwnership(
+			parsed.data,
+			userId,
+			db,
+		);
+		if (!isValidOwnership) {
 			return {
 				error: "Playthrough snapshot ownership is required",
 				success: false,
 			};
 		}
 
-		if (
-			parsed.data.playthroughId &&
-			parsed.data.scenarioSnapshotId &&
-			!(await belongsToAuthenticatedPlaythrough(
-				parsed.data.playthroughId,
-				parsed.data.scenarioSnapshotId,
-				parsed.data.scenarioId,
-				userId,
-				context,
-			))
-		) {
-			return {
-				error: "Playthrough snapshot ownership is required",
-				success: false,
-			};
-		}
-
-		const result = await playthroughService.recordAttempt(
+		const attempt = await createAttemptRecord(
 			{
 				idempotencyKey: parsed.data.idempotencyKey,
-				inputValue: parsed.data.inputValue,
+				inputValue:
+					(parsed.data.inputValue as Record<string, JsonValue> | undefined) ??
+					null,
 				isCorrect: parsed.data.isCorrect,
 				isTimedOut: parsed.data.isTimedOut,
 				playthroughId: parsed.data.playthroughId as string,
@@ -94,23 +124,18 @@ export async function recordAttemptAction(
 				selectedOptionId: parsed.data.selectedOptionId ?? null,
 				userId,
 			},
-			context,
+			db,
 		);
 
-		if (!result.success) {
-			return {
-				error: result.error,
-				success: false,
-			};
-		}
-
 		return {
-			attemptId: result.data?.id,
+			attemptId: attempt?.id,
 			success: true,
 		};
-	} catch {
+	} catch (error) {
+		const message =
+			error instanceof Error ? error.message : "Failed to record attempt";
 		return {
-			error: "Failed to record attempt",
+			error: message,
 			success: false,
 		};
 	}

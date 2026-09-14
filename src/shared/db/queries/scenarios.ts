@@ -37,6 +37,20 @@ export function createScenario(values: ScenarioValues, db = createDbClient()) {
 	return db.insert(scenarios).values(values).returning().get();
 }
 
+export function createScenarios(
+	values: ScenarioValues[],
+	db = createDbClient(),
+) {
+	if (values.length === 0) {
+		return Promise.resolve([]);
+	}
+	return db.insert(scenarios).values(values).returning().all();
+}
+
+export function getScenarioById(id: Scenario["id"], db = createDbClient()) {
+	return db.select().from(scenarios).where(eq(scenarios.id, id)).get();
+}
+
 export function updateScenario(
 	id: Scenario["id"],
 	values: Partial<ScenarioValues>,

@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { vodService } from "@/shared/db";
+import {
+	createDbClient,
+	getVodById as dbGetVodById,
+	queryScenarios,
+	queryVods,
+} from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
 import * as recordAttemptModule from "../record-attempt";
 import {
@@ -20,16 +25,14 @@ vi.mock("../record-attempt");
 describe("entities/vod server-fns", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(createDbClient).mockReturnValue({} as never);
 		vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_1" });
 	});
 
 	it("fetches published VODs only", async () => {
 		// Arrange
 		const mockVods = [{ id: "vod_1", isPublished: true }] as never;
-		vi.mocked(vodService.listPublished).mockResolvedValueOnce({
-			data: mockVods,
-			success: true,
-		});
+		vi.mocked(queryVods).mockResolvedValueOnce(mockVods);
 
 		// Act
 		const result = await (
@@ -37,30 +40,21 @@ describe("entities/vod server-fns", () => {
 		)();
 
 		// Assert
-		expect(vodService.listPublished).toHaveBeenCalled();
+		expect(queryVods).toHaveBeenCalledWith(
+			{
+				filter: { isPublished: { eq: true } },
+				order: { createdAt: "desc" },
+			},
+			expect.anything(),
+		);
 		expect(result).toBe(mockVods);
-	});
-
-	it("throws error when dbGetPublishedVods fails", async () => {
-		// Arrange
-		vi.mocked(vodService.listPublished).mockResolvedValueOnce({
-			error: "Failed to fetch vods",
-			success: false,
-		});
-
-		// Act & Assert
-		await expect(
-			(getPublishedVods as unknown as () => Promise<unknown>)(),
-		).rejects.toThrow("Failed to fetch vods");
 	});
 
 	it("fetches VOD by id", async () => {
 		// Arrange
-		const mockVod = { id: "vod_1", title: "VOD 1" } as never;
-		vi.mocked(vodService.getById).mockResolvedValueOnce({
-			data: mockVod,
-			success: true,
-		});
+		const mockVod = { id: "vod_1", title: "VOD 1" };
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(mockVod as never);
+		vi.mocked(queryScenarios).mockResolvedValueOnce([]);
 
 		// Act
 		const result = await (
@@ -70,25 +64,8 @@ describe("entities/vod server-fns", () => {
 		)({ data: { id: "vod_1" } });
 
 		// Assert
-		expect(vodService.getById).toHaveBeenCalledWith({ id: "vod_1" });
-		expect(result).toBe(mockVod);
-	});
-
-	it("throws error when dbGetVodById fails", async () => {
-		// Arrange
-		vi.mocked(vodService.getById).mockResolvedValueOnce({
-			error: "Failed to fetch vod",
-			success: false,
-		});
-
-		// Act & Assert
-		await expect(
-			(
-				getVodById as unknown as (ctx: {
-					data: { id: string };
-				}) => Promise<unknown>
-			)({ data: { id: "vod_1" } }),
-		).rejects.toThrow("Failed to fetch vod");
+		expect(dbGetVodById).toHaveBeenCalledWith("vod_1", expect.anything());
+		expect(result).toEqual({ ...mockVod, scenarios: [] });
 	});
 
 	it("rejects anonymous protected manifest requests", async () => {
@@ -103,16 +80,15 @@ describe("entities/vod server-fns", () => {
 				}) => Promise<unknown>
 			)({ data: { vodId: "vod_123" } }),
 		).rejects.toThrow("Authentication required");
-		expect(vodService.getSessionManifest).not.toHaveBeenCalled();
+		expect(dbGetVodById).not.toHaveBeenCalled();
 	});
 
 	it("loads a protected manifest for an authenticated user", async () => {
 		// Arrange
-		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
-			data: mockManifest,
-			success: true,
-		});
+		const mockVod = { id: "vod_123" } as never;
+		const mockScenarios = [{ id: "sc_1" }] as never;
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(mockVod);
+		vi.mocked(queryScenarios).mockResolvedValueOnce(mockScenarios);
 
 		// Act
 		const result = await (
@@ -124,38 +100,23 @@ describe("entities/vod server-fns", () => {
 		});
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
-			id: "vod_123",
-			modules: ["STRATEGY"],
-			publishedOnly: undefined,
-		});
-		expect(result).toBe(mockManifest);
-	});
-
-	it("throws error when dbGetSessionManifest fails in getProtectedSessionManifest", async () => {
-		// Arrange
-		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
-			error: "Manifest query failed",
-			success: false,
-		});
-
-		// Act & Assert
-		await expect(
-			(
-				getProtectedSessionManifest as unknown as (ctx: {
-					data: { vodId: string };
-				}) => Promise<unknown>
-			)({ data: { vodId: "vod_123" } }),
-		).rejects.toThrow("Manifest query failed");
+		expect(dbGetVodById).toHaveBeenCalledWith("vod_123", expect.anything());
+		expect(queryScenarios).toHaveBeenCalledWith(
+			{
+				filter: { moduleType: { in: ["STRATEGY"] }, vodId: { eq: "vod_123" } },
+				order: { timestampSeconds: "asc" },
+			},
+			expect.anything(),
+		);
+		expect(result).toEqual({ id: "vod_123", scenarios: mockScenarios });
 	});
 
 	it("executes getSessionManifest handler correctly with object payload", async () => {
 		// Arrange
-		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
-			data: mockManifest,
-			success: true,
-		});
+		const mockVod = { id: "vod_123" } as never;
+		const mockScenarios = [{ id: "sc_1" }] as never;
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(mockVod);
+		vi.mocked(queryScenarios).mockResolvedValueOnce(mockScenarios);
 
 		// Act
 		const result = await (
@@ -171,55 +132,59 @@ describe("entities/vod server-fns", () => {
 		});
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
+		expect(dbGetVodById).toHaveBeenCalledWith("vod_123", expect.anything());
+		expect(queryScenarios).toHaveBeenCalledWith(
+			{
+				filter: { moduleType: { in: ["STRATEGY"] }, vodId: { eq: "vod_123" } },
+				order: { timestampSeconds: "asc" },
+			},
+			expect.anything(),
+		);
+		expect(result).toEqual({ id: "vod_123", scenarios: mockScenarios });
+	});
+
+	it("executes getSessionManifest and getProtectedSessionManifest without module filters", async () => {
+		// Arrange
+		const mockVod = { id: "vod_123" } as never;
+		const mockScenarios = [{ id: "sc_1" }] as never;
+		vi.mocked(getCurrentUser).mockResolvedValue({ id: "user_1" });
+		vi.mocked(dbGetVodById).mockResolvedValue(mockVod);
+		vi.mocked(queryScenarios).mockResolvedValue(mockScenarios);
+
+		// Act
+		const resultPublic = await (
+			getSessionManifest as unknown as (ctx: {
+				data: { vodId: string };
+			}) => Promise<unknown>
+		)({ data: { vodId: "vod_123" } });
+		const resultProtected = await (
+			getProtectedSessionManifest as unknown as (ctx: {
+				data: { vodId: string };
+			}) => Promise<unknown>
+		)({ data: { vodId: "vod_123" } });
+
+		// Assert
+		expect(resultPublic).toEqual({ id: "vod_123", scenarios: mockScenarios });
+		expect(resultProtected).toEqual({
 			id: "vod_123",
-			modules: ["STRATEGY"],
-			publishedOnly: true,
+			scenarios: mockScenarios,
 		});
-		expect(result).toBe(mockManifest);
 	});
 
-	it("throws error when dbGetSessionManifest fails in getSessionManifest", async () => {
+	it("returns null in getSessionManifest if VOD does not exist", async () => {
 		// Arrange
-		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
-			error: "Public manifest query failed",
-			success: false,
-		});
-
-		// Act & Assert
-		await expect(
-			(
-				getSessionManifest as unknown as (ctx: {
-					data: { vodId: string };
-				}) => Promise<unknown>
-			)({ data: { vodId: "vod_123" } }),
-		).rejects.toThrow("Public manifest query failed");
-	});
-
-	it("normalizes a blank module filter at the server-function seam", async () => {
-		// Arrange
-		const mockManifest = { id: "vod_123", scenarios: [] } as never;
-		vi.mocked(vodService.getSessionManifest).mockResolvedValueOnce({
-			data: mockManifest,
-			success: true,
-		});
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(undefined as never);
 
 		// Act
 		const result = await (
 			getSessionManifest as unknown as (ctx: {
-				data: { modules: string; vodId: string };
+				data: { vodId: string };
 			}) => Promise<unknown>
-		)({
-			data: { modules: "   ", vodId: "vod_123" },
-		});
+		)({ data: { vodId: "missing_vod" } });
 
 		// Assert
-		expect(vodService.getSessionManifest).toHaveBeenCalledWith({
-			id: "vod_123",
-			modules: undefined,
-			publishedOnly: undefined,
-		});
-		expect(result).toBe(mockManifest);
+		expect(result).toBeNull();
+		expect(queryScenarios).not.toHaveBeenCalled();
 	});
 
 	it("executes recordAttempt validator and handler correctly on valid payload", async () => {
@@ -293,5 +258,51 @@ describe("entities/vod server-fns", () => {
 		// Assert
 		expect(started).toBeDefined();
 		expect(completed).toBeDefined();
+	});
+
+	it("returns null when vod is not found in getVodById", async () => {
+		// Arrange
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(undefined);
+
+		// Act
+		const result = await (
+			getVodById as unknown as (ctx: {
+				data: { id: string };
+			}) => Promise<unknown>
+		)({ data: { id: "missing_vod" } });
+
+		// Assert
+		expect(result).toBeNull();
+	});
+
+	it("returns null when vod is not found in getSessionManifest", async () => {
+		// Arrange
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(undefined);
+
+		// Act
+		const result = await (
+			getSessionManifest as unknown as (ctx: {
+				data: { vodId: string };
+			}) => Promise<unknown>
+		)({ data: { vodId: "missing_vod" } });
+
+		// Assert
+		expect(result).toBeNull();
+	});
+
+	it("returns null when vod is not found in getProtectedSessionManifest", async () => {
+		// Arrange
+		vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "user_1" });
+		vi.mocked(dbGetVodById).mockResolvedValueOnce(undefined);
+
+		// Act
+		const result = await (
+			getProtectedSessionManifest as unknown as (ctx: {
+				data: { vodId: string };
+			}) => Promise<unknown>
+		)({ data: { vodId: "missing_vod" } });
+
+		// Assert
+		expect(result).toBeNull();
 	});
 });

@@ -5,12 +5,12 @@
  * and attempt telemetry payload types for real-time playthrough execution.
  */
 
+import type { SessionManifest } from "@/entities/vod";
 import type {
 	InputType,
 	JsonValue,
 	ModuleType,
 	PlaythroughStatus,
-	SessionManifest,
 } from "@/shared/db";
 
 export type {

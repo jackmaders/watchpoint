@@ -4,13 +4,13 @@
  * Implements `matchesContentFilters` and `compareContentVods` to evaluate publication status, hero role,
  * text search queries, and multi-column sorting (e.g., scenario count, creation date, map name).
  */
-import type { AdminVodItem } from "@/shared/db";
 import type {
 	ContentHeroRoleFilter,
 	ContentPublicationStatus,
 	ContentSortColumn,
 	ContentSortOrder,
 } from "./search-params";
+import type { AdminVodItem } from "./types";
 
 export function matchesContentFilters(
 	vod: AdminVodItem,

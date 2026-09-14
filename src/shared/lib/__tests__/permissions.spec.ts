@@ -150,6 +150,6 @@ describe("permissions", () => {
 		await requirePermission("admin:access", headers);
 
 		// Assert
-		expect(getCurrentUser).toHaveBeenCalledWith(headers, undefined);
+		expect(getCurrentUser).toHaveBeenCalledWith(headers);
 	});
 });

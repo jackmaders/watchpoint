@@ -12,7 +12,7 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import type { JsonValue } from "../core/types";
+import type { JsonValue } from "../types";
 import { playthroughs } from "./playthrough";
 import { scenarios } from "./scenario";
 import { scenarioSnapshots } from "./scenario-snapshot";
