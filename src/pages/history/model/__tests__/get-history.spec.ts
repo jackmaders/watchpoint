@@ -1,3 +1,10 @@
+/**
+ * Tests domain rule logic for player match history retrieval.
+ *
+ * Verifies authenticated retrieval, unauthenticated rejections, and database failure mappings
+ * returning discriminated unions without throwing runtime exceptions.
+ */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/shared/db");
@@ -5,14 +12,14 @@ vi.mock("@/shared/lib/auth");
 
 import { playthroughService } from "@/shared/db";
 import { getCurrentUser } from "@/shared/lib/auth";
-import { getPlayerHistoryData } from "../history";
+import { getHistoryRule } from "../get-history";
 
-describe("getPlayerHistoryData", () => {
+describe("getHistoryRule", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it("queries player history for the authenticated user", async () => {
+	it("queries player history for the authenticated user and returns success", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({
 			id: "player_123",
@@ -30,7 +37,7 @@ describe("getPlayerHistoryData", () => {
 		} as never);
 
 		// Act
-		const result = await getPlayerHistoryData({
+		const result = await getHistoryRule({
 			modules: ["STRATEGY"],
 			page: 1,
 			pageSize: 10,
@@ -39,7 +46,10 @@ describe("getPlayerHistoryData", () => {
 		});
 
 		// Assert
-		expect(result).toEqual(expectedHistory);
+		expect(result).toEqual({
+			data: expectedHistory,
+			status: "success",
+		});
 		expect(playthroughService.listHistory).toHaveBeenCalledWith(
 			{
 				modules: ["STRATEGY"],
@@ -53,17 +63,21 @@ describe("getPlayerHistoryData", () => {
 		);
 	});
 
-	it("throws error when user is not authenticated", async () => {
+	it("returns rejected when user is not authenticated", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
 
-		// Act & Assert
-		await expect(getPlayerHistoryData()).rejects.toThrow(
-			"Authentication required",
-		);
+		// Act
+		const result = await getHistoryRule();
+
+		// Assert
+		expect(result).toEqual({
+			reason: "Authentication required",
+			status: "rejected",
+		});
 	});
 
-	it("throws error when queryPlayerHistory fails", async () => {
+	it("returns rejected when listHistory fails", async () => {
 		// Arrange
 		vi.mocked(getCurrentUser).mockResolvedValueOnce({
 			id: "player_123",
@@ -73,7 +87,13 @@ describe("getPlayerHistoryData", () => {
 			success: false,
 		} as never);
 
-		// Act & Assert
-		await expect(getPlayerHistoryData()).rejects.toThrow("Database error");
+		// Act
+		const result = await getHistoryRule();
+
+		// Assert
+		expect(result).toEqual({
+			reason: "Database error",
+			status: "rejected",
+		});
 	});
 });

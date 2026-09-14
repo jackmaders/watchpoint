@@ -5,15 +5,15 @@
  * and paginated lists of `HistoryItemCard` components.
  */
 import { useCallback } from "react";
+import { Button } from "@/shared/ui/button";
+import { AppLayout } from "@/widgets/layout-main";
+import type { HistorySearchParams } from "../model/search-params";
 import type {
 	ModuleType,
 	PlayerHistoryResult,
 	PlaythroughStatus,
 	PublishedVodItem,
-} from "@/shared/db";
-import { Button } from "@/shared/ui/button";
-import { AppLayout } from "@/widgets/layout-main";
-import type { HistorySearchParams } from "../model/search-params";
+} from "../model/types";
 import { HistoryEmptyState } from "./history-empty-state";
 import { HistoryFilterBar } from "./history-filter-bar";
 import { HistoryItemCard } from "./history-item-card";

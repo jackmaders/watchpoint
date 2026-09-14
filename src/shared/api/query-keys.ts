@@ -8,9 +8,12 @@
 export const queryKeys = {
 	adminVods: ["admin-vods"],
 	audit: ["audit"],
+	history: ["history"],
+	historyDetail: ["history-detail"],
 	home: ["home"],
 	posts: ["posts"],
 	scenarios: ["scenarios"],
+	sessionPlaythrough: ["session-playthrough"],
 	users: ["users"],
 	vods: ["vods"],
 } as const;

@@ -8,8 +8,8 @@
 
 import { useEffect, useRef } from "react";
 import { MODULE_MAP } from "@/entities/vod";
-import type { ModuleType } from "@/shared/db";
 import type { SessionSummaryReport } from "../model/summary";
+import type { ModuleType } from "../model/types";
 
 export interface SessionSummaryPanelProps {
 	onExit: () => void;

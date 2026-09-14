@@ -35,11 +35,31 @@ export {
 	tryDb,
 } from "./core";
 export {
+	createAttemptRecord,
+	deleteAttemptRecord,
+	getAttemptRecordById,
+	queryAttemptRecords,
+	updateAttemptRecord,
+} from "./queries/attempts";
+export {
 	createAuditEntry,
 	deleteAuditEntry,
 	getAuditEntryById,
 	queryAuditEntries,
 } from "./queries/audit";
+export {
+	createPlaythrough,
+	createPlaythroughCompletion,
+	createPlaythroughModuleSelections,
+	createScenarioSnapshots,
+	deletePlaythrough,
+	getPlaythroughById,
+	queryPlaythroughCompletions,
+	queryPlaythroughModuleSelections,
+	queryPlaythroughs,
+	queryScenarioSnapshots,
+	updatePlaythrough,
+} from "./queries/playthroughs";
 export {
 	createScenario,
 	deleteScenario,
@@ -71,17 +91,16 @@ export {
 	type QueryOptions,
 } from "./query";
 export { accounts } from "./schema/account";
+export { attemptRecords } from "./schema/attempt-record";
 // Schema
 export { auditEntries } from "./schema/audit";
 export {
-	attemptRecords,
 	type PlaythroughStatus,
-	playthroughCompletions,
-	playthroughModuleSelections,
 	playthroughStatusEnum,
 	playthroughs,
-	scenarioSnapshots,
-} from "./schema/playthroughs";
+} from "./schema/playthrough";
+export { playthroughCompletions } from "./schema/playthrough-completion";
+export { playthroughModuleSelections } from "./schema/playthrough-module-selection";
 export { relations } from "./schema/relations";
 export {
 	type InputType,
@@ -90,6 +109,7 @@ export {
 	moduleTypeEnum,
 	scenarios,
 } from "./schema/scenario";
+export { scenarioSnapshots } from "./schema/scenario-snapshot";
 export { sessions } from "./schema/session";
 export {
 	type UserRole,

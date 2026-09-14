@@ -5,7 +5,7 @@
  * and initializing `SessionPlayerClient` with playthrough IDs and scenario snapshot collections.
  */
 import { Link } from "@tanstack/react-router";
-import type { SessionManifest } from "@/shared/db";
+import type { SessionManifest } from "../model/types";
 import { SessionPlayerClient } from "./session-player-client";
 
 export interface SessionPlayerPageProps {

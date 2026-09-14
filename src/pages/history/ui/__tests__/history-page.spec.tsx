@@ -4,7 +4,7 @@ import type {
 	PlayerHistoryItem,
 	PlayerHistoryResult,
 	PublishedVodItem,
-} from "@/shared/db";
+} from "../../model/types";
 import { HistoryPage } from "../history-page";
 
 vi.mock("@tanstack/react-router");

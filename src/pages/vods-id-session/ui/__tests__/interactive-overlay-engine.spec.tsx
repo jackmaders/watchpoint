@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { ModuleType } from "@/shared/db";
 import {
 	InteractiveOverlayEngine,
 	normalizeScenarioInput,
 	ScenarioOverlay,
 } from "../../index";
 import type { ScenarioOverlayState } from "../../model/session-contract";
+import type { ModuleType } from "../../model/types";
 
 const options = [
 	{ id: "opt_a", is_correct: true, text: "Take the high ground" },
