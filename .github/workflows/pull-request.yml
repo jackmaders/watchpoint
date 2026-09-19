@@ -99,6 +99,9 @@ jobs:
           browsers: ${{ matrix.browser }}
 
       - name: 🎭 Run Browser Tests
+        env:
+          E2E_SKIP_BUILD: "true"
+          E2E_USE_PREVIEW: "true"
         run: bun run test:browser --project=${{ matrix.browser }}
 
       - name: 📩 Upload Failure Report
