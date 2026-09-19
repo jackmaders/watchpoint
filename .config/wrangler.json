@@ -4,5 +4,6 @@
   "compatibility_date": "2026-09-19",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "workers_dev": true
 }
