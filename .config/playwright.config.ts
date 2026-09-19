@@ -9,15 +9,6 @@ const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
 
-const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
-if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
-
-const webServer = {
-	command: steps.join(" && "),
-	url: BASE_URL,
-	reuseExistingServer: !process.env.CI,
-};
-
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
 	testDir: "../e2e",
@@ -58,5 +49,18 @@ export default defineConfig({
 		},
 	],
 
-	...(process.env.E2E_BASE_URL ? {} : { webServer }),
+	...getWebServerConfig(),
 });
+
+function getWebServerConfig() {
+	if (process.env.E2E_BASE_URL) return {};
+
+	const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
+	if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
+
+	return {
+		command: steps.join(" && "),
+		url: BASE_URL,
+		reuseExistingServer: !process.env.CI,
+	};
+}
