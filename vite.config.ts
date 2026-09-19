@@ -14,9 +14,7 @@ const config = defineConfig({
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),
-		...(process.env.ANALYSE
-			? [visualizer({ filename: "stats.json", template: "raw-data" })]
-			: []),
+		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
 	],
 });
 

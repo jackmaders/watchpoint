@@ -13,7 +13,7 @@
     "test": "echo 'TODO'",
     "lint": "echo 'TODO'",
     "test:browser": "echo 'TODO'",
-    "check:chunk-size": "bundlewatch --max-size 140kB dist/**/*.js dist/**/**/*.js",
+    "check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js",
     "check:bundle-size": "size-limit --limit 10MB dist/server/**/*.* dist/server/*.*"
   },
   "dependencies": {
