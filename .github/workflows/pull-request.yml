@@ -38,6 +38,9 @@ jobs:
       - name: 🏗️ Build Application
         run: bun run build
 
+      - name: 🏗️ Verify Route Tree
+        run: git diff --exit-code **/routeTree.gen.ts
+
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -57,8 +60,8 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🏗️ Verify Route Tree
-        run: bun run routes:check
+      - name: ☁️ Verify Cloudflare Types
+        run: bun run cf:typegen & git diff --exit-code -- cloudflare-env.d.ts
 
   browser-tests:
     name: 🎭 Run Browser Tests
