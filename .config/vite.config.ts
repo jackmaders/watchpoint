@@ -9,10 +9,10 @@ import { defineConfig } from "vite";
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
 	plugins: [
+		tanstackStart(),
 		cloudflare({ viteEnvironment: { name: "ssr" } }),
 		devtools(),
 		tailwindcss(),
-		tanstackStart(),
 		viteReact(),
 		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
 	],
