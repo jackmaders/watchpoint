@@ -11,6 +11,7 @@
 		"build": "vite build -c .config/vite.config.ts",
 		"preview": "wrangler dev dist/server/server.js -c dist/client/wrangler.json --persist-to .wrangler/state",
 		"deploy": "wrangler deploy dist/server/server.js",
+		"deploy:dry-run": "wrangler deploy dist/server/server.js --dry-run",
 		"test": "echo 'TODO'",
 		"lint": "biome lint --config-path=.config/biome.json --write .",
 		"format": "biome format --config-path=.config/biome.json --write .",
@@ -18,8 +19,7 @@
 		"check": "biome check --config-path=.config/biome.json --write .",
 		"test:browser": "playwright test -c .config/playwright.config.ts",
 		"check:types": "tsc --noEmit",
-		"check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js",
-		"check:bundle-size": "size-limit --limit 10MB dist/server/**/*.* dist/server/*.*"
+		"check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js"
 	},
 	"dependencies": {
 		"@tanstack/react-router": "latest",
@@ -33,7 +33,6 @@
 		"@cloudflare/vite-plugin": "^1.56.0",
 		"@cloudflare/workers-types": "^5.20260919.1",
 		"@playwright/test": "^1.63.0",
-		"@size-limit/file": "^14.0.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/devtools-vite": "latest",
 		"@tanstack/react-devtools": "^0.10.12",
@@ -45,7 +44,6 @@
 		"@vitejs/plugin-react": "^6.0.1",
 		"bundlewatch": "^0.4.2",
 		"rollup-plugin-visualizer": "^7.1.1",
-		"size-limit": "^14.0.0",
 		"typescript": "^6.0.2",
 		"vite": "^8.0.0",
 		"wrangler": "^4.135.0"
