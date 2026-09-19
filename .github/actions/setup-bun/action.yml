@@ -7,7 +7,7 @@ runs:
     - name: ⚡ Setup Bun Runtime
       uses: oven-sh/setup-bun@v2
       with:
-        bun-version-file: ".bun-version"
+        bun-version: "1.4.2"
 
     - name: 💾 Cache Bun Store
       uses: actions/cache@v5
