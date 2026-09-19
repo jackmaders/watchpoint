@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Route } from "../index";
 
 describe("Home route component", () => {
+	// biome-ignore lint/style/noNonNullAssertion: required for testing here
 	const HomeComponent = Route.options.component!;
 
 	it("renders the main heading", () => {
