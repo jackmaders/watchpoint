@@ -1,19 +1,24 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";
+const USE_PREVIEW = process.env.E2E_USE_PREVIEW === "true";
 
-const PORT = process.env.PORT || 8787;
-const BASE_URL = `http://localhost:${PORT}`;
+const PREVIEW_BASE_URL = "http://localhost:8787";
+const DEV_BASE_URL = "http://localhost:5173";
+const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
+
+const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
+if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
+
+const webServer = {
+	command: steps.join(" && "),
+	url: BASE_URL,
+	reuseExistingServer: !process.env.CI,
+};
+
+/** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
 	testDir: "../e2e",
 	/* Run tests in files in parallel */
@@ -51,32 +56,7 @@ export default defineConfig({
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
 		},
-
-		/* Test against mobile viewports. */
-		// {
-		//   name: 'Mobile Chrome',
-		//   use: { ...devices['Pixel 5'] },
-		// },
-		// {
-		//   name: 'Mobile Safari',
-		//   use: { ...devices['iPhone 12'] },
-		// },
-
-		/* Test against branded browsers. */
-		// {
-		//   name: 'Microsoft Edge',
-		//   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-		// },
-		// {
-		//   name: 'Google Chrome',
-		//   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-		// },
 	],
 
-	/* Run your local dev server before starting the tests */
-	webServer: {
-		command: "bun run build && bun run preview",
-		url: BASE_URL,
-		reuseExistingServer: !process.env.CI,
-	},
+	...(process.env.E2E_BASE_URL ? {} : { webServer }),
 });
