@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "test": "echo 'TODO'",
     "lint": "echo 'TODO'",
-    "lint:browser": "echo 'TODO'"
+    "test:browser": "echo 'TODO'"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
