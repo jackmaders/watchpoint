@@ -1,16 +1,18 @@
 {
+	"root": false,
 	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
-		"useIgnoreFile": true
+		"useIgnoreFile": true,
+		"root": "."
 	},
 	"files": {
 		"includes": [
 			"**",
 			"!!**/dist",
-			"!src/routeTree.gen.ts",
-			"!src/cloudflare-env.d.ts"
+			"!**/src/routeTree.gen.ts",
+			"!**/src/cloudflare-env.d.ts"
 		]
 	},
 	"formatter": { "enabled": true },
