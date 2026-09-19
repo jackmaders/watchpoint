@@ -5,5 +5,14 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "@tanstack/react-start/server-entry",
 	"observability": { "enabled": true },
-	"workers_dev": true
+	"workers_dev": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "f7d563c1-aa9f-4a83-9efb-3d379b263821",
+			"database_name": "watchpoint-db",
+			"migrations_dir": "../drizzle",
+			"migrations_pattern": "../drizzle/*/migration.sql"
+		}
+	]
 }
