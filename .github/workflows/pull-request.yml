@@ -124,8 +124,8 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: ✨ Check Code Formatting
-        run: bun run lint
+      - name: ✨ Check Code Lint & Format
+        run: bun run check:ci
 
       - name: 🦺 Check Type Safety
         run: bun run check:types
