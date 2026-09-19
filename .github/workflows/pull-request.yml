@@ -24,7 +24,7 @@ jobs:
         run: bun run test
 
   check-build:
-    name: 📦 Verify Bundle Health
+    name: 📦 Verify Build Health
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -54,8 +54,8 @@ jobs:
           path: dist/
           retention-days: 1
 
-  verify-artifacts:
-    name: 🛡️ Verify Generated Artifacts
+  artifact-drift:
+    name: 🛡️ Prevent Artifact Drift
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
