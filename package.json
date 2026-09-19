@@ -6,10 +6,10 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite -c .config/vite.config.ts dev",
     "cf:typegen": "wrangler -c .config/wrangler.json types cloudflare-env.d.ts --include-runtime false",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "vite -c .config/vite.config.ts build",
+    "preview": "vite -c .config/vite.config.ts preview",
     "test": "echo 'TODO'",
     "lint": "echo 'TODO'",
     "test:browser": "echo 'TODO'",
