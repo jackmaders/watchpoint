@@ -123,3 +123,6 @@ jobs:
 
       - name: ✨ Check Code Formatting
         run: bun run lint
+
+      - name: 🦺 Check Type Safety
+        run: bun run check:types
