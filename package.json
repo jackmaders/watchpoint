@@ -10,6 +10,7 @@
     "cf:typegen": "wrangler types cloudflare-env.d.ts --include-runtime false -c .config/wrangler.json",
     "build": "vite build -c .config/vite.config.ts",
     "preview": "wrangler dev dist/server/server.js -c dist/client/wrangler.json --persist-to .wrangler/state",
+    "deploy": "wrangler deploy dist/server/server.js",
     "test": "echo 'TODO'",
     "lint": "echo 'TODO'",
     "test:browser": "playwright test -c .config/playwright.config.ts",
