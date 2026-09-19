@@ -44,8 +44,8 @@ jobs:
       - name: 🧩 Verify Chunk Sizes
         run: bun run check:chunk-size
 
-      - name: 📦 Verify Bundle Size
-        run: bun run check:bundle-size
+      - name: 📦 Verify Worker Deployment
+        run: bun run deploy:dry-run
 
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
