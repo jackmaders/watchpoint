@@ -59,8 +59,10 @@ function getWebServerConfig() {
 	if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
 
 	return {
-		command: steps.join(" && "),
-		url: BASE_URL,
-		reuseExistingServer: !process.env.CI,
+		webserver: {
+			command: steps.join(" && "),
+			url: BASE_URL,
+			reuseExistingServer: !process.env.CI,
+		},
 	};
 }
