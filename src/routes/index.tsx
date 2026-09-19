@@ -6,9 +6,8 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { type FormEvent, useEffect, useState } from "react";
-import { createPost } from "#/db/queries";
-import { postsQueryOptions } from "#/db/query-options";
-import type { PostInsert } from "#/db/validation";
+import type { PostInsert } from "#/api/posts";
+import { createPost, postsQueryOptions } from "#/api/posts";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {

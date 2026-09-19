@@ -65,6 +65,7 @@ function getWebServerConfig() {
 		webServer: {
 			command: steps.join(" && "),
 			url: BASE_URL,
+			// Ensure each run applies migrations and starts the requested server mode.
 			reuseExistingServer: false,
 		},
 	};

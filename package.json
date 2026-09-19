@@ -23,6 +23,7 @@
 		"check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js",
 		"check:bundle-size": "size-limit --limit 10MB dist/server/**/*.* dist/server/*.*",
 		"db:generate": "drizzle-kit generate --config=.config/drizzle.config.ts",
+		"db:check": "bun run db:generate && git diff --exit-code -- drizzle && test -z \"$(git ls-files --others --exclude-standard -- drizzle)\"",
 		"db:migrate": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state -c .config/wrangler.json",
 		"db:migrate:remote": "wrangler d1 migrations apply DB --remote -c .config/wrangler.json"
 	},
