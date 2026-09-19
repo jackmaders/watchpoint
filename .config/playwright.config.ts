@@ -65,7 +65,7 @@ function getWebServerConfig() {
 		webServer: {
 			command: steps.join(" && "),
 			url: BASE_URL,
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: false,
 		},
 	};
 }

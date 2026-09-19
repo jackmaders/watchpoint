@@ -1,19 +1,34 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { type FormEvent, useEffect, useState } from "react";
-import { createPost, getPosts } from "#/db/queries";
+import { createPost } from "#/db/queries";
+import { postsQueryOptions } from "#/db/query-options";
+import type { PostInsert } from "#/db/validation";
 
 export const Route = createFileRoute("/")({
-	loader: () => getPosts(),
+	loader: async ({ context }) => {
+		await context.queryClient.query(postsQueryOptions);
+	},
 	component: Home,
 });
 
 function Home() {
-	const posts = Route.useLoaderData();
+	const { data: posts } = useSuspenseQuery(postsQueryOptions);
 	const createPostFn = useServerFn(createPost);
-	const router = useRouter();
+	const queryClient = useQueryClient();
 	const [isHydrated, setIsHydrated] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const createPostMutation = useMutation({
+		mutationFn: (data: PostInsert) => createPostFn({ data }),
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: postsQueryOptions.queryKey,
+			}),
+	});
 
 	useEffect(() => {
 		setIsHydrated(true);
@@ -25,14 +40,8 @@ function Home() {
 		const name = new FormData(form).get("name");
 		if (typeof name !== "string") return;
 
-		setIsSubmitting(true);
-		try {
-			await createPostFn({ data: { name } });
-			form.reset();
-			await router.invalidate();
-		} finally {
-			setIsSubmitting(false);
-		}
+		await createPostMutation.mutateAsync({ name });
+		form.reset();
 	}
 
 	return (
@@ -44,7 +53,10 @@ function Home() {
 			<form className="mt-4 flex gap-2" onSubmit={handleSubmit}>
 				<label htmlFor="post-name">Post name</label>
 				<input id="post-name" name="name" required type="text" />
-				<button disabled={!isHydrated || isSubmitting} type="submit">
+				<button
+					disabled={!isHydrated || createPostMutation.isPending}
+					type="submit"
+				>
 					Add post
 				</button>
 			</form>

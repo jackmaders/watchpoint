@@ -24,12 +24,15 @@
 		"db:migrate": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state -c .config/wrangler.json"
 	},
 	"dependencies": {
+		"@tanstack/react-query": "^5.103.1",
 		"@tanstack/react-router": "latest",
+		"@tanstack/react-router-ssr-query": "^1.167.3",
 		"@tanstack/react-start": "latest",
 		"drizzle-orm": "^1.0.0-rc.4",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
-		"tailwindcss": "^4.1.18"
+		"tailwindcss": "^4.1.18",
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.14",
