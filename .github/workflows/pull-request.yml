@@ -1,0 +1,116 @@
+name: 🔍 PR Quality Checks
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: 🧪 Run Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: 🧪 Run Unit Tests
+        run: bun run test
+
+  check-build:
+    name: 📦 Verify Bundle Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: 🏗️ Build Application
+        run: bun run build
+
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 1
+
+  verify-artifacts:
+    name: 🛡️ Verify Generated Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: 🏗️ Verify Route Tree
+        run: bun run routes:check
+
+  browser-tests:
+    name: 🎭 Run Browser Tests
+    needs: [check-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+
+      - name: 🌐 Setup Playwright Environment
+        uses: ./.github/actions/setup-playwright
+        with:
+          browsers: ${{ matrix.browser }}
+
+      - name: 🎭 Run Browser Tests
+        run: bun run test:browser --project=${{ matrix.browser }}
+
+      - name: 📩 Upload Failure Report
+        if: ${{ !cancelled() && failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 7
+
+  code-quality:
+    name: ✨ Check Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: ✨ Check Code Formatting
+        run: bun run lint
