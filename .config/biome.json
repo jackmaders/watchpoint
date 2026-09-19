@@ -11,6 +11,9 @@
 		"includes": [
 			"**",
 			"!!**/dist",
+			"!!**/.wrangler",
+			"!!**/drizzle",
+			"!!**/test-results",
 			"!**/src/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]

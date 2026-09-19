@@ -55,7 +55,10 @@ export default defineConfig({
 function getWebServerConfig() {
 	if (process.env.E2E_BASE_URL) return {};
 
-	const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
+	const steps = [
+		"bun run db:migrate",
+		USE_PREVIEW ? "bun run preview" : "bun run dev",
+	];
 	if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
 
 	return {

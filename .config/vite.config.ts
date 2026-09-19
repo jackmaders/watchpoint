@@ -9,11 +9,11 @@ import { defineConfig } from "vite";
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
 	plugins: [
-		tanstackStart(),
 		cloudflare({
 			configPath: ".config/wrangler.json",
 			viteEnvironment: { name: "ssr" },
 		}),
+		tanstackStart(),
 		devtools(),
 		tailwindcss(),
 		viteReact(),
