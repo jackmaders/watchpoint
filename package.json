@@ -10,7 +10,10 @@
     "routes:generate": "bun --bun tsr generate",
     "routes:check": "bun run routes:generate && git diff --exit-code **/routeTree.gen.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo 'TODO'",
+    "lint": "echo 'TODO'",
+    "lint:browser": "echo 'TODO'"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
