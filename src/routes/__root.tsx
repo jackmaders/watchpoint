@@ -24,7 +24,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 					content: "width=device-width, initial-scale=1",
 				},
 				{
-					title: "TanStack Start Starter",
+					title: "Watchpoint — keep the important signal in sight",
 				},
 			],
 			links: [
@@ -70,13 +70,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 function RootNotFound() {
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center p-8">
-			<h1 className="font-bold text-2xl">404 - Page Not Found</h1>
-			<p className="mt-2 text-gray-600">
-				The page you were looking for does not exist.
+		<div className="flex min-h-screen flex-col items-center justify-center bg-background p-8 text-center">
+			<p className="font-mono text-muted-foreground text-xs uppercase tracking-brand">
+				Signal lost
 			</p>
-			<Link className="mt-4 text-blue-500 hover:underline" to="/">
-				Go to Home
+			<h1 className="mt-3 font-heading font-medium text-4xl tracking-tight">
+				404 — Page not found
+			</h1>
+			<p className="mt-3 max-w-md text-muted-foreground">
+				That route is outside the current watchpoint.
+			</p>
+			<Link
+				className="mt-6 text-primary text-sm underline-offset-4 hover:underline"
+				to="/"
+			>
+				Return to the signal desk
 			</Link>
 		</div>
 	);

@@ -21,6 +21,20 @@ bun --bun run build
 
 This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
+### shadcn/ui
+
+The UI uses the current Tailwind v4 shadcn setup. `components.json` is the
+source of truth for the component aliases and theme configuration, while
+generated primitives live in `src/components/ui`. Add components with:
+
+```bash
+bunx shadcn@latest add <component>
+```
+
+Keep application-specific composition in `src/components` and keep the
+generated primitives small and local. Shared class merging is exposed through
+`src/lib/utils.ts`.
+
 ### Removing Tailwind CSS
 
 If you prefer not to use Tailwind CSS:
@@ -171,6 +185,38 @@ function PeopleComponent() {
   )
 }
 ```
+
+## Authentication
+
+Authentication is wired with [Better Auth](https://better-auth.com/) using its
+official TanStack Start cookie plugin and the Drizzle adapter over the existing
+Cloudflare D1 database:
+
+- `src/lib/auth.ts` is server-only and owns the Better Auth instance.
+- `src/lib/auth-client.ts` is the browser client and uses the same `/api/auth`
+  base path.
+- `src/routes/api/auth/$.ts` mounts Better Auth's GET and POST handlers.
+- `src/lib/auth.functions.ts` provides server-side session helpers for route
+  `beforeLoad` guards and protected server functions.
+- `src/db/auth-schema.ts` and the generated Drizzle migration own the Better
+  Auth tables alongside the existing `posts` table.
+
+Create local secrets before starting the app:
+
+```bash
+cp .dev.vars.example .dev.vars
+# Replace BETTER_AUTH_SECRET in .dev.vars with a value from:
+openssl rand -base64 32
+bun run db:migrate
+bun --bun run dev
+```
+
+For production, set `BETTER_AUTH_SECRET` with `wrangler secret put` and set
+`BETTER_AUTH_URL` to the deployed origin. Keep the cookie plugin last in the
+Better Auth plugin list so TanStack Start can attach auth cookies to responses.
+When a resource becomes private, authorize it at the server boundary with
+`ensureSession`; route redirects are a second layer for navigation UX, not a
+replacement for server-side authorization.
 
 Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
 

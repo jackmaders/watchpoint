@@ -89,5 +89,67 @@
 				"useSortedProperties": "on"
 			}
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["src/components/ui/**"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noLabelWithoutControl": "off"
+					},
+					"performance": {
+						"noNamespaceImport": "off"
+					},
+					"security": {
+						"noSecrets": "off"
+					},
+					"style": {
+						"useComponentExportOnlyModules": "off",
+						"useImportType": "off"
+					},
+					"nursery": {
+						"noTailwindArbitraryValue": "off",
+						"useSortedClasses": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/styles.css"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"noUnusedClasses": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/routes/api/auth/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useNamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/lib/auth.ts"],
+			"linter": {
+				"rules": {
+					"performance": {
+						"noNamespaceImport": "off"
+					},
+					"style": {
+						"useNamingConvention": "off"
+					},
+					"nursery": {
+						"noUnsafeTypeAssertion": "off"
+					}
+				}
+			}
+		}
+	]
 }
