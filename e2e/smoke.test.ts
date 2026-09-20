@@ -2,7 +2,7 @@
 import { expect, test } from "@playwright/test";
 
 const GETTING_STARTED_TEXT_PATTERN =
-	/Edit src\/routes\/index\.tsx to get started\./i;
+	/Edit src\/app\/routes\/index\.tsx to get started\./i;
 
 test.describe("Home page", () => {
 	test.beforeEach(async ({ page }) => {
@@ -22,6 +22,6 @@ test.describe("Home page", () => {
 		await expect(guideText).toBeVisible();
 
 		const codeSnippet = page.locator("code");
-		await expect(codeSnippet).toHaveText("src/routes/index.tsx");
+		await expect(codeSnippet).toHaveText("src/app/routes/index.tsx");
 	});
 });

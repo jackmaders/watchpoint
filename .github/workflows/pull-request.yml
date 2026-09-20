@@ -38,9 +38,6 @@ jobs:
       - name: 🏗️ Build Application
         run: bun run build
 
-      - name: 🗃️ Verify Database Migrations
-        run: bun run db:check
-
       - name: 🔀 Verify Route Tree
         run: git diff --exit-code **/routeTree.gen.ts
 
@@ -70,7 +67,13 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: ☁️ Verify Cloudflare Types
-        run: bun run cf:typegen & git diff --exit-code -- cloudflare-env.d.ts
+        run: bun run cf:typegen && git diff --exit-code -- src/cloudflare-env.d.ts
+
+      - name: 🗃️ Verify Database Migrations
+        run: |
+          bun run db:generate
+          git diff --exit-code -- drizzle
+          test -z "$(git ls-files --others --exclude-standard -- drizzle)"
 
   browser-tests:
     name: 🎭 Run Browser Tests
@@ -117,6 +120,9 @@ jobs:
 
       - name: ✨ Check Code Lint & Format
         run: bun run check:ci
+
+      - name: 🧱 Check Feature-Sliced Architecture
+        run: bun run check:architecture
 
       - name: 🧭 Check Dependency Graph
         run: bun run check:knip

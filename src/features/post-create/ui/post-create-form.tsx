@@ -1,10 +1,10 @@
 import type { SubmitEvent } from "react";
 import { useCallback, useId } from "react";
-import { useCreatePostMutation } from "@/api/posts";
+import { usePostCreateMutation } from "../api/use-post-create-mutation";
 
-export function CreatePostForm() {
+export function PostCreateForm() {
 	const postNameId = useId();
-	const { isPending, mutateAsync } = useCreatePostMutation();
+	const { isPending, mutateAsync } = usePostCreateMutation();
 
 	const handleSubmit = useCallback(
 		async (event: SubmitEvent<HTMLFormElement>) => {

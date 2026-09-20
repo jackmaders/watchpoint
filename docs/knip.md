@@ -31,9 +31,10 @@ as a substitute for fixing the module graph.
 - The route files and browser tests are explicit entry boundaries. The Vite,
   Vitest, Playwright, Drizzle, Biome, Wrangler, and Lefthook plugins discover
   their configured files under `.config`.
-- Generated `src/routeTree.gen.ts` and `src/cloudflare-env.d.ts` are excluded
-  from the project set. They remain available to resolution through imports,
-  but are not treated as hand-maintained source files.
+- Generated `src/app/routeTree.gen.ts` is an explicit production entry boundary,
+  while `src/cloudflare-env.d.ts` is excluded from the project set. The route
+  tree remains available to resolution through imports, but is not treated as
+  hand-maintained source.
 - CSS is part of the project set so the `@import "tailwindcss"` reference is
   visible to the dependency graph.
 - `cloudflare` is ignored only because `cloudflare:workers` is a Cloudflare
@@ -60,7 +61,7 @@ use this dependency and integration policy:
    add `@better-auth/drizzle-adapter` to `dependencies` and configure its
    SQLite provider. Do not install both adapters without a concrete need.
 3. For TanStack Start, mount `auth.handler(request)` in
-   `src/routes/api/auth/$.ts` for both GET and POST, following the official
+   `src/app/routes/api/auth/$.ts` for both GET and POST, following the official
    integration route shape.
 4. Add `tanstackStartCookies()` as the last Better Auth plugin. This repository
    already has Wrangler’s `nodejs_compat` flag, which Better Auth’s Cloudflare

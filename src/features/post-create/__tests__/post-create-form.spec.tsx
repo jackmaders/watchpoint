@@ -1,14 +1,14 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
-import { useCreatePostMutation } from "@/api/posts";
-import { CreatePostForm } from "../create-post-form";
+import { usePostCreateMutation } from "../api/use-post-create-mutation";
+import { PostCreateForm } from "../ui/post-create-form";
 
-vi.mock("@/api/posts");
+vi.mock("../api/use-post-create-mutation");
 
-describe("CreatePostForm", () => {
+describe("PostCreateForm", () => {
 	test("renders the post name field and submit button", () => {
-		render(<CreatePostForm />);
+		render(<PostCreateForm />);
 
 		expect(screen.getByLabelText("Post name")).toBeInTheDocument();
 		expect(
@@ -18,7 +18,7 @@ describe("CreatePostForm", () => {
 
 	test("creates a post and clears the form", async () => {
 		const user = userEvent.setup();
-		render(<CreatePostForm />);
+		render(<PostCreateForm />);
 
 		const input = screen.getByLabelText("Post name");
 		await user.type(input, "First post");
@@ -27,7 +27,7 @@ describe("CreatePostForm", () => {
 			user.click(screen.getByRole("button", { name: "Add post" })),
 		);
 
-		expect(useCreatePostMutation().mutateAsync).toHaveBeenCalledWith({
+		expect(usePostCreateMutation().mutateAsync).toHaveBeenCalledWith({
 			name: "First post",
 		});
 		expect(input).toHaveValue("");
@@ -35,7 +35,7 @@ describe("CreatePostForm", () => {
 
 	test("does not create a post when the name is blank", async () => {
 		const user = userEvent.setup();
-		render(<CreatePostForm />);
+		render(<PostCreateForm />);
 
 		const input = screen.getByLabelText("Post name");
 		await user.type(input, "   ");
@@ -44,6 +44,6 @@ describe("CreatePostForm", () => {
 			user.click(screen.getByRole("button", { name: "Add post" })),
 		);
 
-		expect(useCreatePostMutation().mutateAsync).not.toHaveBeenCalled();
+		expect(usePostCreateMutation().mutateAsync).not.toHaveBeenCalled();
 	});
 });
