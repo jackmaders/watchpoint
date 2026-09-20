@@ -6,10 +6,6 @@ async function readSession() {
 	return auth.api.getSession({ headers: getRequestHeaders() });
 }
 
-export const getSession = createServerFn({ method: "GET" }).handler(
-	readSession,
-);
-
 export const ensureSession = createServerFn({ method: "GET" }).handler(
 	async () => {
 		const session = await readSession();

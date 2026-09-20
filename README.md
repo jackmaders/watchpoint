@@ -196,8 +196,8 @@ Cloudflare D1 database:
 - `src/lib/auth-client.ts` is the browser client and uses Better Auth's
   same-origin `/api/auth` default.
 - `src/routes/api/auth/$.ts` mounts Better Auth's GET and POST handlers.
-- `src/lib/auth.functions.ts` provides server-side session helpers for route
-  `beforeLoad` guards and protected server functions.
+- `src/lib/auth.functions.ts` provides the server-side session helper used by
+  protected server functions.
 - `src/db/auth-schema.ts` and the generated Drizzle migration own the Better
   Auth tables alongside the existing `posts` table.
 
@@ -205,7 +205,7 @@ Create local secrets before starting the app:
 
 ```bash
 cp .config/.dev.vars.example .config/.dev.vars
-# Replace BETTER_AUTH_SECRET in .dev.vars with a value from:
+# Replace BETTER_AUTH_SECRET in .config/.dev.vars with a value from:
 openssl rand -base64 32
 bun run db:migrate
 bun --bun run dev
@@ -231,3 +231,10 @@ Loaders simplify your data fetching logic dramatically. Check out more informati
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
 
 For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+
+## Dependency Health
+
+Run `bun run check:knip` for the full and strict-production checks, or run either
+focused script separately. See the
+[Knip and Better Auth integration guide](docs/knip.md) for the rules,
+exceptions, and authentication dependency policy.
