@@ -1,5 +1,5 @@
 {
-	"include": ["**/*.ts", "**/*.tsx"],
+	"include": ["**/*.ts", "**/*.tsx", ".config/**/*.ts"],
 	"compilerOptions": {
 		"target": "ES2022",
 		"jsx": "react-jsx",
@@ -11,8 +11,8 @@
 		"types": [
 			"vite/client",
 			"vitest/globals",
-			"@types/bun",
-			"@types/node",
+			"bun",
+			"node",
 			"@cloudflare/workers-types",
 			"@testing-library/jest-dom/vitest"
 		],
