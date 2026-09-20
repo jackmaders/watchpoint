@@ -8,6 +8,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod/v4";
 import { getDb } from "@/db/db.server";
 import { posts } from "@/db/schema";
+import { ensureSession } from "@/lib/auth.functions";
 
 const postInsertSchema = createInsertSchema(posts, {
 	name: z.string().trim().min(1),
@@ -26,6 +27,7 @@ export const getPosts = createServerFn().handler(async () => {
 export const createPost = createServerFn({ method: "POST" })
 	.validator(postInsertSchema)
 	.handler(async ({ data }) => {
+		await ensureSession();
 		const db = getDb();
 		const [post] = await db.insert(posts).values(data).returning();
 		return postSelectSchema.parse(post);

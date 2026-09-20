@@ -1,3 +1,0 @@
-# Generate a high-entropy value with: openssl rand -base64 32
-BETTER_AUTH_SECRET=replace-with-a-32-character-secret
-BETTER_AUTH_URL=http://localhost:3000
