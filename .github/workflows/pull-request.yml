@@ -96,24 +96,12 @@ jobs:
           name: build-output
           path: dist/
 
-      - name: 🌐 Setup Playwright Environment
-        uses: ./.github/actions/setup-playwright
-        with:
-          browsers: ${{ matrix.browser }}
-
       - name: 🎭 Run Browser Tests
-        env:
-          E2E_SKIP_BUILD: "true"
-          E2E_USE_PREVIEW: "true"
-        run: bun run test:browser --project=${{ matrix.browser }}
-
-      - name: 📩 Upload Failure Report
-        if: ${{ !cancelled() && failure() }}
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/run-playwright
         with:
-          name: playwright-report-${{ matrix.browser }}
-          path: playwright-report/
-          retention-days: 7
+          browser: ${{ matrix.browser }}
+          use-preview: "true"
+          report-name: playwright-report-${{ matrix.browser }}
 
   code-quality:
     name: ✨ Check Code Quality
