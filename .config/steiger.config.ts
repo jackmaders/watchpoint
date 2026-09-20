@@ -4,11 +4,7 @@ import { defineConfig } from "steiger";
 export default defineConfig([
 	...fsd.configs.recommended,
 	{
-		ignores: [
-			"../**/__mocks__/**",
-			"../src/cloudflare-env.d.ts",
-			"../src/app/routeTree.gen.ts",
-		],
+		ignores: ["../**/__mocks__/**"],
 	},
 	{
 		files: ["../src/features/**", "../src/widgets/**"],
