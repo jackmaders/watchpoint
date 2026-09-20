@@ -1,6 +1,6 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useCallback, useId, useState } from "react";
-import { authClient } from "@/shared/auth-client";
+import { authClient } from "@/shared/auth";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -32,7 +32,7 @@ export function SessionPanel() {
 		);
 	}, []);
 	const handleSubmit = useCallback(
-		async (event: FormEvent<HTMLFormElement>) => {
+		async (event: SubmitEvent<HTMLFormElement>) => {
 			event.preventDefault();
 			setError(null);
 			setIsSubmitting(true);
