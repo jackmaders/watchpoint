@@ -204,7 +204,7 @@ The database connection is also shared infrastructure:
 
 ```text
 src/shared/db/db.server.ts
-src/shared/db/index.ts
+src/shared/db/index.server.ts
 ```
 
 Entity modules use the shared database public interface, but expose domain
@@ -237,6 +237,8 @@ File names communicate runtime responsibility:
   operations. It must not be imported into client code.
 - `index.server.ts` is the entity’s server-only public interface when a higher
   layer needs to call an entity operation.
+- `@tanstack/react-start/server-only` is used as an explicit import-protection
+  marker on server-only public interfaces and persistence modules.
 
 Read transport may live with the entity because it exposes reusable entity
 data. A mutation transport belongs to the feature when it represents a user

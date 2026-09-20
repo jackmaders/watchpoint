@@ -1,4 +1,6 @@
-import { getDb, posts } from "@/shared/db";
+import "@tanstack/react-start/server-only";
+
+import { getDb, posts } from "@/shared/db/index.server";
 import {
 	type PostInsert,
 	postInsertSchema,
