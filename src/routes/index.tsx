@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 	component: Home,
 });
 
-function Home(): React.JSX.Element {
+function Home() {
 	const { data: posts } = useSuspenseQuery(postsQueryOptions);
 
 	return (

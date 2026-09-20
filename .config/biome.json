@@ -51,7 +51,6 @@
 						"withinDescribe": "test"
 					}
 				},
-				"useExplicitReturnType": "error",
 				"useSortedClasses": "error"
 			},
 			"performance": {

@@ -1,4 +1,3 @@
-import type { UseMutationResult } from "@tanstack/react-query";
 import {
 	queryOptions,
 	useMutation,
@@ -17,7 +16,6 @@ const postInsertSchema = createInsertSchema(posts, {
 const postSelectSchema = createSelectSchema(posts);
 
 export type PostInsert = z.infer<typeof postInsertSchema>;
-type Post = z.infer<typeof postSelectSchema>;
 
 export const getPosts = createServerFn().handler(async () => {
 	const db = getDb();
@@ -39,12 +37,7 @@ export const postsQueryOptions = queryOptions({
 	staleTime: 30_000,
 });
 
-export function useCreatePostMutation(): UseMutationResult<
-	Post,
-	unknown,
-	PostInsert,
-	unknown
-> {
+export function useCreatePostMutation() {
 	const queryClient = useQueryClient();
 	const createPostFn = useServerFn(createPost);
 

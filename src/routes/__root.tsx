@@ -39,11 +39,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 	},
 );
 
-function RootDocument({
-	children,
-}: {
-	children: React.ReactNode;
-}): React.JSX.Element {
+function RootDocument({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		document.documentElement.dataset.hydrated = "true";
 	}, []);
@@ -72,7 +68,7 @@ function RootDocument({
 	);
 }
 
-function RootNotFound(): React.JSX.Element {
+function RootNotFound() {
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center p-8">
 			<h1 className="font-bold text-2xl">404 - Page Not Found</h1>

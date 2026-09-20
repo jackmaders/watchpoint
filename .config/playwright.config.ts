@@ -10,14 +10,6 @@ const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
 
-type WebServerConfig = {
-	webServer?: {
-		command: string;
-		url: string;
-		reuseExistingServer: boolean;
-	};
-};
-
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
 	testDir: "../e2e",
@@ -61,7 +53,7 @@ export default defineConfig({
 	...getWebServerConfig(),
 });
 
-function getWebServerConfig(): WebServerConfig {
+function getWebServerConfig() {
 	if (process.env.E2E_BASE_URL) {
 		return {};
 	}

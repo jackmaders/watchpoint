@@ -2,12 +2,12 @@ import type { SubmitEvent } from "react";
 import { useCallback, useId } from "react";
 import { useCreatePostMutation } from "@/api/posts";
 
-export function CreatePostForm(): React.JSX.Element {
+export function CreatePostForm() {
 	const postNameId = useId();
 	const { isPending, mutateAsync } = useCreatePostMutation();
 
 	const handleSubmit = useCallback(
-		async (event: SubmitEvent<HTMLFormElement>): Promise<void> => {
+		async (event: SubmitEvent<HTMLFormElement>) => {
 			event.preventDefault();
 			const form = event.currentTarget;
 			const name = new FormData(form).get("name");
