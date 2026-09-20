@@ -16,7 +16,7 @@ a change local.
 - Name entity slices with a noun: `{noun}`.
 - Keep read-oriented data access and display logic out of features.
 - Keep relational Drizzle tables and relations in one shared persistence schema.
-- Keep entity domain schemas, commands, queries, and reusable UI in the entity
+- Keep entity domain schemas, operations, queries, and reusable UI in the entity
   slice.
 - Keep server transport functions at the layer that owns the use case.
 - Keep route files as route adapters; keep screen composition in pages.
@@ -137,7 +137,7 @@ Query modules without exposing a storage representation. Use
 `postCreateOperation` and `postListOperation`; do not use names such as
 `createPostRecord`, `listPostsRecord`, or `postCreateDatabase`.
 
-An entity command should be kept when it expresses an operation that could be
+An entity operation should be kept when it expresses behavior that could be
 used by another interaction, an import, an administrator workflow, or a server
 job. If it is purely an accidental wrapper for one caller and has no useful
 interface, apply the deletion test before introducing it.
@@ -208,8 +208,9 @@ src/shared/db/index.server.ts
 ```
 
 Entity modules use the shared database public interface, but expose domain
-schemas and domain-oriented commands to their callers. Callers should not need
-to know whether a command uses Drizzle, D1, or another persistence adapter.
+schemas and domain-oriented operations to their callers. Callers should not
+need to know whether an operation uses Drizzle, D1, or another persistence
+adapter.
 
 The split is therefore:
 
@@ -282,7 +283,7 @@ Segments describe implementation role rather than creating new architectural
 layers:
 
 ```text
-api/       queries, commands, server functions, and transport adapters
+api/       queries, operations, server functions, and transport adapters
 model/     domain schemas and types
 ui/        UI modules
 __tests__/ tests for the slice
@@ -298,7 +299,7 @@ every module expose a network API.
 - Tests should cross the same module interface that production callers use.
 - Feature tests should test user interaction behavior and may mock the
   feature’s client transport adapter.
-- Entity tests should test domain commands and queries through their public
+- Entity tests should test domain operations and queries through their public
   interfaces.
 - End-to-end tests remain in the root `e2e` directory for now. They exercise
   deployed-style behavior across layers and are intentionally not colocated.
