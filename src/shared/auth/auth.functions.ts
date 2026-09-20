@@ -1,13 +1,9 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import { auth } from "./auth";
-
-async function readSession() {
-	return auth.api.getSession({ headers: getRequestHeaders() });
-}
+import { auth } from "./auth.server";
 
 export const ensureSession = createServerOnlyFn(async () => {
-	const session = await readSession();
+	const session = await auth.api.getSession({ headers: getRequestHeaders() });
 
 	if (!session) {
 		throw new Error("Unauthorized");

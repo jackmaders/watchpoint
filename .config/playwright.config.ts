@@ -8,14 +8,6 @@ const DEV_BASE_URL = "http://localhost:5173";
 const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
-const E2E_AUTH_SECRET =
-	process.env.BETTER_AUTH_SECRET ??
-	"watchpoint-playwright-e2e-secret-local-only";
-const WEB_SERVER_ENV = Object.fromEntries([
-	["BETTER_AUTH_SECRET", E2E_AUTH_SECRET],
-	["BETTER_AUTH_URL", BASE_URL],
-	["CLOUDFLARE_INCLUDE_PROCESS_ENV", "true"],
-]);
 
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
@@ -67,18 +59,24 @@ function getWebServerConfig() {
 
 	const steps = [
 		"bun run db:migrate",
-		USE_PREVIEW
-			? `bun run preview -- --var BETTER_AUTH_URL:${PREVIEW_BASE_URL}`
-			: "bun run dev",
+		USE_PREVIEW ? `bun run preview` : "bun run dev",
 	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
 	}
 
+	const env = {
+		// biome-ignore-start lint/style/useNamingConvention: environment variables
+		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
+		BETTER_AUTH_URL: BASE_URL,
+		CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
+		// biome-ignore-end lint/style/useNamingConvention: environment variables
+	};
+
 	return {
 		webServer: {
 			command: steps.join(" && "),
-			env: WEB_SERVER_ENV,
+			env,
 			url: BASE_URL,
 			reuseExistingServer: false,
 		},
