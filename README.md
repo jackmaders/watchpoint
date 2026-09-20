@@ -36,10 +36,15 @@ The `src` directory follows a feature-first, FSD-style structure enforced by
 [Steiger](https://github.com/feature-sliced/steiger):
 
 - `app` contains framework setup and route adapters.
+- `pages/<page>` contains screen-level composition, such as `home`.
 - `entities/<noun>` contains shared business logic for an entity, such as `post`.
 - `features/<noun>-<verb>` contains one user interaction, such as `post-create`.
 - `widgets/<noun>-<purpose>` contains read-only or composite UI, such as `post-feed`.
 - `shared` contains business-agnostic and entity-agnostic infrastructure.
+
+Feature and widget slices may be used by only one page when their interface is
+still a meaningful user interaction or composition. Steiger therefore applies
+its insignificant-slice heuristic to other sliced layers, but not to these two.
 
 Keep entity reads and reusable entity UI in `entities`; keep mutations that
 represent a user action in `features`. Server function boundaries use

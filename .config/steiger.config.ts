@@ -10,4 +10,8 @@ export default defineConfig([
 			"../src/app/routeTree.gen.ts",
 		],
 	},
+	{
+		files: ["../src/features/**", "../src/widgets/**"],
+		rules: { "fsd/insignificant-slice": "off" },
+	},
 ]);
