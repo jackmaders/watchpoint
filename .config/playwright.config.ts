@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnresolvedImports: Playwright provides this runtime export.
 import { defineConfig, devices } from "@playwright/test";
 
 const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";
@@ -9,13 +10,21 @@ const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
 
+type WebServerConfig = {
+	webServer?: {
+		command: string;
+		url: string;
+		reuseExistingServer: boolean;
+	};
+};
+
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
 	testDir: "../e2e",
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
-	forbidOnly: !!process.env.CI,
+	forbidOnly: Boolean(process.env.CI),
 	/* Retry on CI only */
 	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
@@ -52,11 +61,15 @@ export default defineConfig({
 	...getWebServerConfig(),
 });
 
-function getWebServerConfig() {
-	if (process.env.E2E_BASE_URL) return {};
+function getWebServerConfig(): WebServerConfig {
+	if (process.env.E2E_BASE_URL) {
+		return {};
+	}
 
 	const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
-	if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
+	if (USE_PREVIEW && !SKIP_BUILD) {
+		steps.unshift("bun run build");
+	}
 
 	return {
 		webServer: {

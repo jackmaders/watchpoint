@@ -10,24 +10,96 @@
 	"files": {
 		"includes": [
 			"**",
-			"!**/dist",
-			"!**/.wrangler",
+			"!!**/dist",
+			"!!**/.wrangler",
 			"!**/src/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
 	},
-	"formatter": { "enabled": true },
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		},
+		"linter": {
+			"enabled": true
+		}
+	},
+	"javascript": {
+		"jsxRuntime": "transparent"
+	},
 	"linter": {
 		"enabled": true,
+		"domains": {
+			"playwright": "all",
+			"react": "all",
+			"tailwind": "all",
+			"types": "all"
+		},
 		"rules": {
-			"preset": "recommended"
+			"preset": "recommended",
+			"a11y": "error",
+			"security": "error",
+			"complexity": {
+				"noImplicitCoercions": "error"
+			},
+			"correctness": {
+				"noUndeclaredDependencies": "error",
+				"noUnresolvedImports": "error"
+			},
+			"nursery": {
+				"noFloatingPromises": "error",
+				"noMisusedPromises": "error",
+				"noTailwindArbitraryValue": "error",
+				"noUnsafeTypeAssertion": "error",
+				"noUnusedClasses": "error",
+				"useConsistentTestIt": {
+					"level": "error",
+					"options": {
+						"function": "test",
+						"withinDescribe": "test"
+					}
+				},
+				"useExplicitReturnType": "error",
+				"useSortedClasses": "error"
+			},
+			"performance": {
+				"noAwaitInLoops": "error",
+				"noNamespaceImport": "error",
+				"noReExportAll": "error",
+				"useTopLevelRegex": "error"
+			},
+			"style": {
+				"useBlockStatements": "error",
+				"useNamingConvention": {
+					"level": "error",
+					"options": {
+						"strictCase": false
+					}
+				}
+			},
+			"suspicious": {
+				"noConsole": "error",
+				"noConstantBinaryExpressions": "error",
+				"noExportsInTest": "error",
+				"noFocusedTests": "error",
+				"noImportCycles": "error",
+				"noSkippedTests": "error",
+				"noUnusedExpressions": "error",
+				"noVar": "error"
+			}
 		}
 	},
 	"assist": {
 		"enabled": true,
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"recommended": true,
+				"noDuplicateClasses": "on",
+				"organizeImports": "on",
+				"useSortedAttributes": "on",
+				"useSortedInterfaceMembers": "on",
+				"useSortedPackageJson": "on",
+				"useSortedProperties": "on"
 			}
 		}
 	}
