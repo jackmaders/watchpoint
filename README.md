@@ -23,17 +23,25 @@ This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
 ### shadcn/ui
 
-The UI uses the current Tailwind v4 shadcn setup. `components.json` is the
-source of truth for the component aliases and theme configuration, while
-generated primitives live in `src/components/ui`. Add components with:
+The UI uses the current Tailwind v4 shadcn setup. `.config/components.json` is
+the source of truth for the component aliases and theme configuration, while
+generated primitives live in `src/shared/ui`. Add components with:
 
 ```bash
-bunx shadcn@latest add <component>
+bun run shadcn:add button
 ```
 
-Keep application-specific composition in `src/components` and keep the
-generated primitives small and local. The generated primitives use the shared
-`cn` adapter in `src/lib/utils.ts`.
+The `shadcn:add` script includes `--cwd .config`, which tells shadcn to load
+`.config/components.json`. When invoking the CLI directly, include the same
+option:
+
+```bash
+bunx --bun shadcn@latest add button --cwd .config
+```
+
+Keep application-specific composition in the relevant feature, page, or
+widget slice and keep the generated primitives small and local. The generated
+primitives use the shared `cn` adapter in `src/shared/lib/utils.ts`.
 
 ### Removing Tailwind CSS
 

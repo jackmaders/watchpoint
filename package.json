@@ -23,6 +23,7 @@
 		"format": "biome format --config-path=.config/biome.json --write .",
 		"lint": "biome lint --config-path=.config/biome.json --write .",
 		"preview": "wrangler dev dist/server/index.js -c dist/server/wrangler.json --persist-to .wrangler/state",
+		"shadcn:add": "bunx --bun shadcn@latest add --cwd .config",
 		"test": "vitest --run -c .config/vitest.config.ts",
 		"test:browser": "playwright test -c .config/playwright.config.ts"
 	},
