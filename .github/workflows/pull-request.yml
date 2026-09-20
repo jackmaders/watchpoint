@@ -130,5 +130,8 @@ jobs:
       - name: ✨ Check Code Lint & Format
         run: bun run check:ci
 
+      - name: 🧭 Check Dependency Graph
+        run: bun run check:knip
+
       - name: 🦺 Check Type Safety
         run: bun run check:types
