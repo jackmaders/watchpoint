@@ -19,16 +19,9 @@
 	"css": {
 		"parser": {
 			"tailwindDirectives": true
-		},
-		"linter": {
-			"enabled": true
 		}
 	},
-	"javascript": {
-		"jsxRuntime": "transparent"
-	},
 	"linter": {
-		"enabled": true,
 		"domains": {
 			"playwright": "all",
 			"react": "all",
@@ -36,7 +29,6 @@
 			"types": "all"
 		},
 		"rules": {
-			"preset": "recommended",
 			"a11y": "error",
 			"security": "error",
 			"complexity": {
@@ -80,7 +72,6 @@
 			"suspicious": {
 				"noConsole": "error",
 				"noConstantBinaryExpressions": "error",
-				"noExportsInTest": "error",
 				"noFocusedTests": "error",
 				"noImportCycles": "error",
 				"noSkippedTests": "error",
@@ -90,12 +81,9 @@
 		}
 	},
 	"assist": {
-		"enabled": true,
 		"actions": {
 			"source": {
-				"recommended": true,
 				"noDuplicateClasses": "on",
-				"organizeImports": "on",
 				"useSortedAttributes": "on",
 				"useSortedInterfaceMembers": "on",
 				"useSortedPackageJson": "on",
