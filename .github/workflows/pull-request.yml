@@ -130,6 +130,9 @@ jobs:
       - name: ✨ Check Code Lint & Format
         run: bun run check:ci
 
+      - name: 🧱 Check Feature-Sliced Architecture
+        run: bun run check:architecture
+
       - name: 🧭 Check Dependency Graph
         run: bun run check:knip
 
