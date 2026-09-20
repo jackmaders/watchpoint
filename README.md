@@ -196,3 +196,10 @@ Loaders simplify your data fetching logic dramatically. Check out more informati
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
 
 For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+
+## Dependency Health
+
+Run `bun run check:knip` for the full and strict-production checks, or run either
+focused script separately. See the
+[Knip and Better Auth integration guide](docs/knip.md) for the rules,
+exceptions, and authentication dependency policy.
