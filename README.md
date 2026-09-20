@@ -40,7 +40,8 @@ The `src` directory follows a feature-first, FSD-style structure enforced by
 - `entities/<noun>` contains shared business logic for an entity, such as `post`.
 - `features/<noun>-<verb>` contains one user interaction, such as `post-create`.
 - `widgets/<noun>-<purpose>` contains read-only or composite UI, such as `post-feed`.
-- `shared` contains business-agnostic and entity-agnostic infrastructure.
+- `shared/db/schema` contains the relational persistence schema and relations;
+  `shared` otherwise contains business-agnostic infrastructure.
 
 Feature and widget slices may be used by only one page when their interface is
 still a meaningful user interaction or composition. Steiger therefore applies
