@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { postsQueryOptions } from "#/api/posts";
-import { CreatePostForm } from "#/components/create-post-form";
+import { postsQueryOptions } from "@/api/posts";
+import { CreatePostForm } from "@/components/create-post-form";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {

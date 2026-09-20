@@ -6,8 +6,8 @@ import {
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod/v4";
-import { getDb } from "#/db/db.server";
-import { posts } from "#/db/schema";
+import { getDb } from "@/db/db.server";
+import { posts } from "@/db/schema";
 
 const postInsertSchema = createInsertSchema(posts, {
 	name: z.string().trim().min(1),

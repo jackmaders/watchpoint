@@ -2,9 +2,6 @@
 	"name": "watchpoint",
 	"private": true,
 	"type": "module",
-	"imports": {
-		"#/*": "./src/*"
-	},
 	"scripts": {
 		"dev": "vite dev -c .config/vite.config.ts",
 		"cf:typegen": "wrangler types src/cloudflare-env.d.ts --include-runtime false -c .config/wrangler.json",

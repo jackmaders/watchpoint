@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Route } from "../index";
+
+vi.mock("@tanstack/react-query");
+vi.mock("@tanstack/react-router");
+vi.mock("@/db/db.server");
 
 describe("Home route component", () => {
 	// biome-ignore lint/style/noNonNullAssertion: required for testing here

@@ -1,5 +1,5 @@
 import type { SubmitEvent } from "react";
-import { useCreatePostMutation } from "#/api/posts";
+import { useCreatePostMutation } from "@/api/posts";
 
 export function CreatePostForm() {
 	const createPostMutation = useCreatePostMutation();
