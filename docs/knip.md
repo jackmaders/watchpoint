@@ -2,7 +2,7 @@
 
 This repository uses [Knip](https://knip.dev/) 6.37.0 to find unused files,
 dependencies, exports, binaries, unresolved imports, and circular dependencies.
-The configuration is in [`knip.jsonc`](../.config/knip.jsonc).
+The configuration is in [`knip.config.ts`](../.config/knip.config.ts).
 
 ## Adopted checks
 
@@ -23,7 +23,7 @@ packages, which are imported by the root route and therefore belong in
 `dependencies`.
 
 The single CI command runs both analysis modes through the aggregate script. New exceptions should be rare and should
-be explained in `.config/knip.jsonc`; do not use `knip --fix` or broad ignore patterns
+be explained in `.config/knip.config.ts`; do not use `knip --fix` or broad ignore patterns
 as a substitute for fixing the module graph.
 
 ## Configuration decisions
@@ -38,8 +38,8 @@ as a substitute for fixing the module graph.
   visible to the dependency graph.
 - `cloudflare` is ignored only because `cloudflare:workers` is a Cloudflare
   Workers runtime module, not an npm package.
-- Lefthook is invoked by the root `prepare` script so its lifecycle-managed
-  hook installation remains explicit and visible to the dependency graph.
+- Lefthook is handled as a lifecycle-managed dependency: local Knip runs ignore
+  it, while CI lets Knip's Lefthook plugin validate the dependency.
 - `ignoreExportsUsedInFile` is enabled for TanStack Start server functions that
   are exported for framework/bundler boundaries but consumed in their defining
   module. Truly orphaned exports still fail the normal export checks.
@@ -70,7 +70,7 @@ use this dependency and integration policy:
    command is for its built-in Kysely adapter; other ORMs should use their ORM
    migration tools.
 6. Keep `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in deployment secrets/local
-   environment files. Do not add secrets to `.config/knip.jsonc` or committed config.
+   environment files. Do not add secrets to `.config/knip.config.ts` or committed config.
 
 Knip will recognize direct imports of `better-auth` and
 `@better-auth/drizzle-adapter`. If a future auth plugin is selected through a
