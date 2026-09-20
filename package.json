@@ -9,7 +9,7 @@
 		"check:architecture": "cd .config && steiger ../src",
 		"check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js",
 		"check:ci": "biome ci --config-path=.config/biome.json .",
-		"check:git-hook": "biome check --config-path=.config/biome.json --write",
+		"check:git-hook": "biome check --config-path=.config/biome.json --write --unsafe --linter-enabled=false --assist-enabled=true",
 		"check:knip": "bun run check:knip:full && bun run check:knip:strict",
 		"check:knip:full": "knip --config .config/knip.config.ts --dependencies --exports --files --cycles --no-progress",
 		"check:knip:strict": "knip --config .config/knip.config.ts --strict --no-progress",
