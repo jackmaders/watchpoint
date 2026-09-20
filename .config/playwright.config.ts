@@ -66,7 +66,10 @@ function getWebServerConfig(): WebServerConfig {
 		return {};
 	}
 
-	const steps = [USE_PREVIEW ? "bun run preview" : "bun run dev"];
+	const steps = [
+		"bun run db:migrate",
+		USE_PREVIEW ? "bun run preview" : "bun run dev",
+	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
 	}
@@ -75,7 +78,7 @@ function getWebServerConfig(): WebServerConfig {
 		webServer: {
 			command: steps.join(" && "),
 			url: BASE_URL,
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: false,
 		},
 	};
 }
