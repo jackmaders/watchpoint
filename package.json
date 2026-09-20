@@ -6,7 +6,7 @@
 		"build": "vite build -c .config/vite.config.ts",
 		"cf:typegen": "wrangler types src/cloudflare-env.d.ts --include-runtime false -c .config/wrangler.json",
 		"check": "biome check --config-path=.config/biome.json --write .",
-		"check:architecture": "steiger ./src",
+		"check:architecture": "cd .config && steiger ../src",
 		"check:bundle-size": "size-limit --limit 10MB dist/server/**/*.* dist/server/*.*",
 		"check:chunk-size": "bundlewatch --max-size 150kB dist/client/**/*.js",
 		"check:ci": "biome ci --config-path=.config/biome.json . && bun run check:architecture",

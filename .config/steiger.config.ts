@@ -5,9 +5,9 @@ export default defineConfig([
 	...fsd.configs.recommended,
 	{
 		ignores: [
-			"**/__mocks__/**",
-			"./src/cloudflare-env.d.ts",
-			"./src/routeTree.gen.ts",
+			"../**/__mocks__/**",
+			"../src/cloudflare-env.d.ts",
+			"../src/app/routeTree.gen.ts",
 		],
 	},
 ]);
