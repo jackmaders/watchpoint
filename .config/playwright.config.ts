@@ -60,7 +60,9 @@ function getWebServerConfig() {
 
 	const steps = [
 		"bun run db:migrate",
-		USE_PREVIEW ? "bun run preview" : "bun run dev",
+		USE_PREVIEW
+			? `bun run preview -- --var BETTER_AUTH_URL:${PREVIEW_BASE_URL}`
+			: "bun run dev",
 	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
