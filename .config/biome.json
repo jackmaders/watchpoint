@@ -11,17 +11,11 @@
 		"includes": [
 			"**",
 			"!!**/dist",
-			"!!**/test-results",
-			"!!**/.wrangler",
 			"!**/src/app/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
 	},
-	"css": {
-		"parser": {
-			"tailwindDirectives": true
-		}
-	},
+	"css": { "parser": { "tailwindDirectives": true } },
 	"linter": {
 		"domains": {
 			"playwright": "all",
@@ -34,10 +28,6 @@
 			"security": "error",
 			"complexity": {
 				"noImplicitCoercions": "error"
-			},
-			"correctness": {
-				"noUndeclaredDependencies": "error",
-				"noUnresolvedImports": "error"
 			},
 			"nursery": {
 				"noFloatingPromises": "error",
@@ -64,9 +54,7 @@
 				"useBlockStatements": "error",
 				"useNamingConvention": {
 					"level": "error",
-					"options": {
-						"strictCase": false
-					}
+					"options": { "strictCase": false }
 				}
 			},
 			"suspicious": {

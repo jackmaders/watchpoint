@@ -21,6 +21,28 @@ bun --bun run build
 
 This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
+### shadcn/ui
+
+The UI uses the current Tailwind v4 shadcn setup. `.config/components.json` is
+the source of truth for the component aliases and theme configuration, while
+generated primitives live in `src/shared/ui`. Add components with:
+
+```bash
+bun run shadcn:add button
+```
+
+The `shadcn:add` script includes `--cwd .config`, which tells shadcn to load
+`.config/components.json`. When invoking the CLI directly, include the same
+option:
+
+```bash
+bunx --bun shadcn@latest add button --cwd .config
+```
+
+Keep application-specific composition in the relevant feature, page, or
+widget slice and keep the generated primitives small and local. The generated
+primitives use the shared `cn` adapter in `src/shared/lib/utils.ts`.
+
 ### Removing Tailwind CSS
 
 If you prefer not to use Tailwind CSS:
@@ -194,6 +216,42 @@ function PeopleComponent() {
   )
 }
 ```
+
+## Authentication
+
+Authentication is wired with [Better Auth](https://better-auth.com/) using its
+official TanStack Start cookie plugin and the Drizzle adapter over the existing
+Cloudflare D1 database:
+
+- `src/lib/auth.ts` is server-only and owns the Better Auth instance.
+- `src/lib/auth-client.ts` is the browser client and uses Better Auth's
+  same-origin `/api/auth` default.
+- `src/routes/api/auth/$.ts` mounts Better Auth's GET and POST handlers.
+- `src/lib/auth.functions.ts` provides the server-side session helper used by
+  protected server functions.
+- `src/db/auth-schema.ts` and the generated Drizzle migration own the Better
+  Auth tables alongside the existing `posts` table.
+
+Create local secrets before starting the app:
+
+```bash
+cp .config/.dev.vars.example .config/.dev.vars
+# Replace BETTER_AUTH_SECRET in .config/.dev.vars with a value from:
+openssl rand -base64 32
+bun run db:migrate
+bun --bun run dev
+```
+
+The Vite dev server and browser tests use `http://localhost:5173`, so keep
+`BETTER_AUTH_URL` aligned with that origin. If you use the Wrangler preview
+server instead, set it to `http://localhost:8787` for that process.
+
+For production, set `BETTER_AUTH_SECRET` with `wrangler secret put` and set
+`BETTER_AUTH_URL` to the deployed origin. Keep the cookie plugin last in the
+Better Auth plugin list so TanStack Start can attach auth cookies to responses.
+Post reads are public for the home page, while post creation is protected at
+the server boundary with `ensureSession`. Route redirects are a second layer
+for navigation UX, not a replacement for server-side authorization.
 
 Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
 

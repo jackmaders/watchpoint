@@ -10,4 +10,9 @@ export default defineConfig([
 		files: ["../src/features/**", "../src/widgets/**"],
 		rules: { "fsd/insignificant-slice": "off" },
 	},
+
+	{
+		files: ["../src/app/routes/api/**"],
+		rules: { "fsd/no-reserved-folder-names": "off" },
+	},
 ]);

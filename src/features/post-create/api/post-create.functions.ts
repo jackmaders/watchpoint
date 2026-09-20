@@ -1,7 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { postInsertSchema } from "@/entities/post";
 import { postCreateOperation } from "@/entities/post/index.server";
+import { ensureSession } from "@/shared/auth";
 
 export const postCreateServerFn = createServerFn({ method: "POST" })
 	.validator(postInsertSchema)
-	.handler(async ({ data }) => postCreateOperation(data));
+	.handler(async ({ data }) => {
+		await ensureSession();
+		return postCreateOperation(data);
+	});

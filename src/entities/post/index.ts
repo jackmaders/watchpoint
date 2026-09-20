@@ -1,5 +1,6 @@
 export { postListQueryOptions } from "./api/posts-query-options";
 export {
+	type Post,
 	type PostInsert,
 	postInsertSchema,
 } from "./model/post.schema";

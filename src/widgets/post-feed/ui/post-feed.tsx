@@ -1,26 +1,18 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useId } from "react";
-import { PostCard, postListQueryOptions } from "@/entities/post";
+import type { Post } from "@/entities/post";
+import { PostCard } from "@/entities/post";
 
-export function PostFeed() {
-	const headingId = useId();
-	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+export function PostFeed({ posts }: { posts: Post[] }) {
+	if (posts.length === 0) {
+		return (
+			<p className="mt-4 text-muted-foreground text-sm">No watchpoints yet.</p>
+		);
+	}
 
 	return (
-		<section aria-labelledby={headingId} className="mt-8">
-			<h2 className="font-bold text-2xl" id={headingId}>
-				Posts
-			</h2>
-			<p>Posts in D1: {posts.length}</p>
-			{posts.length > 0 ? (
-				<ul>
-					{posts.map((post) => (
-						<PostCard key={post.id} post={post} />
-					))}
-				</ul>
-			) : (
-				<p>No posts yet.</p>
-			)}
-		</section>
+		<ul className="mt-4 divide-y divide-border/70">
+			{posts.map((post) => (
+				<PostCard key={post.id} post={post} />
+			))}
+		</ul>
 	);
 }

@@ -47,31 +47,28 @@ as a substitute for fixing the module graph.
 
 ## Better Auth alignment
 
-Better Auth is not installed yet. This repository currently has no auth routes,
-auth tables, or required authentication behavior, so adding the package now
-would create an unused runtime dependency. When authentication is introduced,
-use this dependency and integration policy:
+Better Auth is installed and wired to the existing Cloudflare D1 database and
+TanStack Start runtime. Keep this dependency and integration policy aligned with
+the implementation:
 
 1. Put `better-auth` in `dependencies`, because the Worker creates the auth
    instance and serves its handler at runtime.
-2. Choose one database boundary. This app already has Cloudflare D1 and
-   Drizzle. Better Auth documents native D1 support, where the D1 binding is
-   passed directly to `betterAuth`; that is the lowest-dependency path for this
-   Worker. If auth tables must be owned through the existing Drizzle schema,
-   add `@better-auth/drizzle-adapter` to `dependencies` and configure its
-   SQLite provider. Do not install both adapters without a concrete need.
+2. Keep `@better-auth/drizzle-adapter` in `dependencies`. This app owns its
+   schema through Drizzle and uses the adapter's SQLite provider against D1;
+   do not add a second Better Auth database adapter without a concrete need.
 3. For TanStack Start, mount `auth.handler(request)` in
    `src/app/routes/api/auth/$.ts` for both GET and POST, following the official
    integration route shape.
 4. Add `tanstackStartCookies()` as the last Better Auth plugin. This repository
    already has Wrangler’s `nodejs_compat` flag, which Better Auth’s Cloudflare
    guidance requires for its async context support.
-5. If using the Drizzle adapter, generate the Better Auth schema and apply it
+5. The Better Auth tables live in `src/db/auth-schema.ts` and are applied
    through the existing Drizzle migration workflow. Better Auth’s `migrate`
-   command is for its built-in Kysely adapter; other ORMs should use their ORM
-   migration tools.
-6. Keep `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in deployment secrets/local
-   environment files. Do not add secrets to `.config/knip.config.ts` or committed config.
+   command is for its built-in Kysely adapter; this project uses Drizzle
+   migrations instead.
+6. Keep `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in deployment secrets and
+   `.config/.dev.vars` for local development. The auth module validates both at
+   startup; do not add secrets to `.config/knip.config.ts` or committed config.
 
 Knip will recognize direct imports of `better-auth` and
 `@better-auth/drizzle-adapter`. If a future auth plugin is selected through a

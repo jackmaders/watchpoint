@@ -1,4 +1,3 @@
-// biome-ignore lint/correctness/noUnresolvedImports: Playwright provides this runtime export.
 import { defineConfig, devices } from "@playwright/test";
 
 const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";
@@ -60,15 +59,24 @@ function getWebServerConfig() {
 
 	const steps = [
 		"bun run db:migrate",
-		USE_PREVIEW ? "bun run preview" : "bun run dev",
+		USE_PREVIEW ? `bun run preview` : "bun run dev",
 	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
 	}
 
+	const env = {
+		// biome-ignore-start lint/style/useNamingConvention: environment variables
+		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
+		BETTER_AUTH_URL: BASE_URL,
+		CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
+		// biome-ignore-end lint/style/useNamingConvention: environment variables
+	};
+
 	return {
 		webServer: {
 			command: steps.join(" && "),
+			env,
 			url: BASE_URL,
 			reuseExistingServer: false,
 		},
