@@ -14,7 +14,7 @@ const config = defineConfig({
 			viteEnvironment: { name: "ssr" },
 		}),
 		tanstackStart(),
-		devtools(),
+		devtools({ injectSource: { enabled: false } }),
 		tailwindcss(),
 		viteReact(),
 		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
