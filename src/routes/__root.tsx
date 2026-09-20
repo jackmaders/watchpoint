@@ -7,7 +7,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-
+import { useEffect } from "react";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
@@ -38,6 +38,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 );
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	useEffect(() => {
+		document.documentElement.dataset.hydrated = "true";
+	}, []);
+
 	return (
 		<html lang="en">
 			<head>

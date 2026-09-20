@@ -1,5 +1,9 @@
-import { queryOptions } from "@tanstack/react-query";
-import { createServerFn } from "@tanstack/react-start";
+import {
+	queryOptions,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
+import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod/v4";
 import { getDb } from "#/db/db.server";
@@ -32,3 +36,16 @@ export const postsQueryOptions = queryOptions({
 	queryFn: () => getPosts(),
 	staleTime: 30_000,
 });
+
+export function useCreatePostMutation() {
+	const queryClient = useQueryClient();
+	const createPostFn = useServerFn(createPost);
+
+	return useMutation({
+		mutationFn: (data: PostInsert) => createPostFn({ data }),
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: postsQueryOptions.queryKey,
+			}),
+	});
+}
