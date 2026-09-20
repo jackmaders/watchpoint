@@ -12,7 +12,7 @@
 		"preview": "wrangler dev dist/server/index.js -c dist/server/wrangler.json --persist-to .wrangler/state",
 		"deploy": "bun run build && wrangler deploy -c dist/server/wrangler.json",
 		"deploy:dry-run": "wrangler deploy -c dist/server/wrangler.json --dry-run",
-		"test": "echo 'TODO'",
+		"test": "vitest --run -c .config/vitest.config.ts",
 		"lint": "biome lint --config-path=.config/biome.json --write .",
 		"format": "biome format --config-path=.config/biome.json --write .",
 		"check:ci": "biome ci --config-path=.config/biome.json .",
@@ -49,6 +49,8 @@
 		"@tanstack/devtools-vite": "latest",
 		"@tanstack/react-devtools": "^0.10.12",
 		"@tanstack/react-router-devtools": "^1.167.2",
+		"@testing-library/jest-dom": "^7.0.1",
+		"@testing-library/react": "^16.3.3",
 		"@types/bun": "^1.4.2",
 		"@types/node": "^26.6.2",
 		"@types/react": "^19.2.0",
@@ -56,10 +58,12 @@
 		"@vitejs/plugin-react": "^6.0.1",
 		"bundlewatch": "^0.4.2",
 		"drizzle-kit": "^1.0.0-rc.4",
+		"happy-dom": "^20.14.5",
 		"lefthook": "^2.1.14",
 		"rollup-plugin-visualizer": "^7.1.1",
 		"typescript": "^6.0.2",
 		"vite": "^8.0.0",
+		"vitest": "^5.0.1",
 		"wrangler": "^4.135.0"
 	}
 }
