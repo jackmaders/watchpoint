@@ -1,3 +1,5 @@
+// biome-ignore-all lint/security/noSecrets: These are Tailwind utility strings, not credentials.
+
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
@@ -54,4 +56,4 @@ function Button({
 	);
 }
 
-export { Button, buttonVariants };
+export { Button };

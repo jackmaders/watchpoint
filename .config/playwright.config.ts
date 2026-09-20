@@ -1,4 +1,3 @@
-// biome-ignore lint/correctness/noUnresolvedImports: Playwright provides this runtime export.
 import { defineConfig, devices } from "@playwright/test";
 
 const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";

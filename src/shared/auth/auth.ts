@@ -1,6 +1,5 @@
 import "@tanstack/react-start/server-only";
 
-// biome-ignore lint/correctness/noUnresolvedImports: Cloudflare Workers provides this runtime module.
 import { env } from "cloudflare:workers";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth/minimal";
@@ -12,13 +11,6 @@ import {
 	user,
 	verification,
 } from "@/shared/db/index.server";
-
-type AuthRuntimeEnv = Cloudflare.Env & {
-	BETTER_AUTH_SECRET?: string;
-	BETTER_AUTH_URL?: string;
-};
-
-const authEnv = env as AuthRuntimeEnv;
 
 function requireAuthSecret(value: string | undefined) {
 	const secret = value?.trim();
@@ -60,8 +52,8 @@ function requireAuthUrl(value: string | undefined) {
 	return url.origin;
 }
 
-const authSecret = requireAuthSecret(authEnv.BETTER_AUTH_SECRET);
-const authUrl = requireAuthUrl(authEnv.BETTER_AUTH_URL);
+const authSecret = requireAuthSecret(env.BETTER_AUTH_SECRET);
+const authUrl = requireAuthUrl(env.BETTER_AUTH_URL);
 
 export const auth = betterAuth({
 	baseURL: authUrl,

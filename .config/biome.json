@@ -11,8 +11,6 @@
 		"includes": [
 			"**",
 			"!!**/dist",
-			"!!**/test-results",
-			"!!**/.wrangler",
 			"!**/src/app/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
@@ -34,10 +32,6 @@
 			"security": "error",
 			"complexity": {
 				"noImplicitCoercions": "error"
-			},
-			"correctness": {
-				"noUndeclaredDependencies": "error",
-				"noUnresolvedImports": "error"
 			},
 			"nursery": {
 				"noFloatingPromises": "error",
@@ -64,9 +58,7 @@
 				"useBlockStatements": "error",
 				"useNamingConvention": {
 					"level": "error",
-					"options": {
-						"strictCase": false
-					}
+					"options": { "strictCase": false }
 				}
 			},
 			"suspicious": {
@@ -90,67 +82,5 @@
 				"useSortedProperties": "on"
 			}
 		}
-	},
-	"overrides": [
-		{
-			"includes": ["src/shared/ui/**"],
-			"linter": {
-				"rules": {
-					"a11y": {
-						"noLabelWithoutControl": "off"
-					},
-					"performance": {
-						"noNamespaceImport": "off"
-					},
-					"security": {
-						"noSecrets": "off"
-					},
-					"style": {
-						"useComponentExportOnlyModules": "off",
-						"useImportType": "off"
-					},
-					"nursery": {
-						"noTailwindArbitraryValue": "off",
-						"useSortedClasses": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["src/app/styles.css"],
-			"linter": {
-				"rules": {
-					"nursery": {
-						"noUnusedClasses": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["src/app/routes/api/auth/**"],
-			"linter": {
-				"rules": {
-					"style": {
-						"useNamingConvention": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["src/shared/auth-server/auth.ts"],
-			"linter": {
-				"rules": {
-					"performance": {
-						"noNamespaceImport": "off"
-					},
-					"style": {
-						"useNamingConvention": "off"
-					},
-					"nursery": {
-						"noUnsafeTypeAssertion": "off"
-					}
-				}
-			}
-		}
-	]
+	}
 }

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useNamingConvention: TanStack Start requires HTTP method handler names.
+
 import { createFileRoute } from "@tanstack/react-router";
 import { auth } from "@/shared/auth-server";
 

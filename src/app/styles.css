@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/geist";
 
+/* biome-ignore lint/nursery/noUnusedClasses: Tailwind uses this selector through the custom dark variant. */
 @custom-variant dark (&:is(.dark *));
 
 * {
@@ -101,6 +102,7 @@ body {
 	--sidebar-ring: oklch(0.55 0.12 182);
 }
 
+/* biome-ignore lint/nursery/noUnusedClasses: This theme selector is applied by Tailwind at runtime. */
 .dark {
 	--background: oklch(0.15 0.025 205);
 	--foreground: oklch(0.965 0.015 175);
