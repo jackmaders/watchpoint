@@ -38,10 +38,15 @@ jobs:
         run: bun run deploy
 
   e2e-tests:
-    name: 🎭 Run E2E Tests
+    name: 🎭 Run E2E Tests (${{ matrix.browser }})
     needs: [deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
 
     steps:
       - name: 🛒 Checkout Source Code
@@ -50,21 +55,9 @@ jobs:
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
 
-      - name: 🌐 Setup Playwright Environment
-        uses: ./.github/actions/setup-playwright
-        with:
-          browsers: chromium
-
       - name: 🎭 Run Browser Tests
-        env:
-          E2E_SKIP_BUILD: "true"
-          E2E_BASE_URL: "https://watchpoint.jackmaders.workers.dev/"
-        run: bun run test:browser --project=chromium
-
-      - name: 📩 Upload Failure Report
-        if: ${{ !cancelled() && failure() }}
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/run-playwright
         with:
-          name: playwright-report-production
-          path: playwright-report/
-          retention-days: 7
+          browser: ${{ matrix.browser }}
+          base-url: "https://watchpoint.jackmaders.workers.dev/"
+          report-name: playwright-report-production-${{ matrix.browser }}

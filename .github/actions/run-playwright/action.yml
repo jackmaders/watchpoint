@@ -1,0 +1,49 @@
+name: "Run Playwright Tests"
+description: "Installs a Playwright browser, runs the browser tests, and uploads failure reports"
+
+inputs:
+  browser:
+    description: "Playwright project and browser to test"
+    required: true
+  base-url:
+    description: "Optional URL for tests against an already deployed application"
+    required: false
+    default: ""
+  use-preview:
+    description: "Use the local production preview server when no base URL is provided"
+    required: false
+    default: "false"
+  report-name:
+    description: "Artifact name for the Playwright failure report"
+    required: false
+    default: "playwright-report"
+
+runs:
+  using: "composite"
+  steps:
+    - name: 🌐 Setup Playwright Environment
+      uses: ./.github/actions/setup-playwright
+      with:
+        browsers: ${{ inputs.browser }}
+
+    - name: 🎭 Run Browser Tests
+      shell: bash
+      env:
+        E2E_SKIP_BUILD: "true"
+        E2E_USE_PREVIEW: ${{ inputs.use-preview }}
+        E2E_BASE_URL_INPUT: ${{ inputs.base-url }}
+        PLAYWRIGHT_BROWSER: ${{ inputs.browser }}
+      run: |
+        if [[ -n "$E2E_BASE_URL_INPUT" ]]; then
+          E2E_BASE_URL="$E2E_BASE_URL_INPUT" bun run test:browser --project="$PLAYWRIGHT_BROWSER"
+        else
+          bun run test:browser --project="$PLAYWRIGHT_BROWSER"
+        fi
+
+    - name: 📩 Upload Failure Report
+      if: ${{ !cancelled() && failure() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.report-name }}
+        path: playwright-report/
+        retention-days: 7
