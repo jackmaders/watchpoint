@@ -4,6 +4,7 @@ import { Route } from "../index";
 
 vi.mock("@tanstack/react-query");
 vi.mock("@tanstack/react-router");
+vi.mock("@tanstack/react-start");
 vi.mock("@/db/db.server");
 
 describe("Home route component", () => {
