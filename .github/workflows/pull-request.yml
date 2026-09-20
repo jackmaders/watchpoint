@@ -38,6 +38,9 @@ jobs:
       - name: 🏗️ Build Application
         run: bun run build
 
+      - name: 🗃️ Verify Database Migrations
+        run: bun run db:check
+
       - name: 🔀 Verify Route Tree
         run: git diff --exit-code **/routeTree.gen.ts
 

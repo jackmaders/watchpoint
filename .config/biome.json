@@ -10,8 +10,8 @@
 	"files": {
 		"includes": [
 			"**",
-			"!**/dist",
-			"!**/.wrangler",
+			"!!**/dist",
+			"!!**/.wrangler",
 			"!**/src/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
