@@ -49,7 +49,9 @@ its insignificant-slice heuristic to other sliced layers, but not to these two.
 
 Keep entity reads and reusable entity UI in `entities`; keep mutations that
 represent a user action in `features`. Server function boundaries use
-`*.functions.ts`, while server-only implementations use `*.server.ts`.
+`*.functions.ts` and export `*ServerFn`; server-only implementations use
+`*.server.ts` and export noun–verb `*Operation` functions. TanStack Query
+modules may use `QueryOptions` and `use...Mutation` terminology explicitly.
 
 
 

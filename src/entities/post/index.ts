@@ -1,4 +1,4 @@
-export { postsQueryOptions } from "./api/posts";
+export { postListQueryOptions } from "./api/posts-query-options";
 export {
 	type PostInsert,
 	postInsertSchema,

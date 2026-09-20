@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getPostsRecord } from "./posts.server";
+import { postListOperation } from "./posts.server";
 
-export const getPosts = createServerFn().handler(() => getPostsRecord());
+export const postListServerFn = createServerFn().handler(() =>
+	postListOperation(),
+);

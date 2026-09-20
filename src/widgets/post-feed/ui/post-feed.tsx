@@ -1,10 +1,10 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useId } from "react";
-import { PostCard, postsQueryOptions } from "@/entities/post";
+import { PostCard, postListQueryOptions } from "@/entities/post";
 
 export function PostFeed() {
 	const headingId = useId();
-	const { data: posts } = useSuspenseQuery(postsQueryOptions);
+	const { data: posts } = useSuspenseQuery(postListQueryOptions);
 
 	return (
 		<section aria-labelledby={headingId} className="mt-8">

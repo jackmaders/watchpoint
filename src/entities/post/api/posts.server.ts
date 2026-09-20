@@ -5,13 +5,13 @@ import {
 	postSchema,
 } from "../model/post.schema";
 
-export async function getPostsRecord() {
+export async function postListOperation() {
 	const db = getDb();
 	const result = await db.select().from(posts);
 	return postSchema.array().parse(result);
 }
 
-export async function createPostRecord(data: PostInsert) {
+export async function postCreateOperation(data: PostInsert) {
 	const db = getDb();
 	const input = postInsertSchema.parse(data);
 	const [post] = await db.insert(posts).values(input).returning();

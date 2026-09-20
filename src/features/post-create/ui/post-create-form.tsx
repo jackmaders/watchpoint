@@ -1,6 +1,6 @@
 import type { SubmitEvent } from "react";
 import { useCallback, useId } from "react";
-import { usePostCreateMutation } from "../api/post-create";
+import { usePostCreateMutation } from "../api/use-post-create-mutation";
 
 export function PostCreateForm() {
 	const postNameId = useId();

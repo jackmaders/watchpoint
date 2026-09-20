@@ -1,10 +1,10 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
-import { usePostCreateMutation } from "../api/post-create";
+import { usePostCreateMutation } from "../api/use-post-create-mutation";
 import { PostCreateForm } from "../ui/post-create-form";
 
-vi.mock("../api/post-create");
+vi.mock("../api/use-post-create-mutation");
 
 describe("PostCreateForm", () => {
 	test("renders the post name field and submit button", () => {

@@ -1,1 +1,1 @@
-export { createPostRecord } from "./api/posts.server";
+export { postCreateOperation } from "./api/posts.server";
