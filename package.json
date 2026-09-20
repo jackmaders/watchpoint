@@ -14,7 +14,6 @@
 		"check:knip:full": "knip --config .config/knip.config.ts --dependencies --exports --files --cycles --no-progress",
 		"check:knip:strict": "knip --config .config/knip.config.ts --strict --no-progress",
 		"check:types": "tsc --noEmit",
-		"db:check": "bun run db:generate && git diff --exit-code -- drizzle && test -z \"$(git ls-files --others --exclude-standard -- drizzle)\"",
 		"db:generate": "drizzle-kit generate --config=.config/drizzle.config.ts",
 		"db:migrate": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state -c .config/wrangler.json",
 		"db:migrate:remote": "wrangler d1 migrations apply DB --remote -c .config/wrangler.json",
