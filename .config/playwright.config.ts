@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnresolvedImports: Playwright provides this runtime export.
 import { defineConfig, devices } from "@playwright/test";
 
 const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";
@@ -15,7 +16,7 @@ export default defineConfig({
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
-	forbidOnly: !!process.env.CI,
+	forbidOnly: Boolean(process.env.CI),
 	/* Retry on CI only */
 	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
@@ -53,13 +54,17 @@ export default defineConfig({
 });
 
 function getWebServerConfig() {
-	if (process.env.E2E_BASE_URL) return {};
+	if (process.env.E2E_BASE_URL) {
+		return {};
+	}
 
 	const steps = [
 		"bun run db:migrate",
 		USE_PREVIEW ? "bun run preview" : "bun run dev",
 	];
-	if (USE_PREVIEW && !SKIP_BUILD) steps.unshift("bun run build");
+	if (USE_PREVIEW && !SKIP_BUILD) {
+		steps.unshift("bun run build");
+	}
 
 	return {
 		webServer: {

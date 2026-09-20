@@ -1,13 +1,13 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { useCreatePostMutation } from "@/api/posts";
 import { CreatePostForm } from "../create-post-form";
 
 vi.mock("@/api/posts");
 
 describe("CreatePostForm", () => {
-	it("renders the post name field and submit button", () => {
+	test("renders the post name field and submit button", () => {
 		render(<CreatePostForm />);
 
 		expect(screen.getByLabelText("Post name")).toBeInTheDocument();
@@ -16,7 +16,7 @@ describe("CreatePostForm", () => {
 		).toBeInTheDocument();
 	});
 
-	it("creates a post and clears the form", async () => {
+	test("creates a post and clears the form", async () => {
 		const user = userEvent.setup();
 		render(<CreatePostForm />);
 
@@ -33,7 +33,7 @@ describe("CreatePostForm", () => {
 		expect(input).toHaveValue("");
 	});
 
-	it("does not create a post when the name is blank", async () => {
+	test("does not create a post when the name is blank", async () => {
 		const user = userEvent.setup();
 		render(<CreatePostForm />);
 
