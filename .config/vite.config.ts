@@ -13,7 +13,11 @@ const config = defineConfig({
 			configPath: ".config/wrangler.json",
 			viteEnvironment: { name: "ssr" },
 		}),
-		tanstackStart(),
+		tanstackStart({
+			router: {
+				routesDirectory: "app/routes",
+			},
+		}),
 		devtools({ injectSource: { enabled: false } }),
 		tailwindcss(),
 		viteReact(),
