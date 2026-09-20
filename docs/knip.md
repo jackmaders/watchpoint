@@ -38,8 +38,8 @@ as a substitute for fixing the module graph.
   visible to the dependency graph.
 - `cloudflare` is ignored only because `cloudflare:workers` is a Cloudflare
   Workers runtime module, not an npm package.
-- `lefthook` is ignored only because the npm package installs the Git hooks
-  through its package lifecycle; it is not referenced by application source.
+- Lefthook is invoked by the root `prepare` script so its lifecycle-managed
+  hook installation remains explicit and visible to the dependency graph.
 - `ignoreExportsUsedInFile` is enabled for TanStack Start server functions that
   are exported for framework/bundler boundaries but consumed in their defining
   module. Truly orphaned exports still fail the normal export checks.

@@ -15,7 +15,7 @@
 	],
 
 	// `cloudflare:workers` is a Workers runtime module, not an npm package.
-	"ignoreDependencies": ["cloudflare", "lefthook"],
+	"ignoreDependencies": ["cloudflare"],
 
 	// Server functions in src/api/posts.ts are exported for the framework but
 	// are also consumed within that module. Keep this focused on truly orphaned
