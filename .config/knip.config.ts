@@ -2,17 +2,11 @@ import type { KnipConfig } from "knip";
 
 const ignoreDependencies = ["cloudflare"];
 
-// Lefthook is installed and managed as a repository lifecycle tool. Its Knip
-// plugin resolves the dependency from the package manifest in CI, but local
-// runs do not have that lifecycle context.
 if (!process.env.CI) {
 	ignoreDependencies.push("lefthook");
 }
 
 const config: KnipConfig = {
-	// Keep framework and tooling entry points explicit. Knip's plugins discover
-	// the referenced files behind them, while these patterns preserve the
-	// file-based route and browser-test boundaries of this application.
 	entry: ["src/routes/**/*.tsx!", "e2e/**/*.{ts,tsx}"],
 	project: [
 		".config/**/*.{ts,tsx}",
@@ -23,12 +17,8 @@ const config: KnipConfig = {
 		"!src/cloudflare-env.d.ts",
 	],
 
-	// `cloudflare:workers` is a Workers runtime module, not an npm package.
 	ignoreDependencies,
 
-	// Server functions in src/api/posts.ts are exported for the framework but
-	// are also consumed within that module. Keep this focused on truly orphaned
-	// exports instead of requiring artificial re-export files.
 	ignoreExportsUsedInFile: true,
 	treatConfigHintsAsErrors: true,
 	rules: {
@@ -46,7 +36,6 @@ const config: KnipConfig = {
 		duplicates: "warn",
 	},
 
-	// These configs live under .config rather than at their tool defaults.
 	biome: { config: [".config/biome.json"] },
 	drizzle: { config: [".config/drizzle.config.ts"] },
 	lefthook: { config: [".config/lefthook.yml"] },
