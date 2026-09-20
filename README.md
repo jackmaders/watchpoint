@@ -39,20 +39,43 @@ generated primitives small and local. The generated primitives use the shared
 
 If you prefer not to use Tailwind CSS:
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
+1. Remove the demo pages in `src/app/routes/demo/`
+2. Replace the Tailwind import in `src/app/styles.css` with your own styles
 3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
 4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+
+## Source Architecture
+
+The `src` directory follows a feature-first, FSD-style structure enforced by
+[Steiger](https://github.com/feature-sliced/steiger):
+
+- `app` contains framework setup and route adapters.
+- `pages/<page>` contains screen-level composition, such as `home`.
+- `entities/<noun>` contains shared business logic for an entity, such as `post`.
+- `features/<noun>-<verb>` contains one user interaction, such as `post-create`.
+- `widgets/<noun>-<purpose>` contains read-only or composite UI, such as `post-feed`.
+- `shared/db/schema` contains the relational persistence schema and relations;
+  `shared` otherwise contains business-agnostic infrastructure.
+
+Feature and widget slices may be used by only one page when their interface is
+still a meaningful user interaction or composition. Steiger therefore applies
+its insignificant-slice heuristic to other sliced layers, but not to these two.
+
+Keep entity reads and reusable entity UI in `entities`; keep mutations that
+represent a user action in `features`. Server function boundaries use
+`*.functions.ts` and export `*ServerFn`; server-only implementations use
+`*.server.ts` and export noun–verb `*Operation` functions. TanStack Query
+modules may use `QueryOptions` and `use...Mutation` terminology explicitly.
 
 
 
 ## Routing
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/app/routes`.
 
 ### Adding A Route
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+To add a new route to your application just add a new file in the `./src/app/routes` directory.
 
 TanStack will automatically generate the content of the route file for you.
 
@@ -78,7 +101,7 @@ More information on the `Link` component can be found in the [Link documentation
 
 ### Using A Layout
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
+In the File Based Routing setup the layout is located in `src/app/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
 
 Here is an example layout that includes a header:
 

@@ -9,6 +9,14 @@ const DEV_BASE_URL = "http://localhost:5173";
 const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
+const E2E_AUTH_SECRET =
+	process.env.BETTER_AUTH_SECRET ??
+	"watchpoint-playwright-e2e-secret-local-only";
+const WEB_SERVER_ENV = Object.fromEntries([
+	["BETTER_AUTH_SECRET", E2E_AUTH_SECRET],
+	["BETTER_AUTH_URL", BASE_URL],
+	["CLOUDFLARE_INCLUDE_PROCESS_ENV", "true"],
+]);
 
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
@@ -71,6 +79,7 @@ function getWebServerConfig() {
 	return {
 		webServer: {
 			command: steps.join(" && "),
+			env: WEB_SERVER_ENV,
 			url: BASE_URL,
 			reuseExistingServer: false,
 		},

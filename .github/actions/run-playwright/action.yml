@@ -33,6 +33,7 @@ runs:
         E2E_USE_PREVIEW: ${{ inputs.use-preview }}
         E2E_BASE_URL_INPUT: ${{ inputs.base-url }}
         PLAYWRIGHT_BROWSER: ${{ inputs.browser }}
+        CLOUDFLARE_INCLUDE_PROCESS_ENV: "true"
       run: |
         if [[ -n "$E2E_BASE_URL_INPUT" ]]; then
           E2E_BASE_URL="$E2E_BASE_URL_INPUT" bun run test:browser --project="$PLAYWRIGHT_BROWSER"

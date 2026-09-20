@@ -11,8 +11,9 @@
 		"includes": [
 			"**",
 			"!!**/dist",
+			"!!**/test-results",
 			"!!**/.wrangler",
-			"!**/src/routeTree.gen.ts",
+			"!**/src/app/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
 	},
@@ -92,7 +93,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["src/components/ui/**"],
+			"includes": ["src/shared/ui/**"],
 			"linter": {
 				"rules": {
 					"a11y": {
@@ -116,7 +117,7 @@
 			}
 		},
 		{
-			"includes": ["src/styles.css"],
+			"includes": ["src/app/styles.css"],
 			"linter": {
 				"rules": {
 					"nursery": {
@@ -126,7 +127,7 @@
 			}
 		},
 		{
-			"includes": ["src/routes/api/auth/**"],
+			"includes": ["src/app/routes/api/auth/**"],
 			"linter": {
 				"rules": {
 					"style": {
@@ -136,7 +137,7 @@
 			}
 		},
 		{
-			"includes": ["src/lib/auth.ts"],
+			"includes": ["src/shared/auth-server/auth.ts"],
 			"linter": {
 				"rules": {
 					"performance": {
