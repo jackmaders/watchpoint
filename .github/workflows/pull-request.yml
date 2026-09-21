@@ -36,6 +36,8 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: 🏗️ Build Application
+        env:
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
         run: bun run build
 
       - name: 🔀 Verify Route Tree

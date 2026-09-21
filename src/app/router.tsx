@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import {
 	feedbackIntegration,
 	init,
@@ -10,6 +9,8 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
 
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+
 export function getRouter() {
 	const queryClient = new QueryClient();
 	const router = createTanStackRouter({
@@ -19,9 +20,9 @@ export function getRouter() {
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 	});
-	if (!router.isServer) {
+	if (!router.isServer && sentryDsn) {
 		init({
-			dsn: env.SENTRY_DSN,
+			dsn: sentryDsn,
 			sendDefaultPii: true,
 			integrations: [
 				tanstackRouterBrowserTracingIntegration(router),
