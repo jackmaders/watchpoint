@@ -61,3 +61,22 @@ jobs:
           browser: ${{ matrix.browser }}
           base-url: "https://watchpoint.jackmaders.workers.dev/"
           report-name: playwright-report-production-${{ matrix.browser }}
+
+  lighthouse:
+    name: 🔦 Run Lighthouse Check
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: ⚡ Setup Bun Environment
+        uses: ./.github/actions/setup-bun
+
+      - name: 🔦 Run Lighthouse Check
+        uses: ./.github/actions/run-lighthouse
+        with:
+          base-url: "https://watchpoint.jackmaders.workers.dev/"
+          start-server-command: ""

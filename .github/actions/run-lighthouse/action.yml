@@ -1,0 +1,38 @@
+name: "Run Lighthouse CI"
+description: "Installs Chromium, runs Lighthouse CI, and uploads reports"
+
+inputs:
+  base-url:
+    description: "URL for Lighthouse to audit"
+    required: false
+    default: "http://localhost:8787/"
+  start-server-command:
+    description: "Command Lighthouse CI uses to start the application"
+    required: false
+    default: "bun run db:migrate && bun run preview"
+
+runs:
+  using: "composite"
+  steps:
+    - name: 🌐 Setup Playwright Environment
+      uses: ./.github/actions/setup-playwright
+      with:
+        browsers: chromium
+
+    - name: 🔦 Run Lighthouse CI
+      shell: bash
+      env:
+        LHCI_COLLECT__URL: ${{ inputs.base-url }}
+        LHCI_COLLECT__START_SERVER_COMMAND: ${{ inputs.start-server-command }}
+        LHCI_COLLECT__SETTINGS__CHROME_FLAGS: --no-sandbox
+      run: bun run test:lighthouse
+
+    - name: 📊 Upload Lighthouse Report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: lighthouse-report
+        path: .lighthouseci/
+        include-hidden-files: true
+        if-no-files-found: warn
+        retention-days: 7

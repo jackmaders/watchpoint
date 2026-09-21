@@ -29,3 +29,9 @@ runs:
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: bunx playwright install ${{ inputs.browsers }}
       shell: bash
+
+    - name: 🔎 Resolve Lighthouse Chrome
+      shell: bash
+      run: |
+        chrome_path="$(bun -e 'import { chromium } from "playwright"; console.log(chromium.executablePath())')"
+        echo "CHROME_PATH=$chrome_path" >> "$GITHUB_ENV"
