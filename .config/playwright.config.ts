@@ -59,7 +59,7 @@ function getWebServerConfig() {
 
 	const steps = [
 		"bun run db:migrate",
-		USE_PREVIEW ? `bun run preview` : "bun run dev",
+		USE_PREVIEW ? "bun run preview" : "bun run dev",
 	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
@@ -69,7 +69,6 @@ function getWebServerConfig() {
 		// biome-ignore-start lint/style/useNamingConvention: environment variables
 		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
 		BETTER_AUTH_URL: BASE_URL,
-		CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
 		// biome-ignore-end lint/style/useNamingConvention: environment variables
 	};
 
