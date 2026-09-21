@@ -65,17 +65,9 @@ function getWebServerConfig() {
 		steps.unshift("bun run build");
 	}
 
-	const env = {
-		// biome-ignore-start lint/style/useNamingConvention: environment variables
-		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
-		BETTER_AUTH_URL: BASE_URL,
-		// biome-ignore-end lint/style/useNamingConvention: environment variables
-	};
-
 	return {
 		webServer: {
 			command: steps.join(" && "),
-			env,
 			url: BASE_URL,
 			reuseExistingServer: false,
 		},

@@ -23,6 +23,5 @@ export const auth = betterAuth({
 		enabled: true,
 	},
 	secret: env.BETTER_AUTH_SECRET,
-	trustedOrigins: [env.BETTER_AUTH_URL],
 	plugins: [tanstackStartCookies()],
 });
