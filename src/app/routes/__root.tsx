@@ -1,42 +1,40 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
-import {
-	createRootRouteWithContext,
-	HeadContent,
-	Link,
-	Scripts,
-} from "@tanstack/react-router";
+import { createRootRoute, Link, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 
-import appCss from "../styles.css?url";
+import appCss from "../styles.css?inline";
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
-	{
-		head: () => ({
-			meta: [
-				{
-					charSet: "utf-8",
-				},
-				{
-					name: "viewport",
-					content: "width=device-width, initial-scale=1",
-				},
-				{
-					title: "Watchpoint — keep the important signal in sight",
-				},
-			],
-			links: [
-				{
-					rel: "stylesheet",
-					href: appCss,
-				},
-			],
-		}),
-		shellComponent: RootDocument,
-		notFoundComponent: RootNotFound,
-	},
-);
+export const Route = createRootRoute({
+	head: () => ({
+		meta: [
+			{
+				charSet: "utf-8",
+			},
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1",
+			},
+			{
+				name: "description",
+				content:
+					"A focused workspace for keeping the things worth watching in sight.",
+			},
+			{
+				title: "Watchpoint — keep the important signal in sight",
+			},
+		],
+		links: [
+			{
+				rel: "icon",
+				href: "/favicon.svg",
+				type: "image/svg+xml",
+			},
+		],
+	}),
+	shellComponent: RootDocument,
+	notFoundComponent: RootNotFound,
+});
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
@@ -46,7 +44,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
-				<HeadContent />
+				<meta charSet="utf-8" />
+				<meta content="width=device-width, initial-scale=1" name="viewport" />
+				<meta
+					content="A focused workspace for keeping the things worth watching in sight."
+					name="description"
+				/>
+				<title>Watchpoint — keep the important signal in sight</title>
+				<link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+				<style>{appCss}</style>
 			</head>
 			<body>
 				{children}

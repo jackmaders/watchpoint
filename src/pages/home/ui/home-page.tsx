@@ -1,9 +1,7 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
-import type { ReactNode } from "react";
-import { postListQueryOptions } from "@/entities/post";
+import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
+import type { Post } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
-import { SessionPanel } from "@/features/session-manage";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,
@@ -15,9 +13,14 @@ import {
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 
-export function HomePage() {
-	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+const SessionPanel = lazy(async () => {
+	const { SessionPanel: SessionPanelComponent } = await import(
+		"@/features/session-manage"
+	);
+	return { default: SessionPanelComponent };
+});
 
+export function HomePage({ posts }: { posts: Post[] }) {
 	return (
 		<div className="min-h-screen bg-background">
 			<header className="border-border/70 border-b">
@@ -61,7 +64,7 @@ export function HomePage() {
 						</div>
 					</div>
 					<div className="lg:col-span-2">
-						<SessionPanel />
+						<DeferredSessionPanel />
 					</div>
 				</section>
 
@@ -127,6 +130,34 @@ export function HomePage() {
 				</section>
 			</main>
 		</div>
+	);
+}
+
+function DeferredSessionPanel() {
+	const [isReady, setIsReady] = useState(false);
+
+	useEffect(() => {
+		setIsReady(true);
+	}, []);
+
+	if (!isReady) {
+		return <SessionPanelFallback />;
+	}
+
+	return (
+		<Suspense fallback={<SessionPanelFallback />}>
+			<SessionPanel />
+		</Suspense>
+	);
+}
+
+function SessionPanelFallback() {
+	return (
+		<Card className="min-h-session-panel">
+			<CardHeader>
+				<CardDescription>Checking the current session…</CardDescription>
+			</CardHeader>
+		</Card>
 	);
 }
 

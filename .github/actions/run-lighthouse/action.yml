@@ -6,6 +6,10 @@ inputs:
     description: "URL for Lighthouse to audit"
     required: false
     default: "http://localhost:8787/"
+  number-of-runs:
+    description: "Number of Lighthouse runs to collect"
+    required: false
+    default: "3"
   start-server-command:
     description: "Command Lighthouse CI uses to start the application"
     required: false
@@ -23,6 +27,7 @@ runs:
       shell: bash
       env:
         LHCI_COLLECT__URL: ${{ inputs.base-url }}
+        LHCI_COLLECT__NUMBER_OF_RUNS: ${{ inputs.number-of-runs }}
         LHCI_COLLECT__START_SERVER_COMMAND: ${{ inputs.start-server-command }}
         LHCI_COLLECT__SETTINGS__CHROME_FLAGS: --no-sandbox
       run: bun run test:lighthouse

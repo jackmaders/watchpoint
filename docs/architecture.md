@@ -260,9 +260,6 @@ entities/post/api/posts.server.ts
 entities/post/api/posts.functions.ts
   postListServerFn
 
-entities/post/api/posts-query-options.ts
-  postListQueryOptions
-
 features/post-create/api/post-create.functions.ts
   postCreateServerFn
 
@@ -270,8 +267,8 @@ features/post-create/api/use-post-create-mutation.ts
   usePostCreateMutation
 ```
 
-`postListQueryOptions` and `usePostCreateMutation` intentionally use TanStack
-terminology because they are TanStack Query interfaces. The database-backed
+`postListServerFn` and `usePostCreateMutation` intentionally use TanStack
+terminology because they are framework-facing interfaces. The database-backed
 operations do not.
 
 ## Public interfaces and segments
