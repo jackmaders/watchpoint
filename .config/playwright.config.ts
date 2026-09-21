@@ -8,12 +8,7 @@ const externalBaseURL = process.env.E2E_BASE_URL?.trim();
 const devBaseURL = "http://localhost:5173";
 const previewBaseURL = "http://localhost:8787";
 
-let baseURL = devBaseURL;
-if (externalBaseURL) {
-	baseURL = externalBaseURL;
-} else if (usePreview) {
-	baseURL = previewBaseURL;
-}
+const baseURL = externalBaseURL || (usePreview ? previewBaseURL : devBaseURL);
 
 if (skipBuild && !usePreview) {
 	throw new Error("E2E_SKIP_BUILD=true requires E2E_USE_PREVIEW=true");
