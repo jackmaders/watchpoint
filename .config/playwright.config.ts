@@ -6,6 +6,7 @@ const USE_PREVIEW = process.env.E2E_USE_PREVIEW === "true";
 const PREVIEW_BASE_URL = "http://localhost:8787";
 const DEV_BASE_URL = "http://localhost:5173";
 const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
+const E2E_AUTH_SECRET = "watchpoint-playwright-e2e-secret-local-only";
 
 const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
 
@@ -59,7 +60,9 @@ function getWebServerConfig() {
 
 	const steps = [
 		"bun run db:migrate",
-		USE_PREVIEW ? `bun run preview` : "bun run dev",
+		USE_PREVIEW
+			? "bun run preview -- --var BETTER_AUTH_SECRET:$BETTER_AUTH_SECRET"
+			: "bun run dev",
 	];
 	if (USE_PREVIEW && !SKIP_BUILD) {
 		steps.unshift("bun run build");
@@ -67,9 +70,13 @@ function getWebServerConfig() {
 
 	const env = {
 		// biome-ignore-start lint/style/useNamingConvention: environment variables
-		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
-		BETTER_AUTH_URL: BASE_URL,
-		CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
+		BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
+		...(USE_PREVIEW
+			? {}
+			: {
+					BETTER_AUTH_URL: BASE_URL,
+					CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
+				}),
 		// biome-ignore-end lint/style/useNamingConvention: environment variables
 	};
 
