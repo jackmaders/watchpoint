@@ -7,8 +7,21 @@ import viteReact from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 
+const sentryModulePath = /[\\/]node_modules[\\/]@sentry[\\/]/;
+
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
+	build: {
+		rolldownOptions: {
+			output: {
+				manualChunks(id) {
+					if (sentryModulePath.test(id)) {
+						return "sentry";
+					}
+				},
+			},
+		},
+	},
 	plugins: [
 		cloudflare({
 			configPath: ".config/wrangler.json",
