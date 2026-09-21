@@ -1,5 +1,11 @@
 name: "Run Lighthouse CI"
-description: "Installs Chromium, runs Lighthouse CI against the production preview, and uploads reports"
+description: "Installs Chromium, runs Lighthouse CI, and uploads reports"
+
+inputs:
+  base-url:
+    description: "Optional URL for Lighthouse to audit instead of the local production preview"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -17,7 +23,16 @@ runs:
 
     - name: 🔦 Run Lighthouse CI
       shell: bash
-      run: bun run test:lighthouse
+      env:
+        LIGHTHOUSE_BASE_URL: ${{ inputs.base-url }}
+      run: |
+        if [[ -n "$LIGHTHOUSE_BASE_URL" ]]; then
+          bun run test:lighthouse -- \
+            --collect.url="$LIGHTHOUSE_BASE_URL" \
+            --collect.startServerCommand=""
+        else
+          bun run test:lighthouse
+        fi
 
     - name: 📊 Upload Lighthouse Report
       if: ${{ !cancelled() }}
