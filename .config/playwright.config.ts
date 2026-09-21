@@ -1,37 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
-const externalBaseURL = process.env.E2E_BASE_URL?.trim() || undefined;
-const usePreview = process.env.E2E_USE_PREVIEW === "true";
 const skipBuild = process.env.E2E_SKIP_BUILD === "true";
-const serverMode = externalBaseURL
-	? "external"
-	: usePreview
-		? "preview"
-		: "dev";
+const usePreview = process.env.E2E_USE_PREVIEW === "true";
+const externalBaseURL = process.env.E2E_BASE_URL?.trim();
 
-if (skipBuild && serverMode !== "preview") {
-	throw new Error("E2E_SKIP_BUILD=true requires E2E_USE_PREVIEW=true");
+const devBaseURL = "http://localhost:5173";
+const previewBaseURL = "http://localhost:8787";
+
+let baseURL = devBaseURL;
+if (externalBaseURL) {
+	baseURL = externalBaseURL;
+} else if (usePreview) {
+	baseURL = previewBaseURL;
 }
 
-const baseURL =
-	externalBaseURL ??
-	(serverMode === "preview"
-		? "http://localhost:8787"
-		: "http://localhost:5173");
-
-const webServer =
-	serverMode === "external"
-		? undefined
-		: {
-				command: [
-					...(serverMode === "preview" && !skipBuild ? ["bun run build"] : []),
-					"bun run db:migrate",
-					serverMode === "preview" ? "bun run preview" : "bun run dev",
-				].join(" && "),
-				url: baseURL,
-				reuseExistingServer: false,
-			};
+if (skipBuild && !usePreview) {
+	throw new Error("E2E_SKIP_BUILD=true requires E2E_USE_PREVIEW=true");
+}
 
 export default defineConfig({
 	testDir: "../e2e",
@@ -58,5 +44,31 @@ export default defineConfig({
 			use: { ...devices["Desktop Safari"] },
 		},
 	],
-	webServer,
+	...getWebServerConfig(),
 });
+
+function getWebServerConfig() {
+	if (externalBaseURL) {
+		return {};
+	}
+
+	const steps = ["bun run db:migrate"];
+
+	if (usePreview && !skipBuild) {
+		steps.unshift("bun run build");
+	}
+
+	if (usePreview) {
+		steps.push("bun run preview");
+	} else {
+		steps.push("bun run dev");
+	}
+
+	return {
+		webServer: {
+			command: steps.join(" && "),
+			url: baseURL,
+			reuseExistingServer: false,
+		},
+	};
+}
