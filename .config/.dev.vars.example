@@ -1,3 +1,7 @@
 BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
 BETTER_AUTH_URL="http://localhost:5173"
-SENTRY_DSN="replace-with-your-sentry-dsn"
+# Sentry is disabled by default in local development.
+# SENTRY_DSN="https://public-key@o0.ingest.sentry.io/0"
+# SENTRY_ORG="your-sentry-org-slug"
+# SENTRY_PROJECT="your-sentry-project-slug"
+# SENTRY_AUTH_TOKEN="sntrys_..." # CI/build only; never a Worker runtime variable.

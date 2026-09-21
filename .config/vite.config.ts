@@ -26,9 +26,10 @@ const config = defineConfig({
 		viteReact(),
 		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
 		sentryTanstackStart({
-			org: "___ORG_SLUG___",
-			project: "___PROJECT_SLUG___",
+			org: process.env.SENTRY_ORG,
+			project: process.env.SENTRY_PROJECT,
 			authToken: process.env.SENTRY_AUTH_TOKEN,
+			autoInstrumentMiddleware: false,
 		}),
 	],
 });

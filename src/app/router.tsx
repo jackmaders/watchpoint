@@ -1,4 +1,9 @@
-import * as Sentry from "@sentry/react";
+import {
+	feedbackIntegration,
+	init,
+	replayIntegration,
+	tanstackRouterBrowserTracingIntegration,
+} from "@sentry/react";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
@@ -14,13 +19,13 @@ export function getRouter() {
 		defaultPreloadStaleTime: 0,
 	});
 	if (!router.isServer) {
-		Sentry.init({
+		init({
 			dsn: "___PUBLIC_DSN___",
 			sendDefaultPii: true,
 			integrations: [
-				Sentry.tanstackRouterBrowserTracingIntegration(router),
-				Sentry.replayIntegration(),
-				Sentry.feedbackIntegration({
+				tanstackRouterBrowserTracingIntegration(router),
+				replayIntegration(),
+				feedbackIntegration({
 					colorScheme: "system",
 				}),
 			],
