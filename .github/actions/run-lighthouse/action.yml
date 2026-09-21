@@ -10,10 +10,24 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: 🌐 Setup Chromium
-      uses: ./.github/actions/setup-browser
+    - name: 💾 Cache Lighthouse Chrome
+      id: chrome-cache
+      uses: actions/cache@v5
       with:
-        browsers: chromium
+        key: ${{ runner.os }}-lighthouse-chrome-${{ hashFiles('**/bun.lock') }}
+        path: ~/.cache/ms-playwright
+        restore-keys: |
+          ${{ runner.os }}-lighthouse-chrome-
+
+    - name: 🧩 Install Chrome System Dependencies
+      if: runner.os == 'Linux'
+      shell: bash
+      run: bunx playwright install-deps chromium
+
+    - name: 🌐 Install Chrome for Lighthouse
+      if: steps.chrome-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: bunx playwright install chromium
 
     - name: 🔎 Resolve Lighthouse Chrome
       shell: bash

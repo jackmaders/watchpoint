@@ -21,8 +21,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: 🌐 Setup Browser Environment
-      uses: ./.github/actions/setup-browser
+    - name: 🌐 Setup Playwright Environment
+      uses: ./.github/actions/setup-playwright
       with:
         browsers: ${{ inputs.browser }}
 

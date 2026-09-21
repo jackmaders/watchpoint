@@ -1,5 +1,5 @@
-name: "Setup Browsers"
-description: "Caches and installs browser binaries and operating system dependencies"
+name: "Setup Playwright"
+description: "Caches and installs Playwright browser binaries and operating system dependencies"
 
 inputs:
   browsers:
@@ -10,15 +10,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: 💾 Cache Browser Binaries
-      id: browser-cache
+    - name: 💾 Cache Playwright Browsers
+      id: playwright-cache
       uses: actions/cache@v5
       with:
-        key: ${{ runner.os }}-browser-${{ inputs.browsers }}-${{ hashFiles('**/bun.lock') }}
+        key: ${{ runner.os }}-playwright-${{ inputs.browsers }}-${{ hashFiles('**/bun.lock') }}
         path: ~/.cache/ms-playwright
         restore-keys: |
-          ${{ runner.os }}-browser-${{ inputs.browsers }}-
-          ${{ runner.os }}-browser-
+          ${{ runner.os }}-playwright-${{ inputs.browsers }}-
+          ${{ runner.os }}-playwright-
 
     - name: 🧩 Install Browser System Dependencies
       if: runner.os == 'Linux'
@@ -26,6 +26,6 @@ runs:
       shell: bash
 
     - name: 🌐 Install Browser Binaries
-      if: steps.browser-cache.outputs.cache-hit != 'true'
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: bunx playwright install ${{ inputs.browsers }}
       shell: bash
