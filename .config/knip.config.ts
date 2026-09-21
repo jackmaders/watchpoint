@@ -1,6 +1,10 @@
 import type { KnipConfig } from "knip";
 
-const ignoreDependencies = ["cloudflare"];
+const ignoreDependencies = [
+	"cloudflare",
+	// Strict mode omits Vite config files, so it cannot see this package's /vite import.
+	"@sentry/tanstackstart-react!",
+];
 
 if (!process.env.CI) {
 	ignoreDependencies.push("lefthook");
