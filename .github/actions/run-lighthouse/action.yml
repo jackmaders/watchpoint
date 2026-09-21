@@ -4,8 +4,8 @@ description: "Installs Chromium, runs Lighthouse CI against the production previ
 runs:
   using: "composite"
   steps:
-    - name: 🌐 Setup Lighthouse Environment
-      uses: ./.github/actions/setup-playwright
+    - name: 🌐 Setup Chromium
+      uses: ./.github/actions/setup-browser
       with:
         browsers: chromium
 
