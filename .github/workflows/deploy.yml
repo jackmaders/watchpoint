@@ -23,6 +23,10 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: 🏗️ Build Application
+        env:
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: bun run build
 
       - name: 🗃️ Apply Production Database Migrations
