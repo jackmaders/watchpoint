@@ -3,50 +3,28 @@ description: "Installs Chromium, runs Lighthouse CI, and uploads reports"
 
 inputs:
   base-url:
-    description: "Optional URL for Lighthouse to audit instead of the local production preview"
+    description: "URL for Lighthouse to audit"
     required: false
-    default: ""
+    default: "http://localhost:8787/"
+  start-server-command:
+    description: "Command Lighthouse CI uses to start the application"
+    required: false
+    default: "bun run db:migrate && bun run preview"
 
 runs:
   using: "composite"
   steps:
-    - name: 💾 Cache Lighthouse Chrome
-      id: chrome-cache
-      uses: actions/cache@v5
+    - name: 🌐 Setup Playwright Environment
+      uses: ./.github/actions/setup-playwright
       with:
-        key: ${{ runner.os }}-lighthouse-chrome-${{ hashFiles('**/bun.lock') }}
-        path: ~/.cache/ms-playwright
-        restore-keys: |
-          ${{ runner.os }}-lighthouse-chrome-
-
-    - name: 🧩 Install Chrome System Dependencies
-      if: runner.os == 'Linux'
-      shell: bash
-      run: bunx playwright install-deps chromium
-
-    - name: 🌐 Install Chrome for Lighthouse
-      if: steps.chrome-cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: bunx playwright install chromium
-
-    - name: 🔎 Resolve Lighthouse Chrome
-      shell: bash
-      run: |
-        chrome_path="$(bun -e 'import { chromium } from "playwright"; console.log(chromium.executablePath())')"
-        echo "CHROME_PATH=$chrome_path" >> "$GITHUB_ENV"
+        browsers: chromium
 
     - name: 🔦 Run Lighthouse CI
       shell: bash
       env:
-        LIGHTHOUSE_BASE_URL: ${{ inputs.base-url }}
-      run: |
-        if [[ -n "$LIGHTHOUSE_BASE_URL" ]]; then
-          bun run test:lighthouse -- \
-            --collect.url="$LIGHTHOUSE_BASE_URL" \
-            --collect.startServerCommand=""
-        else
-          bun run test:lighthouse
-        fi
+        LHCI_COLLECT__URL: ${{ inputs.base-url }}
+        LHCI_COLLECT__START_SERVER_COMMAND: ${{ inputs.start-server-command }}
+      run: bun run test:lighthouse
 
     - name: 📊 Upload Lighthouse Report
       if: ${{ !cancelled() }}
