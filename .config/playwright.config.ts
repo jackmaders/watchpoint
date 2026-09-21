@@ -7,7 +7,7 @@ const PREVIEW_BASE_URL = "http://localhost:8787";
 const DEV_BASE_URL = "http://localhost:5173";
 const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
 
-const BASE_URL = process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
+const BASE_URL = process.env.E2E_BASE_URL || DEFAULT_BASE_URL;
 
 /** See https://playwright.dev/docs/test-configuration. */
 export default defineConfig({
