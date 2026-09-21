@@ -3,14 +3,14 @@
 	"name": "watchpoint",
 	"compatibility_date": "2026-09-19",
 	"compatibility_flags": ["nodejs_compat"],
-	"main": "@tanstack/react-start/server-entry",
+	"main": "../src/server.ts",
 	"observability": { "enabled": true },
 	"workers_dev": true,
 	"vars": {
 		"BETTER_AUTH_URL": "https://watchpoint.jackmaders.workers.dev"
 	},
 	"secrets": {
-		"required": ["BETTER_AUTH_SECRET"]
+		"required": ["BETTER_AUTH_SECRET", "SENTRY_DSN"]
 	},
 	"d1_databases": [
 		{

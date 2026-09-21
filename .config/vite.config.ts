@@ -1,4 +1,5 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
+import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -24,6 +25,11 @@ const config = defineConfig({
 		tailwindcss(),
 		viteReact(),
 		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
+		sentryTanstackStart({
+			org: "___ORG_SLUG___",
+			project: "___PROJECT_SLUG___",
+			authToken: process.env.SENTRY_AUTH_TOKEN,
+		}),
 	],
 });
 
