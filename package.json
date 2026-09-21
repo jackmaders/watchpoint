@@ -25,7 +25,8 @@
 		"preview": "wrangler dev dist/server/index.js -c dist/server/wrangler.json --persist-to .wrangler/state",
 		"shadcn:add": "bunx --bun shadcn@latest add --cwd .config",
 		"test": "vitest --run -c .config/vitest.config.ts",
-		"test:browser": "playwright test -c .config/playwright.config.ts"
+		"test:browser": "playwright test -c .config/playwright.config.ts",
+		"test:lighthouse": "lhci autorun --config=.config/lighthouserc.json"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
@@ -54,6 +55,7 @@
 		"@cloudflare/workers-types": "^5.20260919.1",
 		"@commitlint/cli": "^21.2.2",
 		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@lhci/cli": "0.15.1",
 		"@playwright/test": "^1.63.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/devtools-vite": "latest",
