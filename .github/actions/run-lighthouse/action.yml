@@ -25,7 +25,9 @@ runs:
         LHCI_COLLECT__URL: ${{ inputs.base-url }}
         LHCI_COLLECT__START_SERVER_COMMAND: ${{ inputs.start-server-command }}
         LHCI_COLLECT__SETTINGS__CHROME_FLAGS: --no-sandbox
-      run: bun run test:lighthouse
+      run: |
+        CHROME_PATH="$(bun -e 'import { chromium } from "playwright"; console.log(chromium.executablePath())')" \
+          bun run test:lighthouse
 
     - name: 📊 Upload Lighthouse Report
       if: ${{ !cancelled() }}
