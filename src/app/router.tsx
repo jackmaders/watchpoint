@@ -20,7 +20,7 @@ export function getRouter() {
 	});
 	if (!router.isServer) {
 		init({
-			dsn: "___PUBLIC_DSN___",
+			dsn: "https://ad62fa82e1f47662f8ed69f2d6ef84f5@o4511871149670400.ingest.de.sentry.io/4511871151243344",
 			sendDefaultPii: true,
 			integrations: [
 				tanstackRouterBrowserTracingIntegration(router),

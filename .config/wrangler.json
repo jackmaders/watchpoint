@@ -8,7 +8,7 @@
 	"workers_dev": true,
 	"vars": {
 		"BETTER_AUTH_URL": "https://watchpoint.jackmaders.workers.dev",
-		"SENTRY_DSN": ""
+		"SENTRY_DSN": "https://ad62fa82e1f47662f8ed69f2d6ef84f5@o4511871149670400.ingest.de.sentry.io/4511871151243344"
 	},
 	"secrets": {
 		"required": ["BETTER_AUTH_SECRET"]
