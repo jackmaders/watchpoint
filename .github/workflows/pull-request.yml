@@ -129,8 +129,6 @@ jobs:
         uses: ./.github/actions/run-lighthouse
         env:
           BETTER_AUTH_SECRET: watchpoint-lighthouse-local-only
-          BETTER_AUTH_URL: http://localhost:8787
-          CLOUDFLARE_INCLUDE_PROCESS_ENV: "true"
 
   code-quality:
     name: ✨ Check Code Quality

@@ -239,16 +239,30 @@ cp .config/.dev.vars.example .config/.dev.vars
 # Replace BETTER_AUTH_SECRET in .config/.dev.vars with a value from:
 openssl rand -base64 32
 bun run db:migrate
-bun --bun run dev
+bun run dev
 ```
 
-The Vite dev server and browser tests use `http://localhost:5173`, so keep
-`BETTER_AUTH_URL` aligned with that origin. If you use the Wrangler preview
-server instead, set it to `http://localhost:8787` for that process.
+There are three auth origins, one for each way to run the application:
+
+| Mode | Command | `BETTER_AUTH_URL` | Where it is set |
+| --- | --- | --- | --- |
+| Local development | `bun run dev` | `http://localhost:5173` | `.config/.dev.vars` |
+| Production build preview | `bun run build && bun run db:migrate && bun run preview` | `http://localhost:8787` | `bun run preview` override |
+| Cloudflare deployment | `bun run build && bun run deploy` | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json` |
+
+The preview command deliberately overrides the deployment value generated in
+`dist/server/wrangler.json`, so the same build artifact can be previewed
+locally without editing `.config/.dev.vars`. The preview E2E suite exercises
+this command directly:
+
+```bash
+E2E_USE_PREVIEW=true bun run test:browser
+```
 
 For production, set `BETTER_AUTH_SECRET` with `wrangler secret put` and set
-`BETTER_AUTH_URL` to the deployed origin. Keep the cookie plugin last in the
-Better Auth plugin list so TanStack Start can attach auth cookies to responses.
+the deployed origin in `.config/wrangler.json` as `BETTER_AUTH_URL`. Keep the
+cookie plugin last in the Better Auth plugin list so TanStack Start can attach
+auth cookies to responses.
 Post reads are public for the home page, while post creation is protected at
 the server boundary with `ensureSession`. Route redirects are a second layer
 for navigation UX, not a replacement for server-side authorization.

@@ -20,7 +20,12 @@ runs:
           ${{ runner.os }}-browser-${{ inputs.browsers }}-
           ${{ runner.os }}-browser-
 
+    - name: 🧩 Install Browser System Dependencies
+      if: runner.os == 'Linux'
+      run: bunx playwright install-deps ${{ inputs.browsers }}
+      shell: bash
+
     - name: 🌐 Install Browser Binaries
       if: steps.browser-cache.outputs.cache-hit != 'true'
-      run: bunx playwright install --with-deps ${{ inputs.browsers }}
+      run: bunx playwright install ${{ inputs.browsers }}
       shell: bash
