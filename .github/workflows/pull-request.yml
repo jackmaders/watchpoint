@@ -7,6 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  BETTER_AUTH_SECRET: watchpoint-ci-local-only-secret-value
+
 jobs:
   unit-tests:
     name: 🧪 Run Unit Tests
@@ -129,8 +132,6 @@ jobs:
         uses: ./.github/actions/run-lighthouse
         with:
           number-of-runs: "1"
-        env:
-          BETTER_AUTH_SECRET: watchpoint-lighthouse-local-only
 
   code-quality:
     name: ✨ Check Code Quality

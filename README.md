@@ -223,13 +223,13 @@ Authentication is wired with [Better Auth](https://better-auth.com/) using its
 official TanStack Start cookie plugin and the Drizzle adapter over the existing
 Cloudflare D1 database:
 
-- `src/lib/auth.ts` is server-only and owns the Better Auth instance.
-- `src/lib/auth-client.ts` is the browser client and uses Better Auth's
+- `src/shared/auth/auth.server.ts` is server-only and owns the Better Auth instance.
+- `src/shared/auth/auth-client.ts` is the browser client and uses Better Auth's
   same-origin `/api/auth` default.
-- `src/routes/api/auth/$.ts` mounts Better Auth's GET and POST handlers.
-- `src/lib/auth.functions.ts` provides the server-side session helper used by
+- `src/app/routes/api/auth/$.ts` mounts Better Auth's GET and POST handlers.
+- `src/shared/auth/auth.functions.ts` provides the server-side session helper used by
   protected server functions.
-- `src/db/auth-schema.ts` and the generated Drizzle migration own the Better
+- `src/shared/db/schema/auth.ts` and the generated Drizzle migration own the Better
   Auth tables alongside the existing `posts` table.
 
 Create local secrets before starting the app:
@@ -252,11 +252,28 @@ There are three auth origins, one for each way to run the application:
 
 The preview command deliberately overrides the deployment value generated in
 `dist/server/wrangler.json`, so the same build artifact can be previewed
-locally without editing `.config/.dev.vars`. The preview E2E suite exercises
-this command directly:
+locally without editing `.config/.dev.vars`. Better Auth automatically trusts
+the configured base URL, so no duplicate `trustedOrigins` entry is needed.
+
+Playwright uses the same local configuration rather than replacing the Better
+Auth variables. Its runner variables only select where and how the app starts:
+
+| Variable | Purpose |
+| --- | --- |
+| `E2E_BASE_URL` | Test an already-running deployment and do not start a local server. |
+| `E2E_USE_PREVIEW=true` | Build and test the production preview on port 8787. |
+| `E2E_SKIP_BUILD=true` | Reuse an existing preview build; only applies with `E2E_USE_PREVIEW=true`. |
+
+Pull-request jobs share one workflow-scoped, local-only `BETTER_AUTH_SECRET`.
+Production continues to read its real secret from Cloudflare.
+
+The preview E2E suite exercises the preview command directly:
 
 ```bash
 E2E_USE_PREVIEW=true bun run test:browser
+
+# Reuse a build that was created separately.
+bun run build && E2E_USE_PREVIEW=true E2E_SKIP_BUILD=true bun run test:browser
 ```
 
 For production, set `BETTER_AUTH_SECRET` with `wrangler secret put` and set

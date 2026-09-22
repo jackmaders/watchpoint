@@ -29,7 +29,7 @@ runs:
     - name: 🎭 Run Browser Tests
       shell: bash
       env:
-        E2E_SKIP_BUILD: "true"
+        E2E_SKIP_BUILD: ${{ inputs.use-preview }}
         E2E_USE_PREVIEW: ${{ inputs.use-preview }}
         E2E_BASE_URL: ${{ inputs.base-url }}
       run: bun run test:browser --project="${{ inputs.browser }}"
