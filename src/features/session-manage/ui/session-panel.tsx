@@ -13,6 +13,7 @@ import {
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
+import { SessionPanelFallback } from "./session-panel-fallback";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -77,18 +78,12 @@ export function SessionPanel() {
 	);
 
 	if (isPending) {
-		return (
-			<Card className="h-full">
-				<CardHeader>
-					<CardDescription>Checking the current session…</CardDescription>
-				</CardHeader>
-			</Card>
-		);
+		return <SessionPanelFallback className="h-full" />;
 	}
 
 	if (session?.user) {
 		return (
-			<Card className="h-full">
+			<Card className="h-full min-h-112">
 				<CardHeader>
 					<div className="flex items-center justify-between gap-4">
 						<div>
@@ -110,7 +105,7 @@ export function SessionPanel() {
 	}
 
 	return (
-		<Card className="h-full">
+		<Card className="h-full min-h-112">
 			<CardHeader>
 				<CardDescription>Access the watchpoint</CardDescription>
 				<CardTitle className="mt-1">

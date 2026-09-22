@@ -79,4 +79,5 @@ jobs:
         uses: ./.github/actions/run-lighthouse
         with:
           base-url: "https://watchpoint.jackmaders.workers.dev/"
+          number-of-runs: "3"
           start-server-command: ""

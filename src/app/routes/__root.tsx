@@ -9,7 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 
-import appCss from "../styles.css?url";
+import appCss from "../styles.css?inline";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 	{
@@ -23,13 +23,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 					content: "width=device-width, initial-scale=1",
 				},
 				{
+					name: "description",
+					content:
+						"A focused workspace for keeping the things worth watching in sight.",
+				},
+				{
 					title: "Watchpoint — keep the important signal in sight",
 				},
 			],
 			links: [
 				{
-					rel: "stylesheet",
-					href: appCss,
+					rel: "icon",
+					href: "/favicon.svg",
+					type: "image/svg+xml",
 				},
 			],
 		}),
@@ -47,6 +53,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en">
 			<head>
 				<HeadContent />
+				<style>{appCss}</style>
 			</head>
 			<body>
 				{children}

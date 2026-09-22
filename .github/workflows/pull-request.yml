@@ -130,6 +130,8 @@ jobs:
 
       - name: 🔦 Run Lighthouse Check
         uses: ./.github/actions/run-lighthouse
+        with:
+          number-of-runs: "1"
 
   code-quality:
     name: ✨ Check Code Quality
