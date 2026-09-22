@@ -78,7 +78,7 @@ export function SessionPanel() {
 
 	if (isPending) {
 		return (
-			<Card className="h-full min-h-session-panel">
+			<Card className="h-full min-h-112">
 				<CardHeader>
 					<CardDescription>Checking the current session…</CardDescription>
 				</CardHeader>
@@ -88,7 +88,7 @@ export function SessionPanel() {
 
 	if (session?.user) {
 		return (
-			<Card className="h-full min-h-session-panel">
+			<Card className="h-full min-h-112">
 				<CardHeader>
 					<div className="flex items-center justify-between gap-4">
 						<div>
@@ -110,7 +110,7 @@ export function SessionPanel() {
 	}
 
 	return (
-		<Card className="h-full min-h-session-panel">
+		<Card className="h-full min-h-112">
 			<CardHeader>
 				<CardDescription>Access the watchpoint</CardDescription>
 				<CardTitle className="mt-1">

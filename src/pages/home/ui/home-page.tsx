@@ -14,12 +14,11 @@ import {
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 
-const SessionPanel = lazy(async () => {
-	const { SessionPanel: SessionPanelComponent } = await import(
-		"@/features/session-manage"
-	);
-	return { default: SessionPanelComponent };
-});
+const SessionPanel = lazy(() =>
+	import("@/features/session-manage").then(({ SessionPanel }) => ({
+		default: SessionPanel,
+	})),
+);
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -156,7 +155,7 @@ function DeferredSessionPanel() {
 
 function SessionPanelFallback() {
 	return (
-		<Card className="min-h-session-panel">
+		<Card className="min-h-112">
 			<CardHeader>
 				<CardDescription>Checking the current session…</CardDescription>
 			</CardHeader>

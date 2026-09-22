@@ -21,7 +21,6 @@ body {
 @theme inline {
 	--font-heading: var(--font-sans);
 	--font-sans: ui-sans-serif, system-ui, sans-serif;
-	--spacing-session-panel: 28rem;
 	--tracking-brand: 0.18em;
 	--tracking-display: -0.055em;
 	--tracking-eyebrow: 0.22em;
