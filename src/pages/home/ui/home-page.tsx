@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
-import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
+import { lazy, type ReactNode, Suspense } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
 import { Badge } from "@/shared/ui/badge";
@@ -136,16 +136,6 @@ export function HomePage() {
 }
 
 function DeferredSessionPanel() {
-	const [isReady, setIsReady] = useState(false);
-
-	useEffect(() => {
-		setIsReady(true);
-	}, []);
-
-	if (!isReady) {
-		return <SessionPanelFallback />;
-	}
-
 	return (
 		<Suspense fallback={<SessionPanelFallback />}>
 			<SessionPanel />
