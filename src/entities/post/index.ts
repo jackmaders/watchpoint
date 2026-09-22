@@ -1,4 +1,4 @@
-export { postListServerFn } from "./api/posts.functions";
+export { postListQueryOptions } from "./api/posts-query-options";
 export {
 	type Post,
 	type PostInsert,

@@ -1,6 +1,7 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
-import type { Post } from "@/entities/post";
+import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
 import { Badge } from "@/shared/ui/badge";
 import {
@@ -20,7 +21,9 @@ const SessionPanel = lazy(async () => {
 	return { default: SessionPanelComponent };
 });
 
-export function HomePage({ posts }: { posts: Post[] }) {
+export function HomePage() {
+	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+
 	return (
 		<div className="min-h-screen bg-background">
 			<header className="border-border/70 border-b">

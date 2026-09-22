@@ -1,26 +1,17 @@
-import { useRouter } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useState } from "react";
-import type { PostInsert } from "@/entities/post";
+import { type PostInsert, postListQueryOptions } from "@/entities/post";
 import { postCreateServerFn } from "./post-create.functions";
 
 export function usePostCreateMutation() {
-	const router = useRouter();
+	const queryClient = useQueryClient();
 	const postCreate = useServerFn(postCreateServerFn);
-	const [isPending, setIsPending] = useState(false);
-	const mutateAsync = useCallback(
-		async (data: PostInsert) => {
-			setIsPending(true);
-			try {
-				const result = await postCreate({ data });
-				await router.invalidate();
-				return result;
-			} finally {
-				setIsPending(false);
-			}
-		},
-		[postCreate, router],
-	);
 
-	return { isPending, mutateAsync };
+	return useMutation({
+		mutationFn: (data: PostInsert) => postCreate({ data }),
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: postListQueryOptions.queryKey,
+			}),
+	});
 }

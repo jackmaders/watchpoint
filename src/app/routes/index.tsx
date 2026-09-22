@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { postListServerFn } from "@/entities/post";
+import { postListQueryOptions } from "@/entities/post";
 import { HomePage } from "@/pages/home";
 
 export const Route = createFileRoute("/")({
-	loader: () => postListServerFn(),
-	component: HomeRoute,
+	loader: async ({ context }) => {
+		await context.queryClient.ensureQueryData(postListQueryOptions);
+	},
+	component: HomePage,
 });
-
-function HomeRoute() {
-	return <HomePage posts={Route.useLoaderData()} />;
-}
