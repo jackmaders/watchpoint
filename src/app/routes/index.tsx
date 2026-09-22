@@ -4,7 +4,7 @@ import { HomePage } from "@/pages/home";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
-		await context.queryClient.query(postListQueryOptions);
+		await context.queryClient.ensureQueryData(postListQueryOptions);
 	},
 	component: HomePage,
 });

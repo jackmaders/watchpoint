@@ -1,82 +1,68 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const SKIP_BUILD = process.env.E2E_SKIP_BUILD === "true";
-const USE_PREVIEW = process.env.E2E_USE_PREVIEW === "true";
+const isCI = Boolean(process.env.CI);
+const skipBuild = process.env.E2E_SKIP_BUILD === "true";
+const usePreview = process.env.E2E_USE_PREVIEW === "true";
+const externalBaseURL = process.env.E2E_BASE_URL?.trim();
 
-const PREVIEW_BASE_URL = "http://localhost:8787";
-const DEV_BASE_URL = "http://localhost:5173";
-const DEFAULT_BASE_URL = USE_PREVIEW ? PREVIEW_BASE_URL : DEV_BASE_URL;
+const devBaseURL = "http://localhost:5173";
+const previewBaseURL = "http://localhost:8787";
 
-const BASE_URL = process.env.E2E_BASE_URL || DEFAULT_BASE_URL;
+const baseURL = externalBaseURL || (usePreview ? previewBaseURL : devBaseURL);
 
-/** See https://playwright.dev/docs/test-configuration. */
+if (skipBuild && !usePreview) {
+	throw new Error("E2E_SKIP_BUILD=true requires E2E_USE_PREVIEW=true");
+}
+
 export default defineConfig({
 	testDir: "../e2e",
-	/* Run tests in files in parallel */
 	fullyParallel: true,
-	/* Fail the build on CI if you accidentally left test.only in the source code. */
-	forbidOnly: Boolean(process.env.CI),
-	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 0,
-	/* Opt out of parallel tests on CI. */
-	workers: process.env.CI ? 1 : undefined,
-	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: process.env.CI ? "github" : "list",
-	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+	forbidOnly: isCI,
+	retries: isCI ? 2 : 0,
+	workers: isCI ? 1 : undefined,
+	reporter: isCI ? "github" : "list",
 	use: {
-		/* Base URL to use in actions like `await page.goto('')`. */
-		baseURL: BASE_URL,
-
-		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+		baseURL,
 		trace: "on-first-retry",
 	},
-
-	/* Configure projects for major browsers */
 	projects: [
 		{
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
 		},
-
 		{
 			name: "firefox",
 			use: { ...devices["Desktop Firefox"] },
 		},
-
 		{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
 		},
 	],
-
 	...getWebServerConfig(),
 });
 
 function getWebServerConfig() {
-	if (process.env.E2E_BASE_URL) {
+	if (externalBaseURL) {
 		return {};
 	}
 
-	const steps = [
-		"bun run db:migrate",
-		USE_PREVIEW ? "bun run preview" : "bun run dev",
-	];
-	if (USE_PREVIEW && !SKIP_BUILD) {
+	const steps = ["bun run db:migrate"];
+
+	if (usePreview && !skipBuild) {
 		steps.unshift("bun run build");
 	}
 
-	const env = {
-		// biome-ignore-start lint/style/useNamingConvention: environment variables
-		BETTER_AUTH_SECRET: "watchpoint-playwright-e2e-secret-local-only",
-		BETTER_AUTH_URL: BASE_URL,
-		// biome-ignore-end lint/style/useNamingConvention: environment variables
-	};
+	if (usePreview) {
+		steps.push("bun run preview");
+	} else {
+		steps.push("bun run dev");
+	}
 
 	return {
 		webServer: {
 			command: steps.join(" && "),
-			env,
-			url: BASE_URL,
+			url: baseURL,
 			reuseExistingServer: false,
 		},
 	};
