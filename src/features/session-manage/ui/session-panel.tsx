@@ -13,6 +13,7 @@ import {
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
+import { SessionPanelFallback } from "./session-panel-fallback";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -77,13 +78,7 @@ export function SessionPanel() {
 	);
 
 	if (isPending) {
-		return (
-			<Card className="h-full min-h-112">
-				<CardHeader>
-					<CardDescription>Checking the current session…</CardDescription>
-				</CardHeader>
-			</Card>
-		);
+		return <SessionPanelFallback className="h-full" />;
 	}
 
 	if (session?.user) {
