@@ -37,7 +37,7 @@ jobs:
 
       - name: 🏗️ Build Application
         env:
-          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          SENTRY_DSN: ${{ vars.SENTRY_DSN }}
         run: bun run build
 
       - name: 🔀 Verify Route Tree

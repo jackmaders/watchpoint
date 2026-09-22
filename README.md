@@ -235,31 +235,29 @@ Cloudflare D1 database:
 Create the local environment before starting the app:
 
 ```bash
-cp .config/.env.example .config/.env
-# Replace BETTER_AUTH_SECRET in .config/.env with a value from:
+cp .env.example .env
+# Replace BETTER_AUTH_SECRET in .env with a value from:
 openssl rand -base64 32
 bun run db:migrate
 bun run dev
 ```
 
-Vite and the Cloudflare plugin both load `.config/.env`. Only variables with
-the `VITE_` prefix are exposed to browser code; the remaining values stay in
-the Worker environment. To enable Sentry locally, set both `SENTRY_DSN` and
-`VITE_SENTRY_DSN` to the same public DSN. If you already have a
-`.config/.dev.vars` file, rename it to `.config/.env` because Cloudflare gives
-`.dev.vars` precedence when both files exist.
+Vite and the Cloudflare plugin both load the root `.env`. `SENTRY_DSN` is the
+single local Sentry value; Vite derives the browser-facing `VITE_SENTRY_DSN`
+from it. If you are upgrading from an older checkout, move values from
+`.config/.env` or `.config/.dev.vars` into `.env` rather than keeping both.
 
 There are three auth origins, one for each way to run the application:
 
 | Mode | Command | `BETTER_AUTH_URL` | Where it is set |
 | --- | --- | --- | --- |
-| Local development | `bun run dev` | `http://localhost:5173` | `.config/.env` |
+| Local development | `bun run dev` | `http://localhost:5173` | `.env` |
 | Production build preview | `bun run build && bun run db:migrate && bun run preview` | `http://localhost:8787` | `bun run preview` override |
-| Cloudflare deployment | `bun run build && bun run deploy` | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json` |
+| Cloudflare deployment | `bun run build && bun run deploy` | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json` and Cloudflare secrets |
 
 The preview command deliberately overrides the deployment value generated in
 `dist/server/wrangler.json`, so the same build artifact can be previewed
-locally without editing `.config/.env`. The preview E2E suite exercises
+locally without editing `.env`. The preview E2E suite exercises
 this command directly:
 
 ```bash

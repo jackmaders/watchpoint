@@ -5,9 +5,9 @@ dist-ssr
 *.local
 .env
 .env*
+!.env.example
 .dev.vars*
 .config/.env*
-!.config/.env.example
 .config/.dev.vars*
 .nitro
 .tanstack
