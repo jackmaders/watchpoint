@@ -3,7 +3,7 @@ import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import { lazy, type ReactNode, Suspense } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
-import { SessionPanelFallback } from "@/features/session-manage/@x/home";
+import { SessionPanelFallback } from "@/features/session-manage";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,
