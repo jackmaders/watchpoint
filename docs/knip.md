@@ -67,7 +67,7 @@ the implementation:
    command is for its built-in Kysely adapter; this project uses Drizzle
    migrations instead.
 6. Keep `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in deployment secrets and
-   `.config/.dev.vars` for local development. The auth module validates both at
+   `.config/.env` for local development. The auth module validates both at
    startup; do not add secrets to `.config/knip.config.ts` or committed config.
 
 Knip will recognize direct imports of `better-auth` and

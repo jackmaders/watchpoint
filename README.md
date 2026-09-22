@@ -232,27 +232,34 @@ Cloudflare D1 database:
 - `src/db/auth-schema.ts` and the generated Drizzle migration own the Better
   Auth tables alongside the existing `posts` table.
 
-Create local secrets before starting the app:
+Create the local environment before starting the app:
 
 ```bash
-cp .config/.dev.vars.example .config/.dev.vars
-# Replace BETTER_AUTH_SECRET in .config/.dev.vars with a value from:
+cp .config/.env.example .config/.env
+# Replace BETTER_AUTH_SECRET in .config/.env with a value from:
 openssl rand -base64 32
 bun run db:migrate
 bun run dev
 ```
 
+Vite and the Cloudflare plugin both load `.config/.env`. Only variables with
+the `VITE_` prefix are exposed to browser code; the remaining values stay in
+the Worker environment. To enable Sentry locally, set both `SENTRY_DSN` and
+`VITE_SENTRY_DSN` to the same public DSN. If you already have a
+`.config/.dev.vars` file, rename it to `.config/.env` because Cloudflare gives
+`.dev.vars` precedence when both files exist.
+
 There are three auth origins, one for each way to run the application:
 
 | Mode | Command | `BETTER_AUTH_URL` | Where it is set |
 | --- | --- | --- | --- |
-| Local development | `bun run dev` | `http://localhost:5173` | `.config/.dev.vars` |
+| Local development | `bun run dev` | `http://localhost:5173` | `.config/.env` |
 | Production build preview | `bun run build && bun run db:migrate && bun run preview` | `http://localhost:8787` | `bun run preview` override |
 | Cloudflare deployment | `bun run build && bun run deploy` | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json` |
 
 The preview command deliberately overrides the deployment value generated in
 `dist/server/wrangler.json`, so the same build artifact can be previewed
-locally without editing `.config/.dev.vars`. The preview E2E suite exercises
+locally without editing `.config/.env`. The preview E2E suite exercises
 this command directly:
 
 ```bash

@@ -10,6 +10,7 @@ import { defineConfig } from "vite";
 const sentryModulePath = /[\\/]node_modules[\\/]@sentry[\\/]/;
 
 const config = defineConfig({
+	envDir: ".config",
 	resolve: { tsconfigPaths: true },
 	build: {
 		rolldownOptions: {
