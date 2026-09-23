@@ -26,3 +26,5 @@ todos.json
 
 # Lighthouse
 /.lighthouseci/
+
+stats.html
