@@ -3,13 +3,11 @@ import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import "./telemetry/posthog.client";
 
-requestAnimationFrame(() => {
-	startTransition(() => {
-		hydrateRoot(
-			document,
-			<StrictMode>
-				<StartClient />
-			</StrictMode>,
-		);
-	});
+startTransition(() => {
+	hydrateRoot(
+		document,
+		<StrictMode>
+			<StartClient />
+		</StrictMode>,
+	);
 });
