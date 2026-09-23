@@ -3,7 +3,7 @@
 	"name": "watchpoint",
 	"compatibility_date": "2026-09-19",
 	"compatibility_flags": ["nodejs_compat"],
-	"main": "../src/app/server.ts",
+	"main": "@tanstack/react-start/server-entry",
 	"observability": { "enabled": true },
 	"workers_dev": true,
 	"vars": {
@@ -11,7 +11,7 @@
 		"POSTHOG_HOST": "https://us.i.posthog.com"
 	},
 	"secrets": {
-		"required": ["BETTER_AUTH_SECRET", "POSTHOG_KEY"]
+		"required": ["BETTER_AUTH_SECRET"]
 	},
 	"d1_databases": [
 		{

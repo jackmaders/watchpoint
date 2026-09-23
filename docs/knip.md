@@ -28,10 +28,10 @@ as a substitute for fixing the module graph.
 
 ## Configuration decisions
 
-- Framework runtime entrypoints (`src/app/client.tsx` and `src/app/server.ts`),
-  route files, and browser tests are explicit entry boundaries. The Vite,
-  Vitest, Playwright, Drizzle, Biome, Wrangler, and Lefthook plugins discover
-  their configured files under `.config`.
+- Framework runtime entrypoint (`src/app/client.tsx`), route files, and
+  browser tests are explicit entry boundaries. The Vite, Vitest, Playwright,
+  Drizzle, Biome, Wrangler, and Lefthook plugins discover their configured
+  files under `.config`.
 - Generated `src/app/routeTree.gen.ts` is an explicit production entry boundary,
   while `src/cloudflare-env.d.ts` is excluded from the project set. The route
   tree remains available to resolution through imports, but is not treated as
