@@ -8,11 +8,15 @@ if (!process.env.CI) {
 
 const config: KnipConfig = {
 	entry: [
+		"src/app/client.tsx!",
+		"src/app/server.ts!",
+		"src/app/start.ts!",
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
 	],
+
 	project: [
 		".config/**/*.{ts,tsx}",
 		"src/**/*.{ts,tsx,css}!",

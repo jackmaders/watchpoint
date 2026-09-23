@@ -4,7 +4,7 @@ import {
 } from "@sentry/tanstackstart-react";
 import { createStart } from "@tanstack/react-start";
 
-createStart(() => ({
+export const startInstance = createStart(() => ({
 	requestMiddleware: [sentryGlobalRequestMiddleware],
 	functionMiddleware: [sentryGlobalFunctionMiddleware],
 }));

@@ -1,13 +1,9 @@
-import {
-	addIntegration,
-	tanstackRouterBrowserTracingIntegration,
-} from "@sentry/tanstackstart-react";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
 
-export function getRouter() {
+function createRouterInstance() {
 	const queryClient = new QueryClient();
 	const router = createTanStackRouter({
 		routeTree,
@@ -18,8 +14,20 @@ export function getRouter() {
 	});
 	setupRouterSsrQueryIntegration({ router, queryClient });
 
-	if (!router.isServer) {
-		addIntegration(tanstackRouterBrowserTracingIntegration(router));
+	return router;
+}
+
+let clientRouter: ReturnType<typeof createRouterInstance> | undefined;
+
+export function getRouter() {
+	if (typeof document !== "undefined" && clientRouter) {
+		return clientRouter;
+	}
+
+	const router = createRouterInstance();
+
+	if (typeof document !== "undefined") {
+		clientRouter = router;
 	}
 
 	return router;

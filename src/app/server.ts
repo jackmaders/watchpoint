@@ -7,6 +7,6 @@ import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 
 export default createServerEntry(
 	wrapFetchWithSentry({
-		fetch: (request) => handler.fetch(request),
+		fetch: wrapFetchWithSentry(handler),
 	}),
 );
