@@ -8,9 +8,13 @@ When a task creates, reads, lists, triages, labels, comments on, or closes an is
 
 When triaging an issue or pull request, or applying a triage role, read `docs/agents/triage-labels.md`. This repo uses the default five-label vocabulary.
 
-### Domain docs & glossary
+### Domain docs
 
-When exploring code, naming domain concepts, designing architecture, writing tests, diagnosing bugs, or preparing specs and tickets, read `docs/agents/domain.md`. It defines this repo's single-context `GLOSSARY.md` and ADR contract.
+When exploring code, designing architecture, diagnosing bugs, or preparing specs and tickets, read `docs/agents/domain.md`. It defines this repo's ADR contract and explains when to consult the glossary.
+
+### Glossary
+
+When naming domain concepts or writing tests, read `GLOSSARY.md`. It is this repo's canonical vocabulary; use its terms in code, tests, specs, and tickets.
 
 ### Coding standards
 
