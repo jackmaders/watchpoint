@@ -3,13 +3,6 @@ import { wrapFetchWithSentry } from "@sentry/tanstackstart-react";
 import handler from "@tanstack/react-start/server-entry";
 
 export default withSentry(
-	(env: Cloudflare.Env) => ({
-		dsn: env.SENTRY_DSN,
-		tracesSampleRate: 1.0,
-	}),
-	wrapFetchWithSentry({
-		fetch(request) {
-			return handler.fetch(request);
-		},
-	}),
+	(env) => ({ dsn: env.SENTRY_DSN }),
+	wrapFetchWithSentry({ fetch: (request) => handler.fetch(request) }),
 );
