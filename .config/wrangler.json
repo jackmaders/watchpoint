@@ -10,7 +10,7 @@
 		"BETTER_AUTH_URL": "https://watchpoint.jackmaders.workers.dev"
 	},
 	"secrets": {
-		"required": ["BETTER_AUTH_SECRET"]
+		"required": ["BETTER_AUTH_SECRET", "SENTRY_DSN"]
 	},
 	"d1_databases": [
 		{
