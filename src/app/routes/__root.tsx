@@ -9,7 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 
-import appCss from "../styles.css?inline";
+import appCss from "../styles/index.css?inline";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 	{
@@ -32,6 +32,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 				},
 			],
 			links: [
+				{
+					rel: "stylesheet",
+					href: "/fonts/fonts.css",
+				},
 				{
 					rel: "icon",
 					href: "/favicon.svg",
