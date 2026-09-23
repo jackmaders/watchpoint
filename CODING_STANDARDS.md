@@ -26,7 +26,7 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 
 ## 3. Functions & Composition
 
-- **Command-Query Separation (CQS):** A function should either perform an action or answer a query. Queries must never produce observable side effects.
+- **Command-Query Separation (CQS):** A function should either perform an action or answer a query. Queries must never produce observable side effects. Database mutations (such as inserts or updates) may return the created or updated record.
 - **Split Functions by State Sharing, Not Line Count:** When decomposing long functions, do not cut by arbitrary line counts. Identify clusters of logic that share the same variables/state and extract those clusters into cohesive helper functions or modules.
 - **Exhaustive Pattern Matching:** Prefer TypeScript discriminated unions and `switch` statements with an exhaustive `never` check over complex class-based Strategy patterns for closed variant sets.
 - **Options Objects for Parameter Scalability:** Prefer 0–2 positional arguments. When a function requires 3+ parameters, group them into a single, typed options object to enable named arguments and explicit defaults.
@@ -36,8 +36,9 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 
 ## 4. Error & Null Handling
 
-- **Exceptions for Unexpected Breakages Only:** Only throw exceptions when something unexpectedly breaks (e.g. database unreachable, network crash, unrecoverable system invariants). Routine conditions that callers are expected to handle should return values rather than throwing unhandled exceptions.
-- **Pass True Shapes & Narrow Nulls Early:** Pass around the true, complete shape of an object rather than fragmenting it into piecemeal fields. When a function accepts nullable input, validate or narrow it immediately at entry; downstream code should receive the verified non-nullable value without redundant fallback checks.
+- **Exceptions for Unexpected Breakages Only:** Throwing is reserved for unrecoverable errors and external library control-flow primitives that require it by design (e.g. router redirects). Business logic functions should return values.
+- **Pass True Shapes:** Pass around the true, complete shape of an object rather than fragmenting it into piecemeal fields. For UI components, pass the full entity unless a component represents a generic, well-defined subset where taking the full entity would harm reusability.
+- **Narrow Nullability Early:** When a function accepts nullable input, validate or narrow it immediately at entry so downstream code receives the verified non-nullable value without redundant fallback checks.
 
 ---
 
@@ -58,3 +59,12 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 - **Explain Non-Obvious Intent, Not Obvious Code:** Self-explanatory code needs no inline comments. Use comments strictly to document non-obvious rationale, subtle edge cases, or warnings about hidden traps.
 - **Short, Concise JSDoc:** Where public functions or complex types benefit from documentation, write concise JSDoc summaries rather than verbose multi-paragraph docstrings.
 - **No Structural Apologies:** Do not write comments to explain convoluted code—refactor the code. Leave changelogs and author attributions to git.
+
+---
+
+## 7. Tech Conventions
+
+- **Routing & Search Params:** Prefer TanStack Router search params for shareable, bookmarkable page state over local component state.
+- **Server State over Effects:** Rely on TanStack Query for remote state. Never mirror query state into `useState` via `useEffect`.
+- **Render-Phase Derivation:** Compute derived state inline during render; avoid effect-driven state cascades.
+- **Direct Schema Usage:** Use Drizzle ORM directly without creating synthetic DAO wrappers.
