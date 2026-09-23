@@ -28,7 +28,8 @@ as a substitute for fixing the module graph.
 
 ## Configuration decisions
 
-- The route files and browser tests are explicit entry boundaries. The Vite,
+- Framework runtime entrypoints (`src/app/client.tsx` and `src/app/server.ts`),
+  route files, and browser tests are explicit entry boundaries. The Vite,
   Vitest, Playwright, Drizzle, Biome, Wrangler, and Lefthook plugins discover
   their configured files under `.config`.
 - Generated `src/app/routeTree.gen.ts` is an explicit production entry boundary,

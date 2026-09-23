@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
-import { lazy, type ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
-import { SessionPanelFallback } from "@/features/session-manage";
+import { SessionPanel, SessionPanelFallback } from "@/features/session-manage";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,
@@ -14,12 +14,6 @@ import {
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
-
-const LazySessionPanel = lazy(() =>
-	import("@/features/session-manage").then(({ SessionPanel }) => ({
-		default: SessionPanel,
-	})),
-);
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -68,7 +62,7 @@ export function HomePage() {
 					</div>
 					<div className="lg:col-span-2">
 						<Suspense fallback={<SessionPanelFallback />}>
-							<LazySessionPanel />
+							<SessionPanel />
 						</Suspense>
 					</div>
 				</section>
