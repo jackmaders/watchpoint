@@ -9,53 +9,53 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 ## 1. Architectural Alignment
 
 - **Features-First Placement:** Reusable domain logic and user interactions begin immediately in `entities/` or `features/`, not deferred in `pages/`. Naming convention: `{noun}-{verb}` for features (user actions), `{noun}` for entities (domain models), and `{noun}-{purpose}` for widgets (composite read UI).
-- **Declare Workflow or Do the Work (Never Both):** A module either orchestrates high-level policy steps or executes low-level details. If calculation logic or third-party calls sit inside workflow coordination, move the detail into a focused collaborator.
-- **Translate at the Border:** Third-party schemas, external payloads, and database drivers must be translated into domain types at the adapter boundary. Never leak raw vendor types into core domain interfaces.
-- **Wrap Third-Party Libraries & Exceptions:** Insulate domain code from external library churn by wrapping SDK calls and foreign errors behind internal interfaces.
+- **Deep Modules with Substantial Implementation:** Design modules that encapsulate meaningful complexity behind a clean, cohesive interface. Keep related policy and execution together unless responsibilities truly vary independently across multiple consumers.
+- **Translate at the Border:** Third-party vendor payloads, external schemas, and untyped I/O must be parsed into validated domain types at the adapter boundary. Never leak external vendor schemas into core domain interfaces.
+- **Insulate Volatile Dependencies Only:** Stable, type-safe ecosystem libraries (e.g. Drizzle, Zod, TanStack Router) should be used directly. Wrap only volatile, proprietary, or un-typed external SDKs (e.g. Stripe, third-party payment gateways, analytics).
 
 ---
 
-## 2. Object Design & Boundaries
+## 2. Data Modeling & Boundaries
 
-- **Law of Demeter (Tell, Don't Ask):** Avoid navigating object graphs (`a.b().c().d()`). Expose behavior on the immediate object rather than exposing raw internal state.
-- **Expose Behavior, Not Data:** Prefer methods that perform domain actions over classes that act as dumb data bags with public getters and setters.
-- **Feature Envy:** When a method depends primarily on another object's fields, move the method onto that object.
-- **Private as a Change Contract:** `public` promises stability to callers; `private` reserves the right to refactor internals without breaking dependents.
+- **Prefer Inferred & Computed Types:** Derive types directly from the single source of truth rather than recreating manual type definitions. For example, database row and insert types must be inferred from the Drizzle schema (`typeof table.$inferSelect` / `$inferInsert`), and API types should be inferred from Zod schemas (`z.infer<typeof schema>`).
+- **Parse at the Boundary, Keep Data Immutable:** Validate data strictly upon ingress. In core business logic, prefer plain, immutable, serializable data objects (POJOs / interfaces) and pure transformation functions over heavy stateful OOP class hierarchies.
+- **Feature Envy:** When a calculation or transformation depends exclusively on fields from a single domain shape, colocating that function with the domain model's module is preferred.
+- **Public Seam as a Change Contract:** A slice's public index (`index.ts`) promises stability to callers; anything internal to the slice reserves the freedom to be refactored without breaking external dependents.
 
 ---
 
 ## 3. Functions & Composition
 
-- **Command-Query Separation (CQS):** A function must either _do_ something (mutate state, trigger action) or _answer_ something (return data), never both. Queries must remain side-effect free.
-- **Split Functions by State Sharing, Not Line Count:** When decomposing long functions, do not cut by arbitrary line counts. Identify clusters of logic that share the same variables/state and extract those clusters into dedicated classes or modules.
-- **Step-Down Rule:** Structure files like a newspaper headline: highest-level caller functions at the top; private helper implementations live directly beneath the functions that call them.
-- **Bury the Switch:** Avoid scattered `switch` or `if/else` ladders across the codebase. Encapsulate polymorphic branches inside factories or strategy handlers.
-- **Keep Parameters Low (0–2 preferred):** If 3+ arguments travel together or derive from the same entity, pass the parent entity or group them into a cohesive domain type.
+- **Command-Query Separation (CQS):** A function should either perform an action or answer a query. Queries must never produce observable side effects.
+- **Split Functions by State Sharing, Not Line Count:** When decomposing long functions, do not cut by arbitrary line counts. Identify clusters of logic that share the same variables/state and extract those clusters into cohesive helper functions or modules.
+- **Exhaustive Pattern Matching:** Prefer TypeScript discriminated unions and `switch` statements with an exhaustive `never` check over complex class-based Strategy patterns for closed variant sets.
+- **Options Objects for Parameter Scalability:** Prefer 0–2 positional arguments. When a function requires 3+ parameters, group them into a single, typed options object to enable named arguments and explicit defaults.
+- **File Structure & Readability:** Place public, high-level entry points at the top of the file and private implementation helpers lower down, using standard function hoisting where appropriate.
 
 ---
 
 ## 4. Error & Null Handling
 
-- **Exceptions Over Error Codes:** Let the algorithm express its primary intent without polluting every call site with status-code checks.
-- **Never Return Null:** Return Null Objects, empty collections, or explicit Result types. Do not force callers to write defensive `if (x != null)` guards.
-- **Never Use Catch as Control Flow:** `try/catch` is reserved for exceptional, unrecoverable failures, never as a substitute for standard conditional logic.
+- **Exceptions for Unexpected Breakages Only:** Only throw exceptions when something unexpectedly breaks (e.g. database unreachable, network crash, unrecoverable system invariants). Routine conditions that callers are expected to handle should return values rather than throwing unhandled exceptions.
+- **Narrow Nullability Early & Pass True Shapes:** Pass around the true shape of an object as much as possible. If accepting a nullable input, perform the defensive check as soon as possible at the start of the function and pass the verified non-nullable value downstream. Downstream code should not be littered with redundant defensive checks for data that has already been validated.
 
 ---
 
 ## 5. Testing Standards
 
-- **Test Through Public Seams:** Verify behavior through public module interfaces, never private methods or hidden internal state.
-- **One Test, One Promise:** Each test should verify a single promise/behavior. If a test fails, the name alone should tell you which contract broke.
-- **Triple-A Structure (Arrange, Act, Assert):** Build the world, execute the action, verify the result. Keep all three phases clean, visible, and free of extraneous clutter.
-- **Hold Tests to Production Standards:** Poorly structured, duplicate test code degrades maintainability. Treat test helpers and test data builders with first-class engineering discipline.
-- **No Speculative Code:** Write only the code required to satisfy the failing test (Red → Green → Refactor).
+- **Targeted & Implementation Testing:** Testing through public seams is standard, but testing internal implementation functions and modules directly is encouraged whenever it simplifies test setup, targets complex algorithms, or avoids brittle mocking.
+- **One Test, One Contract:** Each test verifies a single specification, scenario, or invariant. Avoid asserting unrelated scenarios in a single test, but related assertions verifying the same outcome are encouraged.
+- **Triple-A Structure (Arrange, Act, Assert):** Build the world, execute the action, verify the result. Keep all three phases clean, visible, and free of extraneous fixture setup.
+- **Hold Tests to Production Standards:** Poorly structured test code degrades maintainability. Treat test helpers and test data factories with first-class engineering discipline.
+- **No Speculative Code:** Write only the minimal production code necessary to satisfy failing tests (Red → Green → Refactor).
 
 ---
 
 ## 6. Naming & Documentation
 
-- **Name for Intent, One Level Above Implementation:** Name functions after _why_ the caller invokes them, not _what_ code executes inside them.
+- **Name for Intent, One Level Above Implementation:** Name functions after _why_ the caller invokes them, not _what_ lines of code execute inside them.
 - **The Neighbor Rule:** Variable name length grows with scope; function name length shrinks with scope. Global functions use concise domain verbs; private helpers require descriptive names to distinguish themselves from sibling helpers.
-- **The "And" Test for Classes:** If describing what a class does requires the word "and", it has multiple responsibilities. Split the class right where the "and" sits.
-- **Why, Not How:** Code shows _how_; comments explain _why_ or warn about non-obvious traps.
+- **Split Distinct Concerns:** Group cohesive operations that belong to the same concern together (e.g. setting and reading a cache belongs in the same module). Split when distinct architectural concerns intersect (e.g. managing a cache vs. handling database persistence).
+- **Explain Non-Obvious Intent, Not Obvious Code:** Self-explanatory code needs no inline comments. Use comments strictly to document non-obvious rationale, subtle edge cases, or warnings about hidden traps.
+- **Short, Concise JSDoc:** Where public functions or complex types benefit from documentation, write short, concise one-line JSDoc summaries rather than verbose multi-paragraph docstrings.
 - **No Structural Apologies:** Do not write comments to explain convoluted code—refactor the code. Leave changelogs and author attributions to git.
