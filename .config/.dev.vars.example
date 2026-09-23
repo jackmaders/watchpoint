@@ -1,4 +1,2 @@
 BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
 BETTER_AUTH_URL="http://localhost:5173"
-POSTHOG_KEY=""
-POSTHOG_HOST=""

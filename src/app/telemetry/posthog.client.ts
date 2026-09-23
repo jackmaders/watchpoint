@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useNamingConvention: PostHog SDK options
+
 import "@tanstack/react-start/client-only";
 
 import posthog from "posthog-js";

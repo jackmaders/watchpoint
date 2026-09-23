@@ -19,6 +19,7 @@ const config = defineConfig({
 			viteEnvironment: { name: "ssr" },
 		}),
 		tanstackStart({
+			client: { entry: "app/client" },
 			router: {
 				entry: "app/router",
 				generatedRouteTree: "app/routeTree.gen.ts",
