@@ -7,8 +7,7 @@
 	"observability": { "enabled": true },
 	"workers_dev": true,
 	"vars": {
-		"BETTER_AUTH_URL": "https://watchpoint.jackmaders.workers.dev",
-		"POSTHOG_HOST": "https://us.i.posthog.com"
+		"BETTER_AUTH_URL": "https://watchpoint.jackmaders.workers.dev"
 	},
 	"secrets": {
 		"required": ["BETTER_AUTH_SECRET"]
