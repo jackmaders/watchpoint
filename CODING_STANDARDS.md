@@ -2,7 +2,7 @@
 
 This document defines the repository's coding standards and design heuristics, enforced during `/implement`, `/tdd`, and `/code-review`.
 
-For full layer definitions, slice boundaries, and FSD variations, consult [`docs/architecture.md`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/docs/architecture.md). Deep-module vocabulary is defined in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md); testing rules are in [`tdd`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/tdd/SKILL.md).
+Detailed architectural definitions live in [`docs/architecture.md`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/docs/architecture.md). Deep-module vocabulary is defined in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md); testing rules are in [`tdd`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/tdd/SKILL.md).
 
 ---
 
@@ -37,7 +37,7 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 ## 4. Error & Null Handling
 
 - **Exceptions for Unexpected Breakages Only:** Throwing is reserved for unrecoverable errors and external library control-flow primitives that require it by design (e.g. router redirects). Business logic functions should return values.
-- **Pass True Shapes:** Pass around the true, complete shape of an object rather than fragmenting it into piecemeal fields. For UI components, pass the full entity unless a component represents a generic, well-defined subset where taking the full entity would harm reusability.
+- **Pass True Shapes:** Pass around the true, complete shape of an object through domain operations, business pipelines, and orchestrator components rather than fragmenting it into piecemeal fields. Leaf components represent the exception: their prop interfaces define only the specific subset needed for presentation, while permitting callers to spread true shapes directly on them.
 - **Narrow Nullability Early:** When a function accepts nullable input, validate or narrow it immediately at entry so downstream code receives the verified non-nullable value without redundant fallback checks.
 
 ---
@@ -67,4 +67,4 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 - **Routing & Search Params:** Prefer TanStack Router search params for shareable, bookmarkable page state over local component state.
 - **Server State over Effects:** Rely on TanStack Query for remote state. Never mirror query state into `useState` via `useEffect`.
 - **Render-Phase Derivation:** Compute derived state inline during render; avoid effect-driven state cascades.
-- **Direct Schema Usage:** Use Drizzle ORM directly without creating synthetic DAO wrappers.
+- **Direct Schema Usage & Server Function Boundaries:** Use Drizzle ORM directly without creating synthetic DAO wrappers. Database access and queries must live inside server modules or dedicated server functions.
