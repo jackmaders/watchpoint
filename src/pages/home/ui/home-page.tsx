@@ -15,11 +15,10 @@ import {
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 
-const LazySessionPanel = lazy(() =>
-	import("@/features/session-manage").then(({ SessionPanel }) => ({
-		default: SessionPanel,
-	})),
-);
+const LazySessionPanel = lazy(async () => {
+	const { SessionPanel } = await import("@/features/session-manage");
+	return { default: SessionPanel };
+});
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
