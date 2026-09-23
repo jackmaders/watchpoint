@@ -28,7 +28,7 @@ const config = defineConfig({
 		tailwindcss(),
 		viteReact(),
 		...(process.env.ANALYSE ? [visualizer({ open: true })] : []),
-		...(process.env.CI ? [sentryTanstackStart()] : []),
+		...(process.env.SENTRY_AUTH_TOKEN ? [sentryTanstackStart()] : []),
 	],
 });
 
