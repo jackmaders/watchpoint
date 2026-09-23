@@ -11,6 +11,7 @@
 		"includes": [
 			"**",
 			"!!**/dist",
+			"!!**/.agents",
 			"!**/src/app/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
