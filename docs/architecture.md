@@ -1,8 +1,6 @@
-# Architecture Invariants: Project FSD Variant
+# Architecture
 
-Divergences from standard Feature-Sliced Design (FSD v2.1) and seam boundaries for TanStack Start & Drizzle. General FSD principles, layers, and segment conventions live in the [`feature-sliced-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/feature-sliced-design/SKILL.md) skill; deep-module vocabulary lives in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md).
-
-For the step-by-step authoring sequence when building new models and slices, see [`docs/architecture/entity-workflow.md`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/docs/architecture/entity-workflow.md).
+This project divergences from standard Feature-Sliced Design (FSD v2.1) and seam boundaries for TanStack Start & Drizzle. General FSD principles, layers, and segment conventions live in the [`feature-sliced-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/feature-sliced-design/SKILL.md) skill; deep-module vocabulary lives in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md).
 
 ---
 
@@ -27,7 +25,7 @@ To prevent conflating server operations, RPC transports, and client state, enfor
   - **Rule:** Never imported by client code. Features never talk to the database directly; they call entity operations.
 - **Server Functions (`{noun}{Verb}ServerFn`):**
   - **Seam:** HTTP / RPC transport adapters defined with `createServerFn`.
-  - **Location:** Read functions in `entities/<noun>/api/*.functions.ts`; mutation functions in `features/<noun>-<verb>/api/*.functions.ts`.
+  - **Location:** Read functions in `entities/<noun>/api/*.functions.ts`; mutation functions in `features/<noun>-<verb>/api/*.functions.ts` (or `entities/<noun>/api/*.functions.ts`, if reused).
   - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to entity operations.
 - **Query Artifacts (`use{Noun}{Verb}Mutation` / `{noun}{Verb}QueryOptions`):**
   - **Seam:** TanStack Query client caching.
