@@ -1,8 +1,44 @@
 # Watchpoint
 
-Watchpoint monitors and tracks system endpoints, background jobs, and operational workflows.
+Watchpoint is an interactive coaching and learning platform where admins author tactical VOD curricula, and users test and sharpen their decision-making.
 
 ## Language
+
+### Core Domain
+
+**VOD**:
+A recorded gameplay or instructional video asset backed by YouTube that serves as the basis for user lessons.
+_Avoid_: Match, Recording, Tape
+
+**Lesson**:
+A user's active learning run through a VOD where they are presented with interactive questions at specific timestamps.
+_Avoid_: Playthrough, Session, Run, Drill, Review, Assignment
+
+**Question**:
+An interactive challenge anchored to a specific timestamp in a VOD that prompts the user to make a tactical decision.
+_Avoid_: Scenario, Prompt, Decision Point, Quiz item
+
+**Option**:
+An individual selectable response choice belonging to a Question, with one designated as correct.
+_Avoid_: Choice, Alternative, Multiple-choice item
+
+**Answer**:
+A user's submitted response to a Question, recording their selected Option, correctness, time elapsed, and an immutable snapshot of the Question.
+_Avoid_: Attempt, Submission, Response
+
+**Skill**:
+A tactical competency category that categorizes Questions (e.g. Strategy, Tactics, Tracking, Spatial).
+_Avoid_: Training module, Category, Discipline, Tag
+
+### Roles
+
+**User**:
+A person who watches VODs, takes Lessons, and reviews their historical performance.
+_Avoid_: Student, Learner, Player, Consumer
+
+**Admin**:
+An administrator who manages VODs, authors Questions and Options, and configures user roles.
+_Avoid_: Instructor, Coach, Manager, Creator
 
 ### Components & UI Taxonomy
 
