@@ -15,9 +15,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 	{
 		head: () => ({
 			meta: [
-				{
-					charSet: "utf-8",
-				},
+				{ charSet: "utf-8" },
 				{
 					name: "viewport",
 					content: "width=device-width, initial-scale=1",
@@ -27,9 +25,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 					content:
 						"A focused workspace for keeping the things worth watching in sight.",
 				},
-				{
-					title: "Watchpoint — keep the important signal in sight",
-				},
+				{ title: "Watchpoint — keep the important signal in sight" },
 			],
 			links: [
 				{
@@ -58,9 +54,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body>
 				{children}
 				<TanStackDevtools
-					config={{
-						position: "bottom-right",
-					}}
+					config={{ position: "bottom-right" }}
 					plugins={[
 						{
 							name: "Tanstack Router",
