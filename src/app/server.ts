@@ -1,13 +1,15 @@
-import "@tanstack/react-start/server-only";
+import { withSentry } from "@sentry/cloudflare";
+import { wrapFetchWithSentry } from "@sentry/tanstackstart-react";
+import handler from "@tanstack/react-start/server-entry";
 
-import { env } from "cloudflare:workers";
-import { init, wrapFetchWithSentry } from "@sentry/tanstackstart-react";
-import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
-
-init({ dsn: env.SENTRY_DSN });
-
-export default createServerEntry(
+export default withSentry(
+	(env: Cloudflare.Env) => ({
+		dsn: env.SENTRY_DSN,
+		tracesSampleRate: 1.0,
+	}),
 	wrapFetchWithSentry({
-		fetch: (request) => handler.fetch(request),
+		fetch(request) {
+			return handler.fetch(request);
+		},
 	}),
 );
