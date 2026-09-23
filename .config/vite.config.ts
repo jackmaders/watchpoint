@@ -5,15 +5,21 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
+import { rolldownOptions } from "./rolldown.config.ts";
 
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
+	build: { rolldownOptions },
+	environments: {
+		ssr: { build: { chunkSizeWarningLimit: 1500 } },
+	},
 	plugins: [
 		cloudflare({
 			configPath: ".config/wrangler.json",
 			viteEnvironment: { name: "ssr" },
 		}),
 		tanstackStart({
+			client: { entry: "app/client" },
 			router: {
 				entry: "app/router",
 				generatedRouteTree: "app/routeTree.gen.ts",

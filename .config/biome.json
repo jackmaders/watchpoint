@@ -12,6 +12,9 @@
 			"**",
 			"!!**/dist",
 			"!!**/.agents",
+			"!!**/.wrangler",
+			"!!**/test-results",
+			"!!**/playwright-report",
 			"!**/src/app/routeTree.gen.ts",
 			"!**/src/cloudflare-env.d.ts"
 		]
