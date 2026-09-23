@@ -9,7 +9,7 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 ## 1. Architectural Alignment
 
 - **Features-First Placement:** Reusable domain logic and user interactions begin immediately in `entities/` or `features/`, not deferred in `pages/`. Naming convention: `{noun}-{verb}` for features (user actions), `{noun}` for entities (domain models), and `{noun}-{purpose}` for widgets (composite read UI).
-- **Deep Modules with Substantial Implementation:** Design modules that encapsulate meaningful complexity behind a clean, cohesive interface. Keep related policy and execution together unless responsibilities truly vary independently across multiple consumers.
+- **Deep Modules with Substantial Implementation:** Design modules that encapsulate meaningful complexity behind a clean, cohesive interface. Keep policy orchestration and step execution together unless they change for different reasons or serve distinct consumers.
 - **Translate at the Border:** Third-party vendor payloads, external schemas, and untyped I/O must be parsed into validated domain types at the adapter boundary. Never leak external vendor schemas into core domain interfaces.
 - **Insulate Volatile Dependencies Only:** Stable, type-safe ecosystem libraries (e.g. Drizzle, Zod, TanStack Router) should be used directly. Wrap only volatile, proprietary, or un-typed external SDKs (e.g. Stripe, third-party payment gateways, analytics).
 
@@ -37,14 +37,13 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 ## 4. Error & Null Handling
 
 - **Exceptions for Unexpected Breakages Only:** Only throw exceptions when something unexpectedly breaks (e.g. database unreachable, network crash, unrecoverable system invariants). Routine conditions that callers are expected to handle should return values rather than throwing unhandled exceptions.
-- **Narrow Nullability Early & Pass True Shapes:** Pass around the true shape of an object as much as possible. If accepting a nullable input, perform the defensive check as soon as possible at the start of the function and pass the verified non-nullable value downstream. Downstream code should not be littered with redundant defensive checks for data that has already been validated.
+- **Pass True Shapes & Narrow Nulls Early:** Pass around the true, complete shape of an object rather than fragmenting it into piecemeal fields. When a function accepts nullable input, validate or narrow it immediately at entry; downstream code should receive the verified non-nullable value without redundant fallback checks.
 
 ---
 
 ## 5. Testing Standards
 
-- **Targeted & Implementation Testing:** Testing through public seams is standard, but testing internal implementation functions and modules directly is encouraged whenever it simplifies test setup, targets complex algorithms, or avoids brittle mocking.
-- **One Test, One Contract:** Each test verifies a single specification, scenario, or invariant. Avoid asserting unrelated scenarios in a single test, but related assertions verifying the same outcome are encouraged.
+- **One Test, One Contract:** Each test verifies a single specification, scenario, or invariant. Name tests using clear specification-style descriptions stating the subject, condition, and expected outcome. Avoid asserting unrelated scenarios in a single test, but related assertions verifying the same outcome are encouraged.
 - **Triple-A Structure (Arrange, Act, Assert):** Build the world, execute the action, verify the result. Keep all three phases clean, visible, and free of extraneous fixture setup.
 - **Hold Tests to Production Standards:** Poorly structured test code degrades maintainability. Treat test helpers and test data factories with first-class engineering discipline.
 - **No Speculative Code:** Write only the minimal production code necessary to satisfy failing tests (Red → Green → Refactor).
@@ -57,5 +56,5 @@ For full layer definitions, slice boundaries, and FSD variations, consult [`docs
 - **The Neighbor Rule:** Variable name length grows with scope; function name length shrinks with scope. Global functions use concise domain verbs; private helpers require descriptive names to distinguish themselves from sibling helpers.
 - **Split Distinct Concerns:** Group cohesive operations that belong to the same concern together (e.g. setting and reading a cache belongs in the same module). Split when distinct architectural concerns intersect (e.g. managing a cache vs. handling database persistence).
 - **Explain Non-Obvious Intent, Not Obvious Code:** Self-explanatory code needs no inline comments. Use comments strictly to document non-obvious rationale, subtle edge cases, or warnings about hidden traps.
-- **Short, Concise JSDoc:** Where public functions or complex types benefit from documentation, write short, concise one-line JSDoc summaries rather than verbose multi-paragraph docstrings.
+- **Short, Concise JSDoc:** Where public functions or complex types benefit from documentation, write concise JSDoc summaries rather than verbose multi-paragraph docstrings.
 - **No Structural Apologies:** Do not write comments to explain convoluted code—refactor the code. Leave changelogs and author attributions to git.
