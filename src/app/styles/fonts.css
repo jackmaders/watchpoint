@@ -2,8 +2,8 @@
 	font-family: "Oxanium";
 	font-style: normal;
 	font-weight: 400;
-	font-display: swap;
-	src: url("./oxanium-400.ttf") format("truetype");
+	font-display: optional;
+	src: url("/fonts/oxanium-400.ttf") format("truetype");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -13,8 +13,8 @@
 	font-family: "Oxanium";
 	font-style: normal;
 	font-weight: 500;
-	font-display: swap;
-	src: url("./oxanium-500.ttf") format("truetype");
+	font-display: optional;
+	src: url("/fonts/oxanium-500.ttf") format("truetype");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -24,8 +24,8 @@
 	font-family: "Oxanium";
 	font-style: normal;
 	font-weight: 600;
-	font-display: swap;
-	src: url("./oxanium-600.ttf") format("truetype");
+	font-display: optional;
+	src: url("/fonts/oxanium-600.ttf") format("truetype");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -35,8 +35,8 @@
 	font-family: "Oxanium";
 	font-style: normal;
 	font-weight: 700;
-	font-display: swap;
-	src: url("./oxanium-700.ttf") format("truetype");
+	font-display: optional;
+	src: url("/fonts/oxanium-700.ttf") format("truetype");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -47,7 +47,7 @@
 	font-style: normal;
 	font-weight: 400;
 	font-display: swap;
-	src: url("./merriweather-400.ttf") format("truetype");
+	src: url("/fonts/merriweather-400.ttf") format("truetype");
 }
 
 @font-face {
@@ -55,7 +55,7 @@
 	font-style: normal;
 	font-weight: 700;
 	font-display: swap;
-	src: url("./merriweather-700.ttf") format("truetype");
+	src: url("/fonts/merriweather-700.ttf") format("truetype");
 }
 
 @font-face {
@@ -63,7 +63,7 @@
 	font-style: normal;
 	font-weight: 400;
 	font-display: swap;
-	src: url("./fira-code-400.ttf") format("truetype");
+	src: url("/fonts/fira-code-400.ttf") format("truetype");
 }
 
 @font-face {
@@ -71,7 +71,7 @@
 	font-style: normal;
 	font-weight: 500;
 	font-display: swap;
-	src: url("./fira-code-500.ttf") format("truetype");
+	src: url("/fonts/fira-code-500.ttf") format("truetype");
 }
 
 @font-face {
@@ -79,5 +79,5 @@
 	font-style: normal;
 	font-weight: 600;
 	font-display: swap;
-	src: url("./fira-code-600.ttf") format("truetype");
+	src: url("/fonts/fira-code-600.ttf") format("truetype");
 }

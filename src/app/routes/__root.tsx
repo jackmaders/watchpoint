@@ -9,6 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 
+import fontCss from "../styles/fonts.css?raw";
 import appCss from "../styles/index.css?inline";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
@@ -33,10 +34,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 			],
 			links: [
 				{
-					rel: "stylesheet",
-					href: "/fonts/fonts.css",
-				},
-				{
 					rel: "icon",
 					href: "/favicon.svg",
 					type: "image/svg+xml",
@@ -57,6 +54,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en">
 			<head>
 				<HeadContent />
+				<style>{fontCss}</style>
 				<style>{appCss}</style>
 			</head>
 			<body>
