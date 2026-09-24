@@ -3,7 +3,7 @@
 	font-style: normal;
 	font-weight: 400;
 	font-display: optional;
-	src: url("/fonts/oxanium-400.ttf") format("truetype");
+	src: url("/fonts/oxanium-400.woff2") format("woff2");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -14,7 +14,7 @@
 	font-style: normal;
 	font-weight: 500;
 	font-display: optional;
-	src: url("/fonts/oxanium-500.ttf") format("truetype");
+	src: url("/fonts/oxanium-500.woff2") format("woff2");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -25,7 +25,7 @@
 	font-style: normal;
 	font-weight: 600;
 	font-display: optional;
-	src: url("/fonts/oxanium-600.ttf") format("truetype");
+	src: url("/fonts/oxanium-600.woff2") format("woff2");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -36,7 +36,7 @@
 	font-style: normal;
 	font-weight: 700;
 	font-display: optional;
-	src: url("/fonts/oxanium-700.ttf") format("truetype");
+	src: url("/fonts/oxanium-700.woff2") format("woff2");
 	ascent-override: 95%;
 	descent-override: 25%;
 	line-gap-override: 0%;
@@ -47,7 +47,7 @@
 	font-style: normal;
 	font-weight: 400;
 	font-display: swap;
-	src: url("/fonts/merriweather-400.ttf") format("truetype");
+	src: url("/fonts/merriweather-400.woff2") format("woff2");
 }
 
 @font-face {
@@ -55,7 +55,7 @@
 	font-style: normal;
 	font-weight: 700;
 	font-display: swap;
-	src: url("/fonts/merriweather-700.ttf") format("truetype");
+	src: url("/fonts/merriweather-700.woff2") format("woff2");
 }
 
 @font-face {
@@ -63,7 +63,8 @@
 	font-style: normal;
 	font-weight: 400;
 	font-display: swap;
-	src: url("/fonts/fira-code-400.ttf") format("truetype");
+	src: url("/fonts/fira-code-400.woff2") format("woff2");
+	unicode-range: U+0020-007E;
 }
 
 @font-face {
@@ -71,7 +72,8 @@
 	font-style: normal;
 	font-weight: 500;
 	font-display: swap;
-	src: url("/fonts/fira-code-500.ttf") format("truetype");
+	src: url("/fonts/fira-code-500.woff2") format("woff2");
+	unicode-range: U+0020-007E;
 }
 
 @font-face {
@@ -79,5 +81,6 @@
 	font-style: normal;
 	font-weight: 600;
 	font-display: swap;
-	src: url("/fonts/fira-code-600.ttf") format("truetype");
+	src: url("/fonts/fira-code-600.woff2") format("woff2");
+	unicode-range: U+0020-007E;
 }
