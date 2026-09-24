@@ -50,7 +50,7 @@ export default function VideoPlayerDemo({
 	const [playerElement, setPlayerElement] = useState<HTMLVideoElement | null>(
 		null,
 	);
-	const { currentTime } = useVideoMarkerSync({
+	const { currentTime, resetTriggeredMarkers } = useVideoMarkerSync({
 		markers,
 		onMarkerTrigger,
 		onTimeUpdate,
@@ -77,10 +77,12 @@ export default function VideoPlayerDemo({
 		[onStatusChange],
 	);
 	const previewFirstMarker = useCallback(() => {
-		if (playerElement) {
-			playerElement.currentTime = markers[0].timestampSeconds - 1;
+		const firstMarker = markers[0];
+		if (playerElement && firstMarker) {
+			resetTriggeredMarkers();
+			playerElement.currentTime = Math.max(0, firstMarker.timestampSeconds - 1);
 		}
-	}, [markers, playerElement]);
+	}, [markers, playerElement, resetTriggeredMarkers]);
 
 	return (
 		<>

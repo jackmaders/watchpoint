@@ -78,6 +78,7 @@ export class VideoMarkerScheduler {
 
 			this.triggeredMarkerIds.add(marker.id);
 			this.pendingSeekMarker = marker;
+			this.stop();
 			this.player.pause();
 			this.onMarkerTrigger?.(marker);
 			break;
@@ -97,6 +98,7 @@ export class VideoMarkerScheduler {
 		const targetTimestamp = this.pendingSeekMarker.timestampSeconds;
 		this.pendingSeekMarker = null;
 		this.player.currentTime = targetTimestamp;
+		this.onTimeUpdate?.(targetTimestamp);
 	};
 
 	private scheduleTick = () => {

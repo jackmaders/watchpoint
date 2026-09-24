@@ -192,13 +192,14 @@ async function findLocalDatabasePath(): Promise<string> {
 		)
 		.map((entry) => join(LOCAL_DATABASE_DIRECTORY, entry.name));
 
-	if (databaseFiles.length !== 1) {
+	const firstFile = databaseFiles[0];
+	if (databaseFiles.length !== 1 || !firstFile) {
 		throw new Error(
 			"Expected one local D1 database. Run `bun run db:migrate` first, or set WATCHPOINT_D1_DATABASE_PATH.",
 		);
 	}
 
-	return databaseFiles[0];
+	return firstFile;
 }
 
 async function runLocalSeed() {
