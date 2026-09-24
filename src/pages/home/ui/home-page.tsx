@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import { type ReactNode, Suspense } from "react";
 import { postListQueryOptions } from "@/entities/post";
-import { PostCreateForm } from "@/features/post-create";
+import { PostCreateForm } from "@/features/post-create/index.async";
 import { SessionPanel, SessionPanelFallback } from "@/features/session-manage";
 import { Badge } from "@/shared/ui/badge";
 import {
