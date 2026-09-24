@@ -65,6 +65,8 @@ jobs:
     steps:
       - name: 🛒 Checkout Source Code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: ⚡ Setup Bun Environment
         uses: ./.github/actions/setup-bun
@@ -77,6 +79,11 @@ jobs:
           bun run db:generate
           git diff --exit-code -- drizzle
           test -z "$(git ls-files --others --exclude-standard -- drizzle)"
+
+      - name: 🔒 Enforce Single Migration Per PR
+        run: |
+          NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref || 'main' }}...HEAD" -- "drizzle/**/*.sql" | wc -l)
+          [ "$NEW_MIGRATIONS" -le 1 ] || { echo "::error::PR introduces $NEW_MIGRATIONS migrations (max 1 allowed)."; exit 1; }
 
   browser-tests:
     name: 🎭 Run Browser Tests

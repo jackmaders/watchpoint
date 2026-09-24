@@ -1,4 +1,6 @@
 import "@tanstack/react-start/server-only";
 
 export { getDb } from "./db.server";
-export { account, posts, session, user, verification } from "./schema";
+export { account, session, user, verification } from "./schema/auth";
+export { posts } from "./schema/posts";
+export {} from "./seed";
