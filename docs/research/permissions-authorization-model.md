@@ -60,6 +60,20 @@ and the [OWASP access-control checklist](https://devguide.owasp.org/en/04-design
    protected seam. Keep pure predicate tests for policy edge cases, but do not treat
    them as a substitute for server-boundary tests.
 
+## Why route navigation remains local
+
+The global `functionMiddleware` is the right place for concerns shared by every
+server function: preserving redirect/not-found control flow, converting
+`ServerFunctionError` values into HTTP status codes, and reporting unexpected
+failures. It should not redirect every unauthorized server function. A mutation such
+as post creation needs to return its authorization failure to the current page so
+the UI can show its own message, while the Admin route needs to turn the same class
+of failure into navigation away from `/admin`.
+
+Therefore, Admin server functions keep authorization middleware at their server seam,
+and the Admin route owns its navigation response in `beforeLoad`. This is a
+presentation/navigation concern, not duplicated authorization policy.
+
 ## Future expansion trigger
 
 Introduce explicit permission sets or Better Auth access control when a second role
