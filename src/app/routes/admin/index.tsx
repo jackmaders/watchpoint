@@ -1,11 +1,20 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { requireAdminServerFn } from "@/features/admin-access/api/admin-access.functions";
+import {
+	createFileRoute,
+	isNotFound,
+	isRedirect,
+	redirect,
+} from "@tanstack/react-router";
+import { requireAdminServerFn } from "@/features/admin-access";
 
 export const Route = createFileRoute("/admin/")({
 	beforeLoad: async () => {
 		try {
 			await requireAdminServerFn();
-		} catch {
+		} catch (error) {
+			if (isRedirect(error) || isNotFound(error)) {
+				throw error;
+			}
+
 			throw redirect({ to: "/" });
 		}
 	},
