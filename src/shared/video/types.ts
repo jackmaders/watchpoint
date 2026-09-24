@@ -1,4 +1,4 @@
-export interface VideoCue {
+export interface VideoMarker {
 	readonly id: string;
 	readonly timestampSeconds: number;
 }

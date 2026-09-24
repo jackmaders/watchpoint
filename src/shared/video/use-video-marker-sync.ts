@@ -5,38 +5,38 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { VideoCue, VideoMedia } from "./types";
-import { VideoCueScheduler } from "./video-cue-scheduler";
+import type { VideoMarker, VideoMedia } from "./types";
+import { VideoMarkerScheduler } from "./video-marker-scheduler";
 
 /** Number of state updates per second. */
 const UPDATE_THROTTLE_HZ = 10;
 
-export interface UseVideoCueSyncOptions {
-	readonly cues?: readonly VideoCue[];
+export interface UseVideoMarkerSyncOptions {
 	readonly leadTimeMs?: number;
-	readonly onCueTrigger?: (cue: VideoCue) => void;
+	readonly markers?: readonly VideoMarker[];
+	readonly onMarkerTrigger?: (marker: VideoMarker) => void;
 	readonly onTimeUpdate?: (currentTime: number) => void;
 	readonly overshootTimeMs?: number;
 	readonly player: VideoMedia | null;
 }
 
-export function useVideoCueSync(options: UseVideoCueSyncOptions) {
+export function useVideoMarkerSync(options: UseVideoMarkerSyncOptions) {
 	const {
 		player,
-		cues,
+		markers,
 		leadTimeMs,
 		overshootTimeMs,
-		onCueTrigger,
+		onMarkerTrigger,
 		onTimeUpdate,
 	} = options;
 
-	const schedulerRef = useRef<VideoCueScheduler | null>(null);
+	const schedulerRef = useRef<VideoMarkerScheduler | null>(null);
 
 	const lastThrottledBucketRef = useRef(-1);
 	const [throttledTime, setThrottledTime] = useState(0);
 
-	const handleCueTrigger = useEffectEvent((cue: VideoCue) =>
-		onCueTrigger?.(cue),
+	const handleMarkerTrigger = useEffectEvent((marker: VideoMarker) =>
+		onMarkerTrigger?.(marker),
 	);
 	const handleTimeUpdate = useEffectEvent((currentTime: number) => {
 		onTimeUpdate?.(currentTime);
@@ -48,10 +48,10 @@ export function useVideoCueSync(options: UseVideoCueSyncOptions) {
 		}
 	});
 
-	const getLatestCues = useEffectEvent(() => cues ?? []);
+	const getMarkers = useEffectEvent(() => markers ?? []);
 
-	const resetTriggeredCues = useCallback(() => {
-		schedulerRef.current?.resetTriggeredCues();
+	const resetTriggeredMarkers = useCallback(() => {
+		schedulerRef.current?.resetTriggeredMarkers();
 	}, []);
 
 	useEffect(() => {
@@ -60,12 +60,12 @@ export function useVideoCueSync(options: UseVideoCueSyncOptions) {
 			return;
 		}
 
-		const scheduler = new VideoCueScheduler({
+		const scheduler = new VideoMarkerScheduler({
 			player,
-			getCues: getLatestCues,
+			getMarkers,
 			leadTimeMs,
 			overshootTimeMs,
-			onCueTrigger: handleCueTrigger,
+			onMarkerTrigger: handleMarkerTrigger,
 			onTimeUpdate: handleTimeUpdate,
 		});
 
@@ -86,5 +86,8 @@ export function useVideoCueSync(options: UseVideoCueSyncOptions) {
 		};
 	}, [leadTimeMs, overshootTimeMs, player]);
 
-	return { currentTime: throttledTime, resetTriggeredCues };
+	return {
+		currentTime: throttledTime,
+		resetTriggeredMarkers,
+	};
 }

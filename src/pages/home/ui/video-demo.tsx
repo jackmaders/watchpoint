@@ -1,9 +1,3 @@
-/**
- * @fileOverview Demonstrates the deferred cue-aware video player on the home page.
- *
- * Keeps the YouTube iframe and player controls out of the initial page load until the demo is requested.
- */
-
 import { Play, Radio } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 import { Badge } from "@/shared/ui/badge";
@@ -15,11 +9,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
-import type { VideoCue } from "@/shared/video";
+import type { VideoMarker } from "@/shared/video";
 
 const VideoPlayerDemo = lazy(() => import("./video-player-demo"));
 
-const DEMO_CUES: readonly VideoCue[] = [
+const DEMO_MARKERS: readonly VideoMarker[] = [
 	{ id: "opening-read", timestampSeconds: 5 },
 	{ id: "midpoint-check", timestampSeconds: 15 },
 	{ id: "closing-read", timestampSeconds: 25 },
@@ -35,7 +29,7 @@ type PlayerStatus =
 
 export function VideoDemo() {
 	const [isPlayerActive, setIsPlayerActive] = useState(false);
-	const [activeCue, setActiveCue] = useState<VideoCue | null>(null);
+	const [activeMarker, setActiveMarker] = useState<VideoMarker | null>(null);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("Not loaded");
 
@@ -67,12 +61,12 @@ export function VideoDemo() {
 						</Badge>
 					</div>
 					<CardTitle className="mt-2 text-2xl">
-						A cue-aware VOD player
+						A marker-aware VOD player
 					</CardTitle>
 					<CardDescription className="mt-2 max-w-xl leading-6">
 						The player package owns lifecycle and controls; the sync engine
-						pauses playback just before each cue so a Lesson can ask a Question
-						at the right moment.
+						pauses playback just before each marker so a Lesson can ask a
+						Question at the right moment.
 					</CardDescription>
 				</CardHeader>
 
@@ -80,8 +74,8 @@ export function VideoDemo() {
 					{isPlayerActive ? (
 						<Suspense fallback={<VideoPlayerLoading />}>
 							<VideoPlayerDemo
-								cues={DEMO_CUES}
-								onCueTrigger={setActiveCue}
+								markers={DEMO_MARKERS}
+								onMarkerTrigger={setActiveMarker}
 								onStatusChange={setPlayerStatus}
 								onTimeUpdate={setCurrentTime}
 							/>
@@ -104,23 +98,23 @@ export function VideoDemo() {
 
 				<div className="mt-8 border-border/70 border-t pt-5">
 					<p className="font-mono text-muted-foreground text-xs uppercase tracking-label">
-						Cue map
+						Marker map
 					</p>
 					<ul className="mt-4 space-y-3">
-						{DEMO_CUES.map((cue) => (
+						{DEMO_MARKERS.map((marker) => (
 							<li
 								className="flex items-center justify-between gap-4 text-sm"
-								key={cue.id}
+								key={marker.id}
 							>
 								<span className="flex items-center gap-2">
 									<span
 										aria-hidden="true"
-										className={`size-1.5 rounded-full ${activeCue?.id === cue.id ? "bg-primary" : "bg-border"}`}
+										className={`size-1.5 rounded-full ${activeMarker?.id === marker.id ? "bg-primary" : "bg-border"}`}
 									/>
-									{cue.id.replaceAll("-", " ")}
+									{marker.id.replaceAll("-", " ")}
 								</span>
 								<span className="font-mono text-muted-foreground text-xs">
-									{formatTime(cue.timestampSeconds)}
+									{formatTime(marker.timestampSeconds)}
 								</span>
 							</li>
 						))}

@@ -1,9 +1,3 @@
-/**
- * @fileOverview Runs the interactive ReactPlayer and Media Chrome cue demo.
- *
- * Loads only after activation so the home page does not pay for YouTube's iframe until a visitor asks to play it.
- */
-
 import {
 	MediaControlBar,
 	MediaController,
@@ -19,7 +13,11 @@ import {
 } from "media-chrome/react";
 import { type CSSProperties, useCallback, useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { ReactPlayer, useVideoCueSync, type VideoCue } from "@/shared/video";
+import {
+	ReactPlayer,
+	useVideoMarkerSync,
+	type VideoMarker,
+} from "@/shared/video";
 
 // biome-ignore lint/security/noSecrets: Public YouTube demo video identifier.
 const DEMO_VIDEO_SRC = "https://www.youtube.com/watch?v=M7lc1UVf-VE";
@@ -37,24 +35,24 @@ const MEDIA_CONTROLLER_STYLE: CSSProperties & {
 type PlayerStatus = "Loading" | "Ready" | "Playing" | "Paused" | "Ended";
 
 interface VideoPlayerDemoProps {
-	readonly cues: readonly VideoCue[];
-	readonly onCueTrigger: (cue: VideoCue) => void;
+	readonly markers: readonly VideoMarker[];
+	readonly onMarkerTrigger: (markers: VideoMarker) => void;
 	readonly onStatusChange: (status: PlayerStatus) => void;
 	readonly onTimeUpdate: (currentTime: number) => void;
 }
 
 export default function VideoPlayerDemo({
-	cues,
-	onCueTrigger,
+	markers,
+	onMarkerTrigger,
 	onStatusChange,
 	onTimeUpdate,
 }: VideoPlayerDemoProps) {
 	const [playerElement, setPlayerElement] = useState<HTMLVideoElement | null>(
 		null,
 	);
-	const { currentTime } = useVideoCueSync({
-		cues,
-		onCueTrigger,
+	const { currentTime } = useVideoMarkerSync({
+		markers,
+		onMarkerTrigger,
 		onTimeUpdate,
 		player: playerElement,
 	});
@@ -78,11 +76,11 @@ export default function VideoPlayerDemo({
 		() => onStatusChange("Ready"),
 		[onStatusChange],
 	);
-	const previewFirstCue = useCallback(() => {
+	const previewFirstMarker = useCallback(() => {
 		if (playerElement) {
-			playerElement.currentTime = cues[0].timestampSeconds - 1;
+			playerElement.currentTime = markers[0].timestampSeconds - 1;
 		}
-	}, [cues, playerElement]);
+	}, [markers, playerElement]);
 
 	return (
 		<>
@@ -126,10 +124,10 @@ export default function VideoPlayerDemo({
 			<div className="mt-4 flex flex-wrap items-center gap-2">
 				<Button
 					disabled={!playerElement}
-					onClick={previewFirstCue}
+					onClick={previewFirstMarker}
 					variant="ghost"
 				>
-					Preview first cue
+					Preview first marker
 				</Button>
 				<span className="text-muted-foreground text-xs">
 					Current time {formatTime(currentTime)}

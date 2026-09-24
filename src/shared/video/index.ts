@@ -1,3 +1,3 @@
 export { ReactPlayer } from "./react-player";
-export type { VideoCue } from "./types";
-export { useVideoCueSync } from "./use-video-cue-sync";
+export type { VideoMarker } from "./types";
+export { useVideoMarkerSync } from "./use-video-marker-sync";

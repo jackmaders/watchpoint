@@ -1,44 +1,44 @@
-import type { VideoCue, VideoPlayer } from "./types";
+import type { VideoMarker, VideoPlayer } from "./types";
 
 const DEFAULT_LEAD_TIME_MS = 80;
-const MAX_CUE_OVERSHOOT_MS = 500;
+const MAX_OVERSHOOT_MS = 500;
 
-export interface VideoCueSchedulerOptions {
-	readonly getCues?: () => readonly VideoCue[];
+export interface VideoMarkerSchedulerOptions {
+	readonly getMarkers?: () => readonly VideoMarker[];
 	readonly leadTimeMs?: number;
-	readonly onCueTrigger?: (cue: VideoCue) => void;
+	readonly onMarkerTrigger?: (marker: VideoMarker) => void;
 	readonly onTimeUpdate?: (currentTime: number) => void;
 	readonly overshootTimeMs?: number;
 	readonly player: VideoPlayer;
 }
 
-/** Schedules timestamped video cues against native media playback. */
-export class VideoCueScheduler {
-	private readonly getCues: () => readonly VideoCue[];
+/** Schedules timestamped video markers against native media playback. */
+export class VideoMarkerScheduler {
+	private readonly getMarkers: () => readonly VideoMarker[];
 	private readonly player: VideoPlayer;
-	private readonly onCueTrigger?: (cue: VideoCue) => void;
+	private readonly onMarkerTrigger?: (marker: VideoMarker) => void;
 	private readonly onTimeUpdate?: (currentTime: number) => void;
 
 	private readonly leadTimeSeconds: number;
 	private readonly overshootTimeSeconds: number;
-	private pendingSeekCue: VideoCue | null = null;
-	private triggeredCueIds: Set<string> = new Set();
+	private pendingSeekMarker: VideoMarker | null = null;
+	private triggeredMarkerIds: Set<string> = new Set();
 	private animationFrameId: number | null = null;
 	private isRunning: boolean = false;
 
-	constructor(options: VideoCueSchedulerOptions) {
+	constructor(options: VideoMarkerSchedulerOptions) {
 		this.player = options.player;
-		this.getCues = options.getCues ?? (() => []);
+		this.getMarkers = options.getMarkers ?? (() => []);
 		this.leadTimeSeconds = (options.leadTimeMs ?? DEFAULT_LEAD_TIME_MS) / 1000;
 		this.overshootTimeSeconds =
-			(options.overshootTimeMs ?? MAX_CUE_OVERSHOOT_MS) / 1000;
-		this.onCueTrigger = options.onCueTrigger;
+			(options.overshootTimeMs ?? MAX_OVERSHOOT_MS) / 1000;
+		this.onMarkerTrigger = options.onMarkerTrigger;
 		this.onTimeUpdate = options.onTimeUpdate;
 	}
 
-	public resetTriggeredCues() {
-		this.triggeredCueIds.clear();
-		this.pendingSeekCue = null;
+	public resetTriggeredMarkers() {
+		this.triggeredMarkerIds.clear();
+		this.pendingSeekMarker = null;
 	}
 
 	public start() {
@@ -61,17 +61,17 @@ export class VideoCueScheduler {
 		const currentTime = this.player.currentTime;
 		this.onTimeUpdate?.(currentTime);
 
-		for (const cue of this.getCues()) {
-			if (this.triggeredCueIds.has(cue.id)) continue;
+		for (const marker of this.getMarkers()) {
+			if (this.triggeredMarkerIds.has(marker.id)) continue;
 
-			const timeDelta = currentTime - cue.timestampSeconds;
+			const timeDelta = currentTime - marker.timestampSeconds;
 			if (timeDelta < -this.leadTimeSeconds) continue;
 			if (timeDelta > this.overshootTimeSeconds) continue;
 
-			this.triggeredCueIds.add(cue.id);
-			this.pendingSeekCue = cue;
+			this.triggeredMarkerIds.add(marker.id);
+			this.pendingSeekMarker = marker;
 			this.player.pause();
-			this.onCueTrigger?.(cue);
+			this.onMarkerTrigger?.(marker);
 			break;
 		}
 	}
@@ -82,10 +82,10 @@ export class VideoCueScheduler {
 
 	public handlePause = () => {
 		this.stop();
-		if (!this.pendingSeekCue) return;
+		if (!this.pendingSeekMarker) return;
 
-		const targetTimestamp = this.pendingSeekCue.timestampSeconds;
-		this.pendingSeekCue = null;
+		const targetTimestamp = this.pendingSeekMarker.timestampSeconds;
+		this.pendingSeekMarker = null;
 		this.player.currentTime = targetTimestamp;
 	};
 
