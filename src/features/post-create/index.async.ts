@@ -1,1 +1,1 @@
-export { PostCreateForm } from "./ui/post-create-form.async";
+export { PostCreateForm } from "./ui/post-create-form-lazy";

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { VideoMarker, VideoPlayer } from "../types";
 import { VideoMarkerScheduler } from "../video-marker-scheduler";
+import type { VideoMarker, VideoPlayer } from "../video-types";
 
 describe("VideoMarkerScheduler", () => {
 	let mockPlayer: VideoPlayer;
