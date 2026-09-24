@@ -21,7 +21,7 @@ export const serverErrorMiddleware = createMiddleware({
 		if (error instanceof ServerFunctionError) {
 			setResponseStatus(error.status, error.message);
 		}
-		reportServerError(error, serverFnMeta.name);
+		reportServerError(error, serverFnMeta?.name ?? "unknown");
 
 		throw error;
 	}
