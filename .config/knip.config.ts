@@ -16,7 +16,6 @@ const config: KnipConfig = {
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
-		"src/shared/youtube/index.ts!",
 	],
 	project: [
 		".config/**/*.{ts,tsx}",
