@@ -4,15 +4,15 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`GLOSSARY.md`** at the repo root, or
-- **`GLOSSARY-MAP.md`** at the repo root if it exists: it points at one `GLOSSARY.md` per context. Read each one relevant to the topic.
+- **`docs/GLOSSARY.md`**, or
+- **`docs/GLOSSARY-MAP.md`** if it exists: it points at one `docs/GLOSSARY.md` per context. Read each one relevant to the topic.
 - **`docs/adr/`**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
 ## Skill contract
 
-`GLOSSARY.md` is the canonical domain glossary for this repo. Domain-aware skills—including `domain-modeling`, `grill-with-docs`, `improve-codebase-architecture`, `triage`, `tdd`, `diagnosing-bugs`, `to-spec`, and `to-tickets`—read this glossary and the relevant ADRs before acting. If an installed skill still names the legacy `CONTEXT.md` or `CONTEXT-MAP.md`, resolve that reference to the corresponding `GLOSSARY.md` or `GLOSSARY-MAP.md` file and keep new writes under the canonical names.
+`docs/GLOSSARY.md` is the canonical domain glossary for this repo. Domain-aware skills—including `domain-modeling`, `grill-with-docs`, `improve-codebase-architecture`, `triage`, `tdd`, `diagnosing-bugs`, `to-spec`, and `to-tickets`—read this glossary and the relevant ADRs before acting. If an installed skill still names the legacy `CONTEXT.md` or `CONTEXT-MAP.md`, resolve that reference to the corresponding `docs/GLOSSARY.md` or `docs/GLOSSARY-MAP.md` file and keep new writes under the canonical names.
 
 ## File structure
 
