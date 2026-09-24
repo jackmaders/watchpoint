@@ -41,7 +41,7 @@ Detailed architectural definitions live in [`docs/architecture.md`](file:///home
 ## 4. Error & Null Handling
 
 - **Exceptions for Unexpected Breakages Only:** Throwing is reserved for unrecoverable errors and external library control-flow primitives that require it by design (e.g. router redirects). Business logic functions should return values.
-- **Pass True Shapes:** Pass around the true, complete shape of an object through domain operations, business pipelines, and orchestrator components rather than fragmenting it into piecemeal fields. Leaf components represent the exception: their prop interfaces define only the specific subset needed for presentation, while permitting callers to spread true shapes directly on them.
+- **Pass True Shapes:** Pass around the true, complete shape of an object through domain handlers, business pipelines, and orchestrator components rather than fragmenting it into piecemeal fields. Leaf components represent the exception: their prop interfaces define only the specific subset needed for presentation, while permitting callers to spread true shapes directly on them.
 - **Narrow Nullability Early:** When a function accepts nullable input, validate or narrow it immediately at entry so downstream code receives the verified non-nullable value without redundant fallback checks.
 
 ---

@@ -17,16 +17,16 @@ This project divergences from standard Feature-Sliced Design (FSD v2.1) and seam
 
 ## 2. Seam Boundaries & Operation Naming
 
-To prevent conflating server operations, RPC transports, and client state, enforce strict naming by seam:
+To prevent conflating server handlers, RPC transports, and client state, enforce strict naming by seam:
 
-- **Entity Operations (`{noun}{Verb}Operation`):**
+- **Entity Operation Handlerss (`{noun}{Verb}Handlers`):**
   - **Seam:** Database queries and domain business logic.
   - **Location:** `entities/<noun>/api/<noun>s.server.ts` (marked `@tanstack/react-start/server-only`).
-  - **Rule:** Never imported by client code. Features never talk to the database directly; they call entity operations.
+  - **Rule:** Never imported by client code. Features never talk to the database directly; they call entity handlers.
 - **Server Functions (`{noun}{Verb}ServerFn`):**
   - **Seam:** HTTP / RPC transport adapters defined with `createServerFn`.
   - **Location:** Read functions in `entities/<noun>/api/*.functions.ts`; mutation functions in `features/<noun>-<verb>/api/*.functions.ts` (or `entities/<noun>/api/*.functions.ts`, if reused).
-  - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to entity operations.
+  - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to entity handlers.
 - **Query Artifacts (`use{Noun}{Verb}Mutation` / `{noun}{Verb}QueryOptions`):**
   - **Seam:** TanStack Query client caching.
   - **Location:** Mutation hooks in `features/`; query options in `entities/`.
