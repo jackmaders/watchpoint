@@ -107,6 +107,10 @@ export class VideoMarkerScheduler {
 		}
 
 		this.tick();
+		if (!this.isRunning) {
+			return;
+		}
+
 		this.animationFrameId = requestAnimationFrame(this.scheduleTick);
 	};
 }
