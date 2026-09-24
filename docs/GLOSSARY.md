@@ -37,7 +37,7 @@ A person who watches VODs, takes Lessons, and reviews their historical performan
 _Avoid_: Student, Learner, Player, Consumer
 
 **Admin**:
-An administrator who manages VODs, authors Questions and Options, and configures user roles.
+An administrator role for a User who manages VODs, authors Questions and Options, and configures user roles. Admin authorization is enforced at server seams; the role is not accepted as signup input.
 _Avoid_: Instructor, Coach, Manager, Creator
 
 ### Components & UI Taxonomy

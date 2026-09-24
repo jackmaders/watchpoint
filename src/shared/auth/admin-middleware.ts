@@ -1,29 +1,29 @@
 import { isNotFound, isRedirect } from "@tanstack/react-router";
 import { createMiddleware } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { ServerFunctionError } from "@/shared/errors";
 import { ensureSession } from "./auth.functions";
-import { isAdmin } from "./auth-roles";
+import { hasAdminPermission } from "./auth-roles";
 
 export const adminMiddleware = createMiddleware({ type: "function" }).server(
 	async ({ next }) => {
-		let session: Awaited<ReturnType<typeof ensureSession>>;
-
 		try {
-			session = await ensureSession();
+			const session = await ensureSession();
+
+			if (!hasAdminPermission(session.user)) {
+				throw new ServerFunctionError("Forbidden", 403);
+			}
+
+			return next({ context: { session } });
 		} catch (error) {
 			if (isRedirect(error) || isNotFound(error)) {
 				throw error;
 			}
 
-			setResponseStatus(401, "Unauthorized");
-			throw error;
-		}
+			if (error instanceof ServerFunctionError) {
+				throw error;
+			}
 
-		if (!isAdmin(session.user)) {
-			setResponseStatus(403, "Forbidden");
-			throw new Error("Forbidden");
+			throw new ServerFunctionError("Unauthorized", 401);
 		}
-
-		return next({ context: { session } });
 	},
 );

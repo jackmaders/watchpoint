@@ -1,16 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { isAdmin } from "../auth-roles";
+import { hasAdminPermission } from "../auth-roles";
 
-describe("isAdmin", () => {
+describe("hasAdminPermission", () => {
 	test("recognizes a user with the admin role", () => {
-		expect(isAdmin({ role: "admin" })).toBe(true);
+		expect(hasAdminPermission({ role: "admin" })).toBe(true);
 	});
 
 	test("rejects a regular user", () => {
-		expect(isAdmin({ role: "user" })).toBe(false);
+		expect(hasAdminPermission({ role: "user" })).toBe(false);
 	});
 
 	test("rejects a missing role", () => {
-		expect(isAdmin({})).toBe(false);
+		expect(hasAdminPermission({})).toBe(false);
 	});
 });
