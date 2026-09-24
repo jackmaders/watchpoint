@@ -1,11 +1,23 @@
 {
 	"version": "7",
 	"dialect": "sqlite",
-	"id": "6323dc53-611f-4d45-b395-18a00ecfc36c",
+	"id": "24d49a32-7564-4862-aab6-aeb301ca3ceb",
 	"prevIds": ["35d46f5a-3596-4da6-9917-5bdc3d128903"],
 	"ddl": [
 		{
 			"name": "account",
+			"entityType": "tables"
+		},
+		{
+			"name": "session",
+			"entityType": "tables"
+		},
+		{
+			"name": "user",
+			"entityType": "tables"
+		},
+		{
+			"name": "verification",
 			"entityType": "tables"
 		},
 		{
@@ -33,19 +45,7 @@
 			"entityType": "tables"
 		},
 		{
-			"name": "session",
-			"entityType": "tables"
-		},
-		{
 			"name": "skills",
-			"entityType": "tables"
-		},
-		{
-			"name": "user",
-			"entityType": "tables"
-		},
-		{
-			"name": "verification",
 			"entityType": "tables"
 		},
 		{
@@ -176,11 +176,221 @@
 			"type": "integer",
 			"notNull": true,
 			"autoincrement": false,
-			"default": null,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
 			"generated": null,
 			"name": "updated_at",
 			"entityType": "columns",
 			"table": "account"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "id",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "expires_at",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "token",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "updated_at",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "ip_address",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "user_agent",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "user_id",
+			"entityType": "columns",
+			"table": "session"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "id",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "name",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "email",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "false",
+			"generated": null,
+			"name": "email_verified",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "image",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "updated_at",
+			"entityType": "columns",
+			"table": "user"
+		},
+		{
+			"type": "text",
+			"notNull": false,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "id",
+			"entityType": "columns",
+			"table": "verification"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "identifier",
+			"entityType": "columns",
+			"table": "verification"
+		},
+		{
+			"type": "text",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "value",
+			"entityType": "columns",
+			"table": "verification"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": null,
+			"generated": null,
+			"name": "expires_at",
+			"entityType": "columns",
+			"table": "verification"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "verification"
+		},
+		{
+			"type": "integer",
+			"notNull": true,
+			"autoincrement": false,
+			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+			"generated": null,
+			"name": "updated_at",
+			"entityType": "columns",
+			"table": "verification"
 		},
 		{
 			"type": "text",
@@ -530,86 +740,6 @@
 			"generated": null,
 			"name": "id",
 			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "expires_at",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "token",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-			"generated": null,
-			"name": "created_at",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "updated_at",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "ip_address",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "user_agent",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "user_id",
-			"entityType": "columns",
-			"table": "session"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "id",
-			"entityType": "columns",
 			"table": "skills"
 		},
 		{
@@ -651,136 +781,6 @@
 			"name": "updated_at",
 			"entityType": "columns",
 			"table": "skills"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "id",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "name",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "email",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "false",
-			"generated": null,
-			"name": "email_verified",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "image",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-			"generated": null,
-			"name": "created_at",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-			"generated": null,
-			"name": "updated_at",
-			"entityType": "columns",
-			"table": "user"
-		},
-		{
-			"type": "text",
-			"notNull": false,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "id",
-			"entityType": "columns",
-			"table": "verification"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "identifier",
-			"entityType": "columns",
-			"table": "verification"
-		},
-		{
-			"type": "text",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "value",
-			"entityType": "columns",
-			"table": "verification"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": null,
-			"generated": null,
-			"name": "expires_at",
-			"entityType": "columns",
-			"table": "verification"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-			"generated": null,
-			"name": "created_at",
-			"entityType": "columns",
-			"table": "verification"
-		},
-		{
-			"type": "integer",
-			"notNull": true,
-			"autoincrement": false,
-			"default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-			"generated": null,
-			"name": "updated_at",
-			"entityType": "columns",
-			"table": "verification"
 		},
 		{
 			"type": "text",
@@ -864,6 +864,17 @@
 			"table": "account"
 		},
 		{
+			"columns": ["user_id"],
+			"tableTo": "user",
+			"columnsTo": ["id"],
+			"onUpdate": "NO ACTION",
+			"onDelete": "CASCADE",
+			"nameExplicit": false,
+			"name": "fk_session_user_id_user_id_fk",
+			"entityType": "fks",
+			"table": "session"
+		},
+		{
 			"columns": ["lesson_id"],
 			"tableTo": "lessons",
 			"columnsTo": ["id"],
@@ -890,7 +901,7 @@
 			"tableTo": "options",
 			"columnsTo": ["id"],
 			"onUpdate": "NO ACTION",
-			"onDelete": "CASCADE",
+			"onDelete": "RESTRICT",
 			"nameExplicit": false,
 			"name": "fk_lesson_answers_selected_option_id_options_id_fk",
 			"entityType": "fks",
@@ -974,17 +985,6 @@
 			"table": "questions"
 		},
 		{
-			"columns": ["user_id"],
-			"tableTo": "user",
-			"columnsTo": ["id"],
-			"onUpdate": "NO ACTION",
-			"onDelete": "CASCADE",
-			"nameExplicit": false,
-			"name": "fk_session_user_id_user_id_fk",
-			"entityType": "fks",
-			"table": "session"
-		},
-		{
 			"columns": ["lesson_id", "skill_id"],
 			"nameExplicit": false,
 			"name": "lesson_selected_skills_pk",
@@ -996,6 +996,27 @@
 			"nameExplicit": false,
 			"name": "account_pk",
 			"table": "account",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["id"],
+			"nameExplicit": false,
+			"name": "session_pk",
+			"table": "session",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["id"],
+			"nameExplicit": false,
+			"name": "user_pk",
+			"table": "user",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["id"],
+			"nameExplicit": false,
+			"name": "verification_pk",
+			"table": "verification",
 			"entityType": "pks"
 		},
 		{
@@ -1036,29 +1057,8 @@
 		{
 			"columns": ["id"],
 			"nameExplicit": false,
-			"name": "session_pk",
-			"table": "session",
-			"entityType": "pks"
-		},
-		{
-			"columns": ["id"],
-			"nameExplicit": false,
 			"name": "skills_pk",
 			"table": "skills",
-			"entityType": "pks"
-		},
-		{
-			"columns": ["id"],
-			"nameExplicit": false,
-			"name": "user_pk",
-			"table": "user",
-			"entityType": "pks"
-		},
-		{
-			"columns": ["id"],
-			"nameExplicit": false,
-			"name": "verification_pk",
-			"table": "verification",
 			"entityType": "pks"
 		},
 		{
@@ -1085,6 +1085,34 @@
 		{
 			"columns": [
 				{
+					"value": "user_id",
+					"isExpression": false
+				}
+			],
+			"isUnique": false,
+			"where": null,
+			"origin": "manual",
+			"name": "session_userId_idx",
+			"entityType": "indexes",
+			"table": "session"
+		},
+		{
+			"columns": [
+				{
+					"value": "identifier",
+					"isExpression": false
+				}
+			],
+			"isUnique": false,
+			"where": null,
+			"origin": "manual",
+			"name": "verification_identifier_idx",
+			"entityType": "indexes",
+			"table": "verification"
+		},
+		{
+			"columns": [
+				{
 					"value": "lesson_id",
 					"isExpression": false
 				},
@@ -1103,20 +1131,6 @@
 		{
 			"columns": [
 				{
-					"value": "lesson_id",
-					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "lesson_answers_lesson_id_idx",
-			"entityType": "indexes",
-			"table": "lesson_answers"
-		},
-		{
-			"columns": [
-				{
 					"value": "question_id",
 					"isExpression": false
 				}
@@ -1127,20 +1141,6 @@
 			"name": "lesson_answers_question_id_idx",
 			"entityType": "indexes",
 			"table": "lesson_answers"
-		},
-		{
-			"columns": [
-				{
-					"value": "lesson_id",
-					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "lesson_selected_skills_lesson_id_idx",
-			"entityType": "indexes",
-			"table": "lesson_selected_skills"
 		},
 		{
 			"columns": [
@@ -1189,20 +1189,6 @@
 				{
 					"value": "question_id",
 					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "options_question_id_idx",
-			"entityType": "indexes",
-			"table": "options"
-		},
-		{
-			"columns": [
-				{
-					"value": "question_id",
-					"isExpression": false
 				},
 				{
 					"value": "order_index",
@@ -1215,20 +1201,6 @@
 			"name": "options_question_order_idx",
 			"entityType": "indexes",
 			"table": "options"
-		},
-		{
-			"columns": [
-				{
-					"value": "vod_id",
-					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "questions_vod_id_idx",
-			"entityType": "indexes",
-			"table": "questions"
 		},
 		{
 			"columns": [
@@ -1261,34 +1233,6 @@
 			"name": "questions_vod_timestamp_idx",
 			"entityType": "indexes",
 			"table": "questions"
-		},
-		{
-			"columns": [
-				{
-					"value": "user_id",
-					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "session_userId_idx",
-			"entityType": "indexes",
-			"table": "session"
-		},
-		{
-			"columns": [
-				{
-					"value": "identifier",
-					"isExpression": false
-				}
-			],
-			"isUnique": false,
-			"where": null,
-			"origin": "manual",
-			"name": "verification_identifier_idx",
-			"entityType": "indexes",
-			"table": "verification"
 		},
 		{
 			"columns": [
@@ -1326,18 +1270,18 @@
 			"table": "session"
 		},
 		{
-			"columns": ["slug"],
-			"nameExplicit": false,
-			"name": "skills_slug_unique",
-			"entityType": "uniques",
-			"table": "skills"
-		},
-		{
 			"columns": ["email"],
 			"nameExplicit": false,
 			"name": "user_email_unique",
 			"entityType": "uniques",
 			"table": "user"
+		},
+		{
+			"columns": ["slug"],
+			"nameExplicit": false,
+			"name": "skills_slug_unique",
+			"entityType": "uniques",
+			"table": "skills"
 		}
 	],
 	"renames": []
