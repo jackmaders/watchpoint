@@ -1,9 +1,3 @@
-/**
- * @fileOverview Creates a YouTube-only ReactPlayer instance for the video slice.
- *
- * Reuses ReactPlayer's lifecycle and media contract without bundling unrelated provider adapters.
- */
-
 import { canPlay } from "react-player/patterns";
 import type { PlayerEntry } from "react-player/players";
 import { createReactPlayer } from "react-player/ReactPlayer";

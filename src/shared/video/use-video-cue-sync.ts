@@ -1,91 +1,90 @@
-/**
- * @fileOverview Connects a native media element to Watchpoint's cue scheduler.
- *
- * Keeps cue timing and playback interruption behavior local while a player package owns generic media controls.
- */
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import { VideoSyncEngine } from "./sync-engine";
+import {
+	useCallback,
+	useEffect,
+	useEffectEvent,
+	useRef,
+	useState,
+} from "react";
 import type { VideoCue, VideoMedia } from "./types";
+import { VideoCueScheduler } from "./video-cue-scheduler";
+
+/** Number of state updates per second. */
+const UPDATE_THROTTLE_HZ = 10;
 
 export interface UseVideoCueSyncOptions {
 	readonly cues?: readonly VideoCue[];
 	readonly leadTimeMs?: number;
 	readonly onCueTrigger?: (cue: VideoCue) => void;
 	readonly onTimeUpdate?: (currentTime: number) => void;
+	readonly overshootTimeMs?: number;
 	readonly player: VideoMedia | null;
 }
 
-export interface UseVideoCueSyncReturn {
-	readonly currentTime: number;
-	readonly resetTriggeredCues: () => void;
-}
+export function useVideoCueSync(options: UseVideoCueSyncOptions) {
+	const {
+		player,
+		cues,
+		leadTimeMs,
+		overshootTimeMs,
+		onCueTrigger,
+		onTimeUpdate,
+	} = options;
 
-export function useVideoCueSync(
-	options: UseVideoCueSyncOptions,
-): UseVideoCueSyncReturn {
-	const { player, cues, leadTimeMs, onCueTrigger, onTimeUpdate } = options;
-	const engineRef = useRef<VideoSyncEngine | null>(null);
-	const callbacksRef = useRef({ onCueTrigger, onTimeUpdate });
-	const cuesRef = useRef(cues);
-	const publishedTimeBucketRef = useRef(-1);
-	const [currentTime, setCurrentTime] = useState(0);
+	const schedulerRef = useRef<VideoCueScheduler | null>(null);
 
-	useEffect(() => {
-		callbacksRef.current = { onCueTrigger, onTimeUpdate };
-	}, [onCueTrigger, onTimeUpdate]);
+	const lastThrottledBucketRef = useRef(-1);
+	const [throttledTime, setThrottledTime] = useState(0);
 
-	useEffect(() => {
-		cuesRef.current = cues;
-		engineRef.current?.setCues(cues ?? []);
-	}, [cues]);
+	const handleCueTrigger = useEffectEvent((cue: VideoCue) =>
+		onCueTrigger?.(cue),
+	);
+	const handleTimeUpdate = useEffectEvent((currentTime: number) => {
+		onTimeUpdate?.(currentTime);
+
+		const nextBucket = Math.floor(currentTime * UPDATE_THROTTLE_HZ);
+		if (nextBucket !== lastThrottledBucketRef.current) {
+			lastThrottledBucketRef.current = nextBucket;
+			setThrottledTime(currentTime);
+		}
+	});
+
+	const getLatestCues = useEffectEvent(() => cues ?? []);
+
+	const resetTriggeredCues = useCallback(() => {
+		schedulerRef.current?.resetTriggeredCues();
+	}, []);
 
 	useEffect(() => {
 		if (!player) {
-			engineRef.current = null;
+			schedulerRef.current = null;
 			return;
 		}
 
-		const engine = new VideoSyncEngine({
+		const scheduler = new VideoCueScheduler({
 			player,
-			cues: cuesRef.current,
+			getCues: getLatestCues,
 			leadTimeMs,
-			onCueTrigger: (cue) => callbacksRef.current.onCueTrigger?.(cue),
-			onTimeUpdate: (nextTime) => {
-				callbacksRef.current.onTimeUpdate?.(nextTime);
-
-				// The scheduler remains frame-accurate, but the display only needs
-				// a modest update rate to avoid rerendering the page every frame.
-				const nextBucket = Math.floor(nextTime * 10);
-				if (nextBucket !== publishedTimeBucketRef.current) {
-					publishedTimeBucketRef.current = nextBucket;
-					setCurrentTime(nextTime);
-				}
-			},
+			overshootTimeMs,
+			onCueTrigger: handleCueTrigger,
+			onTimeUpdate: handleTimeUpdate,
 		});
 
-		engineRef.current = engine;
+		schedulerRef.current = scheduler;
 
-		const handlePlay = () => engine.handlePlay();
-		const handlePause = () => engine.handlePause();
-		player.addEventListener("play", handlePlay);
-		player.addEventListener("pause", handlePause);
+		player.addEventListener("play", scheduler.handlePlay);
+		player.addEventListener("pause", scheduler.handlePause);
 
 		if (!player.paused) {
-			engine.handlePlay();
+			scheduler.handlePlay();
 		}
 
 		return () => {
-			player.removeEventListener("play", handlePlay);
-			player.removeEventListener("pause", handlePause);
-			engine.stop();
-			engineRef.current = null;
+			player.removeEventListener("play", scheduler.handlePlay);
+			player.removeEventListener("pause", scheduler.handlePause);
+			scheduler.stop();
+			schedulerRef.current = null;
 		};
-	}, [leadTimeMs, player]);
+	}, [leadTimeMs, overshootTimeMs, player]);
 
-	const resetTriggeredCues = useCallback(() => {
-		engineRef.current?.resetTriggeredCues();
-	}, []);
-
-	return { currentTime, resetTriggeredCues };
+	return { currentTime: throttledTime, resetTriggeredCues };
 }
