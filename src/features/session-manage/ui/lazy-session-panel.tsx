@@ -1,8 +1,8 @@
 import { lazy, type ReactNode, Suspense } from "react";
-import { SessionPanelFallback } from "./ui/session-panel-fallback";
+import { SessionPanelFallback } from "./session-panel-fallback";
 
 const LazySessionPanel = lazy(() =>
-	import("./ui/session-panel").then((module) => ({
+	import("./session-panel").then((module) => ({
 		default: module.SessionPanel,
 	})),
 );
