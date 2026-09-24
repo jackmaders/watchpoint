@@ -10,8 +10,13 @@ export const serverErrorMiddleware = createMiddleware({
 	try {
 		return await next();
 	} catch (error) {
-		if (isRedirect(error)) throw error;
-		if (isNotFound(error)) throw error;
+		if (isRedirect(error)) {
+			throw error;
+		}
+
+		if (isNotFound(error)) {
+			throw error;
+		}
 
 		if (error instanceof ServerFunctionError) {
 			setResponseStatus(error.status, error.message);

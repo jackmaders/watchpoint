@@ -3,5 +3,5 @@ export type {
 	Post,
 	PostInsert,
 } from "./model/post-types";
-export { postInsertSchema } from "./model/post-validation";
+export { postInsertSchema, postSelectSchema } from "./model/post-validation";
 export { PostCard } from "./ui/post-card";

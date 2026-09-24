@@ -21,11 +21,11 @@ To prevent conflating server handlers, RPC transports, and client state, enforce
 
 - **Entity Operation Handlers (`{noun}{Verb}Handler`):**
   - **Seam:** Database queries and domain business logic.
-  - **Location:** `entities/<noun>/api/<noun>s-handlers.server.ts` (marked `@tanstack/react-start/server-only`).
-  - **Rule:** Never imported by client code. Features never talk to the database directly; they call entity handlers.
+  - **Location:** `{entities,features}/<noun>/api/<noun>s-handlers.server.ts` (marked `@tanstack/react-start/server-only`).
+  - **Rule:** Never imported by client code. Components or server functions never talk to the database directly; they call entity handlers.
 - **Server Functions (`{noun}{Verb}ServerFn`):**
   - **Seam:** HTTP / RPC transport adapters defined with `createServerFn`.
-  - **Location:** Read functions in `entities/<noun>/api/*.functions.ts`; mutation functions in `features/<noun>-<verb>/api/*.functions.ts` (or `entities/<noun>/api/*.functions.ts`, if reused).
+  - **Location:** Read functions in `{entities,features}/<noun>/api/*.functions.ts`; mutation functions in `{entities,features}/<noun>-<verb>/api/*.functions.ts`.
   - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to entity handlers.
 - **Query Artifacts (`use{Noun}{Verb}Mutation` / `{noun}{Verb}QueryOptions`):**
   - **Seam:** TanStack Query client caching.

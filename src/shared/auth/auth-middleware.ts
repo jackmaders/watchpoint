@@ -9,8 +9,13 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
 			const session = await ensureSession();
 			return next({ context: { session } });
 		} catch (error) {
-			if (isRedirect(error)) throw error;
-			if (isNotFound(error)) throw error;
+			if (isRedirect(error)) {
+				throw error;
+			}
+
+			if (isNotFound(error)) {
+				throw error;
+			}
 
 			setResponseStatus(401, "Unauthorized");
 			throw error;

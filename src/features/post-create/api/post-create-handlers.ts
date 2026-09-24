@@ -1,5 +1,8 @@
-import { type PostInsert, postInsertSchema } from "@/entities/post";
-import { postSelectSchema } from "@/entities/post/model/post-validation";
+import {
+	type PostInsert,
+	postInsertSchema,
+	postSelectSchema,
+} from "@/entities/post";
 import { posts } from "@/shared/db";
 import { getDb } from "@/shared/db/index.server";
 
