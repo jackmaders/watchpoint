@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
-import type { QuestionSnapshot } from "@/shared/db/schema/lessons";
+import type { QuestionSnapshot } from "@/shared/db";
 
-export type { QuestionSnapshot } from "@/shared/db/schema/lessons";
+export type { QuestionSnapshot } from "@/shared/db";
 
 const snapshotOptionSchema = z
 	.object({
@@ -67,7 +67,9 @@ export const questionSnapshotSchema = z
 				path: ["selectedOption", "id"],
 			});
 		} else if (
-			JSON.stringify(selectedOption) !== JSON.stringify(snapshot.selectedOption)
+			selectedOption.orderIndex !== snapshot.selectedOption.orderIndex ||
+			selectedOption.text !== snapshot.selectedOption.text ||
+			selectedOption.isCorrect !== snapshot.selectedOption.isCorrect
 		) {
 			context.addIssue({
 				code: "custom",

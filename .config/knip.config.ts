@@ -16,8 +16,7 @@ const config: KnipConfig = {
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
-		// Lesson review contract is consumed by follow-up Answer and LessonSummary tickets.
-		"src/entities/lesson/index.ts!",
+		// Snapshot fixtures are consumed by the lesson contract tests.
 		"src/entities/lesson/model/__fixtures__/**/*.ts!",
 		// Config and test files
 		".config/steiger.config.ts",

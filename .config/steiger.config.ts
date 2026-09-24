@@ -7,7 +7,11 @@ export default defineConfig([
 		ignores: ["../**/__mocks__/**"],
 	},
 	{
-		files: ["../src/features/**", "../src/widgets/**"],
+		files: [
+			"../src/entities/lesson/**",
+			"../src/features/**",
+			"../src/widgets/**",
+		],
 		rules: { "fsd/insignificant-slice": "off" },
 	},
 

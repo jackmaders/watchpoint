@@ -1,6 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+	parseQuestionSnapshot,
+	questionSnapshotSchema,
+	validateQuestionSnapshotForAnswer,
+} from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create/index.async";
 import { SessionPanel } from "@/features/session-manage/index.async";
@@ -16,8 +21,15 @@ import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
+const lessonReviewContract = {
+	parse: parseQuestionSnapshot,
+	schema: questionSnapshotSchema,
+	validateForAnswer: validateQuestionSnapshotForAnswer,
+};
+
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+	const lessonReviewContractReady = Boolean(lessonReviewContract.schema);
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -125,6 +137,15 @@ export function HomePage() {
 									icon={<Activity aria-hidden="true" />}
 									label="Interface"
 									value="shadcn/ui"
+								/>
+								<PostureItem
+									icon={<ShieldCheck aria-hidden="true" />}
+									label="Lesson review"
+									value={
+										lessonReviewContractReady
+											? "Snapshot contract ready"
+											: "Unavailable"
+									}
 								/>
 							</ul>
 						</CardContent>
