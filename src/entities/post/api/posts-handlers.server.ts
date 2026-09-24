@@ -5,9 +5,10 @@ import type { z } from "zod/v4";
 import { getDb, posts } from "@/shared/db/index.server";
 
 export const postSelectSchema = createSelectSchema(posts);
+export type PostSelecttSchema = z.infer<typeof postInsertSchema>;
 
 export const postInsertSchema = createInsertSchema(posts);
-type PostInsertSchema = z.infer<typeof postInsertSchema>;
+export type PostInsertSchema = z.infer<typeof postInsertSchema>;
 
 export async function postListHandler(db = getDb()) {
 	const result = await db.select().from(posts);

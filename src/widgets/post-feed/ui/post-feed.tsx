@@ -1,7 +1,7 @@
-import type { Post } from "@/entities/post";
+import type { PostSelecttSchema } from "@/entities/post";
 import { PostCard } from "@/entities/post";
 
-export function PostFeed({ posts }: { posts: Post[] }) {
+export function PostFeed({ posts }: { posts: PostSelecttSchema[] }) {
 	if (posts.length === 0) {
 		return (
 			<p className="mt-4 text-muted-foreground text-sm">No watchpoints yet.</p>
