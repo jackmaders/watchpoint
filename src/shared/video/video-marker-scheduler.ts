@@ -51,7 +51,9 @@ export class VideoMarkerScheduler {
 
 	public stop() {
 		this.isRunning = false;
-		if (this.animationFrameId === null) return;
+		if (this.animationFrameId === null) {
+			return;
+		}
 
 		cancelAnimationFrame(this.animationFrameId);
 		this.animationFrameId = null;
@@ -62,11 +64,17 @@ export class VideoMarkerScheduler {
 		this.onTimeUpdate?.(currentTime);
 
 		for (const marker of this.getMarkers()) {
-			if (this.triggeredMarkerIds.has(marker.id)) continue;
+			if (this.triggeredMarkerIds.has(marker.id)) {
+				continue;
+			}
 
 			const timeDelta = currentTime - marker.timestampSeconds;
-			if (timeDelta < -this.leadTimeSeconds) continue;
-			if (timeDelta > this.overshootTimeSeconds) continue;
+			if (timeDelta < -this.leadTimeSeconds) {
+				continue;
+			}
+			if (timeDelta > this.overshootTimeSeconds) {
+				continue;
+			}
 
 			this.triggeredMarkerIds.add(marker.id);
 			this.pendingSeekMarker = marker;
@@ -82,7 +90,9 @@ export class VideoMarkerScheduler {
 
 	public handlePause = () => {
 		this.stop();
-		if (!this.pendingSeekMarker) return;
+		if (!this.pendingSeekMarker) {
+			return;
+		}
 
 		const targetTimestamp = this.pendingSeekMarker.timestampSeconds;
 		this.pendingSeekMarker = null;
@@ -90,7 +100,9 @@ export class VideoMarkerScheduler {
 	};
 
 	private scheduleTick = () => {
-		if (!this.isRunning) return;
+		if (!this.isRunning) {
+			return;
+		}
 
 		this.tick();
 		this.animationFrameId = requestAnimationFrame(this.scheduleTick);

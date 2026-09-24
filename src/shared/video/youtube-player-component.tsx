@@ -14,6 +14,7 @@ export const YouTubePlayer = ({
 	return (
 		<YouTubeVideoElement
 			{...props}
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: Bridge react-player HTMLVideoElement ref with youtube-video-element
 			ref={ref as React.Ref<YouTubeMediaElement>}
 			style={{ width, height, ...style }}
 		/>
