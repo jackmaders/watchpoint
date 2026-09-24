@@ -1,5 +1,8 @@
-import { createServerOnlyFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
+import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
+import {
+	getRequestHeaders,
+	setResponseStatus,
+} from "@tanstack/react-start/server";
 import { auth } from "./auth.server";
 
 export const ensureSession = createServerOnlyFn(async () => {
@@ -11,3 +14,15 @@ export const ensureSession = createServerOnlyFn(async () => {
 
 	return session;
 });
+
+export const authMiddleware = createMiddleware({ type: "function" }).server(
+	async ({ next }) => {
+		try {
+			const session = await ensureSession();
+			return next({ context: { session } });
+		} catch (error) {
+			setResponseStatus(401, "Unauthorized");
+			throw error;
+		}
+	},
+);

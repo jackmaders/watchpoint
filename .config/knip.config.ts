@@ -10,6 +10,12 @@ const config: KnipConfig = {
 	entry: [
 		// Framework entrypoints configured via Vite and Wrangler plugins rather than static imports
 		"src/app/client.tsx!",
+		// Lesson server functions are callable entrypoints before their UI consumers land
+		"src/entities/lesson/index.server.ts!",
+		"src/features/demo-convert/index.ts!",
+		"src/features/lesson-answer/index.ts!",
+		"src/features/lesson-complete/index.ts!",
+		"src/features/lesson-start/index.ts!",
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
