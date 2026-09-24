@@ -4,7 +4,7 @@ import {
 	isRedirect,
 	redirect,
 } from "@tanstack/react-router";
-import { requireAdminServerFn } from "@/shared/auth/admin.functions";
+import { requireAdminServerFn } from "@/shared/auth";
 
 export const Route = createFileRoute("/admin/")({
 	beforeLoad: async () => {
