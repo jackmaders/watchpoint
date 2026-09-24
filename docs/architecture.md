@@ -33,7 +33,22 @@ To prevent conflating server handlers, RPC transports, and client state, enforce
 
 ---
 
-## 3. Database Persistence vs. Domain Models
+## 3. Allowed Filename Suffixes
+
+Use only these suffixes when the corresponding meaning applies:
+
+- `.server.*` — Modules with a direct server/environment-specific dependency that needs import protection (for example, `cloudflare:workers`).
+- `.client.*` — Modules with a direct browser/environment-specific dependency that needs import protection.
+- `.functions.ts` — TanStack Start `createServerFn` transport wrappers.
+- `.lazy.tsx` — TanStack Router lazy route modules under `src/app/routes`.
+- `index.ts` — The default public API of a slice or segment.
+- `index.server.ts`, `index.client.ts`, `index.async.ts` — specialized public API entrypoints to avoid unwanted imports.
+
+Do not invent additional dot-separated suffixes. Use descriptive kebab-case names for ordinary modules in the format of `{noun}-{purpose}.ts`, such as `post-validation.ts`, `user-query-options.ts`, and `comment-create-handlers.ts`.
+
+---
+
+## 4. Database Persistence vs. Domain Models
 
 - **Relational Drizzle Schema (`src/shared/db/schema/`):**
   - Centralized in `shared/` to support foreign keys and relations without circular slice dependencies.
