@@ -73,6 +73,7 @@
 	font-weight: 500;
 	font-display: swap;
 	src: url("/fonts/fira-code-500.woff2") format("woff2");
+	unicode-range: U+0020-007E;
 }
 
 @font-face {
@@ -81,4 +82,5 @@
 	font-weight: 600;
 	font-display: swap;
 	src: url("/fonts/fira-code-600.woff2") format("woff2");
+	unicode-range: U+0020-007E;
 }
