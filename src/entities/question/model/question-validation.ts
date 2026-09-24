@@ -1,23 +1,30 @@
-import { createSelectSchema } from "drizzle-orm/zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 import { options } from "@/shared/db/schema/options";
 import { questions } from "@/shared/db/schema/questions";
 
-const optionInputSchema = z.object({
-	id: z.string().min(1).optional(),
+const optionInputSchema = createInsertSchema(options, {
 	text: z.string().trim().min(1),
 	isCorrect: z.boolean(),
-});
+}).pick({ id: true, text: true, isCorrect: true });
 
-const questionFieldsSchema = z.object({
-	id: z.string().min(1).optional(),
+const questionFieldsSchema = createInsertSchema(questions, {
 	vodId: z.string().min(1),
 	skillId: z.string().min(1),
 	timestampSeconds: z.number().int().nonnegative(),
 	prompt: z.string().trim().min(1),
 	explanation: z.string().trim().min(1),
-	options: z.array(optionInputSchema).min(2),
-});
+})
+	.pick({
+		vodId: true,
+		skillId: true,
+		timestampSeconds: true,
+		prompt: true,
+		explanation: true,
+	})
+	.extend({
+		options: z.array(optionInputSchema).min(2),
+	});
 
 const hasExactlyOneCorrectOption = (
 	question: z.infer<typeof questionFieldsSchema>,

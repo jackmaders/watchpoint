@@ -1,24 +1,22 @@
 import { asc, eq } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
+import type { z } from "zod";
 import { getDb } from "@/shared/db/index.server";
 import { options } from "@/shared/db/schema/options";
 import { questions } from "@/shared/db/schema/questions";
-import type { QuestionAuthoring } from "../model/question-types";
 import {
 	questionAuthoringSchema,
 	questionUpdateSchema,
 	questionWithOptionsSchema,
 } from "../model/question-validation";
 
-type QuestionDatabase = ReturnType<typeof getDb>;
-
 export async function questionCreateHandler(
-	data: QuestionAuthoring,
-	db: QuestionDatabase = getDb(),
+	data: z.input<typeof questionAuthoringSchema>,
+	db: ReturnType<typeof getDb> = getDb(),
 ) {
 	const input = questionAuthoringSchema.parse(data);
-	const questionId = input.id ?? crypto.randomUUID();
-	const statements = createPersistenceStatements(
+	const questionId = crypto.randomUUID();
+	const statements = buildQuestionPersistenceBatch(
 		{ ...input, id: questionId },
 		db,
 	);
@@ -28,19 +26,19 @@ export async function questionCreateHandler(
 }
 
 export async function questionUpdateHandler(
-	data: QuestionAuthoring & { id: string },
-	db: QuestionDatabase = getDb(),
+	data: z.input<typeof questionUpdateSchema>,
+	db: ReturnType<typeof getDb> = getDb(),
 ) {
 	const input = questionUpdateSchema.parse(data);
-	const statements = createPersistenceStatements(input, db, true);
+	const statements = buildQuestionPersistenceBatch(input, db, true);
 
 	await db.batch(statements);
 	return readQuestion(input.id, db);
 }
 
-function createPersistenceStatements(
-	input: QuestionAuthoring & { id: string },
-	db: QuestionDatabase,
+function buildQuestionPersistenceBatch(
+	input: z.infer<typeof questionUpdateSchema>,
+	db: ReturnType<typeof getDb>,
 	includeOptionDelete = false,
 ) {
 	const questionValues = {
@@ -66,21 +64,15 @@ function createPersistenceStatements(
 		}),
 	);
 
-	return batchStatements(
+	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
 		questionStatement,
 		...(includeOptionDelete ? [optionDeleteStatement] : []),
 		...optionStatements,
-	);
+	];
+	return statements;
 }
 
-function batchStatements(
-	first: BatchItem<"sqlite">,
-	...rest: BatchItem<"sqlite">[]
-): [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] {
-	return [first, ...rest];
-}
-
-async function readQuestion(id: string, db: QuestionDatabase) {
+async function readQuestion(id: string, db: ReturnType<typeof getDb>) {
 	const [question] = await db
 		.select()
 		.from(questions)

@@ -11,7 +11,6 @@ vi.mock("@/shared/db/index.server", () => ({
 }));
 
 const validQuestion = {
-	id: "question-1",
 	vodId: "vod-1",
 	skillId: "skill-1",
 	timestampSeconds: 42,
@@ -69,6 +68,7 @@ describe("question persistence", () => {
 		const db = createDatabaseDouble();
 		const updatedQuestion = {
 			...validQuestion,
+			id: "question-1",
 			options: [
 				{ id: "option-2", text: "Push alone", isCorrect: true },
 				{ text: "Hold", isCorrect: false },
@@ -98,12 +98,13 @@ function createDatabaseDouble(batchError?: Error) {
 	let reads = 0;
 	const questionRow = {
 		...validQuestion,
+		id: "question-1",
 		createdAt: new Date(),
 		updatedAt: new Date(),
 	};
 	const optionRows = validQuestion.options.map((option, orderIndex) => ({
 		...option,
-		questionId: validQuestion.id,
+		questionId: "question-1",
 		orderIndex,
 		createdAt: new Date(),
 		updatedAt: new Date(),
