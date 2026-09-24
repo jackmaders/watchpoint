@@ -15,6 +15,7 @@ const config: KnipConfig = {
 		"src/entities/lesson/index.server.ts!",
 		"src/entities/lesson/index.ts!",
 		// Lesson server functions are callable entrypoints before their UI consumers land
+		"src/features/lesson-answer/index.ts!",
 		"src/features/lesson-start/index.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
