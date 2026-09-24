@@ -53,6 +53,20 @@ describe("Lesson Runner context", () => {
 		expect(cued.activeQuestionId).toBe("question-middle");
 	});
 
+	test("repeated cue for the active Question preserves context identity", () => {
+		const context = transitionLessonRunner(
+			createLessonRunnerContext({ questions }),
+			{ type: "cue", questionId: "question-middle" },
+		);
+
+		const repeatedCue = transitionLessonRunner(context, {
+			type: "cue",
+			questionId: "question-middle",
+		});
+
+		expect(repeatedCue).toBe(context);
+	});
+
 	test("a duplicate cue cannot reopen an answered Question", () => {
 		const context = createLessonRunnerContext({
 			questions,

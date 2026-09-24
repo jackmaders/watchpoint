@@ -16,8 +16,7 @@ const config: KnipConfig = {
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
-		"src/widgets/lesson-runner/index.ts",
-		"src/widgets/lesson-runner/model/lesson-runner-context.ts",
+		"src/widgets/lesson-runner/index.ts!",
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",

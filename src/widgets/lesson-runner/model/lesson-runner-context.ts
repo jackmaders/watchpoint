@@ -92,6 +92,7 @@ function transitionCue(
 ): LessonRunnerContext {
 	if (
 		context.status === "completed" ||
+		context.activeQuestionId === questionId ||
 		!context.questions.some((question) => question.id === questionId) ||
 		context.answers.some((answer) => answer.questionId === questionId)
 	) {
