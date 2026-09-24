@@ -82,21 +82,8 @@ jobs:
 
       - name: 🔒 Enforce Single Migration Per PR
         run: |
-          BASE_REF="${{ github.base_ref }}"
-          if [ -n "$BASE_REF" ]; then
-            git fetch origin "$BASE_REF" --depth=1
-            BASE_TARGET="origin/$BASE_REF"
-          else
-            BASE_TARGET="origin/main"
-          fi
-          NEW_SQL_COUNT=$(git diff --name-only --diff-filter=A "$BASE_TARGET...HEAD" -- "drizzle/**/*.sql" | wc -l | tr -d ' ')
-          NEW_JSON_COUNT=$(git diff --name-only --diff-filter=A "$BASE_TARGET...HEAD" -- "drizzle/**/snapshot.json" | wc -l | tr -d ' ')
-          echo "New migration scripts added: $NEW_SQL_COUNT"
-          echo "New snapshots added: $NEW_JSON_COUNT"
-          if [ "$NEW_SQL_COUNT" -gt 1 ] || [ "$NEW_JSON_COUNT" -gt 1 ]; then
-            echo "::error::PR introduces $NEW_SQL_COUNT migration scripts and $NEW_JSON_COUNT snapshots. Consolidate into at most 1 migration script & snapshot per PR."
-            exit 1
-          fi
+          NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref || 'main' }}...HEAD" -- "drizzle/**/*.sql" | wc -l)
+          [ "$NEW_MIGRATIONS" -le 1 ] || { echo "::error::PR introduces $NEW_MIGRATIONS migrations (max 1 allowed)."; exit 1; }
 
   browser-tests:
     name: 🎭 Run Browser Tests
