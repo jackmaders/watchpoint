@@ -8,17 +8,28 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { user } from "./auth";
-import type { Option } from "./options";
 import { options } from "./options";
-import type { Question } from "./questions";
 import { questions } from "./questions";
 import { skills } from "./skills";
 import { vods } from "./vods";
 
+export interface QuestionSnapshotOption {
+	id: string;
+	isCorrect: boolean;
+	orderIndex: number;
+	text: string;
+}
+
 export interface QuestionSnapshot {
-	options: Array<Pick<Option, "id" | "orderIndex" | "text">>;
-	prompt: Question["prompt"];
-	timestampSeconds: Question["timestampSeconds"];
+	explanation: string | null;
+	options: QuestionSnapshotOption[];
+	prompt: string;
+	questionId: string;
+	selectedOption: QuestionSnapshotOption;
+	skillId: string;
+	skillName: string;
+	skillSlug: string;
+	timestampSeconds: number;
 }
 
 export const lessons = sqliteTable(
