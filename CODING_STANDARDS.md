@@ -21,6 +21,7 @@ Detailed architectural definitions live in [`docs/architecture.md`](file:///home
 - **Parse at the Boundary, Keep Data Immutable:** Validate data strictly upon ingress. In core business logic, prefer plain, immutable, serializable data objects (POJOs / interfaces) and pure transformation functions over heavy stateful OOP class hierarchies.
 - **Feature Envy:** When a calculation or transformation depends exclusively on fields from a single domain shape, colocating that function with the domain model's module is preferred.
 - **Public Seam as a Change Contract:** A slice's public index (`index.ts`) promises stability to callers; anything internal to the slice reserves the freedom to be refactored without breaking external dependents.
+- **Lazy Slice Exports:** Export lazy-loaded components under their canonical name from a clean `index.ts`, delegating the `lazy()` import and `<Suspense>` fallback wrapper to an internal `ui/lazy-<component>.tsx` module. Do not export both eager and lazy variants from the same barrel.
 
 ---
 

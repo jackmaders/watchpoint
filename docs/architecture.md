@@ -41,3 +41,21 @@ To prevent conflating server operations, RPC transports, and client state, enfor
 - **Domain Models (`src/entities/<noun>/model/`):**
   - Exposes Zod schemas, business types, and domain invariants.
   - Callers and UI consume entity domain models, never raw Drizzle table schemas.
+
+---
+
+## 4. Lazy-Loaded Modules in FSD Slices
+
+To enable clean bundle splitting for heavy client runtimes or non-critical UI without leaking loading mechanics or violating FSD public API boundaries:
+
+- **Clean Slice Entry Point (`index.ts`):**
+  - `index.ts` remains a pure export contract. Do not inline component definitions, JSX, or complex `lazy()` factories directly in `index.ts`.
+  - Export the lazy-loaded component under its canonical domain name (e.g. `export { SessionPanel } from "./ui/lazy-session-panel"`).
+  - Never export both eager and lazy variants of the same component from the same barrel (`index.ts`), as static imports poison bundler tree-shaking and negate dynamic chunk splitting.
+- **Dedicated Internal Lazy Module (`ui/lazy-<component>.tsx`):**
+  - Colocate the dynamic `lazy()` call and self-suspending wrapper in a dedicated module inside the `ui/` segment (e.g. `src/features/session-manage/ui/lazy-session-panel.tsx`).
+  - Use standard kebab-case naming (`lazy-<component>.tsx`). Reserve `.lazy.tsx` exclusively for TanStack Router route files in `src/app/routes/` where the framework router compiler specifically handles route-level splitting.
+- **Self-Suspending Encapsulation:**
+  - Wrap the dynamic component in a local `<Suspense fallback={fallback}>` inside the lazy module, defaulting to the slice's dedicated fallback (e.g. `<SessionPanelFallback />`).
+  - Callers render `<Component />` cleanly without having to manage external Suspense wrappers or risking unhandled Suspense runtime errors.
+
