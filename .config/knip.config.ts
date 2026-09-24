@@ -14,6 +14,8 @@ const config: KnipConfig = {
 		// Lesson entity server operations are entrypoints prior to UI/feature slice consumption
 		"src/entities/lesson/index.server.ts!",
 		"src/entities/lesson/index.ts!",
+		// Lesson server functions are callable entrypoints before their UI consumers land
+		"src/features/lesson-start/index.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
 		// TanStack Router file-based route definitions and generated route tree
