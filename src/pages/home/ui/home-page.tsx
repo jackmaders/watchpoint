@@ -14,6 +14,7 @@ import {
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
+import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -65,6 +66,10 @@ export function HomePage() {
 							<SessionPanel />
 						</Suspense>
 					</div>
+				</section>
+
+				<section className="mt-16">
+					<VideoDemo />
 				</section>
 
 				<section className="mt-16 grid gap-6 lg:grid-cols-5">

@@ -1,34 +1,29 @@
-export interface YouTubeCue {
+/**
+ * @fileOverview Defines the contracts used by the shared video cue integration.
+ *
+ * Keeps cue data and synchronization options independent from any player vendor.
+ */
+
+export interface VideoCue {
 	readonly id: string;
 	readonly timestampSeconds: number;
 }
 
-export interface YouTubePlayerAdapter {
-	getCurrentTime(): number;
-	getPlaybackRate(): number;
-	getPlayerState(): number;
-	getVolume(): number;
-	isMuted(): boolean;
-	mute(): void;
-	pauseVideo(): void;
-	playVideo(): void;
-	seekTo(seconds: number, allowSeekAhead?: boolean): void;
-	setPlaybackRate(rate: number): void;
-	setVolume(volume: number): void;
-	unMute(): void;
+export interface VideoPlayer {
+	currentTime: number;
+	pause(): void;
 }
 
-export interface YouTubePlayerSettings {
-	readonly isMuted: boolean;
-	readonly playbackRate: number;
-	readonly volume: number;
+export interface VideoMedia extends VideoPlayer {
+	addEventListener(type: string, listener: EventListener): void;
+	readonly paused: boolean;
+	removeEventListener(type: string, listener: EventListener): void;
 }
 
-export interface YouTubeSyncEngineOptions {
-	readonly cues?: readonly YouTubeCue[];
+export interface VideoSyncEngineOptions {
+	readonly cues?: readonly VideoCue[];
 	readonly leadTimeMs?: number;
-	readonly onCueTrigger?: (cue: YouTubeCue) => void;
-	readonly onStateChange?: (state: number) => void;
+	readonly onCueTrigger?: (cue: VideoCue) => void;
 	readonly onTimeUpdate?: (currentTime: number) => void;
-	readonly player: YouTubePlayerAdapter;
+	readonly player: VideoPlayer;
 }

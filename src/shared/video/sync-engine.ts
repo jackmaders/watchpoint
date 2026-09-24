@@ -1,37 +1,34 @@
-import type {
-	YouTubeCue,
-	YouTubePlayerAdapter,
-	YouTubePlayerSettings,
-	YouTubeSyncEngineOptions,
-} from "./types";
+/**
+ * @fileOverview Synchronizes native media playback with timestamped video cues.
+ *
+ * Detects cue windows, pauses playback for interaction, and clamps playback to cue timestamps.
+ */
+
+import type { VideoCue, VideoPlayer, VideoSyncEngineOptions } from "./types";
 
 const DEFAULT_LEAD_TIME_MS = 80;
-const YT_PLAYING = 1;
-const YT_PAUSED = 2;
 
-export class YouTubeSyncEngine {
-	private readonly player: YouTubePlayerAdapter;
-	private cues: readonly YouTubeCue[];
+export class VideoSyncEngine {
+	private readonly player: VideoPlayer;
+	private cues: readonly VideoCue[];
 	private readonly leadTimeSeconds: number;
-	private readonly onCueTrigger?: (cue: YouTubeCue) => void;
-	private readonly onStateChange?: (state: number) => void;
+	private readonly onCueTrigger?: (cue: VideoCue) => void;
 	private readonly onTimeUpdate?: (currentTime: number) => void;
 
-	private pendingSeekClampCue: YouTubeCue | null = null;
+	private pendingSeekClampCue: VideoCue | null = null;
 	private triggeredCueIds: Set<string> = new Set();
 	private rafId: number | null = null;
 	private isRunning: boolean = false;
 
-	constructor(options: YouTubeSyncEngineOptions) {
+	constructor(options: VideoSyncEngineOptions) {
 		this.player = options.player;
 		this.cues = options.cues ?? [];
 		this.leadTimeSeconds = (options.leadTimeMs ?? DEFAULT_LEAD_TIME_MS) / 1000;
 		this.onCueTrigger = options.onCueTrigger;
-		this.onStateChange = options.onStateChange;
 		this.onTimeUpdate = options.onTimeUpdate;
 	}
 
-	public setCues(cues: readonly YouTubeCue[]): void {
+	public setCues(cues: readonly VideoCue[]): void {
 		this.cues = cues;
 	}
 
@@ -57,7 +54,7 @@ export class YouTubeSyncEngine {
 	}
 
 	public tick(): void {
-		const currentTime = this.player.getCurrentTime();
+		const currentTime = this.player.currentTime;
 		this.onTimeUpdate?.(currentTime);
 
 		for (const cue of this.cues) {
@@ -74,49 +71,23 @@ export class YouTubeSyncEngine {
 			) {
 				this.triggeredCueIds.add(cue.id);
 				this.pendingSeekClampCue = cue;
-				this.player.pauseVideo();
+				this.player.pause();
 				this.onCueTrigger?.(cue);
 				break;
 			}
 		}
 	}
 
-	public handlePlayerStateChange(state: number): void {
-		this.onStateChange?.(state);
-
-		if (state === YT_PLAYING) {
-			this.start();
-			return;
-		}
-
-		if (state === YT_PAUSED) {
-			this.stop();
-			if (this.pendingSeekClampCue) {
-				const targetTimestamp = this.pendingSeekClampCue.timestampSeconds;
-				this.pendingSeekClampCue = null;
-				this.player.seekTo(targetTimestamp, true);
-			}
-		}
+	public handlePlay(): void {
+		this.start();
 	}
 
-	public snapshotSettings(): YouTubePlayerSettings {
-		return {
-			isMuted: this.player.isMuted(),
-			playbackRate: this.player.getPlaybackRate(),
-			volume: this.player.getVolume(),
-		};
-	}
-
-	public restoreSettings(
-		targetPlayer: YouTubePlayerAdapter,
-		settings: YouTubePlayerSettings,
-	): void {
-		targetPlayer.setPlaybackRate(settings.playbackRate);
-		targetPlayer.setVolume(settings.volume);
-		if (settings.isMuted) {
-			targetPlayer.mute();
-		} else {
-			targetPlayer.unMute();
+	public handlePause(): void {
+		this.stop();
+		if (this.pendingSeekClampCue) {
+			const targetTimestamp = this.pendingSeekClampCue.timestampSeconds;
+			this.pendingSeekClampCue = null;
+			this.player.currentTime = targetTimestamp;
 		}
 	}
 
