@@ -1,13 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	postCreateHandler,
-	postInsertSchema,
-} from "@/entities/post/index.server";
+import { postInsertSchema } from "@/entities/post";
+import { postCreateHandler } from "@/entities/post/index.server";
 import { authMiddleware } from "@/shared/auth";
-import { dbMiddleware } from "@/shared/db/index.server";
 import { serverErrorMiddleware } from "@/shared/errors";
 
 export const postCreateServerFn = createServerFn({ method: "POST" })
-	.middleware([authMiddleware, dbMiddleware, serverErrorMiddleware])
+	.middleware([authMiddleware, serverErrorMiddleware])
 	.validator(postInsertSchema)
-	.handler(({ data, context }) => postCreateHandler(data, context.db));
+	.handler(({ data }) => postCreateHandler(data));

@@ -1,6 +1,7 @@
+export { postListQueryOptions } from "./api/posts-query-options";
 export type {
 	PostInsertSchema,
-	PostSelecttSchema,
-} from "./api/posts-handlers.server";
-export { postListQueryOptions } from "./api/posts-query-options";
+	PostSelectSchema,
+} from "./model/types";
+export { postInsertSchema } from "./model/validation";
 export { PostCard } from "./ui/post-card";

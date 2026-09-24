@@ -1,6 +1,3 @@
 import "@tanstack/react-start/server-only";
 
-export {
-	postCreateHandler,
-	postInsertSchema,
-} from "./api/posts-handlers.server";
+export { postCreateHandler } from "./api/posts-handlers.server";

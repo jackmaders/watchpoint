@@ -1,14 +1,9 @@
 import "@tanstack/react-start/server-only";
 
-import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
-import type { z } from "zod/v4";
-import { getDb, posts } from "@/shared/db/index.server";
-
-export const postSelectSchema = createSelectSchema(posts);
-export type PostSelecttSchema = z.infer<typeof postInsertSchema>;
-
-export const postInsertSchema = createInsertSchema(posts);
-export type PostInsertSchema = z.infer<typeof postInsertSchema>;
+import { posts } from "@/shared/db";
+import { getDb } from "@/shared/db/index.server";
+import type { PostInsertSchema } from "../model/types";
+import { postInsertSchema, postSelectSchema } from "../model/validation";
 
 export async function postListHandler(db = getDb()) {
 	const result = await db.select().from(posts);
