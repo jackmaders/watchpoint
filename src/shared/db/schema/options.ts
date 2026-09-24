@@ -5,7 +5,9 @@ import { questions } from "./questions";
 export const options = sqliteTable(
 	"options",
 	{
-		id: text("id").primaryKey(),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		questionId: text("question_id")
 			.notNull()
 			.references(() => questions.id, { onDelete: "cascade" }),
@@ -23,7 +25,6 @@ export const options = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		index("options_question_id_idx").on(table.questionId),
 		index("options_question_order_idx").on(table.questionId, table.orderIndex),
 	],
 );

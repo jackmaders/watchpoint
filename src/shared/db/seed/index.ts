@@ -1,5 +1,8 @@
 import type { SQLiteAsyncDatabase } from "drizzle-orm/sqlite-core/async";
-import { options, questions, skills, vods } from "../schema";
+import { options } from "../schema/options";
+import { questions } from "../schema/questions";
+import { skills } from "../schema/skills";
+import { vods } from "../schema/vods";
 
 export const BASELINE_SKILLS = [
 	{

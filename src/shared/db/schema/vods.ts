@@ -10,7 +10,9 @@ import {
 export const vods = sqliteTable(
 	"vods",
 	{
-		id: text("id").primaryKey(),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		title: text("title").notNull(),
 		youtubeId: text("youtube_id").notNull(),
 		isDemo: integer("is_demo", { mode: "boolean" }).default(false).notNull(),

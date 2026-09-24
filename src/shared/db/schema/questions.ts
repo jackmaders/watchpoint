@@ -6,7 +6,9 @@ import { vods } from "./vods";
 export const questions = sqliteTable(
 	"questions",
 	{
-		id: text("id").primaryKey(),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		vodId: text("vod_id")
 			.notNull()
 			.references(() => vods.id, { onDelete: "cascade" }),
@@ -24,7 +26,6 @@ export const questions = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
-		index("questions_vod_id_idx").on(table.vodId),
 		index("questions_skill_id_idx").on(table.skillId),
 		index("questions_vod_timestamp_idx").on(
 			table.vodId,

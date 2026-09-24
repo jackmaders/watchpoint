@@ -24,7 +24,9 @@ export interface QuestionSnapshot {
 export const lessons = sqliteTable(
 	"lessons",
 	{
-		id: text("id").primaryKey(),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		userId: text("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -61,7 +63,6 @@ export const lessonSelectedSkills = sqliteTable(
 	},
 	(table) => [
 		primaryKey({ columns: [table.lessonId, table.skillId] }),
-		index("lesson_selected_skills_lesson_id_idx").on(table.lessonId),
 		index("lesson_selected_skills_skill_id_idx").on(table.skillId),
 	],
 );
@@ -69,7 +70,9 @@ export const lessonSelectedSkills = sqliteTable(
 export const lessonAnswers = sqliteTable(
 	"lesson_answers",
 	{
-		id: text("id").primaryKey(),
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		lessonId: text("lesson_id")
 			.notNull()
 			.references(() => lessons.id, { onDelete: "cascade" }),
@@ -78,7 +81,7 @@ export const lessonAnswers = sqliteTable(
 			.references(() => questions.id, { onDelete: "cascade" }),
 		selectedOptionId: text("selected_option_id")
 			.notNull()
-			.references(() => options.id, { onDelete: "cascade" }),
+			.references(() => options.id, { onDelete: "restrict" }),
 		isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
 		timeSpentSeconds: integer("time_spent_seconds"),
 		questionSnapshot: text("question_snapshot", { mode: "json" })
@@ -97,7 +100,6 @@ export const lessonAnswers = sqliteTable(
 			table.lessonId,
 			table.questionId,
 		),
-		index("lesson_answers_lesson_id_idx").on(table.lessonId),
 		index("lesson_answers_question_id_idx").on(table.questionId),
 	],
 );
