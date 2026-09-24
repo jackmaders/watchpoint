@@ -1,6 +1,7 @@
 import { CircleHelp, Clock3 } from "lucide-react";
 import { useId } from "react";
 import type { VodCatalog as VodCatalogData } from "@/entities/vod";
+import { formatDuration } from "@/shared/lib/format-duration";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,
@@ -70,10 +71,4 @@ export function VodCatalog({ vods }: { vods: VodCatalogData }) {
 			)}
 		</section>
 	);
-}
-
-function formatDuration(durationSeconds: number) {
-	const minutes = Math.floor(durationSeconds / 60);
-	const seconds = durationSeconds % 60;
-	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }

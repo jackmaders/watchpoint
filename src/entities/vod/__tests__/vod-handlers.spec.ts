@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { relations } from "@/shared/db/schema/relations";
 import { publishedVodListHandler } from "../api/vod-handlers";
 
 vi.mock("@/shared/db/index.server", () => ({ getDb: vi.fn() }));
@@ -59,7 +60,7 @@ describe("publishedVodListHandler", () => {
 function createDatabase() {
 	const database = new Database(":memory:");
 	databases.push(database);
-	const db = drizzle({ client: database });
+	const db = drizzle({ client: database, relations });
 	db.run(sql`
 		CREATE TABLE vods (
 			id TEXT PRIMARY KEY,
