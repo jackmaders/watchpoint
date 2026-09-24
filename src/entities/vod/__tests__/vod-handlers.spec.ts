@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { relations } from "@/shared/db/schema/relations";
+import { relations } from "@/shared/db";
 import { publishedVodListHandler } from "../api/vod-handlers";
 
 vi.mock("@/shared/db/index.server", () => ({ getDb: vi.fn() }));
