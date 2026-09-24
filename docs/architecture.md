@@ -19,9 +19,9 @@ This project divergences from standard Feature-Sliced Design (FSD v2.1) and seam
 
 To prevent conflating server handlers, RPC transports, and client state, enforce strict naming by seam:
 
-- **Entity Operation Handlerss (`{noun}{Verb}Handlers`):**
+- **Entity Operation Handlers (`{noun}{Verb}Handler`):**
   - **Seam:** Database queries and domain business logic.
-  - **Location:** `entities/<noun>/api/<noun>s.server.ts` (marked `@tanstack/react-start/server-only`).
+  - **Location:** `entities/<noun>/api/<noun>s-handlers.server.ts` (marked `@tanstack/react-start/server-only`).
   - **Rule:** Never imported by client code. Features never talk to the database directly; they call entity handlers.
 - **Server Functions (`{noun}{Verb}ServerFn`):**
   - **Seam:** HTTP / RPC transport adapters defined with `createServerFn`.
@@ -39,5 +39,7 @@ To prevent conflating server handlers, RPC transports, and client state, enforce
   - Centralized in `shared/` to support foreign keys and relations without circular slice dependencies.
   - Exposes database tables and relations via `src/shared/db/schema/index.ts`.
 - **Domain Models (`src/entities/<noun>/model/`):**
-  - Exposes Zod schemas, business types, and domain invariants.
+  - `validation.ts` exposes Zod schemas derived from the Drizzle table schema.
+  - `types.ts` exposes inferred TypeScript types from those Zod schemas.
+  - Business invariants belong alongside the relevant domain model and should be enforced by the entity handler before persistence.
   - Callers and UI consume entity domain models, never raw Drizzle table schemas.

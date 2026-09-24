@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { type PostInsertSchema, postListQueryOptions } from "@/entities/post";
+import { type PostInsert, postListQueryOptions } from "@/entities/post";
 import { postCreateServerFn } from "./post-create.functions";
 
 export function usePostCreateMutation() {
@@ -8,7 +8,7 @@ export function usePostCreateMutation() {
 	const postCreate = useServerFn(postCreateServerFn);
 
 	return useMutation({
-		mutationFn: (data: PostInsertSchema) => postCreate({ data }),
+		mutationFn: (data: PostInsert) => postCreate({ data }),
 		onSuccess: () =>
 			queryClient.invalidateQueries({
 				queryKey: postListQueryOptions.queryKey,
