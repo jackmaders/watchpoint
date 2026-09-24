@@ -1,24 +1,11 @@
 /**
- * @fileOverview Demonstrates ReactPlayer and Media Chrome with Watchpoint cue timing.
+ * @fileOverview Demonstrates the deferred cue-aware video player on the home page.
  *
- * Shows how generic playback controls can live outside the slice while cue pauses remain product behavior.
+ * Keeps the YouTube iframe and player controls out of the initial page load until the demo is requested.
  */
 
-import { Radio, SkipForward } from "lucide-react";
-import {
-	MediaControlBar,
-	MediaController,
-	MediaFullscreenButton,
-	MediaMuteButton,
-	MediaPlayButton,
-	MediaPlaybackRateButton,
-	MediaSeekBackwardButton,
-	MediaSeekForwardButton,
-	MediaTimeDisplay,
-	MediaTimeRange,
-	MediaVolumeRange,
-} from "media-chrome/react";
-import { useCallback, useState } from "react";
+import { Play, Radio } from "lucide-react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -28,10 +15,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
-import { ReactPlayer, useVideoCueSync, type VideoCue } from "@/shared/video";
+import type { VideoCue } from "@/shared/video";
 
-// biome-ignore lint/security/noSecrets: Public YouTube demo video identifier.
-const DEMO_VIDEO_SRC = "https://www.youtube.com/watch?v=M7lc1UVf-VE";
+const VideoPlayerDemo = lazy(() => import("./video-player-demo"));
 
 const DEMO_CUES: readonly VideoCue[] = [
 	{ id: "opening-read", timestampSeconds: 5 },
@@ -39,30 +25,24 @@ const DEMO_CUES: readonly VideoCue[] = [
 	{ id: "closing-read", timestampSeconds: 25 },
 ];
 
-type PlayerStatus = "Loading" | "Ready" | "Playing" | "Paused" | "Ended";
+type PlayerStatus =
+	| "Not loaded"
+	| "Loading"
+	| "Ready"
+	| "Playing"
+	| "Paused"
+	| "Ended";
 
 export function VideoDemo() {
-	const [playerElement, setPlayerElement] = useState<HTMLVideoElement | null>(
-		null,
-	);
+	const [isPlayerActive, setIsPlayerActive] = useState(false);
 	const [activeCue, setActiveCue] = useState<VideoCue | null>(null);
-	const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("Loading");
-	const { currentTime } = useVideoCueSync({
-		cues: DEMO_CUES,
-		onCueTrigger: setActiveCue,
-		player: playerElement,
-	});
-	const handleEnded = useCallback(() => setPlayerStatus("Ended"), []);
-	const handleError = useCallback(() => setPlayerStatus("Loading"), []);
-	const handlePause = useCallback(() => setPlayerStatus("Paused"), []);
-	const handlePlay = useCallback(() => setPlayerStatus("Playing"), []);
-	const handleReady = useCallback(() => setPlayerStatus("Ready"), []);
+	const [currentTime, setCurrentTime] = useState(0);
+	const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("Not loaded");
 
-	const previewFirstCue = useCallback(() => {
-		if (playerElement) {
-			playerElement.currentTime = DEMO_CUES[0].timestampSeconds - 1;
-		}
-	}, [playerElement]);
+	const activatePlayer = useCallback(() => {
+		setIsPlayerActive(true);
+		setPlayerStatus("Loading");
+	}, []);
 
 	return (
 		<Card className="overflow-hidden border-primary/20 bg-accent/20 lg:grid lg:grid-cols-5 lg:gap-0">
@@ -74,10 +54,14 @@ export function VideoDemo() {
 						</CardDescription>
 						<Badge
 							className="gap-1.5"
-							variant={playerStatus === "Loading" ? "outline" : "default"}
+							variant={
+								playerStatus === "Not loaded" || playerStatus === "Loading"
+									? "outline"
+									: "default"
+							}
 						>
 							<span
-								className={`size-1.5 rounded-full ${playerStatus === "Loading" ? "bg-muted-foreground" : "bg-primary-foreground"}`}
+								className={`size-1.5 rounded-full ${playerStatus === "Not loaded" || playerStatus === "Loading" ? "bg-muted-foreground" : "bg-primary-foreground"}`}
 							/>
 							{playerStatus}
 						</Badge>
@@ -93,43 +77,18 @@ export function VideoDemo() {
 				</CardHeader>
 
 				<CardContent className="mt-6 p-0">
-					<MediaController style={{ aspectRatio: "16 / 9", width: "100%" }}>
-						<ReactPlayer
-							className="video-demo-media"
-							controls={false}
-							height="100%"
-							onEnded={handleEnded}
-							onError={handleError}
-							onPause={handlePause}
-							onPlay={handlePlay}
-							onReady={handleReady}
-							ref={setPlayerElement}
-							slot="media"
-							src={DEMO_VIDEO_SRC}
-							width="100%"
-						/>
-						<MediaControlBar>
-							<MediaPlayButton />
-							<MediaSeekBackwardButton seekOffset={10} />
-							<MediaSeekForwardButton seekOffset={10} />
-							<MediaTimeRange />
-							<MediaTimeDisplay showDuration />
-							<MediaMuteButton />
-							<MediaVolumeRange />
-							<MediaPlaybackRateButton />
-							<MediaFullscreenButton />
-						</MediaControlBar>
-					</MediaController>
-					<div className="mt-4 flex flex-wrap items-center gap-2">
-						<Button
-							disabled={!playerElement}
-							onClick={previewFirstCue}
-							variant="ghost"
-						>
-							<SkipForward aria-hidden="true" />
-							Preview first cue
-						</Button>
-					</div>
+					{isPlayerActive ? (
+						<Suspense fallback={<VideoPlayerLoading />}>
+							<VideoPlayerDemo
+								cues={DEMO_CUES}
+								onCueTrigger={setActiveCue}
+								onStatusChange={setPlayerStatus}
+								onTimeUpdate={setCurrentTime}
+							/>
+						</Suspense>
+					) : (
+						<VideoPlayerFacade onActivate={activatePlayer} />
+					)}
 				</CardContent>
 			</div>
 
@@ -155,6 +114,7 @@ export function VideoDemo() {
 							>
 								<span className="flex items-center gap-2">
 									<span
+										aria-hidden="true"
 										className={`size-1.5 rounded-full ${activeCue?.id === cue.id ? "bg-primary" : "bg-border"}`}
 									/>
 									{cue.id.replaceAll("-", " ")}
@@ -168,6 +128,28 @@ export function VideoDemo() {
 				</div>
 			</div>
 		</Card>
+	);
+}
+
+function VideoPlayerFacade({ onActivate }: { onActivate: () => void }) {
+	return (
+		<div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-lg border border-border/70 bg-background/40 p-6 text-center">
+			<Button onClick={onActivate} size="lg" type="button">
+				<Play aria-hidden="true" />
+				Load video demo
+			</Button>
+			<p className="max-w-sm text-muted-foreground text-xs leading-5">
+				YouTube loads only after you request the interactive player.
+			</p>
+		</div>
+	);
+}
+
+function VideoPlayerLoading() {
+	return (
+		<div className="flex aspect-video w-full items-center justify-center rounded-lg border border-border/70 bg-background/40 text-muted-foreground text-sm">
+			Loading the interactive player…
+		</div>
 	);
 }
 
