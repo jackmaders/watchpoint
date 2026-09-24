@@ -20,23 +20,12 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: 🛒 Checkout Source Code
+        uses: actions/checkout@v5
+
       - name: Run PR Agent review
         uses: the-pr-agent/pr-agent@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
-          config.model: "gemini/gemini-3.8-flash"
-          config.fallback_models: >-
-            ["gemini/gemini-3.7-flash",
-             "gemini/gemini-3.6-flash",
-             "gemini/gemini-3.5-flash",
-             "gemini/gemini-3.5-flash-lite",
-             "gemini/gemini-3.1-flash-lite",
-             "gemini/gemini-3-flash-preview",
-             "gemini/gemini-2.5-flash"]
-          pr_reviewer.require_score_review: "true"
-          github_action_config.auto_describe: "true"
-          github_action_config.auto_improve: "true"
-          github_action_config.auto_review: "true"
-          config.propagate_tool_errors: "true"
+          CONFIG.EXTRA_CONFIG_URL: "${{ github.workspace }}/.config/pr-agent.toml"
