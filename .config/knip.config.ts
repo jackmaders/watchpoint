@@ -10,14 +10,14 @@ const config: KnipConfig = {
 	entry: [
 		// Framework entrypoints configured via Vite and Wrangler plugins rather than static imports
 		"src/app/client.tsx!",
+		// Local database seed executable
+		"src/shared/db/seed/index.ts",
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
-		// Database seeding script
-		"src/shared/db/seed/index.ts",
 	],
 	project: [
 		".config/**/*.{ts,tsx}",

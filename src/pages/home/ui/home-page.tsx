@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
-import { type ReactNode, Suspense } from "react";
+import type { ReactNode } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create/index.async";
-import { SessionPanel, SessionPanelFallback } from "@/features/session-manage";
+import { SessionPanel } from "@/features/session-manage/index.async";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,
@@ -14,6 +14,7 @@ import {
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
+import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -61,10 +62,12 @@ export function HomePage() {
 						</div>
 					</div>
 					<div className="lg:col-span-2">
-						<Suspense fallback={<SessionPanelFallback />}>
-							<SessionPanel />
-						</Suspense>
+						<SessionPanel />
 					</div>
+				</section>
+
+				<section className="mt-16">
+					<VideoDemo />
 				</section>
 
 				<section className="mt-16 grid gap-6 lg:grid-cols-5">
