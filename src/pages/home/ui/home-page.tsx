@@ -1,6 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+	type CalculateLessonSummaryInput,
+	calculateLessonSummary,
+	type LessonSummary,
+	type LessonSummaryQuestion,
+	type SkillSummary,
+} from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create/index.async";
 import { SessionPanel } from "@/features/session-manage/index.async";
@@ -16,8 +23,24 @@ import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
+const stubLessonQuestions: LessonSummaryQuestion[] = [
+	{ skillId: "signal-reading", isCorrect: true },
+	{ skillId: "signal-reading", isCorrect: null },
+];
+
+const stubLessonSummaryInput: CalculateLessonSummaryInput = {
+	createdAt: new Date("2026-09-24T10:00:00Z"),
+	completedAt: new Date("2026-09-24T10:01:00Z"),
+	questions: stubLessonQuestions,
+};
+
+function getStubLessonSummary(): LessonSummary {
+	return calculateLessonSummary(stubLessonSummaryInput);
+}
+
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+	const lessonSummary = getStubLessonSummary();
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -57,8 +80,14 @@ export function HomePage() {
 						</p>
 						<div className="mt-10 grid max-w-xl grid-cols-2 gap-6 border-border/70 border-t pt-6 sm:grid-cols-3">
 							<Metric label="Posts tracked" value={posts.length.toString()} />
-							<Metric label="Storage" value="D1" />
-							<Metric label="Auth" value="Ready" />
+							<Metric
+								label="Lesson score"
+								value={`${lessonSummary.scorePercentage}%`}
+							/>
+							<Metric
+								label="Skills reviewed"
+								value={lessonSummary.skills.map(formatSkillSummary).join(", ")}
+							/>
 						</div>
 					</div>
 					<div className="lg:col-span-2">
@@ -133,6 +162,10 @@ export function HomePage() {
 			</main>
 		</div>
 	);
+}
+
+function formatSkillSummary({ skillId, percentage }: SkillSummary): string {
+	return `${skillId}: ${percentage}%`;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
