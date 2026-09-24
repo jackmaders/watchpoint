@@ -21,12 +21,12 @@ To prevent conflating server handlers, RPC transports, and client state, enforce
 
 - **Entity Operation Handlers (`{noun}{Verb}Handler`):**
   - **Seam:** Database queries and domain business logic.
-  - **Location:** `{entities,features}/<noun>/api/<noun>s-handlers.server.ts` (marked `@tanstack/react-start/server-only`).
+  - **Location:** `{entities,features}/<noun>/api/<noun>-handlers.ts`.
   - **Rule:** Never imported by client code. Components or server functions never talk to the database directly; they call entity handlers.
 - **Server Functions (`{noun}{Verb}ServerFn`):**
   - **Seam:** HTTP / RPC transport adapters defined with `createServerFn`.
   - **Location:** Read functions in `{entities,features}/<noun>/api/*.functions.ts`; mutation functions in `{entities,features}/<noun>-<verb>/api/*.functions.ts`.
-  - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to entity handlers.
+  - **Rule:** Thin transport adapters. Do not embed SQL or business logic; delegate to handlers.
 - **Query Artifacts (`use{Noun}{Verb}Mutation` / `{noun}{Verb}QueryOptions`):**
   - **Seam:** TanStack Query client caching.
   - **Location:** Mutation hooks in `features/`; query options in `entities/`.
@@ -39,7 +39,7 @@ Use only these suffixes when the corresponding meaning applies:
 
 - `.server.*` — Modules with a direct server/environment-specific dependency that needs import protection (for example, `cloudflare:workers`).
 - `.client.*` — Modules with a direct browser/environment-specific dependency that needs import protection.
-- `.functions.ts` — TanStack Start `createServerFn` transport wrappers.
+- `.functions.ts` — TanStack Start server function modules.
 - `.lazy.tsx` — TanStack Router lazy route modules under `src/app/routes`.
 - `index.ts` — The default public API of a slice or segment.
 - `index.server.ts`, `index.client.ts`, `index.async.ts` — specialized public API entrypoints to avoid unwanted imports.
