@@ -32,12 +32,16 @@ _Avoid_: Training module, Category, Discipline, Tag
 
 ### Roles
 
+**Role**:
+A classification assigned to a User that determines which protected routes and operations they may access. Current roles are `user` and `admin`.
+_Avoid_: Permission, Access level
+
 **User**:
 A person who watches VODs, takes Lessons, and reviews their historical performance.
 _Avoid_: Student, Learner, Player, Consumer
 
 **Admin**:
-An administrator who manages VODs, authors Questions and Options, and configures user roles.
+An administrator role for a User who manages VODs, authors Questions and Options, and configures user roles. Admin authorization is enforced at server seams; the role is not accepted as signup input.
 _Avoid_: Instructor, Coach, Manager, Creator
 
 ### Components & UI Taxonomy
@@ -51,6 +55,10 @@ A component that orchestrates domain state, user interactions, or mutations and 
 _Avoid_: Container component, smart component, controller component, screen controller
 
 ### Architecture
+
+**Authorisation**:
+The decision that a User may access a protected route or perform an operation, based on their Role.
+_Avoid_: Authentication, Access control
 
 **Seam**:
 The public boundary or interface where callers and tests observe behavior without reaching inside internal implementation details.
