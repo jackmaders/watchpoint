@@ -20,8 +20,11 @@ Detailed architectural definitions live in [`docs/architecture.md`](file:///home
 - **Prefer Inferred & Computed Types:** Derive types directly from the single source of truth rather than recreating manual type definitions. For example, database row and insert types must be inferred from the Drizzle schema (`typeof table.$inferSelect` / `$inferInsert`), and API types should be inferred from Zod schemas (`z.infer<typeof schema>`).
 - **Parse at the Boundary, Keep Data Immutable:** Validate data strictly upon ingress. In core business logic, prefer plain, immutable, serializable data objects (POJOs / interfaces) and pure transformation functions over heavy stateful OOP class hierarchies.
 - **Feature Envy:** When a calculation or transformation depends exclusively on fields from a single domain shape, colocating that function with the domain model's module is preferred.
-- **Public Seam as a Change Contract:** A slice's public barrel promises stability to callers; anything internal to the slice reserves the freedom to be refactored without breaking external dependents.
-- **Specialized & Async Slice Entrypoints:** Specialized barrels (`index.*.ts`, such as `index.server.ts` or `index.async.ts`) are valid first-class entrypoints, even if a generic `index.ts` is omitted. Slices providing code-split components offer `index.async.ts` for self-suspending, dynamic-import exports and optional `index.ts` for synchronous exports. Internal lazy wrappers use `.async.tsx` (e.g. `ui/<component>.async.tsx`) to avoid conflicts with TanStack Router's `.lazy.tsx` route files. Never mix static and dynamic imports of the same component in one barrel.
+- **Public Seam as a Change Contract:** A slice's public barrel promises stability to callers; anything internal to the slice reserves the freedom to be refactored without breaking external dependents. Use the provided `knip` package to ensure the public barrel contains on the necessary exports for the current functionality.
+- **Specialized & Async Slice Entrypoints:** Specialized barrels (`index.*.ts`) are valid first-class entrypoints, even if a generic `index.ts` is omitted.
+  - Code-split components are exported in `index.async.ts`.
+  - Worker-only functionality is exported in `index.server.ts`.
+  - Browser-only functionality is exported in `index.client.ts`.
 
 ---
 
