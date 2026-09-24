@@ -16,8 +16,8 @@ const config: KnipConfig = {
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
-		// Shared DB public interface
-		"src/shared/db/index.server.ts!",
+		// Database seeding script
+		"src/shared/db/seed/index.ts",
 	],
 	project: [
 		".config/**/*.{ts,tsx}",
