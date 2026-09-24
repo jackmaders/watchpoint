@@ -5,8 +5,8 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { VideoMarker, VideoMedia } from "./types";
 import { VideoMarkerScheduler } from "./video-marker-scheduler";
+import type { VideoMarker, VideoMedia } from "./video-types";
 
 /** Number of state updates per second. */
 const UPDATE_THROTTLE_HZ = 10;

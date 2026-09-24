@@ -14,8 +14,8 @@ When exploring code, designing architecture, diagnosing bugs, or preparing specs
 
 ### Glossary
 
-When naming domain concepts or writing tests, read `GLOSSARY.md`. It is this repo's canonical vocabulary; use its terms in code, tests, specs, and tickets.
+When naming domain concepts or writing tests, read `docs/GLOSSARY.md`. It is this repo's canonical vocabulary; use its terms in code, tests, specs, and tickets.
 
 ### Coding standards
 
-When implementing features, writing tests, or reviewing code, read `CODING_STANDARDS.md`. It defines the repo's architectural rules, module boundaries, function design, error handling, and testing standards.
+When implementing features, writing tests, or reviewing code, read `docs/CODING_STANDARDS.md`. It defines the repo's architectural rules, module boundaries, function design, error handling, and testing standards.

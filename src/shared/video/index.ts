@@ -1,3 +1,3 @@
 export { ReactPlayer } from "./react-player";
-export type { VideoMarker } from "./types";
 export { useVideoMarkerSync } from "./use-video-marker-sync";
+export type { VideoMarker } from "./video-types";

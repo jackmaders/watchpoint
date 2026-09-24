@@ -1,4 +1,4 @@
-import type { VideoMarker, VideoPlayer } from "./types";
+import type { VideoMarker, VideoPlayer } from "./video-types";
 
 const DEFAULT_LEAD_TIME_MS = 80;
 const MAX_OVERSHOOT_MS = 500;

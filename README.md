@@ -72,10 +72,8 @@ its insignificant-slice heuristic to other sliced layers, but not to these two.
 Keep entity reads and reusable entity UI in `entities`; keep mutations that
 represent a user action in `features`. Server function boundaries use
 `*.functions.ts` and export `*ServerFn`; server-only implementations use
-`*.server.ts` and export noun–verb `*Operation` functions. TanStack Query
+`*.server.ts` and export noun–verb `*Handler` functions. TanStack Query
 modules may use `QueryOptions` and `use...Mutation` terminology explicitly.
-
-
 
 ## Routing
 
@@ -114,14 +112,14 @@ In the File Based Routing setup the layout is located in `src/app/routes/__root.
 Here is an example layout that includes a header:
 
 ```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "My App" },
     ],
   }),
   shellComponent: ({ children }) => (
@@ -141,7 +139,7 @@ export const Route = createRootRoute({
       </body>
     </html>
   ),
-})
+});
 ```
 
 More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
@@ -151,23 +149,23 @@ More information on layouts can be found in the [Layouts documentation](https://
 TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
 
 ```tsx
-import { createServerFn } from '@tanstack/react-start'
+import { createServerFn } from "@tanstack/react-start";
 
 const getServerTime = createServerFn({
-  method: 'GET',
+  method: "GET",
 }).handler(async () => {
-  return new Date().toISOString()
-})
+  return new Date().toISOString();
+});
 
 // Use in a component
 function MyComponent() {
-  const [time, setTime] = useState('')
-  
+  const [time, setTime] = useState("");
+
   useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
+    getServerTime().then(setTime);
+  }, []);
+
+  return <div>Server time: {time}</div>;
 }
 ```
 
@@ -176,16 +174,16 @@ function MyComponent() {
 You can create API routes by using the `server` property in your route definitions:
 
 ```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
+import { createFileRoute } from "@tanstack/react-router";
+import { json } from "@tanstack/react-start";
 
-export const Route = createFileRoute('/api/hello')({
+export const Route = createFileRoute("/api/hello")({
   server: {
     handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
+      GET: () => json({ message: "Hello, World!" }),
     },
   },
-})
+});
 ```
 
 ## Data Fetching
@@ -195,25 +193,25 @@ There are multiple ways to fetch data in your application. You can use TanStack 
 For example:
 
 ```tsx
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/people')({
+export const Route = createFileRoute("/people")({
   loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
+    const response = await fetch("https://swapi.dev/api/people");
+    return response.json();
   },
   component: PeopleComponent,
-})
+});
 
 function PeopleComponent() {
-  const data = Route.useLoaderData()
+  const data = Route.useLoaderData();
   return (
     <ul>
       {data.results.map((person) => (
         <li key={person.name}>{person.name}</li>
       ))}
     </ul>
-  )
+  );
 }
 ```
 
@@ -244,11 +242,11 @@ bun run dev
 
 There are three auth origins, one for each way to run the application:
 
-| Mode | Command | `BETTER_AUTH_URL` | Where it is set |
-| --- | --- | --- | --- |
-| Local development | `bun run dev` | `http://localhost:5173` | `.config/.dev.vars` |
-| Production build preview | `bun run build && bun run db:migrate && bun run preview` | `http://localhost:8787` | `bun run preview` override |
-| Cloudflare deployment | `bun run build && bun run deploy` | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json` |
+| Mode                     | Command                                                  | `BETTER_AUTH_URL`                           | Where it is set            |
+| ------------------------ | -------------------------------------------------------- | ------------------------------------------- | -------------------------- |
+| Local development        | `bun run dev`                                            | `http://localhost:5173`                     | `.config/.dev.vars`        |
+| Production build preview | `bun run build && bun run db:migrate && bun run preview` | `http://localhost:8787`                     | `bun run preview` override |
+| Cloudflare deployment    | `bun run build && bun run deploy`                        | `https://watchpoint.jackmaders.workers.dev` | `.config/wrangler.json`    |
 
 The preview command deliberately overrides the deployment value generated in
 `dist/server/wrangler.json`, so the same build artifact can be previewed
@@ -258,11 +256,11 @@ the configured base URL, so no duplicate `trustedOrigins` entry is needed.
 Playwright uses the same local configuration rather than replacing the Better
 Auth variables. Its runner variables only select where and how the app starts:
 
-| Variable | Purpose |
-| --- | --- |
-| `E2E_BASE_URL` | Test an already-running deployment and do not start a local server. |
-| `E2E_USE_PREVIEW=true` | Build and test the production preview on port 8787. |
-| `E2E_SKIP_BUILD=true` | Reuse an existing preview build; only applies with `E2E_USE_PREVIEW=true`. |
+| Variable               | Purpose                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `E2E_BASE_URL`         | Test an already-running deployment and do not start a local server.        |
+| `E2E_USE_PREVIEW=true` | Build and test the production preview on port 8787.                        |
+| `E2E_SKIP_BUILD=true`  | Reuse an existing preview build; only applies with `E2E_USE_PREVIEW=true`. |
 
 Pull-request jobs share one workflow-scoped, local-only `BETTER_AUTH_SECRET`.
 Production continues to read its real secret from Cloudflare.
@@ -285,8 +283,6 @@ the server boundary with `ensureSession`. Route redirects are a second layer
 for navigation UX, not a replacement for server-side authorization.
 
 Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
 
 # Learn More
 

@@ -1,4 +1,4 @@
-import type { Post } from "../model/post.schema";
+import type { Post } from "../model/post-types";
 
 export function PostCard({ post }: { post: Post }) {
 	return (

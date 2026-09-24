@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { VideoMarker, VideoMedia } from "../types";
 import { useVideoMarkerSync } from "../use-video-marker-sync";
+import type { VideoMarker, VideoMedia } from "../video-types";
 
 describe("useVideoMarkerSync", () => {
 	let eventListeners: Map<string, EventListener>;

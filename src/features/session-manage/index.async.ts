@@ -1,1 +1,1 @@
-export { SessionPanel } from "./ui/session-panel.async";
+export { SessionPanel } from "./ui/session-panel-lazy";

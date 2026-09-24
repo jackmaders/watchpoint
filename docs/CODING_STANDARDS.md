@@ -2,7 +2,7 @@
 
 This document defines the repository's coding standards and design heuristics, enforced during `/implement`, `/tdd`, and `/code-review`.
 
-Detailed architectural definitions live in [`docs/architecture.md`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/docs/architecture.md). Deep-module vocabulary is defined in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md); testing rules are in [`tdd`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/tdd/SKILL.md).
+Detailed architectural definitions live in [`docs/architecture/README.md`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/docs/architecture/README.md). Deep-module vocabulary is defined in [`codebase-design`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/codebase-design/SKILL.md); testing rules are in [`tdd`](file:///home/jackw/.herdr/worktrees/watchpoint/worktree-green-meadow-516b/.agents/skills/tdd/SKILL.md).
 
 ---
 
@@ -41,7 +41,7 @@ Detailed architectural definitions live in [`docs/architecture.md`](file:///home
 ## 4. Error & Null Handling
 
 - **Exceptions for Unexpected Breakages Only:** Throwing is reserved for unrecoverable errors and external library control-flow primitives that require it by design (e.g. router redirects). Business logic functions should return values.
-- **Pass True Shapes:** Pass around the true, complete shape of an object through domain operations, business pipelines, and orchestrator components rather than fragmenting it into piecemeal fields. Leaf components represent the exception: their prop interfaces define only the specific subset needed for presentation, while permitting callers to spread true shapes directly on them.
+- **Pass True Shapes:** Pass around the true, complete shape of an object through domain handlers, business pipelines, and orchestrator components rather than fragmenting it into piecemeal fields. Leaf components represent the exception: their prop interfaces define only the specific subset needed for presentation, while permitting callers to spread true shapes directly on them.
 - **Narrow Nullability Early:** When a function accepts nullable input, validate or narrow it immediately at entry so downstream code receives the verified non-nullable value without redundant fallback checks.
 
 ---
