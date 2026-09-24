@@ -15,9 +15,13 @@ fallback_models = [
   "gemini/gemini-2.5-flash",
 ]
 propagate_tool_errors = true
+persistent_inline_comments = true
 
 [pr_reviewer]
 require_score_review = true
+
+[pr_code_suggestions]
+commitable_code_suggestions = true
 
 [github_action_config]
 auto_describe = true
