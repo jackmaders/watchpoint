@@ -3,7 +3,7 @@ import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create";
-import { SessionPanel } from "@/features/session-manage";
+import { SessionPanel } from "@/features/session-manage/index.async";
 import { Badge } from "@/shared/ui/badge";
 import {
 	Card,

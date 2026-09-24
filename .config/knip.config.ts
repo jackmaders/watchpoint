@@ -16,6 +16,9 @@ const config: KnipConfig = {
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
+		// Slice entrypoints (sync, async/lazy, server-only)
+		"src/{entities,features,widgets,shared}/*/index.{ts,tsx}!",
+		"src/{entities,features,widgets,shared}/*/index.*.{ts,tsx}!",
 	],
 	project: [
 		".config/**/*.{ts,tsx}",

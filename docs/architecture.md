@@ -44,18 +44,19 @@ To prevent conflating server operations, RPC transports, and client state, enfor
 
 ---
 
-## 4. Lazy-Loaded Modules in FSD Slices
+## 4. Lazy-Loaded & Code-Split Modules in FSD Slices
 
 To enable clean bundle splitting for heavy client runtimes or non-critical UI without leaking loading mechanics or violating FSD public API boundaries:
 
-- **Clean Slice Entry Point (`index.ts`):**
-  - `index.ts` remains a pure export contract. Do not inline component definitions, JSX, or complex `lazy()` factories directly in `index.ts`.
-  - Export the lazy-loaded component under its canonical domain name (e.g. `export { SessionPanel } from "./ui/lazy-session-panel"`).
-  - Never export both eager and lazy variants of the same component from the same barrel (`index.ts`), as static imports poison bundler tree-shaking and negate dynamic chunk splitting.
-- **Dedicated Internal Lazy Module (`ui/lazy-<component>.tsx`):**
-  - Colocate the dynamic `lazy()` call and self-suspending wrapper in a dedicated module inside the `ui/` segment (e.g. `src/features/session-manage/ui/lazy-session-panel.tsx`).
-  - Use standard kebab-case naming (`lazy-<component>.tsx`). Reserve `.lazy.tsx` exclusively for TanStack Router route files in `src/app/routes/` where the framework router compiler specifically handles route-level splitting.
+- **Dual-Entrypoint Architecture (`index.ts` vs. `index.async.ts`):**
+  - Paralleling `index.server.ts` for server-only code, slices that support deferred/code-split client loading expose a secondary public entrypoint: `index.async.ts`.
+  - The default `index.ts` exports the synchronous/eager component (`SessionPanel`), keeping callers that require synchronous mounting simple.
+  - The `index.async.ts` entrypoint exports the self-suspending, dynamic-import component under the same canonical name (`export { SessionPanel } from "./ui/session-panel.async"`).
+  - Never mix static and dynamic imports of the same component inside a single barrel, as static imports poison bundler tree-shaking and negate dynamic chunk splitting.
+- **Dedicated Internal Async Module (`ui/<component>.async.tsx`):**
+  - Colocate the dynamic `lazy()` call and self-suspending wrapper in a dedicated module using the `.async.tsx` suffix inside the `ui/` segment (e.g. `src/features/session-manage/ui/session-panel.async.tsx`).
+  - The `.async.tsx` suffix clearly denotes asynchronous code splitting and avoids colliding with TanStack Router's `.lazy.tsx` file-based routing conventions in `src/app/routes/`.
 - **Self-Suspending Encapsulation:**
-  - Wrap the dynamic component in a local `<Suspense fallback={fallback}>` inside the lazy module, defaulting to the slice's dedicated fallback (e.g. `<SessionPanelFallback />`).
-  - Callers render `<Component />` cleanly without having to manage external Suspense wrappers or risking unhandled Suspense runtime errors.
+  - Wrap the dynamic component in a local `<Suspense fallback={fallback}>` inside the async module, defaulting to the slice's dedicated fallback (e.g. `<SessionPanelFallback />`).
+  - Callers consuming `index.async` render `<Component />` cleanly without having to manage external Suspense wrappers or risking unhandled Suspense runtime errors.
 
