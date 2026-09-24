@@ -13,6 +13,9 @@ const config: KnipConfig = {
 		"src/app/start.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
+		// Question authoring persistence public seam; the UI slice will consume it later.
+		"src/entities/question/index.server.ts!",
+		"src/entities/question/index.ts!",
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",

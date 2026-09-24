@@ -44,6 +44,8 @@ export const SAMPLE_QUESTIONS = [
 		timestampSeconds: 72,
 		prompt:
 			"The enemy team just committed support ultimates. What is the optimal tactical rotation?",
+		explanation:
+			"Review the tactical tradeoff before committing to the next rotation.",
 		options: [
 			{
 				id: "option-sample-1",
@@ -128,6 +130,7 @@ export async function seed(db: SeedableDatabase) {
 					skillId: q.skillId,
 					timestampSeconds: q.timestampSeconds,
 					prompt: q.prompt,
+					explanation: q.explanation,
 					createdAt: now,
 					updatedAt: now,
 				})

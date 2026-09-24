@@ -17,6 +17,7 @@ export const questions = sqliteTable(
 			.references(() => skills.id, { onDelete: "cascade" }),
 		timestampSeconds: integer("timestamp_seconds").notNull(),
 		prompt: text("prompt").notNull(),
+		explanation: text("explanation").notNull(),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 			.notNull(),
