@@ -1,7 +1,7 @@
 import {
 	parseFiniteNonNegativeNumber,
 	roundToPrecision,
-} from "@/shared/lib/utils";
+} from "@/shared/lib/maths";
 
 export const VOD_TIMESTAMP_SEARCH_PARAM = "timestamp";
 

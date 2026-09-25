@@ -11,9 +11,10 @@ import {
 	MediaTimeRange,
 	MediaVolumeRange,
 } from "media-chrome/react";
-import { type CSSProperties, useCallback, useState } from "react";
+import { type CSSProperties, useCallback, useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import {
+	parseVodTimestamp,
 	ReactPlayer,
 	useVideoMarkerSync,
 	type VideoMarker,
@@ -35,6 +36,7 @@ const MEDIA_CONTROLLER_STYLE: CSSProperties & {
 type PlayerStatus = "Loading" | "Ready" | "Playing" | "Paused" | "Ended";
 
 interface VideoPlayerDemoProps {
+	readonly initialTimestampSeconds: number;
 	readonly markers: readonly VideoMarker[];
 	readonly onMarkerTrigger: (markers: VideoMarker) => void;
 	readonly onStatusChange: (status: PlayerStatus) => void;
@@ -42,6 +44,7 @@ interface VideoPlayerDemoProps {
 }
 
 export default function VideoPlayerDemo({
+	initialTimestampSeconds,
 	markers,
 	onMarkerTrigger,
 	onStatusChange,
@@ -50,6 +53,11 @@ export default function VideoPlayerDemo({
 	const [playerElement, setPlayerElement] = useState<HTMLVideoElement | null>(
 		null,
 	);
+	const playerElementRef = useRef<HTMLVideoElement | null>(null);
+	const handlePlayerRef = useCallback((element: HTMLVideoElement | null) => {
+		playerElementRef.current = element;
+		setPlayerElement(element);
+	}, []);
 	const { currentTime, resetTriggeredMarkers } = useVideoMarkerSync({
 		markers,
 		onMarkerTrigger,
@@ -72,10 +80,24 @@ export default function VideoPlayerDemo({
 		() => onStatusChange("Playing"),
 		[onStatusChange],
 	);
-	const handleReady = useCallback(
-		() => onStatusChange("Ready"),
-		[onStatusChange],
-	);
+	const handleReady = useCallback(() => {
+		const player = playerElementRef.current;
+		if (player && initialTimestampSeconds > 0) {
+			resetTriggeredMarkers();
+			const timestamp = parseVodTimestamp(
+				initialTimestampSeconds,
+				player.duration,
+			);
+			player.currentTime = timestamp;
+			onTimeUpdate(timestamp);
+		}
+		onStatusChange("Ready");
+	}, [
+		initialTimestampSeconds,
+		onStatusChange,
+		onTimeUpdate,
+		resetTriggeredMarkers,
+	]);
 	const previewFirstMarker = useCallback(() => {
 		const firstMarker = markers[0];
 		if (playerElement && firstMarker) {
@@ -96,7 +118,7 @@ export default function VideoPlayerDemo({
 					onPause={handlePause}
 					onPlay={handlePlay}
 					onReady={handleReady}
-					ref={setPlayerElement}
+					ref={handlePlayerRef}
 					slot="media"
 					src={DEMO_VIDEO_SRC}
 					width="100%"

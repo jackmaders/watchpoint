@@ -9,7 +9,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/ui/card";
-import type { VideoMarker } from "@/shared/video";
+import {
+	parseVodTimestamp,
+	type VideoMarker,
+	VOD_TIMESTAMP_PRECISION_SECONDS,
+} from "@/shared/video";
 
 const VideoPlayerDemo = lazy(() => import("./video-player-demo"));
 
@@ -27,7 +31,11 @@ type PlayerStatus =
 	| "Paused"
 	| "Ended";
 
-export function VideoDemo() {
+export function VideoDemo({
+	initialTimestampSeconds,
+}: {
+	readonly initialTimestampSeconds: number;
+}) {
 	const [isPlayerActive, setIsPlayerActive] = useState(false);
 	const [activeMarker, setActiveMarker] = useState<VideoMarker | null>(null);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -74,6 +82,7 @@ export function VideoDemo() {
 					{isPlayerActive ? (
 						<Suspense fallback={<VideoPlayerLoading />}>
 							<VideoPlayerDemo
+								initialTimestampSeconds={initialTimestampSeconds}
 								markers={DEMO_MARKERS}
 								onMarkerTrigger={setActiveMarker}
 								onStatusChange={setPlayerStatus}
@@ -159,8 +168,19 @@ function Readout({ label, value }: { label: string; value: string }) {
 }
 
 function formatTime(seconds: number): string {
-	const wholeSeconds = Math.max(0, Math.floor(seconds));
+	const roundedSeconds = parseVodTimestamp(seconds);
+	const wholeSeconds = Math.floor(roundedSeconds);
 	const minutes = Math.floor(wholeSeconds / 60);
 	const remainingSeconds = wholeSeconds % 60;
-	return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+	const fractionalSeconds = Math.round(
+		(roundedSeconds - wholeSeconds) / VOD_TIMESTAMP_PRECISION_SECONDS,
+	);
+	const precisionDigits = Math.round(
+		Math.log10(1 / VOD_TIMESTAMP_PRECISION_SECONDS),
+	);
+	const fraction =
+		fractionalSeconds === 0
+			? ""
+			: `.${fractionalSeconds.toString().padStart(precisionDigits, "0")}`;
+	return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}${fraction}`;
 }

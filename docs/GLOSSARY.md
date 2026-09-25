@@ -10,6 +10,14 @@ Watchpoint is an interactive coaching and learning platform where admins author 
 A recorded gameplay or instructional video asset backed by YouTube that serves as the basis for user lessons.
 _Avoid_: Match, Recording, Tape
 
+**VOD Timestamp**:
+A position in a VOD's playback timeline, expressed in seconds, that can identify where a Question occurs or where a User resumes viewing.
+_Avoid_: Playback time, video position
+
+**VOD Duration**:
+The total playable length of a VOD, expressed in seconds.
+_Avoid_: Video length
+
 **Lesson**:
 A user's active learning run through a VOD where they are presented with interactive questions at specific timestamps.
 _Avoid_: Playthrough, Session, Run, Drill, Review, Assignment
