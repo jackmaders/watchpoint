@@ -1,5 +1,6 @@
 export { account, session, user, verification } from "./schema/auth";
 export {
+	lessonAnswers,
 	lessonSelectedSkills,
 	lessons,
 } from "./schema/lessons";

@@ -20,3 +20,10 @@ export class LessonValidationError extends LessonError {
 		this.name = "LessonValidationError";
 	}
 }
+
+export class LessonConflictError extends LessonError {
+	constructor(message: string) {
+		super(message, 409);
+		this.name = "LessonConflictError";
+	}
+}

@@ -1,1 +1,4 @@
-export { startLessonSchema } from "./model/lesson-validation";
+export {
+	startLessonSchema,
+	submitLessonAnswerSchema,
+} from "./model/lesson-validation";

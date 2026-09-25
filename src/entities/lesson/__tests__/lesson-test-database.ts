@@ -2,13 +2,23 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { options, questions, skills, user, vods } from "@/shared/db";
 import { relations } from "@/shared/db/schema/relations";
-import { createLessonOperations } from "../index.server";
+import type { createLessonOperations } from "../index.server";
 
 export const userId = "user-1";
 export const vodId = "vod-1";
 export const strategySkillId = "skill-strategy";
 export const tacticsSkillId = "skill-tactics";
 
+export function snapshot(prompt: string, optionId: string) {
+	return {
+		options: [
+			{ id: optionId, orderIndex: 0, text: "Correct answer" },
+			{ id: `${optionId}-wrong`, orderIndex: 1, text: "Wrong answer" },
+		],
+		prompt,
+		timestampSeconds: 10,
+	};
+}
 
 export function createTestDatabase() {
 	const sqlite = new Database(":memory:");
@@ -87,7 +97,6 @@ export function createTestDatabase() {
 	`);
 
 	const database = drizzle({ client: sqlite, relations });
-	// biome-ignore lint/nursery/noUnsafeTypeAssertion: the test database adds D1's batch seam to a SQLite database
 	const testDatabase = database as unknown as NonNullable<
 		Parameters<typeof createLessonOperations>[0]
 	>;
