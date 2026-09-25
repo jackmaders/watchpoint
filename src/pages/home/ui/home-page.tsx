@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { postListQueryOptions } from "@/entities/post";
+import { publishedVodListQueryOptions } from "@/entities/vod";
 import { PostCreateForm } from "@/features/post-create/index.async";
 import { SessionPanel } from "@/features/session-manage/index.async";
 import { Badge } from "@/shared/ui/badge";
@@ -14,10 +15,12 @@ import {
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
+import { VodCatalog } from "@/widgets/vod-catalog";
 import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+	const { data: vods } = useSuspenseQuery(publishedVodListQueryOptions);
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -42,6 +45,8 @@ export function HomePage() {
 			</header>
 
 			<main className="mx-auto max-w-6xl px-6 py-12 lg:px-8 lg:py-16">
+				<VodCatalog vods={vods} />
+
 				<section className="grid gap-12 lg:grid-cols-5 lg:items-start">
 					<div className="pt-2 lg:col-span-3">
 						<p className="font-mono text-primary text-xs uppercase tracking-eyebrow">

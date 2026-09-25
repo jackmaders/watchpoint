@@ -7,10 +7,9 @@ export default defineConfig([
 		ignores: ["../**/__mocks__/**"],
 	},
 	{
-		files: ["../src/features/**", "../src/widgets/**"],
+		files: ["../src/features/**", "../src/widgets/**", "../src/entities/**"],
 		rules: { "fsd/insignificant-slice": "off" },
 	},
-
 	{
 		files: ["../src/app/routes/api/**"],
 		rules: { "fsd/no-reserved-folder-names": "off" },

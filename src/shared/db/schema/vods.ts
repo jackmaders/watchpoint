@@ -15,6 +15,7 @@ export const vods = sqliteTable(
 			.$defaultFn(() => crypto.randomUUID()),
 		title: text("title").notNull(),
 		youtubeId: text("youtube_id").notNull(),
+		durationSeconds: integer("duration_seconds").default(1).notNull(),
 		isDemo: integer("is_demo", { mode: "boolean" }).default(false).notNull(),
 		isPublished: integer("is_published", { mode: "boolean" })
 			.default(false)
