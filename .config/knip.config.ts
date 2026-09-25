@@ -11,6 +11,8 @@ const config: KnipConfig = {
 		// Framework entrypoints configured via Vite and Wrangler plugins rather than static imports
 		"src/app/client.tsx!",
 		"src/app/start.ts!",
+		// Public shared video seam
+		"src/shared/video/index.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
 		// TanStack Router file-based route definitions and generated route tree

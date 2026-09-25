@@ -18,6 +18,7 @@ describe("parseVodTimestamp", () => {
 
 	test("accepts finite non-negative timestamp values", () => {
 		expect(parseVodTimestamp("12.3456")).toBe(12.346);
+		expect(parseVodTimestamp("0.029")).toBe(0.029);
 		expect(parseVodTimestamp(0)).toBe(0);
 	});
 
@@ -41,5 +42,6 @@ describe("parseVodTimestamp", () => {
 	test("ignores an invalid VOD duration when clamping", () => {
 		expect(parseVodTimestamp("42.5", Number.NaN)).toBe(42.5);
 		expect(parseVodTimestamp("42.5", -1)).toBe(42.5);
+		expect(parseVodTimestamp("42.5", 0)).toBe(42.5);
 	});
 });

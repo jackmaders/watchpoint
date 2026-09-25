@@ -1,6 +1,5 @@
 export { ReactPlayer } from "./react-player";
 export { useVideoMarkerSync } from "./use-video-marker-sync";
-/** @public */
 export {
 	DEFAULT_VOD_TIMESTAMP_SECONDS,
 	parseVodTimestamp,
