@@ -16,8 +16,16 @@ import { skills } from "./skills";
 import { vods } from "./vods";
 
 export interface QuestionSnapshot {
-	options: Array<Pick<Option, "id" | "orderIndex" | "text">>;
+	explanation?: string | null;
+	options: Array<
+		Pick<Option, "id" | "orderIndex" | "text"> & {
+			isCorrect?: Option["isCorrect"];
+		}
+	>;
 	prompt: Question["prompt"];
+	questionId?: Question["id"];
+	skillId?: Question["skillId"];
+	skillName?: string;
 	timestampSeconds: Question["timestampSeconds"];
 }
 
