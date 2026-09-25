@@ -11,8 +11,7 @@ export default defineConfig([
 		rules: { "fsd/insignificant-slice": "off" },
 	},
 	{
-		// Steiger doesn't count the intentional Skill @x/VOD reference as a slice consumer.
-		files: ["../src/entities/skill/**"],
+		files: ["../src/entities/**"],
 		rules: { "fsd/insignificant-slice": "off" },
 	},
 
