@@ -1,33 +1,31 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, notInArray } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { getDb } from "@/shared/db/index.server";
 import { options } from "@/shared/db/schema/options";
 import { questions } from "@/shared/db/schema/questions";
 import type {
-	QuestionAuthoring,
+	QuestionInsert,
+	QuestionInsertInput,
 	QuestionUpdate,
+	QuestionUpdateInput,
+	QuestionWithOptions,
 } from "../model/question-types";
 import {
-	questionAuthoringSchema,
+	questionInsertSchema,
 	questionUpdateSchema,
 	questionWithOptionsSchema,
 } from "../model/question-validation";
 
 export async function questionCreateHandler(
-	data: QuestionAuthoring,
+	data: QuestionInsertInput,
 	db = getDb(),
 ) {
-	const input = questionAuthoringSchema.parse(data);
+	const input: QuestionInsert = questionInsertSchema.parse(data);
 	const questionId = crypto.randomUUID();
 	const { options: questionOptions, ...questionValues } = input;
-	const optionStatements = questionOptions.map((option, orderIndex) =>
-		db.insert(options).values({
-			id: option.id ?? crypto.randomUUID(),
-			questionId,
-			text: option.text,
-			isCorrect: option.isCorrect,
-			orderIndex,
-		}),
+	const optionRows = toOptionInsertValues(questionId, questionOptions);
+	const optionStatements = optionRows.map((option) =>
+		db.insert(options).values(option),
 	);
 	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
 		db.insert(questions).values({ id: questionId, ...questionValues }),
@@ -39,23 +37,42 @@ export async function questionCreateHandler(
 }
 
 export async function questionUpdateHandler(
-	data: QuestionUpdate,
+	data: QuestionUpdateInput,
 	db = getDb(),
 ) {
-	const input = questionUpdateSchema.parse(data);
+	const input: QuestionUpdate = questionUpdateSchema.parse(data);
 	const { id, options: questionOptions, ...questionValues } = input;
-	const optionStatements = questionOptions.map((option, orderIndex) =>
-		db.insert(options).values({
-			id: option.id ?? crypto.randomUUID(),
-			questionId: id,
-			text: option.text,
-			isCorrect: option.isCorrect,
-			orderIndex,
-		}),
+	// Retained Options keep their IDs because saved Answers reference them.
+	const existingOptions = await db
+		.select()
+		.from(options)
+		.where(eq(options.questionId, id))
+		.orderBy(asc(options.orderIndex));
+	const existingOptionIds = new Set(existingOptions.map((option) => option.id));
+	const optionRows = toOptionInsertValues(id, questionOptions);
+	const retainedOptionIds = optionRows.map((option) => option.id);
+	const optionStatements = optionRows.map((option) =>
+		existingOptionIds.has(option.id)
+			? db
+					.update(options)
+					.set({
+						text: option.text,
+						isCorrect: option.isCorrect,
+						orderIndex: option.orderIndex,
+					})
+					.where(and(eq(options.id, option.id), eq(options.questionId, id)))
+			: db.insert(options).values(option),
 	);
 	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
 		db.update(questions).set(questionValues).where(eq(questions.id, id)),
-		db.delete(options).where(eq(options.questionId, id)),
+		db
+			.delete(options)
+			.where(
+				and(
+					eq(options.questionId, id),
+					notInArray(options.id, retainedOptionIds),
+				),
+			),
 		...optionStatements,
 	];
 
@@ -63,7 +80,10 @@ export async function questionUpdateHandler(
 	return questionFetchHandler(input.id, db);
 }
 
-export async function questionFetchHandler(id: string, db = getDb()) {
+export async function questionFetchHandler(
+	id: string,
+	db = getDb(),
+): Promise<QuestionWithOptions | undefined> {
 	const [question] = await db
 		.select()
 		.from(questions)
@@ -81,4 +101,17 @@ export async function questionFetchHandler(id: string, db = getDb()) {
 		...question,
 		options: questionOptions,
 	});
+}
+
+function toOptionInsertValues(
+	questionId: string,
+	questionOptions: QuestionInsert["options"],
+) {
+	return questionOptions.map((option, orderIndex) => ({
+		id: option.id ?? crypto.randomUUID(),
+		questionId,
+		text: option.text,
+		isCorrect: option.isCorrect,
+		orderIndex,
+	}));
 }

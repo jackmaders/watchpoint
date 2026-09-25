@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { questions } from "@/shared/db/schema/questions";
-import { questionAuthoringSchema } from "..";
+import { questionInsertSchema } from "..";
 import {
 	questionCreateHandler,
 	questionUpdateHandler,
@@ -22,11 +22,10 @@ const validQuestion = {
 	],
 };
 
-// biome-ignore lint/security/noSecrets: This is a domain name, not a secret.
-describe("questionAuthoringSchema", () => {
+describe("questionInsertSchema", () => {
 	test("requires at least two Options", () => {
 		expect(() =>
-			questionAuthoringSchema.parse({
+			questionInsertSchema.parse({
 				...validQuestion,
 				options: [validQuestion.options[0]],
 			}),
@@ -35,7 +34,7 @@ describe("questionAuthoringSchema", () => {
 
 	test("requires exactly one correct Option", () => {
 		expect(() =>
-			questionAuthoringSchema.parse({
+			questionInsertSchema.parse({
 				...validQuestion,
 				options: validQuestion.options.map((option) => ({
 					...option,
