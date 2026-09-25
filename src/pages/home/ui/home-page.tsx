@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
-import { calculateLessonSummary } from "@/entities/lesson";
+import { calculateLessonSummary, type Lesson } from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { publishedVodListQueryOptions } from "@/entities/vod";
 import { PostCreateForm } from "@/features/post-create/index.async";
@@ -19,9 +19,14 @@ import { PostFeed } from "@/widgets/post-feed";
 import { VodCatalog } from "@/widgets/vod-catalog";
 import { VideoDemo } from "./video-demo";
 
-const lessonSummaryExample = calculateLessonSummary({
+const lessonSummaryExample: Lesson = {
+	id: "example-lesson",
+	userId: "example-user",
+	vodId: "example-vod",
+	status: "completed",
 	createdAt: new Date(0),
 	completedAt: new Date(45_000),
+	updatedAt: new Date(45_000),
 	questions: [
 		{
 			id: "example-question-1",
@@ -36,7 +41,8 @@ const lessonSummaryExample = calculateLessonSummary({
 			answer: { isCorrect: false },
 		},
 	],
-});
+};
+const lessonSummaryPreview = calculateLessonSummary(lessonSummaryExample);
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -85,7 +91,7 @@ export function HomePage() {
 							<Metric label="Storage" value="D1" />
 							<Metric
 								label="Sample Score"
-								value={`${lessonSummaryExample.score.percentage}%`}
+								value={`${lessonSummaryPreview.score.percentage}%`}
 							/>
 						</div>
 					</div>

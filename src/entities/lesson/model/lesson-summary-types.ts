@@ -1,20 +1,24 @@
-export interface LessonSummaryQuestion {
-	readonly answer: {
-		readonly isCorrect: boolean;
-	} | null;
-	readonly id: string;
-	readonly skill: {
-		readonly id: string;
-		readonly name: string;
-	};
-	readonly timestampSeconds: number;
-}
+import type {
+	LessonAnswer,
+	Lesson as PersistedLesson,
+	Question,
+	Skill,
+} from "@/shared/db";
 
-export interface LessonSummaryInput {
-	readonly completedAt: Date;
-	readonly createdAt: Date;
+export type LessonSummaryQuestion = Readonly<
+	Pick<Question, "id" | "timestampSeconds">
+> & {
+	readonly answer: Readonly<Pick<LessonAnswer, "isCorrect">> | null;
+	readonly skill: Readonly<Pick<Skill, "id" | "name">>;
+};
+
+export type Lesson = Readonly<
+	Omit<PersistedLesson, "completedAt" | "status">
+> & {
+	readonly completedAt: NonNullable<PersistedLesson["completedAt"]>;
 	readonly questions: readonly LessonSummaryQuestion[];
-}
+	readonly status: Extract<PersistedLesson["status"], "completed">;
+};
 
 export interface Score {
 	readonly answeredQuestionCount: number;

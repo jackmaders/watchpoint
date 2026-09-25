@@ -1,6 +1,7 @@
+import { compareStringsByCodeUnit } from "@/shared/lib/compare-strings-by-code-unit";
 import type {
+	Lesson,
 	LessonSummary,
-	LessonSummaryInput,
 	LessonSummaryQuestion,
 	Score,
 	SkillSummary,
@@ -8,10 +9,7 @@ import type {
 
 type ScoreCounts = Omit<Score, "percentage">;
 
-interface EarliestQuestion {
-	questionId: string;
-	timestampSeconds: number;
-}
+type EarliestQuestion = Pick<LessonSummaryQuestion, "id" | "timestampSeconds">;
 
 interface SkillAggregation {
 	earliestQuestion: EarliestQuestion;
@@ -20,12 +18,9 @@ interface SkillAggregation {
 	skillName: string;
 }
 
-/** Calculates a completed Lesson summary from valid UTC instants and its complete Question set. */
-export function calculateLessonSummary({
-	createdAt,
-	completedAt,
-	questions,
-}: LessonSummaryInput): LessonSummary {
+/** Calculates a summary from a completed Lesson and its Questions. */
+export function calculateLessonSummary(lesson: Lesson): LessonSummary {
+	const { createdAt, completedAt, questions } = lesson;
 	let scoreCounts = createScoreCounts();
 	const skillAggregations = new Map<string, SkillAggregation>();
 
@@ -38,7 +33,7 @@ export function calculateLessonSummary({
 				skillId: question.skill.id,
 				skillName: question.skill.name,
 				earliestQuestion: {
-					questionId: question.id,
+					id: question.id,
 					timestampSeconds: question.timestampSeconds,
 				},
 				scoreCounts: createScoreCounts(),
@@ -47,7 +42,7 @@ export function calculateLessonSummary({
 		} else if (isEarlierQuestion(question, aggregation.earliestQuestion)) {
 			aggregation.skillName = question.skill.name;
 			aggregation.earliestQuestion = {
-				questionId: question.id,
+				id: question.id,
 				timestampSeconds: question.timestampSeconds,
 			};
 		}
@@ -127,22 +122,14 @@ function isEarlierQuestion(
 		return question.timestampSeconds < earliestQuestion.timestampSeconds;
 	}
 
-	return compareStrings(question.id, earliestQuestion.questionId) < 0;
+	return compareStringsByCodeUnit(question.id, earliestQuestion.id) < 0;
 }
 
 function compareSkillSummaries(left: SkillSummary, right: SkillSummary) {
-	const nameOrder = compareStrings(
+	const nameOrder = compareStringsByCodeUnit(
 		left.skillName.toLowerCase(),
 		right.skillName.toLowerCase(),
 	);
 
-	return nameOrder || compareStrings(left.skillId, right.skillId);
-}
-
-function compareStrings(left: string, right: string) {
-	if (left < right) {
-		return -1;
-	}
-
-	return left > right ? 1 : 0;
+	return nameOrder || compareStringsByCodeUnit(left.skillId, right.skillId);
 }

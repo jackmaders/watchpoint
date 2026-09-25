@@ -4,6 +4,10 @@ import { calculateLessonSummary } from "../../index";
 type LessonSummaryQuestion = Parameters<
 	typeof calculateLessonSummary
 >[0]["questions"][number];
+type Lesson = Parameters<typeof calculateLessonSummary>[0];
+type LessonOverrides = Partial<
+	Pick<Lesson, "completedAt" | "createdAt" | "questions">
+>;
 
 describe("calculateLessonSummary", () => {
 	test("scores a correctly answered Question as 100 percent", () => {
@@ -113,31 +117,34 @@ describe("calculateLessonSummary", () => {
 	});
 
 	test("rounds Lesson Duration halves upward to the nearest second", () => {
-		const summary = calculateLessonSummary({
-			createdAt: new Date(0),
-			completedAt: new Date(1_500),
-			questions: [],
-		});
+		const summary = calculateLessonSummary(
+			createLesson({
+				createdAt: new Date(0),
+				completedAt: new Date(1_500),
+			}),
+		);
 
 		expect(summary.lessonDurationSeconds).toBe(2);
 	});
 
 	test("clamps reversed Lesson timestamps to zero duration", () => {
-		const summary = calculateLessonSummary({
-			createdAt: new Date(3_000),
-			completedAt: new Date(2_000),
-			questions: [],
-		});
+		const summary = calculateLessonSummary(
+			createLesson({
+				createdAt: new Date(3_000),
+				completedAt: new Date(2_000),
+			}),
+		);
 
 		expect(summary.lessonDurationSeconds).toBe(0);
 	});
 
 	test("preserves duration and returns empty Scores when there are no Questions", () => {
-		const summary = calculateLessonSummary({
-			createdAt: new Date(0),
-			completedAt: new Date(12_000),
-			questions: [],
-		});
+		const summary = calculateLessonSummary(
+			createLesson({
+				createdAt: new Date(0),
+				completedAt: new Date(12_000),
+			}),
+		);
 
 		expect(summary).toEqual({
 			lessonDurationSeconds: 12,
@@ -223,11 +230,24 @@ describe("calculateLessonSummary", () => {
 });
 
 function summarize(questions: readonly LessonSummaryQuestion[]) {
-	return calculateLessonSummary({
-		createdAt: new Date(0),
-		completedAt: new Date(0),
+	return calculateLessonSummary(createLesson({ questions }));
+}
+
+function createLesson({
+	createdAt = new Date(0),
+	completedAt = new Date(0),
+	questions = [],
+}: LessonOverrides = {}): Lesson {
+	return {
+		id: "lesson-1",
+		userId: "user-1",
+		vodId: "vod-1",
+		status: "completed",
+		createdAt,
+		completedAt,
+		updatedAt: completedAt,
 		questions,
-	});
+	};
 }
 
 function question({
