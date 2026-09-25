@@ -16,6 +16,7 @@ import {
 import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 import { VodCatalog } from "@/widgets/vod-catalog";
+import { LessonPreview } from "./lesson-preview";
 import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
@@ -73,6 +74,10 @@ export function HomePage() {
 
 				<section className="mt-16">
 					<VideoDemo />
+				</section>
+
+				<section className="mt-16">
+					<LessonPreview />
 				</section>
 
 				<section className="mt-16 grid gap-6 lg:grid-cols-5">
