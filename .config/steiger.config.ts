@@ -4,10 +4,10 @@ import { defineConfig } from "steiger";
 export default defineConfig([
 	...fsd.configs.recommended,
 	{
-		ignores: ["../**/__mocks__/**"],
+		ignores: ["../**/__mocks__/**", "../**/__tests__/**"],
 	},
 	{
-		files: ["../src/features/**", "../src/widgets/**", "../src/entities/**"],
+		files: ["../src/entities/**", "../src/features/**", "../src/widgets/**"],
 		rules: { "fsd/insignificant-slice": "off" },
 	},
 	{
