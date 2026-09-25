@@ -1,32 +1,10 @@
-export interface LessonSummaryQuestion {
-	isCorrect: boolean | null;
-	skillId: string;
-}
-
-export interface CalculateLessonSummaryInput {
-	completedAt: Date;
-	createdAt: Date;
-	questions: readonly LessonSummaryQuestion[];
-}
-
-export interface SkillSummary {
-	answeredQuestions: number;
-	correctAnswers: number;
-	percentage: number;
-	skillId: string;
-	totalQuestions: number;
-	unansweredQuestions: number;
-}
-
-export interface LessonSummary {
-	answeredQuestions: number;
-	completionTimeMs: number;
-	correctAnswers: number;
-	scorePercentage: number;
-	skills: SkillSummary[];
-	totalQuestions: number;
-	unansweredQuestions: number;
-}
+import { percentage } from "@/shared/lib/percentage";
+import type {
+	CalculateLessonSummaryInput,
+	LessonSummary,
+	LessonSummaryQuestion,
+	SkillSummary,
+} from "./lesson-summary-types";
 
 /**
  * Calculates review metrics from persisted Lesson instants and Questions.
@@ -90,12 +68,4 @@ function aggregateSkills(
 	}
 
 	return [...summaries.values()];
-}
-
-function percentage(numerator: number, denominator: number): number {
-	if (denominator === 0) {
-		return 0;
-	}
-
-	return Math.round((numerator / denominator) * 10000) / 100;
 }

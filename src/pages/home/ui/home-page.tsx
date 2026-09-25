@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
 	type CalculateLessonSummaryInput,
 	calculateLessonSummary,
+	formatSkillSummary,
 	type LessonSummary,
 	type LessonSummaryQuestion,
 	type SkillSummary,
@@ -41,6 +42,7 @@ function getStubLessonSummary(): LessonSummary {
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
 	const lessonSummary = getStubLessonSummary();
+	const skills: SkillSummary[] = lessonSummary.skills;
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -86,7 +88,7 @@ export function HomePage() {
 							/>
 							<Metric
 								label="Skills reviewed"
-								value={lessonSummary.skills.map(formatSkillSummary).join(", ")}
+								value={skills.map(formatSkillSummary).join(", ")}
 							/>
 						</div>
 					</div>
@@ -162,10 +164,6 @@ export function HomePage() {
 			</main>
 		</div>
 	);
-}
-
-function formatSkillSummary({ skillId, percentage }: SkillSummary): string {
-	return `${skillId}: ${percentage}%`;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
