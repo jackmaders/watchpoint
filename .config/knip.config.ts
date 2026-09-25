@@ -14,6 +14,7 @@ const config: KnipConfig = {
 		// Server functions can be called before their UI consumers land
 		"src/features/lesson-start/index.ts!",
 		"src/features/lesson-answer/index.ts!",
+		"src/features/lesson-complete/index.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
 		// TanStack Router file-based route definitions and generated route tree

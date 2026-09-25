@@ -54,6 +54,17 @@ export const lessonAnswerResultSchema = z.object({
 	alreadySubmitted: z.boolean(),
 });
 
+export const lessonCompletionSchema = z.object({
+	lessonId: lessonSelectSchema.shape.id,
+});
+
+export const lessonCompletionSummarySchema = z.object({
+	lessonId: lessonSelectSchema.shape.id,
+	score: z.number().int().nonnegative(),
+	totalQuestions: z.number().int().nonnegative(),
+	completedAt: z.date(),
+});
+
 export const startLessonSchema = z.object({
 	vodId: lessonSelectSchema.shape.vodId,
 	selectedSkillIds: z

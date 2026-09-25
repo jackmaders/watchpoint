@@ -36,6 +36,21 @@ export async function requireSkills(db: LessonDatabase, skillIds: string[]) {
 	}
 }
 
+export async function findLessonQuestions(
+	db: LessonDatabase,
+	{ vodId, selectedSkillIds }: { vodId: string; selectedSkillIds: string[] },
+) {
+	return db
+		.select({ id: questions.id, skillId: questions.skillId })
+		.from(questions)
+		.where(
+			and(
+				eq(questions.vodId, vodId),
+				inArray(questions.skillId, selectedSkillIds),
+			),
+		);
+}
+
 export async function requireOwnedLesson(
 	db: LessonDatabase,
 	{ lessonId, userId }: { lessonId: string; userId: string },
