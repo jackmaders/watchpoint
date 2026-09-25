@@ -1,6 +1,5 @@
 import { asc, eq } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
-import type { z } from "zod";
 import { getDb } from "@/shared/db/index.server";
 import { options } from "@/shared/db/schema/options";
 import { questions } from "@/shared/db/schema/questions";
@@ -20,66 +19,8 @@ export async function questionCreateHandler(
 ) {
 	const input = questionAuthoringSchema.parse(data);
 	const questionId = crypto.randomUUID();
-	await db.batch(buildQuestionCreateBatch({ input, questionId, db }));
-	return questionFetchHandler(questionId, db);
-}
-
-export async function questionUpdateHandler(
-	data: QuestionUpdate,
-	db = getDb(),
-) {
-	const input = questionUpdateSchema.parse(data);
-	await db.batch(buildQuestionUpdateBatch({ input, db }));
-	return questionFetchHandler(input.id, db);
-}
-
-function buildQuestionCreateBatch({
-	input,
-	questionId,
-	db,
-}: {
-	input: z.infer<typeof questionAuthoringSchema>;
-	questionId: string;
-	db: ReturnType<typeof getDb>;
-}): [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] {
 	const { options: questionOptions, ...questionValues } = input;
-	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
-		db.insert(questions).values({ id: questionId, ...questionValues }),
-		...buildOptionInsertStatements({ questionId, questionOptions, db }),
-	];
-	return statements;
-}
-
-function buildQuestionUpdateBatch({
-	input,
-	db,
-}: {
-	input: z.infer<typeof questionUpdateSchema>;
-	db: ReturnType<typeof getDb>;
-}): [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] {
-	const { id, options: questionOptions, ...questionValues } = input;
-	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
-		db.update(questions).set(questionValues).where(eq(questions.id, id)),
-		db.delete(options).where(eq(options.questionId, id)),
-		...buildOptionInsertStatements({
-			questionId: id,
-			questionOptions,
-			db,
-		}),
-	];
-	return statements;
-}
-
-function buildOptionInsertStatements({
-	questionId,
-	questionOptions,
-	db,
-}: {
-	questionId: string;
-	questionOptions: QuestionAuthoring["options"];
-	db: ReturnType<typeof getDb>;
-}) {
-	return questionOptions.map((option, orderIndex) =>
+	const optionStatements = questionOptions.map((option, orderIndex) =>
 		db.insert(options).values({
 			id: option.id ?? crypto.randomUUID(),
 			questionId,
@@ -88,6 +29,38 @@ function buildOptionInsertStatements({
 			orderIndex,
 		}),
 	);
+	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
+		db.insert(questions).values({ id: questionId, ...questionValues }),
+		...optionStatements,
+	];
+
+	await db.batch(statements);
+	return questionFetchHandler(questionId, db);
+}
+
+export async function questionUpdateHandler(
+	data: QuestionUpdate,
+	db = getDb(),
+) {
+	const input = questionUpdateSchema.parse(data);
+	const { id, options: questionOptions, ...questionValues } = input;
+	const optionStatements = questionOptions.map((option, orderIndex) =>
+		db.insert(options).values({
+			id: option.id ?? crypto.randomUUID(),
+			questionId: id,
+			text: option.text,
+			isCorrect: option.isCorrect,
+			orderIndex,
+		}),
+	);
+	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
+		db.update(questions).set(questionValues).where(eq(questions.id, id)),
+		db.delete(options).where(eq(options.questionId, id)),
+		...optionStatements,
+	];
+
+	await db.batch(statements);
+	return questionFetchHandler(input.id, db);
 }
 
 export async function questionFetchHandler(id: string, db = getDb()) {
