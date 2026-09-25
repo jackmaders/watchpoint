@@ -18,7 +18,7 @@ const config: KnipConfig = {
 		"src/app/routeTree.gen.ts!",
 		// Config and test files
 		".config/steiger.config.ts",
-		"src/**/*.{spec,test}.{ts,tsx}!",
+		"src/**/__tests__/**/*.{ts,tsx}",
 		"e2e/**/*.{ts,tsx}",
 	],
 	project: [

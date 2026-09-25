@@ -8,8 +8,6 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { user } from "./auth";
-import { options } from "./options";
-import { questions } from "./questions";
 import { skills } from "./skills";
 import { vods } from "./vods";
 
@@ -20,6 +18,11 @@ export interface QuestionSnapshotOption {
 	text: string;
 }
 
+/**
+ * Detached catalog data persisted as JSON text on `lesson_answers`.
+ * Drizzle serializes and parses the value; runtime validation is handled by
+ * the lesson entity at Answer boundaries.
+ */
 export interface QuestionSnapshot {
 	explanation: string | null;
 	options: QuestionSnapshotOption[];
@@ -87,15 +90,16 @@ export const lessonAnswers = sqliteTable(
 		lessonId: text("lesson_id")
 			.notNull()
 			.references(() => lessons.id, { onDelete: "cascade" }),
-		questionId: text("question_id")
-			.notNull()
-			.references(() => questions.id, { onDelete: "cascade" }),
-		selectedOptionId: text("selected_option_id")
-			.notNull()
-			.references(() => options.id, { onDelete: "restrict" }),
+		// Catalog ids are historical identifiers, not FKs: deleting live catalog
+		// rows must not cascade-delete an Answer and its detached snapshot.
+		questionId: text("question_id").notNull(),
+		selectedOptionId: text("selected_option_id").notNull(),
 		isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
 		timeSpentSeconds: integer("time_spent_seconds"),
-		/** Drizzle parses/stringifies this detached Question JSON; `$type` adds no runtime validation. */
+		/**
+		 * Stored as JSON text. Drizzle parses/stringifies it; `$type` is compile-time
+		 * only, so SQLite enforces NOT NULL but does not validate its shape.
+		 */
 		questionSnapshot: text("question_snapshot", { mode: "json" })
 			.$type<QuestionSnapshot>()
 			.notNull(),
