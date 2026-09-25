@@ -10,9 +10,24 @@ Watchpoint is an interactive coaching and learning platform where admins author 
 A recorded gameplay or instructional video asset backed by YouTube that serves as the basis for user lessons.
 _Avoid_: Match, Recording, Tape
 
+**Published VOD**:
+A VOD made available for Users to discover and use in Lessons. Published VODs appear in the VOD Catalog.
+_Avoid_: Public VOD, Listed VOD
+
+**VOD Catalog**:
+The user-facing collection where Users discover Published VODs and see each VOD's duration, Question count, and Skills represented by its Questions.
+_Avoid_: Learning library, Video library, Playlist
+
 **Lesson**:
 A user's active learning run through a VOD where they are presented with interactive questions at specific timestamps.
 _Avoid_: Playthrough, Session, Run, Drill, Review, Assignment
+
+**Lesson Summary**:
+A recap of a completed Lesson that reports its duration, overall Score, and Question outcomes, with performance grouped by Skill.
+
+**Lesson Duration**:
+The elapsed time between the creation and completion of a Lesson.
+_Avoid_: Completion time (ambiguous with the time at which a Lesson completes)
 
 **Question**:
 An interactive challenge anchored to a specific timestamp in a VOD that prompts the user to make a tactical decision.
@@ -30,14 +45,24 @@ _Avoid_: Attempt, Submission, Response
 A tactical competency category that categorizes Questions (e.g. Strategy, Tactics, Tracking, Spatial).
 _Avoid_: Training module, Category, Discipline, Tag
 
+**Skill Summary**:
+A Lesson Summary's breakdown of the Questions assigned to one Skill, including their totals and Score.
+
+**Score**:
+The percentage of Questions answered correctly within a Lesson or Skill Summary. All Questions in that scope count toward the denominator, and unanswered Questions earn no credit.
+
 ### Roles
+
+**Role**:
+A classification assigned to a User that determines which protected routes and operations they may access. Current roles are `user` and `admin`.
+_Avoid_: Permission, Access level
 
 **User**:
 A person who watches VODs, takes Lessons, and reviews their historical performance.
 _Avoid_: Student, Learner, Player, Consumer
 
 **Admin**:
-An administrator who manages VODs, authors Questions and Options, and configures user roles.
+An administrator role for a User who manages VODs, authors Questions and Options, and configures user roles. Admin authorization is enforced at server seams; the role is not accepted as signup input.
 _Avoid_: Instructor, Coach, Manager, Creator
 
 ### Components & UI Taxonomy
@@ -51,6 +76,10 @@ A component that orchestrates domain state, user interactions, or mutations and 
 _Avoid_: Container component, smart component, controller component, screen controller
 
 ### Architecture
+
+**Authorisation**:
+The decision that a User may access a protected route or perform an operation, based on their Role.
+_Avoid_: Authentication, Access control
 
 **Seam**:
 The public boundary or interface where callers and tests observe behavior without reaching inside internal implementation details.

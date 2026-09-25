@@ -32,6 +32,7 @@ export const SAMPLE_VOD = {
 	id: "vod-sample-coaching-demo",
 	title: "Overwatch 2 - Positioning & Target Priority Guide",
 	youtubeId: "dQw4w9WgXcQ",
+	durationSeconds: 212,
 	isDemo: true,
 	isPublished: true,
 } as const;
@@ -101,6 +102,7 @@ export async function seed(db: SeedableDatabase) {
 			id: SAMPLE_VOD.id,
 			title: SAMPLE_VOD.title,
 			youtubeId: SAMPLE_VOD.youtubeId,
+			durationSeconds: SAMPLE_VOD.durationSeconds,
 			isDemo: SAMPLE_VOD.isDemo,
 			isPublished: SAMPLE_VOD.isPublished,
 			createdAt: now,
@@ -111,6 +113,7 @@ export async function seed(db: SeedableDatabase) {
 			set: {
 				title: SAMPLE_VOD.title,
 				youtubeId: SAMPLE_VOD.youtubeId,
+				durationSeconds: SAMPLE_VOD.durationSeconds,
 				isDemo: SAMPLE_VOD.isDemo,
 				isPublished: SAMPLE_VOD.isPublished,
 				updatedAt: now,

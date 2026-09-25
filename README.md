@@ -278,6 +278,18 @@ For production, set `BETTER_AUTH_SECRET` with `wrangler secret put` and set
 the deployed origin in `.config/wrangler.json` as `BETTER_AUTH_URL`. Keep the
 cookie plugin last in the Better Auth plugin list so TanStack Start can attach
 auth cookies to responses.
+Users have a persisted `role` of `user` or `admin`. New accounts always receive the
+`user` role; the role is not accepted as signup input. To designate the initial Admin,
+first create the account, then run an operator-only D1 update with the exact email:
+
+```bash
+wrangler d1 execute DB --remote --command \
+  "UPDATE user SET role = 'admin' WHERE email = 'admin@example.com';"
+```
+
+Replace the email before running the command. Keep this operation restricted to trusted
+operators and verify the target user exists. Admin routes and Admin server functions
+both enforce the role independently of the client UI.
 Post reads are public for the home page, while post creation is protected at
 the server boundary with `ensureSession`. Route redirects are a second layer
 for navigation UX, not a replacement for server-side authorization.
