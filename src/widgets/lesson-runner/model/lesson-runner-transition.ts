@@ -1,4 +1,3 @@
-import { assertNever } from "../lib/assert-never";
 import { getNextUnansweredQuestion } from "./lesson-runner-context";
 import type {
 	LessonRunnerAnswer,
@@ -21,7 +20,9 @@ export function transitionLessonRunner(
 		case "complete":
 			return transitionComplete(context);
 		default:
-			return assertNever(transition);
+			throw new Error(
+				`Unknown Lesson Runner transition: ${String(transition)}`,
+			);
 	}
 }
 

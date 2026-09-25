@@ -8,7 +8,7 @@ import type {
 export function createLessonRunnerContext({
 	questions,
 	answers = [],
-}: CreateLessonRunnerContextOptions): LessonRunnerContext {
+}: CreateLessonRunnerContextOptions) {
 	const orderedQuestions = [...questions].sort(compareQuestions);
 	const knownQuestionIds = new Set(
 		orderedQuestions.map((question) => question.id),
@@ -26,7 +26,7 @@ export function createLessonRunnerContext({
 		answers: uniqueAnswers,
 		activeQuestionId: null,
 		status: "in_progress",
-	};
+	} satisfies LessonRunnerContext;
 }
 
 /** Returns the first Question without an Answer, or null when the Lesson is complete. */

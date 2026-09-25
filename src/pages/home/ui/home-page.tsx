@@ -13,11 +13,25 @@ import {
 	CardTitle,
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
+import type {
+	CreateLessonRunnerContextOptions,
+	LessonRunnerAnswer,
+	LessonRunnerContext,
+	LessonRunnerQuestion,
+	LessonRunnerStatus,
+	LessonRunnerTransition,
+} from "@/widgets/lesson-runner";
+import {
+	createLessonRunnerContext,
+	getNextUnansweredQuestion,
+	transitionLessonRunner,
+} from "@/widgets/lesson-runner";
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+	const lessonRunnerPreview = createLessonRunnerPreview();
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -68,6 +82,24 @@ export function HomePage() {
 
 				<section className="mt-16">
 					<VideoDemo />
+				</section>
+
+				<section className="mt-8">
+					<Card>
+						<CardHeader>
+							<CardDescription className="font-mono text-xs uppercase tracking-label">
+								Runner contract
+							</CardDescription>
+							<CardTitle className="mt-2">Lesson Runner preview</CardTitle>
+							<CardDescription>
+								A small stub exercising the public context and transition API.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="text-muted-foreground text-sm">
+							Status: {lessonRunnerPreview.status}. Next unanswered Question:{" "}
+							{lessonRunnerPreview.nextQuestion?.id ?? "none"}
+						</CardContent>
+					</Card>
 				</section>
 
 				<section className="mt-16 grid gap-6 lg:grid-cols-5">
@@ -133,6 +165,23 @@ export function HomePage() {
 			</main>
 		</div>
 	);
+}
+
+function createLessonRunnerPreview() {
+	const questions: LessonRunnerQuestion[] = [
+		{ id: "home-preview-question", timestampSeconds: 42 },
+	];
+	const answers: LessonRunnerAnswer[] = [];
+	const options: CreateLessonRunnerContextOptions = { answers, questions };
+	const context: LessonRunnerContext = createLessonRunnerContext(options);
+	const resumeTransition: LessonRunnerTransition = { type: "resume" };
+	const resumedContext = transitionLessonRunner(context, resumeTransition);
+	const status: LessonRunnerStatus = resumedContext.status;
+
+	return {
+		nextQuestion: getNextUnansweredQuestion(resumedContext),
+		status,
+	};
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
