@@ -19,7 +19,7 @@ export function VodCatalog({ vods }: { vods: VodCatalogData }) {
 			<div className="flex items-end justify-between gap-4">
 				<div>
 					<p className="font-mono text-primary text-xs uppercase tracking-eyebrow">
-						Learning library
+						VOD Catalog
 					</p>
 					<h2 className="mt-2 font-heading text-3xl" id={titleId}>
 						Published VODs

@@ -46,11 +46,28 @@ describe("publishedVodListHandler", () => {
 			{
 				id: "published",
 				title: "Published VOD",
+				youtubeId: "video-id",
 				durationSeconds: 212,
+				isDemo: false,
+				isPublished: true,
+				createdAt: new Date(1),
+				updatedAt: new Date(1),
 				questionCount: 3,
 				skills: [
-					{ id: "strategy", name: "Strategy", slug: "strategy" },
-					{ id: "tactics", name: "Tactics", slug: "tactics" },
+					{
+						id: "strategy",
+						name: "Strategy",
+						slug: "strategy",
+						createdAt: new Date(1),
+						updatedAt: new Date(1),
+					},
+					{
+						id: "tactics",
+						name: "Tactics",
+						slug: "tactics",
+						createdAt: new Date(1),
+						updatedAt: new Date(1),
+					},
 				],
 			},
 		]);
@@ -77,7 +94,9 @@ function createDatabase() {
 		CREATE TABLE skills (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
-			slug TEXT NOT NULL
+			slug TEXT NOT NULL,
+			created_at INTEGER NOT NULL DEFAULT 1,
+			updated_at INTEGER NOT NULL DEFAULT 1
 		)
 	`);
 	db.run(sql`

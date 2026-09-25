@@ -18,11 +18,28 @@ describe("VodCatalog", () => {
 					{
 						id: "vod-positioning",
 						title: "Positioning fundamentals",
+						youtubeId: "positioning-video",
 						durationSeconds: 212,
+						isDemo: false,
+						isPublished: true,
+						createdAt: new Date(0),
+						updatedAt: new Date(0),
 						questionCount: 3,
 						skills: [
-							{ id: "skill-strategy", name: "Strategy", slug: "strategy" },
-							{ id: "skill-tactics", name: "Tactics", slug: "tactics" },
+							{
+								id: "skill-strategy",
+								name: "Strategy",
+								slug: "strategy",
+								createdAt: new Date(0),
+								updatedAt: new Date(0),
+							},
+							{
+								id: "skill-tactics",
+								name: "Tactics",
+								slug: "tactics",
+								createdAt: new Date(0),
+								updatedAt: new Date(0),
+							},
 						],
 					},
 				]}
