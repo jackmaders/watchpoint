@@ -20,13 +20,8 @@ export async function questionCreateHandler(
 ) {
 	const input = questionAuthoringSchema.parse(data);
 	const questionId = crypto.randomUUID();
-	const statements = buildQuestionPersistenceBatch(
-		{ ...input, id: questionId },
-		db,
-	);
-
-	await db.batch(statements);
-	return readQuestion(questionId, db);
+	await db.batch(buildQuestionCreateBatch({ input, questionId, db }));
+	return questionFetchHandler(questionId, db);
 }
 
 export async function questionUpdateHandler(
@@ -34,49 +29,68 @@ export async function questionUpdateHandler(
 	db = getDb(),
 ) {
 	const input = questionUpdateSchema.parse(data);
-	const statements = buildQuestionPersistenceBatch(input, db, true);
-
-	await db.batch(statements);
-	return readQuestion(input.id, db);
+	await db.batch(buildQuestionUpdateBatch({ input, db }));
+	return questionFetchHandler(input.id, db);
 }
 
-function buildQuestionPersistenceBatch(
-	input: z.infer<typeof questionUpdateSchema>,
-	db: ReturnType<typeof getDb>,
-	includeOptionDelete = false,
-) {
-	const questionValues = {
-		vodId: input.vodId,
-		skillId: input.skillId,
-		timestampSeconds: input.timestampSeconds,
-		prompt: input.prompt,
-		explanation: input.explanation,
-	};
-	const questionStatement = includeOptionDelete
-		? db.update(questions).set(questionValues).where(eq(questions.id, input.id))
-		: db.insert(questions).values({ id: input.id, ...questionValues });
-	const optionDeleteStatement = db
-		.delete(options)
-		.where(eq(options.questionId, input.id));
-	const optionStatements = input.options.map((option, orderIndex) =>
+function buildQuestionCreateBatch({
+	input,
+	questionId,
+	db,
+}: {
+	input: z.infer<typeof questionAuthoringSchema>;
+	questionId: string;
+	db: ReturnType<typeof getDb>;
+}): [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] {
+	const { options: questionOptions, ...questionValues } = input;
+	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
+		db.insert(questions).values({ id: questionId, ...questionValues }),
+		...buildOptionInsertStatements({ questionId, questionOptions, db }),
+	];
+	return statements;
+}
+
+function buildQuestionUpdateBatch({
+	input,
+	db,
+}: {
+	input: z.infer<typeof questionUpdateSchema>;
+	db: ReturnType<typeof getDb>;
+}): [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] {
+	const { id, options: questionOptions, ...questionValues } = input;
+	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
+		db.update(questions).set(questionValues).where(eq(questions.id, id)),
+		db.delete(options).where(eq(options.questionId, id)),
+		...buildOptionInsertStatements({
+			questionId: id,
+			questionOptions,
+			db,
+		}),
+	];
+	return statements;
+}
+
+function buildOptionInsertStatements({
+	questionId,
+	questionOptions,
+	db,
+}: {
+	questionId: string;
+	questionOptions: QuestionAuthoring["options"];
+	db: ReturnType<typeof getDb>;
+}) {
+	return questionOptions.map((option, orderIndex) =>
 		db.insert(options).values({
 			id: option.id ?? crypto.randomUUID(),
-			questionId: input.id,
+			questionId,
 			text: option.text,
 			isCorrect: option.isCorrect,
 			orderIndex,
 		}),
 	);
-
-	const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
-		questionStatement,
-		...(includeOptionDelete ? [optionDeleteStatement] : []),
-		...optionStatements,
-	];
-	return statements;
 }
 
-async function readQuestion(id: string, db: ReturnType<typeof getDb>) {
+export async function questionFetchHandler(id: string, db = getDb()) {
 	const [question] = await db
 		.select()
 		.from(questions)
