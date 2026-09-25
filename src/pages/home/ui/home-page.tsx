@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
+import { calculateLessonSummary } from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { publishedVodListQueryOptions } from "@/entities/vod";
 import { PostCreateForm } from "@/features/post-create/index.async";
@@ -17,6 +18,25 @@ import { Separator } from "@/shared/ui/separator";
 import { PostFeed } from "@/widgets/post-feed";
 import { VodCatalog } from "@/widgets/vod-catalog";
 import { VideoDemo } from "./video-demo";
+
+const lessonSummaryExample = calculateLessonSummary({
+	createdAt: new Date(0),
+	completedAt: new Date(45_000),
+	questions: [
+		{
+			id: "example-question-1",
+			timestampSeconds: 15,
+			skill: { id: "example-skill", name: "Positioning" },
+			answer: { isCorrect: true },
+		},
+		{
+			id: "example-question-2",
+			timestampSeconds: 30,
+			skill: { id: "example-skill", name: "Positioning" },
+			answer: { isCorrect: false },
+		},
+	],
+});
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -63,7 +83,10 @@ export function HomePage() {
 						<div className="mt-10 grid max-w-xl grid-cols-2 gap-6 border-border/70 border-t pt-6 sm:grid-cols-3">
 							<Metric label="Posts tracked" value={posts.length.toString()} />
 							<Metric label="Storage" value="D1" />
-							<Metric label="Auth" value="Ready" />
+							<Metric
+								label="Sample Score"
+								value={`${lessonSummaryExample.score.percentage}%`}
+							/>
 						</div>
 					</div>
 					<div className="lg:col-span-2">
