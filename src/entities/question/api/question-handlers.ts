@@ -4,6 +4,10 @@ import type { z } from "zod";
 import { getDb } from "@/shared/db/index.server";
 import { options } from "@/shared/db/schema/options";
 import { questions } from "@/shared/db/schema/questions";
+import type {
+	QuestionAuthoring,
+	QuestionUpdate,
+} from "../model/question-types";
 import {
 	questionAuthoringSchema,
 	questionUpdateSchema,
@@ -11,8 +15,8 @@ import {
 } from "../model/question-validation";
 
 export async function questionCreateHandler(
-	data: z.input<typeof questionAuthoringSchema>,
-	db: ReturnType<typeof getDb> = getDb(),
+	data: QuestionAuthoring,
+	db = getDb(),
 ) {
 	const input = questionAuthoringSchema.parse(data);
 	const questionId = crypto.randomUUID();
@@ -26,8 +30,8 @@ export async function questionCreateHandler(
 }
 
 export async function questionUpdateHandler(
-	data: z.input<typeof questionUpdateSchema>,
-	db: ReturnType<typeof getDb> = getDb(),
+	data: QuestionUpdate,
+	db = getDb(),
 ) {
 	const input = questionUpdateSchema.parse(data);
 	const statements = buildQuestionPersistenceBatch(input, db, true);
