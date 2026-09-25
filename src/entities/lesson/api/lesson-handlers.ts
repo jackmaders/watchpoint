@@ -3,8 +3,10 @@ import "@tanstack/react-start/server-only";
 import { getDb } from "@/shared/db/index.server";
 import { submitLessonAnswerHandler } from "./lesson-answer-handler";
 import { completeLessonHandler } from "./lesson-completion-handler";
+import { importDemoLessonHandler } from "./lesson-demo-import-handler";
 import type {
 	CompleteLessonHandlerInput,
+	ImportDemoLessonHandlerInput,
 	LessonDatabase,
 	StartLessonHandlerInput,
 	SubmitLessonAnswerHandlerInput,
@@ -21,5 +23,7 @@ export function createLessonOperations(db?: LessonDatabase) {
 			submitLessonAnswerHandler(getOperationsDb(), input),
 		lessonCompleteOperation: (input: CompleteLessonHandlerInput) =>
 			completeLessonHandler(getOperationsDb(), input),
+		lessonDemoImportOperation: (input: ImportDemoLessonHandlerInput) =>
+			importDemoLessonHandler(getOperationsDb(), input),
 	};
 }

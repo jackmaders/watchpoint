@@ -15,6 +15,7 @@ const config: KnipConfig = {
 		"src/features/lesson-start/index.ts!",
 		"src/features/lesson-answer/index.ts!",
 		"src/features/lesson-complete/index.ts!",
+		"src/features/demo-convert/index.ts!",
 		// Local database seed executable
 		"src/shared/db/seed/index.ts",
 		// TanStack Router file-based route definitions and generated route tree

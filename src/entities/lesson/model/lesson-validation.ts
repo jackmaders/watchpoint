@@ -72,3 +72,7 @@ export const startLessonSchema = z.object({
 		.min(1)
 		.max(50),
 });
+
+export const importDemoLessonSchema = startLessonSchema.extend({
+	answers: z.array(lessonAnswerInputSchema),
+});

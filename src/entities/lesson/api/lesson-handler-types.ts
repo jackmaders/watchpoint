@@ -1,6 +1,7 @@
 import type { getDb } from "@/shared/db/index.server";
 import type {
 	CompleteLessonInput,
+	ImportDemoLessonInput,
 	LessonAnswerInput,
 	StartLessonInput,
 } from "../model/lesson-types";
@@ -13,5 +14,8 @@ export type SubmitLessonAnswerHandlerInput = LessonAnswerInput & {
 	userId: string;
 };
 export type CompleteLessonHandlerInput = CompleteLessonInput & {
+	userId: string;
+};
+export type ImportDemoLessonHandlerInput = ImportDemoLessonInput & {
 	userId: string;
 };
