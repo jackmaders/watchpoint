@@ -18,6 +18,14 @@ _Avoid_: Playthrough, Session, Run, Drill, Review, Assignment
 An interactive challenge anchored to a specific timestamp in a VOD that prompts the user to make a tactical decision.
 _Avoid_: Scenario, Prompt, Decision Point, Quiz item
 
+**Question Marker**:
+A timestamp marker on a VOD associated with a Question, identifying where playback pauses so that Question can be presented during a Lesson.
+_Avoid_: Cue
+
+**Active Question**:
+The unanswered Question currently presented to a User during a Lesson, awaiting an Answer.
+_Avoid_: Current prompt, active scenario
+
 **Option**:
 An individual selectable response choice belonging to a Question, with one designated as correct.
 _Avoid_: Choice, Alternative, Multiple-choice item

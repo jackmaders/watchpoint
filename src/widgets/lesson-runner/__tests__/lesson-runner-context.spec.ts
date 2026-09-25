@@ -42,50 +42,50 @@ describe("Lesson Runner context", () => {
 		expect(resumed.activeQuestionId).toBe("question-middle");
 	});
 
-	test("cue activates an unanswered Question", () => {
+	test("marker activates an unanswered Question", () => {
 		const context = createLessonRunnerContext({ questions });
 
-		const cued = transitionLessonRunner(context, {
-			type: "cue",
+		const marked = transitionLessonRunner(context, {
+			type: "marker",
 			questionId: "question-middle",
 		});
 
-		expect(cued.activeQuestionId).toBe("question-middle");
+		expect(marked.activeQuestionId).toBe("question-middle");
 	});
 
-	test("repeated cue for the active Question preserves context identity", () => {
+	test("repeated marker for the active Question preserves context identity", () => {
 		const context = transitionLessonRunner(
 			createLessonRunnerContext({ questions }),
-			{ type: "cue", questionId: "question-middle" },
+			{ type: "marker", questionId: "question-middle" },
 		);
 
-		const repeatedCue = transitionLessonRunner(context, {
-			type: "cue",
+		const repeatedMarker = transitionLessonRunner(context, {
+			type: "marker",
 			questionId: "question-middle",
 		});
 
-		expect(repeatedCue).toBe(context);
+		expect(repeatedMarker).toBe(context);
 	});
 
-	test("a duplicate cue cannot reopen an answered Question", () => {
+	test("a duplicate marker cannot reopen an answered Question", () => {
 		const context = createLessonRunnerContext({
 			questions,
 			answers: [{ questionId: "question-middle" }],
 		});
 
-		const cued = transitionLessonRunner(context, {
-			type: "cue",
+		const marked = transitionLessonRunner(context, {
+			type: "marker",
 			questionId: "question-middle",
 		});
 
-		expect(cued).toBe(context);
-		expect(cued.activeQuestionId).toBeNull();
+		expect(marked).toBe(context);
+		expect(marked.activeQuestionId).toBeNull();
 	});
 
 	test("answer clears the active Question and records the Answer once", () => {
 		const context = transitionLessonRunner(
 			createLessonRunnerContext({ questions }),
-			{ type: "cue", questionId: "question-early" },
+			{ type: "marker", questionId: "question-early" },
 		);
 
 		const answered = transitionLessonRunner(context, {

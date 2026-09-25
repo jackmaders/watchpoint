@@ -17,7 +17,7 @@ export interface LessonRunnerContext {
 }
 
 export type LessonRunnerTransition =
-	| { readonly type: "cue"; readonly questionId: string }
+	| { readonly type: "marker"; readonly questionId: string }
 	| { readonly type: "answer"; readonly answer: LessonRunnerAnswer }
 	| { readonly type: "resume" }
 	| { readonly type: "complete" };

@@ -11,8 +11,8 @@ export function transitionLessonRunner(
 	transition: LessonRunnerTransition,
 ): LessonRunnerContext {
 	switch (transition.type) {
-		case "cue":
-			return transitionCue(context, transition.questionId);
+		case "marker":
+			return transitionMarker(context, transition.questionId);
 		case "answer":
 			return transitionAnswer(context, transition.answer);
 		case "resume":
@@ -26,7 +26,7 @@ export function transitionLessonRunner(
 	}
 }
 
-function transitionCue(
+function transitionMarker(
 	context: LessonRunnerContext,
 	questionId: string,
 ): LessonRunnerContext {
