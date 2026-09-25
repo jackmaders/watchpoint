@@ -14,14 +14,12 @@ import {
 	CardTitle,
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
-import { DEFAULT_VOD_TIMESTAMP_SECONDS } from "@/shared/video";
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
 	const { timestamp } = useSearch({ from: "/" });
-	const initialTimestampSeconds = timestamp ?? DEFAULT_VOD_TIMESTAMP_SECONDS;
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -71,7 +69,7 @@ export function HomePage() {
 				</section>
 
 				<section className="mt-16">
-					<VideoDemo initialTimestampSeconds={initialTimestampSeconds} />
+					<VideoDemo initialTimestampSeconds={timestamp} />
 				</section>
 
 				<section className="mt-16 grid gap-6 lg:grid-cols-5">
