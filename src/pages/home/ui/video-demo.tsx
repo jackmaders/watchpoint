@@ -13,12 +13,6 @@ import type { VideoMarker } from "@/shared/video";
 
 const VideoPlayerDemo = lazy(() => import("./video-player-demo"));
 
-const DEMO_MARKERS: readonly VideoMarker[] = [
-	{ id: "opening-read", timestampSeconds: 5 },
-	{ id: "midpoint-check", timestampSeconds: 15 },
-	{ id: "closing-read", timestampSeconds: 25 },
-];
-
 type PlayerStatus =
 	| "Not loaded"
 	| "Loading"
@@ -27,9 +21,18 @@ type PlayerStatus =
 	| "Paused"
 	| "Ended";
 
-export function VideoDemo() {
+interface VideoDemoProps {
+	readonly activeQuestionId: string | null;
+	readonly markers: readonly VideoMarker[];
+	readonly onMarkerTrigger: (marker: VideoMarker) => void;
+}
+
+export function VideoDemo({
+	activeQuestionId,
+	markers,
+	onMarkerTrigger,
+}: VideoDemoProps) {
 	const [isPlayerActive, setIsPlayerActive] = useState(false);
-	const [activeMarker, setActiveMarker] = useState<VideoMarker | null>(null);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("Not loaded");
 
@@ -74,8 +77,8 @@ export function VideoDemo() {
 					{isPlayerActive ? (
 						<Suspense fallback={<VideoPlayerLoading />}>
 							<VideoPlayerDemo
-								markers={DEMO_MARKERS}
-								onMarkerTrigger={setActiveMarker}
+								markers={markers}
+								onMarkerTrigger={onMarkerTrigger}
 								onStatusChange={setPlayerStatus}
 								onTimeUpdate={setCurrentTime}
 							/>
@@ -101,7 +104,7 @@ export function VideoDemo() {
 						Marker map
 					</p>
 					<ul className="mt-4 space-y-3">
-						{DEMO_MARKERS.map((marker) => (
+						{markers.map((marker) => (
 							<li
 								className="flex items-center justify-between gap-4 text-sm"
 								key={marker.id}
@@ -109,7 +112,7 @@ export function VideoDemo() {
 								<span className="flex items-center gap-2">
 									<span
 										aria-hidden="true"
-										className={`size-1.5 rounded-full ${activeMarker?.id === marker.id ? "bg-primary" : "bg-border"}`}
+										className={`size-1.5 rounded-full ${activeQuestionId === marker.id ? "bg-primary" : "bg-border"}`}
 									/>
 									{marker.id.replaceAll("-", " ")}
 								</span>

@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 import { postListQueryOptions } from "@/entities/post";
 import { PostCreateForm } from "@/features/post-create/index.async";
 import { SessionPanel } from "@/features/session-manage/index.async";
@@ -13,6 +13,7 @@ import {
 	CardTitle,
 } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
+import type { VideoMarker } from "@/shared/video";
 import type {
 	CreateLessonRunnerContextOptions,
 	LessonRunnerAnswer,
@@ -29,9 +30,37 @@ import {
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
+const DEMO_QUESTIONS: readonly LessonRunnerQuestion[] = [
+	{ id: "opening-read", timestampSeconds: 5 },
+	{ id: "midpoint-check", timestampSeconds: 15 },
+	{ id: "closing-read", timestampSeconds: 25 },
+];
+
+const DEMO_ANSWERS: readonly LessonRunnerAnswer[] = [];
+
+const DEMO_LESSON_OPTIONS: CreateLessonRunnerContextOptions = {
+	answers: DEMO_ANSWERS,
+	questions: DEMO_QUESTIONS,
+};
+
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
-	const lessonRunnerPreview = createLessonRunnerPreview();
+	const [lessonRunnerContext, setLessonRunnerContext] =
+		useState<LessonRunnerContext>(() =>
+			createLessonRunnerContext(DEMO_LESSON_OPTIONS),
+		);
+	const nextUnansweredQuestion = getNextUnansweredQuestion(lessonRunnerContext);
+	const status: LessonRunnerStatus = lessonRunnerContext.status;
+	const handleMarkerTrigger = useCallback((marker: VideoMarker) => {
+		const transition: LessonRunnerTransition = {
+			type: "marker",
+			questionId: marker.id,
+		};
+
+		setLessonRunnerContext((context) =>
+			transitionLessonRunner(context, transition),
+		);
+	}, []);
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -81,7 +110,11 @@ export function HomePage() {
 				</section>
 
 				<section className="mt-16">
-					<VideoDemo />
+					<VideoDemo
+						activeQuestionId={lessonRunnerContext.activeQuestionId}
+						markers={lessonRunnerContext.questions}
+						onMarkerTrigger={handleMarkerTrigger}
+					/>
 				</section>
 
 				<section className="mt-8">
@@ -92,12 +125,14 @@ export function HomePage() {
 							</CardDescription>
 							<CardTitle className="mt-2">Lesson Runner preview</CardTitle>
 							<CardDescription>
-								A small stub exercising the public context and transition API.
+								Video markers and runner state share the same Questions and
+								context.
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="text-muted-foreground text-sm">
-							Status: {lessonRunnerPreview.status}. Next unanswered Question:{" "}
-							{lessonRunnerPreview.nextQuestion?.id ?? "none"}
+							Status: {status}. Active Question:{" "}
+							{lessonRunnerContext.activeQuestionId ?? "none"}. Next unanswered
+							Question: {nextUnansweredQuestion?.id ?? "none"}
 						</CardContent>
 					</Card>
 				</section>
@@ -165,23 +200,6 @@ export function HomePage() {
 			</main>
 		</div>
 	);
-}
-
-function createLessonRunnerPreview() {
-	const questions: LessonRunnerQuestion[] = [
-		{ id: "home-preview-question", timestampSeconds: 42 },
-	];
-	const answers: LessonRunnerAnswer[] = [];
-	const options: CreateLessonRunnerContextOptions = { answers, questions };
-	const context: LessonRunnerContext = createLessonRunnerContext(options);
-	const resumeTransition: LessonRunnerTransition = { type: "resume" };
-	const resumedContext = transitionLessonRunner(context, resumeTransition);
-	const status: LessonRunnerStatus = resumedContext.status;
-
-	return {
-		nextQuestion: getNextUnansweredQuestion(resumedContext),
-		status,
-	};
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
