@@ -19,8 +19,11 @@ An interactive challenge anchored to a specific timestamp in a VOD that prompts 
 _Avoid_: Scenario, Prompt, Decision Point, Quiz item
 
 **Option**:
-An individual selectable response choice belonging to a Question, with one designated as correct.
+An individual selectable response choice belonging to a Question, with one designated as correct. Options have an author-defined order within their Question.
 _Avoid_: Choice, Alternative, Multiple-choice item
+
+**Explanation**:
+Text attached to a Question that explains the tactical reasoning behind its correct Option.
 
 **Answer**:
 A user's submitted response to a Question, recording their selected Option, correctness, time elapsed, and an immutable snapshot of the Question.
