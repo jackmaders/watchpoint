@@ -95,6 +95,7 @@ export const lessonAnswers = sqliteTable(
 			.references(() => options.id, { onDelete: "restrict" }),
 		isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
 		timeSpentSeconds: integer("time_spent_seconds"),
+		/** Drizzle parses/stringifies this detached Question JSON; `$type` adds no runtime validation. */
 		questionSnapshot: text("question_snapshot", { mode: "json" })
 			.$type<QuestionSnapshot>()
 			.notNull(),
