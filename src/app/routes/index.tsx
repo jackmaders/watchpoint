@@ -13,10 +13,5 @@ export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(postListQueryOptions);
 	},
-	component: HomeRoute,
+	component: HomePage,
 });
-
-function HomeRoute() {
-	const { timestamp } = Route.useSearch();
-	return <HomePage initialTimestampSeconds={timestamp} />;
-}

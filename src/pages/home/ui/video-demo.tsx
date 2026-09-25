@@ -1,5 +1,6 @@
 import { Play, Radio } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
+import { formatTime } from "@/shared/lib/format-time";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
 	CardTitle,
 } from "@/shared/ui/card";
 import {
-	parseVodTimestamp,
 	type VideoMarker,
 	VOD_TIMESTAMP_PRECISION_SECONDS,
 } from "@/shared/video";
@@ -102,7 +102,10 @@ export function VideoDemo({
 				</div>
 				<dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5">
 					<Readout label="State" value={playerStatus} />
-					<Readout label="Time" value={formatTime(currentTime)} />
+					<Readout
+						label="Time"
+						value={formatTime(currentTime, VOD_TIMESTAMP_PRECISION_SECONDS)}
+					/>
 				</dl>
 
 				<div className="mt-8 border-border/70 border-t pt-5">
@@ -123,7 +126,10 @@ export function VideoDemo({
 									{marker.id.replaceAll("-", " ")}
 								</span>
 								<span className="font-mono text-muted-foreground text-xs">
-									{formatTime(marker.timestampSeconds)}
+									{formatTime(
+										marker.timestampSeconds,
+										VOD_TIMESTAMP_PRECISION_SECONDS,
+									)}
 								</span>
 							</li>
 						))}
@@ -165,22 +171,4 @@ function Readout({ label, value }: { label: string; value: string }) {
 			<dd className="mt-1 font-medium text-lg tracking-tight">{value}</dd>
 		</div>
 	);
-}
-
-function formatTime(seconds: number): string {
-	const roundedSeconds = parseVodTimestamp(seconds);
-	const wholeSeconds = Math.floor(roundedSeconds);
-	const minutes = Math.floor(wholeSeconds / 60);
-	const remainingSeconds = wholeSeconds % 60;
-	const fractionalSeconds = Math.round(
-		(roundedSeconds - wholeSeconds) / VOD_TIMESTAMP_PRECISION_SECONDS,
-	);
-	const precisionDigits = Math.round(
-		Math.log10(1 / VOD_TIMESTAMP_PRECISION_SECONDS),
-	);
-	const fraction =
-		fractionalSeconds === 0
-			? ""
-			: `.${fractionalSeconds.toString().padStart(precisionDigits, "0")}`;
-	return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}${fraction}`;
 }

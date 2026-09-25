@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { postListQueryOptions } from "@/entities/post";
@@ -17,12 +18,10 @@ import { DEFAULT_VOD_TIMESTAMP_SECONDS } from "@/shared/video";
 import { PostFeed } from "@/widgets/post-feed";
 import { VideoDemo } from "./video-demo";
 
-export function HomePage({
-	initialTimestampSeconds = DEFAULT_VOD_TIMESTAMP_SECONDS,
-}: {
-	readonly initialTimestampSeconds?: number;
-}) {
+export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
+	const { timestamp } = useSearch({ from: "/" });
+	const initialTimestampSeconds = timestamp ?? DEFAULT_VOD_TIMESTAMP_SECONDS;
 
 	return (
 		<div className="min-h-screen bg-background">

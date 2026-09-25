@@ -12,12 +12,14 @@ import {
 	MediaVolumeRange,
 } from "media-chrome/react";
 import { type CSSProperties, useCallback, useRef, useState } from "react";
+import { formatTime } from "@/shared/lib/format-time";
 import { Button } from "@/shared/ui/button";
 import {
 	parseVodTimestamp,
 	ReactPlayer,
 	useVideoMarkerSync,
 	type VideoMarker,
+	VOD_TIMESTAMP_PRECISION_SECONDS,
 } from "@/shared/video";
 
 // biome-ignore lint/security/noSecrets: Public YouTube demo video identifier.
@@ -154,16 +156,10 @@ export default function VideoPlayerDemo({
 					Preview first marker
 				</Button>
 				<span className="text-muted-foreground text-xs">
-					Current time {formatTime(currentTime)}
+					Current time{" "}
+					{formatTime(currentTime, VOD_TIMESTAMP_PRECISION_SECONDS)}
 				</span>
 			</div>
 		</>
 	);
-}
-
-function formatTime(seconds: number): string {
-	const wholeSeconds = Math.max(0, Math.floor(seconds));
-	const minutes = Math.floor(wholeSeconds / 60);
-	const remainingSeconds = wholeSeconds % 60;
-	return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
