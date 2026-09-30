@@ -22,6 +22,12 @@ _Avoid_: Learning library, Video library, Playlist
 A user's active learning run through a VOD where they are presented with interactive questions at specific timestamps.
 _Avoid_: Playthrough, Session, Run, Drill, Review, Assignment
 
+**Lesson Summary**:
+A summary of a completed Lesson's results, including its Lesson Duration, Score, and Skill Summaries.
+
+**Lesson Duration**:
+The time elapsed between the start and completion of a Lesson.
+
 **Question**:
 An interactive challenge anchored to a specific timestamp in a VOD that prompts the user to make a tactical decision.
 _Avoid_: Scenario, Prompt, Decision Point, Quiz item
@@ -37,6 +43,12 @@ _Avoid_: Attempt, Submission, Response
 **Skill**:
 A tactical competency category that categorizes Questions (e.g. Strategy, Tactics, Tracking, Spatial).
 _Avoid_: Training module, Category, Discipline, Tag
+
+**Score**:
+A measure of the Questions answered correctly relative to all Questions in a Lesson or Skill; an unanswered Question counts as not correct.
+
+**Skill Summary**:
+A summary of a Skill's Questions and performance within a Lesson.
 
 ### Roles
 
