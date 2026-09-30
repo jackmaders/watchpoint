@@ -4,7 +4,12 @@ import { defineConfig } from "steiger";
 export default defineConfig([
 	...fsd.configs.recommended,
 	{
-		ignores: ["../**/__mocks__/**"],
+		ignores: [
+			"../**/__mocks__/**",
+			"../**/__tests__/**",
+			"../**/*.spec.*",
+			"../**/*.test.*",
+		],
 	},
 	{
 		files: ["../src/features/**", "../src/widgets/**", "../src/entities/**"],
