@@ -1,13 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { compareStringsByCodeUnit } from "../compare-strings-by-code-unit";
+import { compareStrings } from "../compare-strings";
 
-// biome-ignore lint/security/noSecrets: This is a function name, not a credential.
-describe("compareStringsByCodeUnit", () => {
+describe("compareStrings", () => {
 	test("returns -1 when the left string precedes the right string", () => {
 		const left = "apple";
 		const right = "banana";
 
-		const result = compareStringsByCodeUnit(left, right);
+		const result = compareStrings(left, right);
 
 		expect(result).toBe(-1);
 	});
@@ -16,7 +15,7 @@ describe("compareStringsByCodeUnit", () => {
 		const left = "banana";
 		const right = "apple";
 
-		const result = compareStringsByCodeUnit(left, right);
+		const result = compareStrings(left, right);
 
 		expect(result).toBe(1);
 	});
@@ -25,7 +24,7 @@ describe("compareStringsByCodeUnit", () => {
 		const left = "watchpoint";
 		const right = "watchpoint";
 
-		const result = compareStringsByCodeUnit(left, right);
+		const result = compareStrings(left, right);
 
 		expect(result).toBe(0);
 	});
@@ -34,7 +33,7 @@ describe("compareStringsByCodeUnit", () => {
 		const left = "Alpha";
 		const right = "alpha";
 
-		const result = compareStringsByCodeUnit(left, right);
+		const result = compareStrings(left, right);
 
 		expect(result).toBe(-1);
 	});
@@ -43,7 +42,7 @@ describe("compareStringsByCodeUnit", () => {
 		const left = "test";
 		const right = "testing";
 
-		const result = compareStringsByCodeUnit(left, right);
+		const result = compareStrings(left, right);
 
 		expect(result).toBe(-1);
 	});

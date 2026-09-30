@@ -1,4 +1,4 @@
-import { compareStringsByCodeUnit } from "@/shared/lib/compare-strings-by-code-unit";
+import { compareStrings } from "@/shared/lib/compare-strings";
 import type {
 	Lesson,
 	LessonSummary,
@@ -132,14 +132,14 @@ function isEarlierQuestion(
 		return question.timestampSeconds < earliestQuestion.timestampSeconds;
 	}
 
-	return compareStringsByCodeUnit(question.id, earliestQuestion.id) < 0;
+	return compareStrings(question.id, earliestQuestion.id) < 0;
 }
 
 function compareSkillSummaries(left: SkillSummary, right: SkillSummary) {
-	const nameOrder = compareStringsByCodeUnit(
+	const nameOrder = compareStrings(
 		left.skillName.toLowerCase(),
 		right.skillName.toLowerCase(),
 	);
 
-	return nameOrder || compareStringsByCodeUnit(left.skillId, right.skillId);
+	return nameOrder || compareStrings(left.skillId, right.skillId);
 }
