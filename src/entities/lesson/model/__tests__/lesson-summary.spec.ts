@@ -138,6 +138,38 @@ describe("calculateLessonSummary", () => {
 		expect(summary.lessonDurationSeconds).toBe(0);
 	});
 
+	test("clamps reversed subsecond timestamps to zero without negative rounding", () => {
+		const summary = calculateLessonSummary(
+			createLesson({
+				createdAt: new Date(1_000),
+				completedAt: new Date(500),
+			}),
+		);
+
+		expect(summary.lessonDurationSeconds).toBe(0);
+		expect(Object.is(summary.lessonDurationSeconds, -0)).toBe(false);
+	});
+
+	test("throws a TypeError when given an invalid date", () => {
+		expect(() =>
+			calculateLessonSummary(
+				createLesson({
+					createdAt: new Date("invalid"),
+					completedAt: new Date(1_000),
+				}),
+			),
+		).toThrow(TypeError);
+
+		expect(() =>
+			calculateLessonSummary(
+				createLesson({
+					createdAt: new Date(0),
+					completedAt: new Date("invalid"),
+				}),
+			),
+		).toThrow(TypeError);
+	});
+
 	test("preserves duration and returns empty Scores when there are no Questions", () => {
 		const summary = calculateLessonSummary(
 			createLesson({

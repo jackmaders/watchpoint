@@ -21,6 +21,14 @@ interface SkillAggregation {
 /** Calculates a summary from a completed Lesson and its Questions. */
 export function calculateLessonSummary(lesson: Lesson): LessonSummary {
 	const { createdAt, completedAt, questions } = lesson;
+
+	if (
+		Number.isNaN(createdAt.getTime()) ||
+		Number.isNaN(completedAt.getTime())
+	) {
+		throw new TypeError("Lesson createdAt and completedAt must be valid dates");
+	}
+
 	let scoreCounts = createScoreCounts();
 	const skillAggregations = new Map<string, SkillAggregation>();
 
@@ -67,11 +75,13 @@ export function calculateLessonSummary(lesson: Lesson): LessonSummary {
 		)
 		.sort(compareSkillSummaries);
 
+	const elapsedSeconds = Math.max(
+		0,
+		(completedAt.getTime() - createdAt.getTime()) / 1000,
+	);
+
 	return {
-		lessonDurationSeconds: Math.max(
-			0,
-			Math.round((completedAt.getTime() - createdAt.getTime()) / 1000),
-		),
+		lessonDurationSeconds: Math.round(elapsedSeconds),
 		score: createScore(scoreCounts),
 		skillSummaries,
 	};

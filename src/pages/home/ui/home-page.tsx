@@ -1,7 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
-import { calculateLessonSummary, type Lesson } from "@/entities/lesson";
+import {
+	calculateLessonSummary,
+	type Lesson,
+	type LessonSummary,
+} from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { publishedVodListQueryOptions } from "@/entities/vod";
 import { PostCreateForm } from "@/features/post-create/index.async";
@@ -42,7 +46,8 @@ const lessonSummaryExample: Lesson = {
 		},
 	],
 };
-const lessonSummaryPreview = calculateLessonSummary(lessonSummaryExample);
+const lessonSummaryPreview: LessonSummary =
+	calculateLessonSummary(lessonSummaryExample);
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
