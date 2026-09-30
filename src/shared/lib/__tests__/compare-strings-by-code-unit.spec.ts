@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { compareStringsByCodeUnit } from "../compare-strings-by-code-unit";
 
+// biome-ignore lint/security/noSecrets: This is a function name, not a credential.
 describe("compareStringsByCodeUnit", () => {
 	test("returns -1 when the left string precedes the right string", () => {
 		const left = "apple";
