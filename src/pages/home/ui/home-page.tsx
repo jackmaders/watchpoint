@@ -3,8 +3,16 @@ import { Activity, Database, Eye, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import {
 	calculateLessonSummary,
+	completeLessonRunner,
+	createLessonRunnerContext,
+	getNextUnansweredQuestion,
 	type Lesson,
+	type LessonRunnerAnswer,
+	type LessonRunnerQuestion,
 	type LessonSummary,
+	recordAnswer,
+	resumeLessonRunner,
+	triggerMarker,
 } from "@/entities/lesson";
 import { postListQueryOptions } from "@/entities/post";
 import { publishedVodListQueryOptions } from "@/entities/vod";
@@ -48,6 +56,41 @@ const lessonSummaryExample: Lesson = {
 };
 const lessonSummaryPreview: LessonSummary =
 	calculateLessonSummary(lessonSummaryExample);
+
+const firstLessonRunnerQuestion: LessonRunnerQuestion = {
+	id: "example-question-1",
+	timestampSeconds: 15,
+};
+const secondLessonRunnerQuestion: LessonRunnerQuestion = {
+	id: "example-question-2",
+	timestampSeconds: 30,
+};
+const lessonRunnerContext = createLessonRunnerContext({
+	questions: [firstLessonRunnerQuestion, secondLessonRunnerQuestion],
+});
+const lessonRunnerActiveContext = triggerMarker(
+	lessonRunnerContext,
+	firstLessonRunnerQuestion,
+);
+const firstLessonRunnerAnswer: LessonRunnerAnswer = {
+	questionId: firstLessonRunnerQuestion.id,
+};
+const lessonRunnerAnsweredContext = recordAnswer(
+	lessonRunnerActiveContext,
+	firstLessonRunnerAnswer,
+);
+const nextLessonRunnerQuestion = getNextUnansweredQuestion(
+	lessonRunnerAnsweredContext,
+);
+const resumedLessonRunnerContext = resumeLessonRunner(
+	lessonRunnerAnsweredContext,
+);
+const secondLessonRunnerAnswer: LessonRunnerAnswer = {
+	questionId: secondLessonRunnerQuestion.id,
+};
+const completedLessonRunnerContext = completeLessonRunner(
+	recordAnswer(resumedLessonRunnerContext, secondLessonRunnerAnswer),
+);
 
 export function HomePage() {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
@@ -103,6 +146,35 @@ export function HomePage() {
 					<div className="lg:col-span-2">
 						<SessionPanel />
 					</div>
+				</section>
+
+				<section className="mt-10">
+					<Card className="bg-secondary/30">
+						<CardHeader>
+							<CardDescription className="font-mono text-xs uppercase tracking-label">
+								Lesson Runner preview
+							</CardDescription>
+							<CardTitle className="mt-2">Sample transition flow</CardTitle>
+							<CardDescription>
+								A static example of marker activation, answer recording, and
+								resuming.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="grid gap-6 sm:grid-cols-3">
+							<Metric
+								label="Active after marker"
+								value={lessonRunnerActiveContext.activeQuestion?.id ?? "None"}
+							/>
+							<Metric
+								label="Next unanswered"
+								value={nextLessonRunnerQuestion?.id ?? "None"}
+							/>
+							<Metric
+								label="Sample status"
+								value={completedLessonRunnerContext.status}
+							/>
+						</CardContent>
+					</Card>
 				</section>
 
 				<section className="mt-16">
