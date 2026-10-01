@@ -1,2 +1,6 @@
+export {
+	demoVodServerFn,
+	vodLessonAccessServerFn,
+} from "./api/vod.functions";
 export { publishedVodListQueryOptions } from "./api/vod-query-options";
 export type { VodCatalog } from "./model/vod-types";

@@ -8,15 +8,17 @@ const LazySessionPanel = lazy(() =>
 );
 
 export interface SessionPanelProps {
+	callbackUrl?: string;
 	fallback?: ReactNode;
 }
 
 export function SessionPanel({
+	callbackUrl = "/",
 	fallback = <SessionPanelFallback />,
 }: SessionPanelProps = {}) {
 	return (
 		<Suspense fallback={fallback}>
-			<LazySessionPanel />
+			<LazySessionPanel callbackUrl={callbackUrl} />
 		</Suspense>
 	);
 }

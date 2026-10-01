@@ -17,7 +17,7 @@ import { SessionPanelFallback } from "./session-panel-fallback";
 
 type AuthMode = "sign-in" | "sign-up";
 
-export function SessionPanel() {
+export function SessionPanel({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { data: session, isPending } = authClient.useSession();
 	const fieldId = useId();
 	const [mode, setMode] = useState<AuthMode>("sign-in");
@@ -46,7 +46,7 @@ export function SessionPanel() {
 				if (mode === "sign-up") {
 					const name = String(formData.get("name") ?? "");
 					const result = await authClient.signUp.email({
-						callbackURL: "/",
+						callbackURL: callbackUrl,
 						email,
 						name,
 						password,
@@ -54,10 +54,12 @@ export function SessionPanel() {
 
 					if (result.error) {
 						setError(result.error.message ?? "Unable to create the account.");
+					} else {
+						window.location.assign(callbackUrl);
 					}
 				} else {
 					const result = await authClient.signIn.email({
-						callbackURL: "/",
+						callbackURL: callbackUrl,
 						email,
 						password,
 					});
@@ -74,7 +76,7 @@ export function SessionPanel() {
 				setIsSubmitting(false);
 			}
 		},
-		[mode],
+		[callbackUrl, mode],
 	);
 
 	if (isPending) {

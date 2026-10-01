@@ -49,7 +49,7 @@ const lessonSummaryExample: Lesson = {
 const lessonSummaryPreview: LessonSummary =
 	calculateLessonSummary(lessonSummaryExample);
 
-export function HomePage() {
+export function HomePage({ returnTo }: { returnTo: string }) {
 	const { data: posts } = useSuspenseQuery(postListQueryOptions);
 	const { data: vods } = useSuspenseQuery(publishedVodListQueryOptions);
 
@@ -101,7 +101,7 @@ export function HomePage() {
 						</div>
 					</div>
 					<div className="lg:col-span-2">
-						<SessionPanel />
+						<SessionPanel callbackUrl={returnTo} />
 					</div>
 				</section>
 

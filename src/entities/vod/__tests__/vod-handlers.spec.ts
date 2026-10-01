@@ -3,7 +3,12 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { relations } from "@/shared/db";
-import { publishedVodListHandler } from "../api/vod-handlers";
+import {
+	getDemoVodHandler,
+	getVodByIdHandler,
+	getVodLessonAccessHandler,
+	publishedVodListHandler,
+} from "../api/vod-handlers";
 
 vi.mock("@/shared/db/index.server", () => ({ getDb: vi.fn() }));
 
@@ -74,6 +79,119 @@ describe("publishedVodListHandler", () => {
 	});
 });
 
+describe("getDemoVodHandler", () => {
+	test("returns null when no demo VOD exists", async () => {
+		const db = createDatabase();
+
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+		expect(await getDemoVodHandler(db as never)).toBeNull();
+	});
+
+	test("returns the designated demo VOD", async () => {
+		const db = createDatabase();
+		insertVod(db, { id: "standard", isPublished: 1, isDemo: 0 });
+		insertVod(db, { id: "demo", isPublished: 1, isDemo: 1 });
+
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+		const demoVod = await getDemoVodHandler(db as never);
+		expect(demoVod?.id).toBe("demo");
+		expect(demoVod?.isDemo).toBe(true);
+	});
+});
+
+// biome-ignore lint/security/noSecrets: This is a function name, not a credential.
+describe("getVodByIdHandler", () => {
+	test("returns null when VOD does not exist", async () => {
+		const db = createDatabase();
+
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+		expect(await getVodByIdHandler("non-existent", db as never)).toBeNull();
+	});
+
+	test("returns VOD by id", async () => {
+		const db = createDatabase();
+		insertVod(db, { id: "target-vod", isPublished: 1 });
+
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+		const vod = await getVodByIdHandler("target-vod", db as never);
+		expect(vod?.id).toBe("target-vod");
+	});
+});
+
+describe("getVodLessonAccessHandler", () => {
+	const userSession = {
+		user: {
+			id: "user-1",
+			role: "user",
+		},
+	};
+
+	test("returns demo access result for anonymous guest on demo VOD", async () => {
+		const db = createDatabase();
+		insertVod(db, { id: "demo-vod", isPublished: 1, isDemo: 1 });
+
+		const result = await getVodLessonAccessHandler(
+			{ vodId: "demo-vod", session: null },
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+			db as never,
+		);
+
+		expect(result).toEqual({
+			status: "allow",
+			mode: "demo",
+			vod: expect.objectContaining({ id: "demo-vod", isDemo: true }),
+		});
+	});
+
+	test("returns redirect result for anonymous guest on standard VOD", async () => {
+		const db = createDatabase();
+		insertVod(db, { id: "standard-vod", isPublished: 1, isDemo: 0 });
+
+		const result = await getVodLessonAccessHandler(
+			{ vodId: "standard-vod", session: null, returnTo: "/vods/standard-vod" },
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+			db as never,
+		);
+
+		expect(result).toEqual({
+			status: "redirect",
+			to: "/",
+			returnTo: "/vods/standard-vod",
+		});
+	});
+
+	test("returns standard access result for authenticated User on published VOD", async () => {
+		const db = createDatabase();
+		insertVod(db, { id: "standard-vod", isPublished: 1, isDemo: 0 });
+
+		const result = await getVodLessonAccessHandler(
+			{ vodId: "standard-vod", session: userSession },
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+			db as never,
+		);
+
+		expect(result).toEqual({
+			status: "allow",
+			mode: "standard",
+			vod: expect.objectContaining({ id: "standard-vod", isDemo: false }),
+		});
+	});
+
+	test("returns not-found result when VOD does not exist", async () => {
+		const db = createDatabase();
+
+		const result = await getVodLessonAccessHandler(
+			{ vodId: "missing-vod", session: userSession },
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: The test uses an equivalent in-memory SQLite driver.
+			db as never,
+		);
+
+		expect(result).toEqual({
+			status: "not-found",
+		});
+	});
+});
+
 function createDatabase() {
 	const database = new Database(":memory:");
 	databases.push(database);
@@ -115,11 +233,11 @@ function createDatabase() {
 
 function insertVod(
 	db: ReturnType<typeof createDatabase>,
-	values: { id: string; isPublished: 0 | 1 },
+	values: { id: string; isPublished: 0 | 1; isDemo?: 0 | 1 },
 ) {
 	db.run(
 		sql`INSERT INTO vods (id, title, youtube_id, duration_seconds, is_demo, is_published, created_at, updated_at)
-			VALUES (${values.id}, 'Published VOD', 'video-id', 212, 0, ${values.isPublished}, 1, 1)`,
+			VALUES (${values.id}, 'Published VOD', 'video-id', 212, ${values.isDemo ?? 0}, ${values.isPublished}, 1, 1)`,
 	);
 }
 
