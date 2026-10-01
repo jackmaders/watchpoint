@@ -14,3 +14,5 @@ export const vodCatalogItemSchema = createSelectSchema(vods)
 	});
 
 export const vodCatalogSchema = z.array(vodCatalogItemSchema);
+
+export const vodDetailSchema = createSelectSchema(vods);
