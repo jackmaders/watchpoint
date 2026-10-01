@@ -16,6 +16,8 @@ const config: KnipConfig = {
 		// TanStack Router file-based route definitions and generated route tree
 		"src/app/routes/**/*.tsx!",
 		"src/app/routeTree.gen.ts!",
+		// Server functions configured as remote HTTP RPC endpoints
+		"src/**/*.functions.ts!",
 		// Config and test files
 		".config/steiger.config.ts",
 		"e2e/**/*.{ts,tsx}",
