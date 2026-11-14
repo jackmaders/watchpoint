@@ -14,4 +14,4 @@ function vodsQueryOptions() {
   });
 }
 
-export { vodKeys, vodsQueryOptions };
+export { vodsQueryOptions };

@@ -1,10 +1,8 @@
-/** @public Tracked in #12. */
-export const ROLES = ["Tank", "Damage", "Support"] as const;
+const ROLES = ["Tank", "Damage", "Support"] as const;
 
 type Role = (typeof ROLES)[number];
 
-/** @public Tracked in #12. */
-export const HERO_TO_ROLE: Record<string, Role> = {
+const HERO_TO_ROLE: Record<string, Role> = {
   Ana: "Support",
   Ashe: "Damage",
   Baptiste: "Support",
@@ -59,11 +57,10 @@ function getHeroRole(hero: string): Role {
   return role;
 }
 
-/** @public Tracked in #12. */
-export function getHeroesForRole(role: Role): string[] {
+function getHeroesForRole(role: Role): string[] {
   return Object.entries(HERO_TO_ROLE)
     .filter(([, heroRole]) => heroRole === role)
     .map(([hero]) => hero);
 }
 
-export { getHeroRole, type Role };
+export { HERO_TO_ROLE, ROLES, getHeroRole, getHeroesForRole, type Role };

@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "./fixtures";
-import { AuthClient, HomePage, VodsPage, waitForHydration } from "./page-objects";
+import { AuthClient, HomePage, VodsPage } from "./page-objects";
 
 const SEEDED_VOD_COUNT = 3;
 
@@ -13,11 +13,11 @@ const TAEJONG_TITLE =
 
 test("redirects unauthenticated visitors from /vods to /", async ({ page }) => {
   // Arrange
+  const vodsPage = new VodsPage(page);
   const homePage = new HomePage(page);
 
   // Act
-  await page.goto("/vods");
-  await waitForHydration(page);
+  await vodsPage.goto();
 
   // Assert
   await expect(page).toHaveURL(/\/$/u);
@@ -29,12 +29,12 @@ test("redirects authenticated visitors from / to /vods and shows VODs link in he
   baseURL,
 }) => {
   // Arrange
+  const homePage = new HomePage(page);
   const vodsPage = new VodsPage(page);
   await signUpTestUser(page, baseURL);
 
   // Act
-  await page.goto("/");
-  await waitForHydration(page);
+  await homePage.goto();
 
   // Assert
   await expect(page).toHaveURL(/\/vods$/u);
@@ -95,6 +95,8 @@ test("renders metadata and skill badges on the Shu Ana VOD card", async ({ page,
   // Arrange
   const vodsPage = new VodsPage(page);
   await signUpTestUser(page, baseURL);
+
+  // Act
   await vodsPage.goto();
   const card = vodsPage.getCard(SHU_TITLE);
 
@@ -112,6 +114,8 @@ test("renders metadata and skill badges on the Junbin Winston and Taejong Tracer
   // Arrange
   const vodsPage = new VodsPage(page);
   await signUpTestUser(page, baseURL);
+
+  // Act
   await vodsPage.goto();
   const junbinCard = vodsPage.getCard(JUNBIN_TITLE);
   const taejongCard = vodsPage.getCard(TAEJONG_TITLE);

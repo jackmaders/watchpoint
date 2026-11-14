@@ -2,6 +2,19 @@ import type { Database } from "../index.server";
 import { checkpoints, type NewCheckpoint, type NewVod, vods } from "../schema";
 import { SEED_CHECKPOINTS, SEED_VODS } from "./vod-data";
 
+async function seedVods(db: Database): Promise<void> {
+  await Promise.all(
+    SEED_VODS.map(async (vod) => {
+      await upsertVod(db, vod);
+    }),
+  );
+  await Promise.all(
+    SEED_CHECKPOINTS.map(async (checkpoint) => {
+      await upsertCheckpoint(db, checkpoint);
+    }),
+  );
+}
+
 async function upsertVod(db: Database, vod: NewVod): Promise<void> {
   await db
     .insert(vods)
@@ -35,19 +48,6 @@ async function upsertCheckpoint(db: Database, checkpoint: NewCheckpoint): Promis
       },
       target: checkpoints.id,
     });
-}
-
-async function seedVods(db: Database): Promise<void> {
-  await Promise.all(
-    SEED_VODS.map(async (vod) => {
-      await upsertVod(db, vod);
-    }),
-  );
-  await Promise.all(
-    SEED_CHECKPOINTS.map(async (checkpoint) => {
-      await upsertCheckpoint(db, checkpoint);
-    }),
-  );
 }
 
 export { seedVods };

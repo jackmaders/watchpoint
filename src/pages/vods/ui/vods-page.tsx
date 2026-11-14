@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
 
 import { vodsQueryOptions } from "../api/vod-query-options";
-import type { VodCatalogueItem } from "../api/vods-service";
+import type { VodCatalogueItem } from "../model/vod-catalogue";
 import { VodCard } from "./vod-card";
 
 function VodsPage() {

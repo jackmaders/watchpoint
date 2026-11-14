@@ -5,7 +5,7 @@ import type { SkillCategory } from "@/shared/db";
 import { Badge } from "@/shared/ui/shadcn/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
 
-import type { VodCatalogueItem } from "../api/vods-service";
+import type { VodCatalogueItem } from "../model/vod-catalogue";
 
 interface VodCardProps extends Omit<ComponentProps<typeof Card>, "children"> {
   vod: VodCatalogueItem;
@@ -13,7 +13,7 @@ interface VodCardProps extends Omit<ComponentProps<typeof Card>, "children"> {
 
 function VodCard({ className, vod, ...props }: VodCardProps) {
   return (
-    <Card className={cn("h-full", className)} {...props}>
+    <Card className={cn("relative h-full", className)} {...props}>
       <img
         alt={vod.title}
         className="aspect-video w-full object-cover"
@@ -64,7 +64,7 @@ function VodCardTitle({ id, title }: { id: string; title: string }) {
     <CardTitle>
       <h2>
         <a
-          className="line-clamp-2 hover:underline focus-visible:underline focus-visible:outline-none"
+          className="line-clamp-2 after:absolute after:inset-0 hover:underline focus-visible:underline focus-visible:outline-none"
           href={`/vods/${id}`}
         >
           {title}

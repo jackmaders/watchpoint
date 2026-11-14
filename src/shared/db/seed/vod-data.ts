@@ -28,7 +28,9 @@ const SHU_VOD_ID = "shu-ana-owcs-kr-s3";
 const JUNBIN_VOD_ID = "junbin-winston-owcs-kr-s3";
 const TAEJONG_VOD_ID = "taejong-tracer-owcs-kr-s3";
 
-const SEED_VODS: readonly NewVod[] = [
+type SeedVod = NewVod & { id: string };
+
+const SEED_VODS: readonly SeedVod[] = [
   {
     curatedOrder: CURATED_ORDER_FIRST,
     hero: "Ana",
