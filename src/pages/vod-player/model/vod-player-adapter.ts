@@ -37,8 +37,212 @@ interface AdapterState {
   activePlayer: YouTubePlayerInstance | null;
   cancelPendingApiLoad: (() => void) | null;
   isDestroyed: boolean;
+  pendingPause: boolean;
   pendingSeekSec: number | null;
   readyPlayer: YouTubePlayerInstance | null;
+}
+
+function createYouTubeVodPlayerAdapter(
+  options: CreateYouTubeVodPlayerAdapterOptions,
+): VodPlayerAdapter {
+  const state: AdapterState = {
+    activePlayer: null,
+    cancelPendingApiLoad: null,
+    isDestroyed: false,
+    pendingPause: false,
+    pendingSeekSec: null,
+    readyPlayer: null,
+  };
+
+  return {
+    destroy: () => {
+      destroyAdapter(state, options.container);
+    },
+    getCurrentTime: () => getAdapterCurrentTime(state),
+    load: (videoId) => {
+      loadAdapterVideo(state, options, videoId);
+    },
+    pause: () => {
+      pauseAdapter(state);
+    },
+    play: () => {
+      playAdapter(state);
+    },
+    seekTo: (timeSec) => {
+      seekAdapter(state, timeSec);
+    },
+  };
+}
+
+function loadAdapterVideo(
+  state: AdapterState,
+  options: CreateYouTubeVodPlayerAdapterOptions,
+  videoId: string,
+) {
+  if (state.isDestroyed) {
+    return;
+  }
+  state.pendingSeekSec = null;
+  state.pendingPause = false;
+  state.cancelPendingApiLoad?.();
+  state.cancelPendingApiLoad = null;
+
+  if (window.YT?.Player) {
+    mountYouTubePlayer(state, options, videoId);
+    return;
+  }
+
+  state.cancelPendingApiLoad = loadYouTubeIframeApi({
+    onFailed: () => {
+      state.cancelPendingApiLoad = null;
+      options.onError?.("PLAYBACK_ERROR");
+    },
+    onLoaded: () => {
+      state.cancelPendingApiLoad = null;
+      mountYouTubePlayer(state, options, videoId);
+    },
+  });
+}
+
+function mountYouTubePlayer(
+  state: AdapterState,
+  options: CreateYouTubeVodPlayerAdapterOptions,
+  videoId: string,
+) {
+  clearMountedPlayer(state);
+  const YouTubePlayer = window.YT?.Player;
+  if (!YouTubePlayer) {
+    options.onError?.("PLAYBACK_ERROR");
+    return;
+  }
+
+  const mountNode = createMountNode(options.container);
+  state.activePlayer = new YouTubePlayer(mountNode, {
+    events: createYouTubePlayerEvents(state, options),
+    host: YOUTUBE_NOCOOKIE_HOST,
+    playerVars: {
+      controls: 1,
+      enablejsapi: 1,
+      origin: window.location.origin,
+      playsinline: 1,
+      rel: 0,
+    },
+    videoId,
+  });
+}
+
+function createYouTubePlayerEvents(
+  state: AdapterState,
+  options: CreateYouTubeVodPlayerAdapterOptions,
+): YouTubePlayerOptions["events"] {
+  return {
+    onAutoplayBlocked: () => {
+      if (!state.isDestroyed) {
+        options.onError?.("AUTOPLAY_BLOCKED");
+      }
+    },
+    onError: (event) => {
+      if (!state.isDestroyed) {
+        options.onError?.(mapYouTubeErrorCode(event.data));
+      }
+    },
+    onReady: (event) => {
+      if (state.isDestroyed) {
+        return;
+      }
+      const readyPlayer = event?.target ?? state.activePlayer;
+      if (!readyPlayer) {
+        return;
+      }
+      state.activePlayer = readyPlayer;
+      state.readyPlayer = readyPlayer;
+      flushPendingPlayerCommands(state, readyPlayer);
+    },
+    onStateChange: (event) => {
+      if (state.isDestroyed) {
+        return;
+      }
+      const normalized = mapYouTubePlayerState(event.data);
+      if (normalized) {
+        options.onStateChange?.(normalized);
+      }
+    },
+  };
+}
+
+function flushPendingPlayerCommands(state: AdapterState, readyPlayer: YouTubePlayerInstance) {
+  if (state.pendingSeekSec !== null) {
+    readyPlayer.seekTo(state.pendingSeekSec, true);
+    state.pendingSeekSec = null;
+  }
+  if (state.pendingPause) {
+    readyPlayer.pauseVideo();
+    state.pendingPause = false;
+  }
+}
+
+function seekAdapter(state: AdapterState, timeSec: number) {
+  if (state.isDestroyed) {
+    return;
+  }
+  if (!state.readyPlayer) {
+    state.pendingSeekSec = timeSec;
+    return;
+  }
+  state.readyPlayer.seekTo(timeSec, true);
+}
+
+function pauseAdapter(state: AdapterState) {
+  if (state.isDestroyed) {
+    return;
+  }
+  if (!state.readyPlayer) {
+    state.pendingPause = true;
+    return;
+  }
+  state.readyPlayer.pauseVideo();
+}
+
+function playAdapter(state: AdapterState) {
+  if (state.isDestroyed) {
+    return;
+  }
+  state.pendingPause = false;
+  state.readyPlayer?.playVideo();
+}
+
+function getAdapterCurrentTime(state: AdapterState): number {
+  if (!state.readyPlayer) {
+    return 0;
+  }
+  const timeSec = state.readyPlayer.getCurrentTime();
+  return Number.isFinite(timeSec) ? Math.max(0, timeSec) : 0;
+}
+
+function destroyAdapter(state: AdapterState, container: HTMLElement) {
+  if (state.isDestroyed) {
+    return;
+  }
+  state.isDestroyed = true;
+  state.pendingSeekSec = null;
+  state.pendingPause = false;
+  state.cancelPendingApiLoad?.();
+  state.cancelPendingApiLoad = null;
+  clearMountedPlayer(state);
+  container.replaceChildren();
+}
+
+function clearMountedPlayer(state: AdapterState) {
+  state.readyPlayer = null;
+  state.activePlayer?.destroy();
+  state.activePlayer = null;
+}
+
+function createMountNode(container: HTMLElement): HTMLDivElement {
+  const mountNode = document.createElement("div");
+  mountNode.className = "size-full";
+  container.replaceChildren(mountNode);
+  return mountNode;
 }
 
 function mapYouTubePlayerState(stateCode: number): VodPlayerState | null {
@@ -71,174 +275,6 @@ function mapYouTubeErrorCode(errorCode: number): VodPlayerErrorCode {
       return "PLAYBACK_ERROR";
     }
   }
-}
-
-function clearMountedPlayer(state: AdapterState) {
-  state.readyPlayer = null;
-  state.activePlayer?.destroy();
-  state.activePlayer = null;
-}
-
-function createMountNode(container: HTMLElement): HTMLDivElement {
-  const mountNode = document.createElement("div");
-  mountNode.className = "size-full";
-  container.replaceChildren(mountNode);
-  return mountNode;
-}
-
-function createYouTubePlayerEvents(
-  state: AdapterState,
-  options: CreateYouTubeVodPlayerAdapterOptions,
-): YouTubePlayerOptions["events"] {
-  return {
-    onAutoplayBlocked: () => {
-      if (!state.isDestroyed) {
-        options.onError?.("AUTOPLAY_BLOCKED");
-      }
-    },
-    onError: (event) => {
-      if (!state.isDestroyed) {
-        options.onError?.(mapYouTubeErrorCode(event.data));
-      }
-    },
-    onReady: () => {
-      if (state.isDestroyed) {
-        return;
-      }
-      state.readyPlayer = state.activePlayer;
-      if (state.readyPlayer && state.pendingSeekSec !== null) {
-        state.readyPlayer.seekTo(state.pendingSeekSec, true);
-        state.pendingSeekSec = null;
-      }
-    },
-    onStateChange: (event) => {
-      if (state.isDestroyed) {
-        return;
-      }
-      const normalized = mapYouTubePlayerState(event.data);
-      if (normalized) {
-        options.onStateChange?.(normalized);
-      }
-    },
-  };
-}
-
-function mountYouTubePlayer(
-  state: AdapterState,
-  options: CreateYouTubeVodPlayerAdapterOptions,
-  videoId: string,
-) {
-  clearMountedPlayer(state);
-  const YouTubePlayer = window.YT?.Player;
-  if (!YouTubePlayer) {
-    options.onError?.("PLAYBACK_ERROR");
-    return;
-  }
-
-  const mountNode = createMountNode(options.container);
-  state.activePlayer = new YouTubePlayer(mountNode, {
-    events: createYouTubePlayerEvents(state, options),
-    host: YOUTUBE_NOCOOKIE_HOST,
-    playerVars: {
-      controls: 1,
-      enablejsapi: 1,
-      origin: window.location.origin,
-      playsinline: 1,
-      rel: 0,
-    },
-    videoId,
-  });
-}
-
-function loadAdapterVideo(
-  state: AdapterState,
-  options: CreateYouTubeVodPlayerAdapterOptions,
-  videoId: string,
-) {
-  if (state.isDestroyed) {
-    return;
-  }
-  state.pendingSeekSec = null;
-  state.cancelPendingApiLoad?.();
-  state.cancelPendingApiLoad = null;
-
-  if (window.YT?.Player) {
-    mountYouTubePlayer(state, options, videoId);
-    return;
-  }
-
-  state.cancelPendingApiLoad = loadYouTubeIframeApi({
-    onFailed: () => {
-      state.cancelPendingApiLoad = null;
-      options.onError?.("PLAYBACK_ERROR");
-    },
-    onLoaded: () => {
-      state.cancelPendingApiLoad = null;
-      mountYouTubePlayer(state, options, videoId);
-    },
-  });
-}
-
-function seekAdapter(state: AdapterState, timeSec: number) {
-  if (state.isDestroyed) {
-    return;
-  }
-  if (!state.readyPlayer) {
-    state.pendingSeekSec = timeSec;
-    return;
-  }
-  state.readyPlayer.seekTo(timeSec, true);
-}
-
-function getAdapterCurrentTime(state: AdapterState): number {
-  if (!state.readyPlayer) {
-    return 0;
-  }
-  const timeSec = state.readyPlayer.getCurrentTime();
-  return Number.isFinite(timeSec) ? Math.max(0, timeSec) : 0;
-}
-
-function destroyAdapter(state: AdapterState, container: HTMLElement) {
-  if (state.isDestroyed) {
-    return;
-  }
-  state.isDestroyed = true;
-  state.pendingSeekSec = null;
-  state.cancelPendingApiLoad?.();
-  state.cancelPendingApiLoad = null;
-  clearMountedPlayer(state);
-  container.replaceChildren();
-}
-
-function createYouTubeVodPlayerAdapter(
-  options: CreateYouTubeVodPlayerAdapterOptions,
-): VodPlayerAdapter {
-  const state: AdapterState = {
-    activePlayer: null,
-    cancelPendingApiLoad: null,
-    isDestroyed: false,
-    pendingSeekSec: null,
-    readyPlayer: null,
-  };
-
-  return {
-    destroy: () => {
-      destroyAdapter(state, options.container);
-    },
-    getCurrentTime: () => getAdapterCurrentTime(state),
-    load: (videoId) => {
-      loadAdapterVideo(state, options, videoId);
-    },
-    pause: () => {
-      state.readyPlayer?.pauseVideo();
-    },
-    play: () => {
-      state.readyPlayer?.playVideo();
-    },
-    seekTo: (timeSec) => {
-      seekAdapter(state, timeSec);
-    },
-  };
 }
 
 export {
