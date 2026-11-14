@@ -57,6 +57,16 @@ function createHostContainer(): HTMLDivElement {
   return element;
 }
 
+function requireYouTubeApiScript(): HTMLScriptElement {
+  const script = document.head.querySelector<HTMLScriptElement>(
+    'script[src="https://www.youtube.com/iframe_api"]',
+  );
+  if (!script) {
+    throw new Error("Expected YouTube iframe_api script element");
+  }
+  return script;
+}
+
 afterEach(() => {
   document.body.replaceChildren();
   delete window.YT;
@@ -165,9 +175,7 @@ describe("youtube vod player adapter", () => {
 
     // Act
     adapter.load("Ha5QwBV3Rhk");
-    const script = document.head.querySelector(
-      'script[src="https://www.youtube.com/iframe_api"]',
-    ) as HTMLScriptElement;
+    const script = requireYouTubeApiScript();
     script.dispatchEvent(new Event("error"));
 
     adapter.load("nkfn9HK66gg");
@@ -395,9 +403,7 @@ describe("youtube vod player adapter", () => {
       },
     });
     adapter.load("Ha5QwBV3Rhk");
-    const script = document.head.querySelector(
-      'script[src="https://www.youtube.com/iframe_api"]',
-    ) as HTMLScriptElement;
+    const script = requireYouTubeApiScript();
 
     // Act
     adapter.destroy();
