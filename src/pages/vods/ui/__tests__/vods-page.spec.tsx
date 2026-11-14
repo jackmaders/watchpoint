@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { QueryClient } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
 import { Suspense } from "react";
@@ -14,6 +13,7 @@ import { VodsPage } from "../vods-page";
 
 vi.mock(import("../../api/vods.functions"));
 
+const SEARCH_PARAM_KEY = "q";
 const TEST_MAPS = ["King's Row", "Lijiang Tower", "Suravasa"];
 
 function renderSuspendedVodsPage({
@@ -43,6 +43,14 @@ function createPreSeededQueryClient(filters: VodCatalogueFilters = {}) {
   queryClient.setQueryDefaults(mapsOptions.queryKey, { staleTime: Infinity });
   queryClient.setQueryData(mapsOptions.queryKey, TEST_MAPS);
   return queryClient;
+}
+
+function getSelectElement(name: string): HTMLSelectElement {
+  const element = screen.getByRole("combobox", { name });
+  if (!(element instanceof HTMLSelectElement)) {
+    throw new TypeError(`Expected combobox "${name}" to be an HTMLSelectElement`);
+  }
+  return element;
 }
 
 describe("vods page", () => {
@@ -119,7 +127,7 @@ describe("vods page", () => {
 
     // Act
     const { user } = renderSuspendedVodsPage({
-      filters: { q: "Nonexistent", role: "Support" },
+      filters: { [SEARCH_PARAM_KEY]: "Nonexistent", role: "Support" },
       onFiltersChange,
     });
     const emptyHeading = await screen.findByText("No matching VODs");
@@ -132,6 +140,48 @@ describe("vods page", () => {
     expect(clearButton).toBeDefined();
     expect(list).toBeNull();
     expect(onFiltersChange).toHaveBeenCalledWith({});
+  });
+
+  it("renders the un-filtered empty state when only sort is set", async () => {
+    expect.assertions(3);
+
+    // Arrange
+    vi.mocked(getVodsFn).mockResolvedValueOnce([]);
+
+    // Act
+    renderSuspendedVodsPage({
+      filters: { sort: "Map A–Z" },
+    });
+    const emptyStateHeading = await screen.findByText("No VODs available");
+    const matchingHeading = screen.queryByText("No matching VODs");
+    const clearButton = screen.queryByRole("button", { name: "Clear filters" });
+
+    // Assert
+    expect(emptyStateHeading).toBeDefined();
+    expect(matchingHeading).toBeNull();
+    expect(clearButton).toBeNull();
+  });
+
+  it("clears unsubmitted search input text when Clear filters is clicked", async () => {
+    expect.assertions(2);
+
+    // Arrange
+    vi.mocked(getVodsFn).mockResolvedValueOnce([]);
+    const onFiltersChange = vi.fn<(nextFilters: VodCatalogueFilters) => void>();
+
+    // Act
+    const { user } = renderSuspendedVodsPage({
+      filters: { role: "Support" },
+      onFiltersChange,
+    });
+    const clearButton = await screen.findByRole("button", { name: "Clear filters" });
+    const searchInput = screen.getByRole<HTMLInputElement>("searchbox", { name: "Search" });
+    await user.type(searchInput, "Ana");
+    await user.click(clearButton);
+
+    // Assert
+    expect(onFiltersChange).toHaveBeenCalledWith({});
+    expect(searchInput.value).toBe("");
   });
 
   it("submits search query and normalizes blank search text while preserving other filters", async () => {
@@ -154,7 +204,10 @@ describe("vods page", () => {
     await user.click(searchButton);
 
     // Assert
-    expect(onFiltersChange).toHaveBeenNthCalledWith(1, { q: "Ana", role: "Support" });
+    expect(onFiltersChange).toHaveBeenNthCalledWith(1, {
+      [SEARCH_PARAM_KEY]: "Ana",
+      role: "Support",
+    });
     expect(onFiltersChange).toHaveBeenNthCalledWith(2, { role: "Support" });
   });
 
@@ -167,7 +220,7 @@ describe("vods page", () => {
 
     // Act
     const { user } = renderSuspendedVodsPage({
-      filters: { q: "Ana", role: "Support", sort: "Map A–Z" },
+      filters: { [SEARCH_PARAM_KEY]: "Ana", role: "Support", sort: "Map A–Z" },
       onFiltersChange,
     });
     const roleSelect = await screen.findByRole("combobox", { name: "Role" });
@@ -183,29 +236,29 @@ describe("vods page", () => {
 
     // Assert
     expect(onFiltersChange).toHaveBeenNthCalledWith(1, {
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Tank",
       sort: "Map A–Z",
     });
     expect(onFiltersChange).toHaveBeenNthCalledWith(2, {
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Map A–Z",
       tier: "OWCS",
     });
     expect(onFiltersChange).toHaveBeenNthCalledWith(3, {
       map: "King's Row",
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Map A–Z",
     });
     expect(onFiltersChange).toHaveBeenNthCalledWith(4, {
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Most Checkpoints",
     });
     expect(onFiltersChange).toHaveBeenNthCalledWith(5, {
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
     });
   });
@@ -216,7 +269,7 @@ describe("vods page", () => {
     // Arrange
     const initialFilters: VodCatalogueFilters = {
       map: "King's Row",
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       tier: "OWCS",
     };
@@ -232,13 +285,13 @@ describe("vods page", () => {
       { queryClient },
     );
     const searchInput = screen.getByRole<HTMLInputElement>("searchbox", { name: "Search" });
-    const roleSelect = screen.getByRole("combobox", { name: "Role" });
+    const roleSelect = getSelectElement("Role");
     const initialQueryValue = searchInput.value;
-    const initialRoleValue = (roleSelect as unknown as { value: string }).value;
+    const initialRoleValue = roleSelect.value;
 
     rerender(<VodsPage filters={{ role: "Tank" }} onFiltersChange={onFiltersChange} />);
     const updatedQueryValue = searchInput.value;
-    const updatedRoleValue = (roleSelect as unknown as { value: string }).value;
+    const updatedRoleValue = roleSelect.value;
 
     // Assert
     expect(initialQueryValue).toBe("Ana");

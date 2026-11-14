@@ -63,4 +63,7 @@ function getHeroesForRole(role: Role): string[] {
     .map(([hero]) => hero);
 }
 
-export { HERO_TO_ROLE, ROLES, getHeroRole, getHeroesForRole, type Role };
+export { ROLES, getHeroRole, getHeroesForRole, type Role };
+
+/** @internal Exported solely to enable enhanced testability. */
+export { HERO_TO_ROLE };

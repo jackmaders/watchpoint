@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
 
@@ -8,6 +7,8 @@ import {
   VOD_SORT_OPTIONS,
   vodsQueryInputSchema,
 } from "../vod-catalogue";
+
+const SEARCH_PARAM_KEY = "q";
 
 describe("vod catalogue search and query schemas", () => {
   it("exposes supported sort options with Curated first", () => {
@@ -23,7 +24,7 @@ describe("vod catalogue search and query schemas", () => {
     // Arrange
     const rawSearch = {
       map: "  King's Row  ",
-      q: "  Ana  ",
+      [SEARCH_PARAM_KEY]: "  Ana  ",
       role: "Support",
       sort: "Hero A–Z",
       tier: "OWCS",
@@ -35,7 +36,7 @@ describe("vod catalogue search and query schemas", () => {
     // Assert
     expect(result).toStrictEqual({
       map: "King's Row",
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Hero A–Z",
       tier: "OWCS",
@@ -48,7 +49,7 @@ describe("vod catalogue search and query schemas", () => {
     // Arrange
     const invalidSearch = {
       map: "   ",
-      q: "",
+      [SEARCH_PARAM_KEY]: "",
       role: "Flex",
       sort: "Curated",
       tier: "Bronze",
@@ -56,7 +57,11 @@ describe("vod catalogue search and query schemas", () => {
 
     // Act
     const parsedInvalid = parseVodCatalogueSearch(invalidSearch);
-    const parsedTypes = parseVodCatalogueSearch({ map: 123, q: null, sort: "Unknown" });
+    const parsedTypes = parseVodCatalogueSearch({
+      map: 123,
+      [SEARCH_PARAM_KEY]: null,
+      sort: "Unknown",
+    });
 
     // Assert
     expect(parsedInvalid).toStrictEqual({});
@@ -68,10 +73,10 @@ describe("vod catalogue search and query schemas", () => {
 
     // Act
     const emptyDefault = normalizeVodFilters();
-    const withDefaultSort = normalizeVodFilters({ q: "  ", sort: "Curated" });
+    const withDefaultSort = normalizeVodFilters({ [SEARCH_PARAM_KEY]: "  ", sort: "Curated" });
     const withValues = normalizeVodFilters({
       map: "Lijiang Tower",
-      q: "Winston",
+      [SEARCH_PARAM_KEY]: "Winston",
       role: "Tank",
       sort: "Most Checkpoints",
       tier: "Ranked GM",
@@ -82,7 +87,7 @@ describe("vod catalogue search and query schemas", () => {
     expect(withDefaultSort).toStrictEqual({});
     expect(withValues).toStrictEqual({
       map: "Lijiang Tower",
-      q: "Winston",
+      [SEARCH_PARAM_KEY]: "Winston",
       role: "Tank",
       sort: "Most Checkpoints",
       tier: "Ranked GM",
@@ -97,9 +102,12 @@ describe("vod catalogue search and query schemas", () => {
 
     // Act
     const emptyResult = vodsQueryInputSchema.parse(omittedInput.at(0));
-    const blankTextResult = vodsQueryInputSchema.parse({ map: "   ", q: "  " });
+    const blankTextResult = vodsQueryInputSchema.parse({
+      map: "   ",
+      [SEARCH_PARAM_KEY]: "  ",
+    });
     const validResult = vodsQueryInputSchema.parse({
-      q: "  Tracer  ",
+      [SEARCH_PARAM_KEY]: "  Tracer  ",
       role: "Damage",
       sort: "Map A–Z",
       tier: "FACEIT",
@@ -109,7 +117,7 @@ describe("vod catalogue search and query schemas", () => {
     expect(emptyResult).toBeUndefined();
     expect(blankTextResult).toStrictEqual({});
     expect(validResult).toStrictEqual({
-      q: "Tracer",
+      [SEARCH_PARAM_KEY]: "Tracer",
       role: "Damage",
       sort: "Map A–Z",
       tier: "FACEIT",

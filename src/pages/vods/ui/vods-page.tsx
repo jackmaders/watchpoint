@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { Button } from "@/shared/ui/shadcn/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
@@ -21,7 +22,14 @@ interface VodsPageProps {
 function VodsPage({ controlFilters, filters, onFiltersChange }: VodsPageProps) {
   const { data: vods } = useSuspenseQuery(vodsQueryOptions(filters));
   const { data: maps } = useSuspenseQuery(vodMapsQueryOptions());
-  const hasActiveFilters = Object.keys(normalizeVodFilters(filters)).length > 0;
+  const [clearCount, setClearCount] = useState(0);
+  const normalizedFilters = normalizeVodFilters(filters);
+  const hasActiveFilters = [
+    normalizedFilters.q,
+    normalizedFilters.role,
+    normalizedFilters.tier,
+    normalizedFilters.map,
+  ].some((value) => value !== undefined);
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -32,6 +40,7 @@ function VodsPage({ controlFilters, filters, onFiltersChange }: VodsPageProps) {
         </p>
       </header>
       <VodCatalogueControls
+        clearCount={clearCount}
         filters={controlFilters ?? filters}
         maps={maps}
         onFiltersChange={onFiltersChange}
@@ -40,6 +49,7 @@ function VodsPage({ controlFilters, filters, onFiltersChange }: VodsPageProps) {
         <EmptyVodCatalogue
           hasActiveFilters={hasActiveFilters}
           onClearFilters={() => {
+            setClearCount((count) => count + 1);
             onFiltersChange({});
           }}
         />

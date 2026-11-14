@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { z } from "zod";
 
@@ -15,6 +14,8 @@ vi.mock(import("@tanstack/react-start"));
 vi.mock(import("@/shared/auth/session.server"));
 vi.mock(import("@/shared/auth/permissions"), { spy: true });
 vi.mock(import("../vods-service"));
+
+const SEARCH_PARAM_KEY = "q";
 
 beforeEach(() => {
   vi.mocked(ensureSession).mockResolvedValue(TEST_SESSION);
@@ -46,7 +47,7 @@ describe("vods functions getVodsFn", () => {
     const result = await getVodsFn({
       data: {
         map: "  King's Row ",
-        q: "  Ana  ",
+        [SEARCH_PARAM_KEY]: "  Ana  ",
         role: "Support",
         sort: "Hero A–Z",
         tier: "OWCS",
@@ -56,7 +57,7 @@ describe("vods functions getVodsFn", () => {
     // Assert
     expect(getVods).toHaveBeenCalledWith({
       map: "King's Row",
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Hero A–Z",
       tier: "OWCS",

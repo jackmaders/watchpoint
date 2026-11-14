@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import { TEST_VOD } from "@test/vitest/fixtures/vods";
@@ -8,20 +7,26 @@ import { getVodMapsFn, getVodsFn } from "../vods.functions";
 
 vi.mock(import("../vods.functions"));
 
+const SEARCH_PARAM_KEY = "q";
+
 describe("vod query options", () => {
   it("configures normalized vods list queryKey and default empty filters", () => {
     expect.assertions(2);
 
     // Act
     const defaultOptions = vodsQueryOptions();
-    const normalizedOptions = vodsQueryOptions({ q: "  Ana  ", role: "Support", sort: "Curated" });
+    const normalizedOptions = vodsQueryOptions({
+      [SEARCH_PARAM_KEY]: "  Ana  ",
+      role: "Support",
+      sort: "Curated",
+    });
 
     // Assert
     expect(defaultOptions.queryKey).toStrictEqual(["vods", "list", {}]);
     expect(normalizedOptions.queryKey).toStrictEqual([
       "vods",
       "list",
-      { q: "Ana", role: "Support" },
+      { [SEARCH_PARAM_KEY]: "Ana", role: "Support" },
     ]);
   });
 
@@ -30,13 +35,15 @@ describe("vod query options", () => {
 
     // Arrange
     vi.mocked(getVodsFn).mockResolvedValueOnce([TEST_VOD]);
-    const options = vodsQueryOptions({ q: "  Ana  ", sort: "Map A–Z" });
+    const options = vodsQueryOptions({ [SEARCH_PARAM_KEY]: "  Ana  ", sort: "Map A–Z" });
 
     // Act
     const result = await options.queryFn?.({} as never);
 
     // Assert
-    expect(getVodsFn).toHaveBeenCalledWith({ data: { q: "Ana", sort: "Map A–Z" } });
+    expect(getVodsFn).toHaveBeenCalledWith({
+      data: { [SEARCH_PARAM_KEY]: "Ana", sort: "Map A–Z" },
+    });
     expect(result).toStrictEqual([TEST_VOD]);
   });
 

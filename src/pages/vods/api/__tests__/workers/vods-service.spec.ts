@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -7,6 +6,8 @@ import { getDb } from "@/shared/db/index.server";
 import { seedVods } from "@/shared/db/seed";
 
 import { getVodMaps, getVods } from "../../vods-service";
+
+const SEARCH_PARAM_KEY = "q";
 
 describe("vods-service getVods", () => {
   it("returns an empty array when no VODs exist", async () => {
@@ -173,11 +174,11 @@ describe("vods-service getVods", () => {
     });
 
     // Act
-    const byTitle = await getVods({ q: "primal punch" }, { db });
-    const byHero = await getVods({ q: "TRACER" }, { db });
-    const byMap = await getVods({ q: "king's row" }, { db });
-    const literalPercent = await getVods({ q: "100%" }, { db });
-    const wildcardOnly = await getVods({ q: "___" }, { db });
+    const byTitle = await getVods({ [SEARCH_PARAM_KEY]: "primal punch" }, { db });
+    const byHero = await getVods({ [SEARCH_PARAM_KEY]: "TRACER" }, { db });
+    const byMap = await getVods({ [SEARCH_PARAM_KEY]: "king's row" }, { db });
+    const literalPercent = await getVods({ [SEARCH_PARAM_KEY]: "100%" }, { db });
+    const wildcardOnly = await getVods({ [SEARCH_PARAM_KEY]: "___" }, { db });
 
     // Assert
     expect(byTitle.map((vod) => vod.id)).toStrictEqual(["junbin-winston-owcs-kr-s3"]);
@@ -209,7 +210,7 @@ describe("vods-service getVods", () => {
     const gmVods = await getVods({ tier: "Ranked GM" }, { db });
     const suravasaVods = await getVods({ map: "Suravasa" }, { db });
     const combinedVods = await getVods(
-      { map: "Ilios", q: "kiriko", role: "Support", tier: "Ranked GM" },
+      { map: "Ilios", [SEARCH_PARAM_KEY]: "kiriko", role: "Support", tier: "Ranked GM" },
       { db },
     );
 

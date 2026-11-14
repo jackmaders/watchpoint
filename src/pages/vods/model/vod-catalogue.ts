@@ -48,18 +48,6 @@ const vodCatalogueQuerySchema = z.object({
   tier: z.enum(competitiveTiers).optional(),
 });
 
-function parseOptionalField<TSchema extends z.ZodType>(
-  schema: TSchema,
-  value: unknown,
-): z.output<TSchema> | undefined {
-  const parsed = schema.safeParse(value);
-  return parsed.success ? parsed.data : undefined;
-}
-
-function omitUndefinedFilters(filters: VodCatalogueFilters): VodCatalogueFilters {
-  return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined));
-}
-
 function normalizeVodFilters(filters: VodCatalogueFilters = {}): VodCatalogueFilters {
   const trimmedQuery = filters.q?.trim();
   const trimmedMap = filters.map?.trim();
@@ -85,6 +73,18 @@ function parseVodCatalogueSearch(search: Record<string, unknown>): VodCatalogueF
     sort: parseOptionalField(z.enum(VOD_SORT_OPTIONS), search["sort"]),
     tier: parseOptionalField(z.enum(competitiveTiers), search["tier"]),
   });
+}
+
+function parseOptionalField<TSchema extends z.ZodType>(
+  schema: TSchema,
+  value: unknown,
+): z.output<TSchema> | undefined {
+  const parsed = schema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+}
+
+function omitUndefinedFilters(filters: VodCatalogueFilters): VodCatalogueFilters {
+  return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined));
 }
 
 export {
