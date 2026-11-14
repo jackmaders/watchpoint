@@ -11,20 +11,13 @@ import { vodMapsQueryOptions, vodsQueryOptions } from "@/pages/vods";
 import { getSessionFn } from "@/shared/auth";
 import { TEST_SESSION } from "@test/vitest/fixtures/session";
 import { TEST_VODS } from "@test/vitest/fixtures/vods";
+import { createDeferred } from "@test/vitest/helpers/deferred";
 import { getRouteOption } from "@test/vitest/helpers/route";
 
 vi.mock(import("@/pages/vods"));
 vi.mock(import("@/shared/auth"));
 vi.mock(import("@/app/layouts"));
 vi.mock(import("@/shared/ui/shadcn/toast"));
-
-function createDeferredVods() {
-  let resolve: (value: typeof TEST_VODS) => void = vi.fn();
-  const promise = new Promise<typeof TEST_VODS>((resolvePromise) => {
-    resolve = resolvePromise;
-  });
-  return { promise, resolve };
-}
 
 describe("vods route options", () => {
   it("configures private no-store cache headers", () => {
@@ -151,7 +144,7 @@ describe("vods route options", () => {
 
     // Arrange
     vi.mocked(getSessionFn).mockResolvedValue(TEST_SESSION);
-    const { promise: pendingVods, resolve: resolveNextVods } = createDeferredVods();
+    const { promise: pendingVods, resolve: resolveNextVods } = createDeferred<typeof TEST_VODS>();
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
