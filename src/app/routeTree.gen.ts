@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedTodosRouteImport } from './routes/_authenticated/todos'
+import { Route as PrototypeVodPlayerRouteImport } from './routes/prototype/vod-player'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiImagesSplatRouteImport } from './routes/api/images/$'
 
@@ -41,6 +42,11 @@ const AuthenticatedTodosRoute = AuthenticatedTodosRouteImport.update({
   path: '/todos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const PrototypeVodPlayerRoute = PrototypeVodPlayerRouteImport.update({
+  id: '/prototype/vod-player',
+  path: '/prototype/vod-player',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/todos': typeof AuthenticatedTodosRoute
+  '/prototype/vod-player': typeof PrototypeVodPlayerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/images/$': typeof ApiImagesSplatRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/todos': typeof AuthenticatedTodosRoute
+  '/prototype/vod-player': typeof PrototypeVodPlayerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/images/$': typeof ApiImagesSplatRoute
 }
@@ -75,15 +83,29 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/todos': typeof AuthenticatedTodosRoute
+  '/prototype/vod-player': typeof PrototypeVodPlayerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/images/$': typeof ApiImagesSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/about' | '/profile' | '/todos' | '/api/auth/$' | '/api/images/$'
+    | '/'
+    | '/about'
+    | '/profile'
+    | '/todos'
+    | '/prototype/vod-player'
+    | '/api/auth/$'
+    | '/api/images/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/profile' | '/todos' | '/api/auth/$' | '/api/images/$'
+  to:
+    | '/'
+    | '/about'
+    | '/profile'
+    | '/todos'
+    | '/prototype/vod-player'
+    | '/api/auth/$'
+    | '/api/images/$'
   id:
     | '__root__'
     | '/'
@@ -91,6 +113,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/_authenticated/profile'
     | '/_authenticated/todos'
+    | '/prototype/vod-player'
     | '/api/auth/$'
     | '/api/images/$'
   fileRoutesById: FileRoutesById
@@ -99,6 +122,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  PrototypeVodPlayerRoute: typeof PrototypeVodPlayerRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiImagesSplatRoute: typeof ApiImagesSplatRoute
 }
@@ -140,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTodosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/prototype/vod-player': {
+      id: '/prototype/vod-player'
+      path: '/prototype/vod-player'
+      fullPath: '/prototype/vod-player'
+      preLoaderRoute: typeof PrototypeVodPlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -175,6 +206,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  PrototypeVodPlayerRoute: PrototypeVodPlayerRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiImagesSplatRoute: ApiImagesSplatRoute,
 }
