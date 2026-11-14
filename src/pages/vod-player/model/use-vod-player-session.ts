@@ -2,12 +2,18 @@ import { type RefObject, useCallback, useEffect, useRef, useState } from "react"
 
 import { type CheckpointPoller, createCheckpointPoller } from "./checkpoint-poller";
 import type { VodCheckpoint } from "./vod-detail";
-import { createYouTubeVodPlayerAdapter, type VodPlayerAdapter } from "./vod-player-adapter";
+import {
+  createYouTubeVodPlayerAdapter,
+  type VodPlayerAdapter,
+  type VodPlayerErrorCode,
+} from "./vod-player-adapter";
 
 interface CheckpointAnswer {
   isCorrect: boolean;
   selectedOptionIndex: number;
 }
+
+type VodPlayerFatalError = Exclude<VodPlayerErrorCode, "AUTOPLAY_BLOCKED">;
 
 interface UseVodPlayerSessionInput {
   checkpoints: readonly VodCheckpoint[];
@@ -18,6 +24,7 @@ interface VodPlayerSessionState {
   activeAnswer: CheckpointAnswer | null;
   activeCheckpoint: VodCheckpoint | null;
   answers: ReadonlyMap<string, CheckpointAnswer>;
+  playerError: VodPlayerFatalError | null;
   playerHostRef: RefObject<HTMLDivElement | null>;
   resetSession: () => void;
   resumeVod: () => void;
@@ -44,7 +51,9 @@ interface SessionStore {
   clearAnswers: () => void;
   getAnsweredIds: () => ReadonlySet<string>;
   getCheckpoints: () => readonly VodCheckpoint[];
+  playerError: VodPlayerFatalError | null;
   recordOption: (optionIndex: number) => void;
+  reportFatalError: (errorCode: VodPlayerFatalError) => void;
 }
 
 interface MountVodPlayerSessionInput {
@@ -53,6 +62,7 @@ interface MountVodPlayerSessionInput {
   getAnsweredIds: () => ReadonlySet<string>;
   getCheckpoints: () => readonly VodCheckpoint[];
   onCheckpointReached: (checkpoint: VodCheckpoint) => void;
+  onFatalError: (errorCode: VodPlayerFatalError) => void;
   youtubeVideoId: string;
 }
 
@@ -70,6 +80,7 @@ function useVodPlayerSession({
     activeAnswer: activeCheckpoint ? (store.answers.get(activeCheckpoint.id) ?? null) : null,
     activeCheckpoint,
     answers: store.answers,
+    playerError: store.playerError,
     playerHostRef,
     ...actions,
   };
@@ -84,6 +95,7 @@ function useVodSessionStore(checkpoints: readonly VodCheckpoint[]): SessionStore
   });
   const [activeCheckpointId, setActiveCheckpointId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<ReadonlyMap<string, CheckpointAnswer>>(() => new Map());
+  const [playerError, setPlayerError] = useState<VodPlayerFatalError | null>(null);
 
   useEffect(() => {
     refs.current.checkpoints = checkpoints;
@@ -116,7 +128,9 @@ function useVodSessionStore(checkpoints: readonly VodCheckpoint[]): SessionStore
     clearAnswers,
     getAnsweredIds: useCallback(() => refs.current.answeredIds, []),
     getCheckpoints: useCallback(() => refs.current.checkpoints, []),
+    playerError,
     recordOption,
+    reportFatalError: setPlayerError,
   };
 }
 
@@ -129,7 +143,7 @@ function useVodSessionAdapter({
 }) {
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const controllerRef = useRef<PlayerSessionController | null>(null);
-  const { activateCheckpoint, getAnsweredIds, getCheckpoints } = store;
+  const { activateCheckpoint, getAnsweredIds, getCheckpoints, reportFatalError } = store;
 
   useEffect(() => {
     const container = playerHostRef.current;
@@ -142,10 +156,11 @@ function useVodSessionAdapter({
           onCheckpointReached: (checkpoint) => {
             activateCheckpoint(checkpoint.id);
           },
+          onFatalError: reportFatalError,
           youtubeVideoId,
         })
       : undefined;
-  }, [activateCheckpoint, getAnsweredIds, getCheckpoints, youtubeVideoId]);
+  }, [activateCheckpoint, getAnsweredIds, getCheckpoints, reportFatalError, youtubeVideoId]);
 
   return { controllerRef, playerHostRef };
 }
@@ -222,6 +237,7 @@ function mountVodPlayerSession({
   getAnsweredIds,
   getCheckpoints,
   onCheckpointReached,
+  onFatalError,
   youtubeVideoId,
 }: MountVodPlayerSessionInput): () => void {
   const poller = createCheckpointPoller({
@@ -236,6 +252,15 @@ function mountVodPlayerSession({
 
   const adapter = createYouTubeVodPlayerAdapter({
     container,
+    onError: (errorCode) => {
+      if (errorCode === "AUTOPLAY_BLOCKED") {
+        return;
+      }
+      poller.stop();
+      adapter.destroy();
+      controllerRef.current = null;
+      onFatalError(errorCode);
+    },
     onStateChange: (playerState) => {
       poller.handlePlayerStateChange(playerState);
     },
@@ -255,5 +280,6 @@ export {
   useVodPlayerSession,
   type CheckpointAnswer,
   type UseVodPlayerSessionInput,
+  type VodPlayerFatalError,
   type VodPlayerSessionState,
 };

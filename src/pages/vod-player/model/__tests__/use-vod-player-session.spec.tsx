@@ -252,7 +252,7 @@ describe("vod player session hook", () => {
   });
 
   it("clears activeCheckpoint and calls play on resumeVod even when AUTOPLAY_BLOCKED fires", () => {
-    expect.assertions(4);
+    expect.assertions(5);
 
     // Arrange
     const { adapter, getOptions } = setupMockAdapter();
@@ -279,6 +279,7 @@ describe("vod player session hook", () => {
     expect(harness.getSession().activeCheckpoint).toBeNull();
     expect(harness.getSession().activeAnswer).toBeNull();
     expect(harness.getSession().answers.size).toBe(1);
+    expect(harness.getSession().playerError).toBeNull();
   });
 
   it("handles resumeVod and resetSession safely when playerHostRef is unattached", () => {
@@ -415,4 +416,36 @@ describe("vod player session hook", () => {
     expect(harness.getSession().activeCheckpoint?.id).toBe(firstCheckpoint.id);
     expect(harness.getSession().activeAnswer).toBeNull();
   });
+
+  it.each(["EMBED_DISABLED", "NOT_FOUND", "PLAYBACK_ERROR"] as const)(
+    "records %s playerError, stops polling, destroys adapter, and keeps checkpoint selection safe",
+    (errorCode) => {
+      expect.assertions(5);
+
+      // Arrange
+      const raf = createRafController();
+      const { adapter, getOptions } = setupMockAdapter();
+      const firstCheckpoint = requireCheckpoint(0);
+      const harness = createMountedSessionHarness({
+        checkpoints: TEST_VOD_CHECKPOINTS,
+        youtubeVideoId: TEST_VOD_DETAIL.youtubeVideoId,
+      });
+
+      // Act
+      act(() => {
+        getOptions().onStateChange?.("PLAYING");
+        getOptions().onError?.(errorCode);
+      });
+      act(() => {
+        harness.getSession().selectCheckpoint(firstCheckpoint);
+      });
+
+      // Assert
+      expect(harness.getSession().playerError).toBe(errorCode);
+      expect(raf.frames.size).toBe(0);
+      expect(adapter.destroy).toHaveBeenCalledOnce();
+      expect(adapter.seekTo).not.toHaveBeenCalled();
+      expect(harness.getSession().activeCheckpoint?.id).toBe(firstCheckpoint.id);
+    },
+  );
 });

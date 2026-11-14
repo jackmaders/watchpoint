@@ -328,7 +328,7 @@ describe("vod player page", () => {
   });
 
   it("clears active prompt back to idle on Resume VOD even when AUTOPLAY_BLOCKED occurs", async () => {
-    expect.assertions(4);
+    expect.assertions(5);
 
     // Arrange
     const user = userEvent.setup();
@@ -358,6 +358,7 @@ describe("vod player page", () => {
       ),
     ).toBeDefined();
     expect(screen.getByRole("region", { name: "VOD player" })).toBeDefined();
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("button", { name: "00:45 ✓" }).getAttribute("aria-pressed")).toBe(
       "false",
     );
@@ -468,4 +469,59 @@ describe("vod player page", () => {
     ).toBeDefined();
     expect(pillLabelsAfterReset).toStrictEqual(["00:45", "01:50", "03:05", "04:20"]);
   });
+
+  it.each([
+    {
+      description:
+        "The video owner disabled playback outside YouTube. Watch directly on YouTube or return to the catalogue.",
+      errorCode: "EMBED_DISABLED" as const,
+      title: "Embedding disabled for this video",
+    },
+    {
+      description:
+        "This YouTube video is private, removed, or unavailable. Check YouTube directly or return to the catalogue.",
+      errorCode: "NOT_FOUND" as const,
+      title: "Video not found",
+    },
+    {
+      description:
+        "Playback failed to initialize in the embedded player. Watch directly on YouTube or return to the catalogue.",
+      errorCode: "PLAYBACK_ERROR" as const,
+      title: "Unable to load YouTube player",
+    },
+  ])(
+    "replaces the 16:9 player slot with an inline error card when $errorCode fires",
+    async ({ description, errorCode, title }) => {
+      expect.assertions(5);
+
+      // Arrange
+      const { getOptions } = setupMockAdapter();
+      vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+      await mountVodPlayerPage();
+
+      // Act
+      act(() => {
+        getOptions().onError?.(errorCode);
+      });
+      const fallbackCard = screen.getByRole("alert");
+      const cardScope = within(fallbackCard);
+      const youtubeLink = cardScope.getByRole("link", { name: "Watch on YouTube" });
+      const catalogueLink = cardScope.getByRole("link", { name: "Back to Catalogue" });
+
+      // Assert
+      expect(screen.queryByRole("region", { name: "VOD player" })).toBeNull();
+      expect(cardScope.getByRole("heading", { level: 2, name: title })).toBeDefined();
+      expect(cardScope.getByText(description)).toBeDefined();
+      expect([
+        youtubeLink.getAttribute("href"),
+        youtubeLink.getAttribute("target"),
+        youtubeLink.getAttribute("rel"),
+      ]).toStrictEqual([
+        `https://www.youtube.com/watch?v=${TEST_VOD_DETAIL.youtubeVideoId}`,
+        "_blank",
+        "noopener noreferrer",
+      ]);
+      expect(catalogueLink.getAttribute("href")).toBe("/vods");
+    },
+  );
 });

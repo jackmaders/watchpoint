@@ -5,8 +5,13 @@ import { Button } from "@/shared/ui/shadcn/button";
 
 import { vodDetailQueryOptions } from "../api/vod-detail-query-options";
 import { formatTime } from "../model/format-time";
-import { type CheckpointAnswer, useVodPlayerSession } from "../model/use-vod-player-session";
+import {
+  type CheckpointAnswer,
+  useVodPlayerSession,
+  type VodPlayerFatalError,
+} from "../model/use-vod-player-session";
 import type { VodCheckpoint, VodDetail } from "../model/vod-detail";
+import { VodPlayerErrorCard } from "./vod-player-error-card";
 import { VodPromptPanel } from "./vod-prompt-panel";
 
 interface VodPlayerPageProps {
@@ -18,7 +23,9 @@ interface VodPlayerColumnProps {
   answers: ReadonlyMap<string, CheckpointAnswer>;
   checkpoints: readonly VodCheckpoint[];
   onSelectCheckpoint: (checkpoint: VodCheckpoint) => void;
+  playerError: VodPlayerFatalError | null;
   playerHostRef: RefObject<HTMLDivElement | null>;
+  youtubeVideoId: string;
 }
 
 interface CheckpointPillStripProps {
@@ -39,6 +46,7 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
     activeAnswer,
     activeCheckpoint,
     answers,
+    playerError,
     playerHostRef,
     resetSession,
     resumeVod,
@@ -64,7 +72,9 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
           answers={answers}
           checkpoints={vod.checkpoints}
           onSelectCheckpoint={selectCheckpoint}
+          playerError={playerError}
           playerHostRef={playerHostRef}
+          youtubeVideoId={vod.youtubeVideoId}
         />
         <VodPromptPanel
           activeAnswer={activeAnswer}
@@ -86,16 +96,22 @@ function VodPlayerColumn({
   answers,
   checkpoints,
   onSelectCheckpoint,
+  playerError,
   playerHostRef,
+  youtubeVideoId,
 }: VodPlayerColumnProps) {
   return (
     <div className="space-y-3 lg:min-w-0 lg:flex-1">
-      <section
-        aria-label="VOD player"
-        className="aspect-video w-full overflow-hidden rounded-lg border bg-black"
-      >
-        <div ref={playerHostRef} className="size-full" />
-      </section>
+      {playerError === null ? (
+        <section
+          aria-label="VOD player"
+          className="aspect-video w-full overflow-hidden rounded-lg border bg-black"
+        >
+          <div ref={playerHostRef} className="size-full" />
+        </section>
+      ) : (
+        <VodPlayerErrorCard error={playerError} youtubeVideoId={youtubeVideoId} />
+      )}
       <CheckpointPillStrip
         activeCheckpointId={activeCheckpointId}
         answers={answers}
