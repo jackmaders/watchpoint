@@ -12,11 +12,15 @@ const FIRST_CHECKPOINT_QUESTION =
 const FIRST_CHECKPOINT_OPTION_ONE = "Save Nano Boost strictly as an emergency heal for your Tracer";
 const FIRST_CHECKPOINT_OPTION_TWO =
   "Use Nano Boost to enable your main tank's dive initiation and build momentum";
+const FIRST_CHECKPOINT_EXPLANATION =
+  "Pairing Nano Boost with your Winston's primal engage or dive commitment creates immediate backline pressure and secures space around the first choke.";
 const SECOND_CHECKPOINT_TIME_SEC = 110;
 const SECOND_CHECKPOINT_QUESTION =
   "The enemy Winston dives your backline; how should you sequence Sleep Dart and Biotic Grenade?";
 const SECOND_CHECKPOINT_OPTION_ONE =
   "Bait or wait out his bubble timing, land Sleep Dart, then anti-nade as your team collapses";
+const PASSIVE_SCRUB_START_SEC = 10;
+const PASSIVE_SCRUB_END_SEC = 60;
 
 test("redirects unauthenticated visitors from /vods/$vodId to /", async ({ page }) => {
   // Arrange
@@ -120,7 +124,7 @@ test("clicking a checkpoint pill seeks, pauses playback, and displays that check
     });
 });
 
-test("allows selecting and changing a prompt option on an active checkpoint", async ({
+test("immediately grades selected option, locks options, and reveals explanation", async ({
   page,
   baseURL,
 }) => {
@@ -130,17 +134,13 @@ test("allows selecting and changing a prompt option on an active checkpoint", as
 
   // Act
   await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_ONE);
-  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_TWO);
 
   // Assert
-  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_ONE)).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
-  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_TWO)).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_TWO)).toBeDisabled();
+  await expect(vodPlayerPage.promptFeedback("Incorrect")).toBeVisible();
+  await expect(vodPlayerPage.promptExplanation(FIRST_CHECKPOINT_EXPLANATION)).toBeVisible();
+  await expect(vodPlayerPage.getCheckpointPill("00:45", "incorrect")).toBeVisible();
+  await expect(vodPlayerPage.resumeVodButton).toBeVisible();
 });
 
 test("resets selected option and seeks when switching to another checkpoint pill", async ({
@@ -149,8 +149,7 @@ test("resets selected option and seeks when switching to another checkpoint pill
 }) => {
   // Arrange
   const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
-  await vodPlayerPage.clickCheckpointPill("01:50");
-  await vodPlayerPage.selectPromptOption(SECOND_CHECKPOINT_OPTION_ONE);
+  await vodPlayerPage.answerCheckpoint("01:50", SECOND_CHECKPOINT_OPTION_ONE);
 
   // Act
   await vodPlayerPage.clickCheckpointPill("00:45");
@@ -170,6 +169,103 @@ test("resets selected option and seeks when switching to another checkpoint pill
       state: "PAUSED",
     });
 });
+
+test("shows Correct feedback with ✓ pill and returns to idle playing state on Resume VOD", async ({
+  page,
+  baseURL,
+}) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+
+  // Act & Assert grading
+  await vodPlayerPage.answerCheckpoint("00:45", FIRST_CHECKPOINT_OPTION_TWO);
+  await expect(vodPlayerPage.promptFeedback("Correct")).toBeVisible();
+  await expect(vodPlayerPage.getCheckpointPill("00:45", "correct")).toBeVisible();
+
+  // Act & Assert resume
+  await vodPlayerPage.resumeVod();
+  await expect(vodPlayerPage.idlePromptMessage).toBeVisible();
+  await expect(vodPlayerPage.getCheckpointPill("00:45", "correct")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({ playCount: 1, state: "PLAYING" });
+});
+
+test("clears prompt back to idle on Resume VOD even when AUTOPLAY_BLOCKED occurs", async ({
+  page,
+  baseURL,
+}) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await vodPlayerPage.answerCheckpoint("00:45", FIRST_CHECKPOINT_OPTION_TWO);
+  await vodPlayerPage.blockNextPlay();
+
+  // Act
+  await vodPlayerPage.resumeVod();
+
+  // Assert
+  await expect(vodPlayerPage.idlePromptMessage).toBeVisible();
+  await expect(vodPlayerPage.playerRegion).toBeVisible();
+  await expect(vodPlayerPage.playerErrorCard).toBeHidden();
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({ playCount: 1, state: "PAUSED" });
+});
+
+test("skips answered checkpoints on passive playback and opens review mode on pill click", async ({
+  page,
+  baseURL,
+}) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await triggerAndAnswerFirstCheckpoint(vodPlayerPage, FIRST_CHECKPOINT_OPTION_ONE);
+
+  // Act & Assert passive skip
+  await vodPlayerPage.playbackFromTo(PASSIVE_SCRUB_START_SEC, PASSIVE_SCRUB_END_SEC);
+  await expect(vodPlayerPage.idlePromptMessage).toBeVisible();
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({ state: "PLAYING" });
+
+  // Act & Assert review mode
+  await vodPlayerPage.clickCheckpointPill("00:45", "incorrect");
+  await expect(vodPlayerPage.promptExplanation(FIRST_CHECKPOINT_EXPLANATION)).toBeVisible();
+  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_ONE)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({ currentTime: FIRST_CHECKPOINT_TIME_SEC, state: "PAUSED" });
+});
+
+test("resuming a reviewed checkpoint does not retrigger it", async ({ page, baseURL }) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await triggerAndAnswerFirstCheckpoint(vodPlayerPage, FIRST_CHECKPOINT_OPTION_ONE);
+  await vodPlayerPage.clickCheckpointPill("00:45", "incorrect");
+  const pausedCountAfterReview = await vodPlayerPage.getStubPlayerPausedCount();
+
+  // Act
+  await vodPlayerPage.resumeVod();
+  await vodPlayerPage.playbackFromTo(FIRST_CHECKPOINT_TIME_SEC, PASSIVE_SCRUB_END_SEC);
+
+  // Assert
+  await expect(vodPlayerPage.idlePromptMessage).toBeVisible();
+  await expect(vodPlayerPage.promptExplanation(FIRST_CHECKPOINT_EXPLANATION)).toBeHidden();
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({ pausedCount: pausedCountAfterReview, state: "PLAYING" });
+});
+
+async function triggerAndAnswerFirstCheckpoint(vodPlayerPage: VodPlayerPage, optionText: string) {
+  await vodPlayerPage.simulatePlaybackAcross(FIRST_CHECKPOINT_TIME_SEC);
+  await vodPlayerPage.selectPromptOption(optionText);
+  await vodPlayerPage.resumeVod();
+}
 
 async function openAuthenticatedVodsPage(page: Page, baseURL: string | undefined) {
   const vodsPage = new VodsPage(page);
