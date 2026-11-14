@@ -17,7 +17,7 @@ export function SignUpDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Sign Up</DialogTitle>
-          <DialogDescription>Create an account to start managing your todos</DialogDescription>
+          <DialogDescription>Create an account to start reviewing Overwatch VODs</DialogDescription>
         </DialogHeader>
         <SignUpForm />
       </DialogContent>

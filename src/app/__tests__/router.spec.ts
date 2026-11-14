@@ -45,6 +45,21 @@ describe("router route matching", () => {
 });
 
 describe("router auth route matching", () => {
+  it("matches the vods catalogue page within authenticated layout", () => {
+    expect.assertions(1);
+
+    // Act
+    const router = getRouter();
+    const matches = router.matchRoutes("/vods");
+
+    // Assert
+    expect(matches.map((match) => match.routeId)).toStrictEqual([
+      "__root__",
+      "/_authenticated",
+      "/_authenticated/vods/",
+    ]);
+  });
+
   it("matches the profile page within authenticated layout", () => {
     expect.assertions(1);
 

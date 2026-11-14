@@ -24,14 +24,14 @@ async function renderHeader({
   const { router, wrapper } = createTestingWrapper({
     context: { session },
     initialLocation: initialEntry,
-    routePaths: ["/", "/about", "/todos"],
+    routePaths: ["/", "/about", "/vods"],
   });
   await router.load();
   render(<Header />, { wrapper });
 }
 
 describe("header identity and navigation", () => {
-  it("provides a branded home link and navigation links", async () => {
+  it("provides a branded Watchpoint home link and navigation links", async () => {
     expect.assertions(3);
 
     // Arrange & Act
@@ -39,7 +39,7 @@ describe("header identity and navigation", () => {
     const banner = screen.getByRole("banner");
 
     // Assert
-    expect(within(banner).getByRole("link", { name: "App" }).getAttribute("href")).toBe("/");
+    expect(within(banner).getByRole("link", { name: "Watchpoint" }).getAttribute("href")).toBe("/");
     expect(within(banner).getByRole("link", { name: "Home" }).getAttribute("href")).toBe("/");
     expect(within(banner).getByRole("link", { name: "About" }).getAttribute("href")).toBe("/about");
   });
@@ -54,14 +54,15 @@ describe("header identity and navigation", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
   });
 
-  it("shows todos link and sign out button when user is authenticated", async () => {
-    expect.assertions(2);
+  it("shows VODs link without Todos and sign out button when user is authenticated", async () => {
+    expect.assertions(3);
 
     // Arrange & Act
-    await renderHeader({ initialEntry: "/todos", session: TEST_SESSION });
+    await renderHeader({ initialEntry: "/vods", session: TEST_SESSION });
 
     // Assert
-    expect(screen.getByRole("link", { name: "Todos" }).getAttribute("href")).toBe("/todos");
+    expect(screen.getByRole("link", { name: "VODs" }).getAttribute("href")).toBe("/vods");
+    expect(screen.queryByRole("link", { name: "Todos" })).toBeNull();
     expect(screen.getByRole("button", { name: "Sign Out" })).toBeDefined();
   });
 });
@@ -72,7 +73,7 @@ describe("header auth actions", () => {
 
     // Arrange
     const user = userEvent.setup();
-    await renderHeader({ initialEntry: "/todos", session: TEST_SESSION });
+    await renderHeader({ initialEntry: "/vods", session: TEST_SESSION });
 
     // Act
     await user.click(screen.getByRole("button", { name: "Sign Out" }));
@@ -101,7 +102,7 @@ describe("header auth actions", () => {
 
     // Assert
     expect(within(drawer).getByRole("button", { name: "Sign in" })).toBeDefined();
-    expect(within(drawer).queryByRole("link", { name: "Todos" })).toBeNull();
+    expect(within(drawer).queryByRole("link", { name: "VODs" })).toBeNull();
     expect(error).not.toHaveBeenCalled();
     expect(warning).not.toHaveBeenCalled();
   });
@@ -111,10 +112,10 @@ describe("header auth actions", () => {
 
     // Arrange
     const user = userEvent.setup();
-    await renderHeader({ initialEntry: "/todos", session: TEST_SESSION });
+    await renderHeader({ initialEntry: "/vods", session: TEST_SESSION });
     await user.click(screen.getByRole("button", { name: "Open menu" }));
     const drawer = await screen.findByRole("dialog");
-    const todos = within(drawer).getByRole("link", { name: "Todos" });
+    const vods = within(drawer).getByRole("link", { name: "VODs" });
 
     // Act
     await user.click(within(drawer).getByRole("button", { name: "Sign Out" }));
@@ -125,7 +126,7 @@ describe("header auth actions", () => {
     );
 
     // Assert
-    expect(todos.getAttribute("href")).toBe("/todos");
+    expect(vods.getAttribute("href")).toBe("/vods");
     expect(signOut).toHaveBeenCalledWith();
   });
 });

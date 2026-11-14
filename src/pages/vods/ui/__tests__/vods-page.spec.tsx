@@ -24,19 +24,18 @@ function mountVodsPage(vods: VodCatalogueItem[]) {
 
 describe("vods page", () => {
   it("renders the VOD Catalogue heading and a card for each VOD", async () => {
-    expect.assertions(5);
+    expect.assertions(3);
 
     // Arrange & Act
     mountVodsPage(TEST_VODS);
     const heading = await screen.findByRole("heading", { level: 1, name: "VOD Catalogue" });
     const items = screen.getAllByRole("listitem");
+    const linkTitles = screen.getAllByRole("link").map((link) => link.textContent);
 
     // Assert
     expect(heading).toBeDefined();
     expect(items).toHaveLength(3);
-    expect(screen.getByRole("link", { name: TEST_VODS[0]?.title })).toBeDefined();
-    expect(screen.getByRole("link", { name: TEST_VODS[1]?.title })).toBeDefined();
-    expect(screen.getByRole("link", { name: TEST_VODS[2]?.title })).toBeDefined();
+    expect(linkTitles).toStrictEqual(TEST_VODS.map((vod) => vod.title));
   });
 
   it("renders an empty state card when no VODs are available", async () => {
