@@ -234,7 +234,7 @@ describe("vod player page", () => {
     expect(promptScope.getByText(secondCheckpoint.question)).toBeDefined();
   });
 
-  it("supports single-select option buttons and clears selection when switching checkpoints", async () => {
+  it("grades option immediately, locks options, and shows unselected options when switching to an unanswered checkpoint", async () => {
     expect.assertions(5);
 
     // Arrange
@@ -247,13 +247,13 @@ describe("vod player page", () => {
 
     // Act
     await user.click(screen.getByRole("button", { name: "00:45" }));
-    const firstOption = screen.getByRole("button", { name: requireOption(firstCheckpoint, 0) });
-    const secondOption = screen.getByRole("button", { name: requireOption(firstCheckpoint, 1) });
-    await user.click(firstOption);
-    const firstPressedAfterFirstClick = firstOption.getAttribute("aria-pressed");
-    await user.click(secondOption);
-    const firstPressedAfterSecondClick = firstOption.getAttribute("aria-pressed");
-    const secondPressedAfterSecondClick = secondOption.getAttribute("aria-pressed");
+    const wrongOption = screen.getByRole("button", { name: requireOption(firstCheckpoint, 0) });
+    const rightOption = screen.getByRole("button", {
+      name: requireOption(firstCheckpoint, firstCheckpoint.correctOptionIndex),
+    });
+    await user.click(wrongOption);
+    const wrongPressed = wrongOption.getAttribute("aria-pressed");
+    const rightDisabledAfterAnswer = (rightOption as HTMLButtonElement).disabled;
 
     await user.click(screen.getByRole("button", { name: "01:50" }));
     const nextCheckpointFirstOption = screen.getByRole("button", {
@@ -261,12 +261,211 @@ describe("vod player page", () => {
     });
 
     // Assert
-    expect(firstPressedAfterFirstClick).toBe("true");
-    expect(firstPressedAfterSecondClick).toBe("false");
-    expect(secondPressedAfterSecondClick).toBe("true");
+    expect(wrongPressed).toBe("true");
+    expect(rightDisabledAfterAnswer).toBe(true);
     expect(nextCheckpointFirstOption.getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByRole("button", { name: "00:45" }).getAttribute("aria-pressed")).toBe(
+    expect((nextCheckpointFirstOption as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByRole("button", { name: "00:45 ✕" }).getAttribute("aria-pressed")).toBe(
       "false",
     );
+  });
+
+  it("reveals Correct feedback, coaching explanation, ✓ pill, and Resume VOD on correct selection", async () => {
+    expect.assertions(5);
+
+    // Arrange
+    const user = userEvent.setup();
+    setupMockAdapter();
+    const firstCheckpoint = requireCheckpoint(0);
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+    await mountVodPlayerPage();
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "00:45" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: requireOption(firstCheckpoint, firstCheckpoint.correctOptionIndex),
+      }),
+    );
+    const promptPanel = screen.getByRole("complementary", { name: "Checkpoint prompt" });
+    const promptScope = within(promptPanel);
+
+    // Assert
+    expect(promptScope.getByText("Correct")).toBeDefined();
+    expect(promptScope.getByText(firstCheckpoint.explanation)).toBeDefined();
+    expect(promptScope.getByRole("button", { name: "Resume VOD" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "00:45 ✓" })).toBeDefined();
+    expect(
+      screen
+        .getByRole("button", {
+          name: requireOption(firstCheckpoint, firstCheckpoint.correctOptionIndex),
+        })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("reveals Incorrect feedback, explanation, and ✕ pill on wrong selection", async () => {
+    expect.assertions(4);
+
+    // Arrange
+    const user = userEvent.setup();
+    setupMockAdapter();
+    const firstCheckpoint = requireCheckpoint(0);
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+    await mountVodPlayerPage();
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "00:45" }));
+    await user.click(screen.getByRole("button", { name: requireOption(firstCheckpoint, 0) }));
+    const promptPanel = screen.getByRole("complementary", { name: "Checkpoint prompt" });
+    const promptScope = within(promptPanel);
+
+    // Assert
+    expect(promptScope.getByText("Incorrect")).toBeDefined();
+    expect(promptScope.getByText(firstCheckpoint.explanation)).toBeDefined();
+    expect(promptScope.getByRole("button", { name: "Resume VOD" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "00:45 ✕" })).toBeDefined();
+  });
+
+  it("clears active prompt back to idle on Resume VOD even when AUTOPLAY_BLOCKED occurs", async () => {
+    expect.assertions(4);
+
+    // Arrange
+    const user = userEvent.setup();
+    const { adapter, getOptions } = setupMockAdapter();
+    const firstCheckpoint = requireCheckpoint(0);
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+    await mountVodPlayerPage();
+    adapter.play.mockImplementationOnce(() => {
+      getOptions().onError?.("AUTOPLAY_BLOCKED");
+    });
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "00:45" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: requireOption(firstCheckpoint, firstCheckpoint.correctOptionIndex),
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Resume VOD" }));
+    const promptPanel = screen.getByRole("complementary", { name: "Checkpoint prompt" });
+
+    // Assert
+    expect(adapter.play).toHaveBeenCalledOnce();
+    expect(
+      within(promptPanel).getByText(
+        "Play the video. Playback pauses automatically at each Checkpoint.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByRole("region", { name: "VOD player" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "00:45 ✓" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+  });
+
+  it("skips answered checkpoints on passive playback and reopens them in review mode on pill click", async () => {
+    expect.assertions(5);
+
+    // Arrange
+    const user = userEvent.setup();
+    const raf = createRafController();
+    const { adapter, getOptions } = setupMockAdapter();
+    const firstCheckpoint = requireCheckpoint(0);
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+    await mountVodPlayerPage();
+    let currentTimeSec = 10;
+    adapter.getCurrentTime.mockImplementation(() => currentTimeSec);
+
+    // Act: trigger and answer checkpoint 1, resume, then scrub back and play past checkpoint 1
+    act(() => {
+      getOptions().onStateChange?.("PLAYING");
+      raf.flushFrame();
+    });
+    currentTimeSec = firstCheckpoint.timeSec;
+    act(() => {
+      raf.flushFrame();
+    });
+    await user.click(screen.getByRole("button", { name: requireOption(firstCheckpoint, 0) }));
+    await user.click(screen.getByRole("button", { name: "Resume VOD" }));
+    currentTimeSec = 10;
+    act(() => {
+      getOptions().onStateChange?.("PLAYING");
+      raf.flushFrame();
+    });
+    currentTimeSec = firstCheckpoint.timeSec + 10;
+    act(() => {
+      raf.flushFrame();
+    });
+    const promptDuringPassiveSkip = within(
+      screen.getByRole("complementary", { name: "Checkpoint prompt" }),
+    ).getByText("Play the video. Playback pauses automatically at each Checkpoint.");
+
+    // Act: click answered pill to enter review mode
+    await user.click(screen.getByRole("button", { name: "00:45 ✕" }));
+    const promptScope = within(screen.getByRole("complementary", { name: "Checkpoint prompt" }));
+
+    // Assert
+    expect(promptDuringPassiveSkip).toBeDefined();
+    expect(adapter.seekTo).toHaveBeenCalledWith(firstCheckpoint.timeSec);
+    expect(promptScope.getByText("Incorrect")).toBeDefined();
+    expect(promptScope.getByText(firstCheckpoint.explanation)).toBeDefined();
+    expect(
+      promptScope
+        .getByRole("button", { name: requireOption(firstCheckpoint, 0) })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("shows completion summary after all checkpoints are answered and resets session state on Reset Session", async () => {
+    expect.assertions(5);
+
+    // Arrange
+    const user = userEvent.setup();
+    setupMockAdapter();
+    const cp1 = requireCheckpoint(0);
+    const cp2 = requireCheckpoint(1);
+    const cp3 = requireCheckpoint(2);
+    const cp4 = requireCheckpoint(3);
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(TEST_VOD_DETAIL);
+    await mountVodPlayerPage();
+
+    // Act: answer 3 correct, 1 incorrect
+    await user.click(screen.getByRole("button", { name: "00:45" }));
+    await user.click(
+      screen.getByRole("button", { name: requireOption(cp1, cp1.correctOptionIndex) }),
+    );
+    await user.click(screen.getByRole("button", { name: "01:50" }));
+    await user.click(screen.getByRole("button", { name: requireOption(cp2, 1) }));
+    await user.click(screen.getByRole("button", { name: "03:05" }));
+    await user.click(
+      screen.getByRole("button", { name: requireOption(cp3, cp3.correctOptionIndex) }),
+    );
+    await user.click(screen.getByRole("button", { name: "04:20" }));
+    await user.click(
+      screen.getByRole("button", { name: requireOption(cp4, cp4.correctOptionIndex) }),
+    );
+    const summaryBeforeResume = screen.queryByText("3 / 4 correct");
+    await user.click(screen.getByRole("button", { name: "Resume VOD" }));
+    const promptPanel = screen.getByRole("complementary", { name: "Checkpoint prompt" });
+    const scoreText = within(promptPanel).getByText("3 / 4 correct");
+    const backLinkHref = within(promptPanel)
+      .getByRole("link", { name: "Back to Catalogue" })
+      .getAttribute("href");
+
+    await user.click(within(promptPanel).getByRole("button", { name: "Reset Session" }));
+    const pillLabelsAfterReset = within(screen.getByRole("group", { name: "Checkpoints" }))
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+
+    // Assert
+    expect(summaryBeforeResume).toBeNull();
+    expect(scoreText).toBeDefined();
+    expect(backLinkHref).toBe("/vods");
+    expect(
+      within(promptPanel).getByText(
+        "Play the video. Playback pauses automatically at each Checkpoint.",
+      ),
+    ).toBeDefined();
+    expect(pillLabelsAfterReset).toStrictEqual(["00:45", "01:50", "03:05", "04:20"]);
   });
 });

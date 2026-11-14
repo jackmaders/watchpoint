@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/shadcn/button";
 
 import { vodDetailQueryOptions } from "../api/vod-detail-query-options";
 import { formatTime } from "../model/format-time";
-import { useVodPlayerSession } from "../model/use-vod-player-session";
+import { type CheckpointAnswer, useVodPlayerSession } from "../model/use-vod-player-session";
 import type { VodCheckpoint, VodDetail } from "../model/vod-detail";
 import { VodPromptPanel } from "./vod-prompt-panel";
 
@@ -15,6 +15,7 @@ interface VodPlayerPageProps {
 
 interface VodPlayerColumnProps {
   activeCheckpointId: string | null;
+  answers: ReadonlyMap<string, CheckpointAnswer>;
   checkpoints: readonly VodCheckpoint[];
   onSelectCheckpoint: (checkpoint: VodCheckpoint) => void;
   playerHostRef: RefObject<HTMLDivElement | null>;
@@ -22,6 +23,7 @@ interface VodPlayerColumnProps {
 
 interface CheckpointPillStripProps {
   activeCheckpointId: string | null;
+  answers: ReadonlyMap<string, CheckpointAnswer>;
   checkpoints: readonly VodCheckpoint[];
   onSelectCheckpoint: (checkpoint: VodCheckpoint) => void;
 }
@@ -33,11 +35,25 @@ function VodPlayerPage({ vodId }: VodPlayerPageProps) {
 }
 
 function VodPlayerStudio({ vod }: { vod: VodDetail }) {
-  const { activeCheckpoint, playerHostRef, selectCheckpoint, selectOption, selectedOptionIndex } =
-    useVodPlayerSession({
-      checkpoints: vod.checkpoints,
-      youtubeVideoId: vod.youtubeVideoId,
-    });
+  const {
+    activeAnswer,
+    activeCheckpoint,
+    answers,
+    playerHostRef,
+    resetSession,
+    resumeVod,
+    selectCheckpoint,
+    selectOption,
+  } = useVodPlayerSession({
+    checkpoints: vod.checkpoints,
+    youtubeVideoId: vod.youtubeVideoId,
+  });
+  const totalCheckpoints = vod.checkpoints.length;
+  const correctCount = vod.checkpoints.filter(
+    (checkpoint) => answers.get(checkpoint.id)?.isCorrect === true,
+  ).length;
+  const isSessionComplete =
+    totalCheckpoints > 0 && vod.checkpoints.every((checkpoint) => answers.has(checkpoint.id));
 
   return (
     <section className="space-y-4">
@@ -45,14 +61,20 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
       <div className="flex flex-col gap-6 lg:flex-row">
         <VodPlayerColumn
           activeCheckpointId={activeCheckpoint?.id ?? null}
+          answers={answers}
           checkpoints={vod.checkpoints}
           onSelectCheckpoint={selectCheckpoint}
           playerHostRef={playerHostRef}
         />
         <VodPromptPanel
+          activeAnswer={activeAnswer}
           activeCheckpoint={activeCheckpoint}
+          correctCount={correctCount}
+          isSessionComplete={isSessionComplete}
+          onResetSession={resetSession}
+          onResumeVod={resumeVod}
           onSelectOption={selectOption}
-          selectedOptionIndex={selectedOptionIndex}
+          totalCheckpoints={totalCheckpoints}
         />
       </div>
     </section>
@@ -61,6 +83,7 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
 
 function VodPlayerColumn({
   activeCheckpointId,
+  answers,
   checkpoints,
   onSelectCheckpoint,
   playerHostRef,
@@ -75,6 +98,7 @@ function VodPlayerColumn({
       </section>
       <CheckpointPillStrip
         activeCheckpointId={activeCheckpointId}
+        answers={answers}
         checkpoints={checkpoints}
         onSelectCheckpoint={onSelectCheckpoint}
       />
@@ -84,6 +108,7 @@ function VodPlayerColumn({
 
 function CheckpointPillStrip({
   activeCheckpointId,
+  answers,
   checkpoints,
   onSelectCheckpoint,
 }: CheckpointPillStripProps) {
@@ -95,6 +120,8 @@ function CheckpointPillStrip({
     <fieldset aria-label="Checkpoints" className="flex flex-wrap gap-2">
       {checkpoints.map((checkpoint) => {
         const isActive = activeCheckpointId === checkpoint.id;
+        const statusSymbol = getCheckpointStatusSymbol(answers.get(checkpoint.id));
+
         return (
           <Button
             key={checkpoint.id}
@@ -107,11 +134,19 @@ function CheckpointPillStrip({
             }}
           >
             <span className="font-mono text-xs">{formatTime(checkpoint.timeSec)}</span>
+            {statusSymbol === null ? null : <span>{statusSymbol}</span>}
           </Button>
         );
       })}
     </fieldset>
   );
+}
+
+function getCheckpointStatusSymbol(answer: CheckpointAnswer | undefined): string | null {
+  if (!answer) {
+    return null;
+  }
+  return answer.isCorrect ? "✓" : "✕";
 }
 
 export { VodPlayerPage };
