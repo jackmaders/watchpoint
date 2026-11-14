@@ -1,10 +1,10 @@
 import type { UserRole } from "../db/schema";
 
-type Permission = "todos:read" | "todos:create" | "todos:update" | "todos:delete";
+type Permission = "vods:read";
 
 const ROLE_PERMISSIONS = new Map<UserRole, readonly Permission[]>([
-  ["admin", ["todos:read", "todos:create", "todos:update", "todos:delete"]],
-  ["user", ["todos:read", "todos:create", "todos:update", "todos:delete"]],
+  ["admin", ["vods:read"]],
+  ["user", ["vods:read"]],
 ]);
 
 function hasPermission(role: UserRole | undefined, permission: Permission): boolean {

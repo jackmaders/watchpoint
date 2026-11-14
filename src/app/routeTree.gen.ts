@@ -13,9 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedTodosRouteImport } from './routes/_authenticated/todos'
+import { Route as AuthenticatedVodsIndexRouteImport } from './routes/_authenticated/vods/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiImagesSplatRouteImport } from './routes/api/images/$'
+import { Route as AuthenticatedVodsVodIdIndexRouteImport } from './routes/_authenticated/vods/$vodId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,9 +36,9 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedTodosRoute = AuthenticatedTodosRouteImport.update({
-  id: '/todos',
-  path: '/todos',
+const AuthenticatedVodsIndexRoute = AuthenticatedVodsIndexRouteImport.update({
+  id: '/vods/',
+  path: '/vods/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -46,27 +46,28 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiImagesSplatRoute = ApiImagesSplatRouteImport.update({
-  id: '/api/images/$',
-  path: '/api/images/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedVodsVodIdIndexRoute =
+  AuthenticatedVodsVodIdIndexRouteImport.update({
+    id: '/vods/$vodId/',
+    path: '/vods/$vodId/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/profile': typeof AuthenticatedProfileRoute
-  '/todos': typeof AuthenticatedTodosRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/images/$': typeof ApiImagesSplatRoute
+  '/vods/': typeof AuthenticatedVodsIndexRoute
+  '/vods/$vodId/': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/profile': typeof AuthenticatedProfileRoute
-  '/todos': typeof AuthenticatedTodosRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/images/$': typeof ApiImagesSplatRoute
+  '/vods': typeof AuthenticatedVodsIndexRoute
+  '/vods/$vodId': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -74,25 +75,25 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
-  '/_authenticated/todos': typeof AuthenticatedTodosRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/images/$': typeof ApiImagesSplatRoute
+  '/_authenticated/vods/': typeof AuthenticatedVodsIndexRoute
+  '/_authenticated/vods/$vodId/': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/about' | '/profile' | '/todos' | '/api/auth/$' | '/api/images/$'
+    '/' | '/about' | '/profile' | '/api/auth/$' | '/vods/' | '/vods/$vodId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/profile' | '/todos' | '/api/auth/$' | '/api/images/$'
+  to: '/' | '/about' | '/profile' | '/api/auth/$' | '/vods' | '/vods/$vodId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/about'
     | '/_authenticated/profile'
-    | '/_authenticated/todos'
     | '/api/auth/$'
-    | '/api/images/$'
+    | '/_authenticated/vods/'
+    | '/_authenticated/vods/$vodId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,7 +101,6 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiImagesSplatRoute: typeof ApiImagesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -133,11 +133,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/todos': {
-      id: '/_authenticated/todos'
-      path: '/todos'
-      fullPath: '/todos'
-      preLoaderRoute: typeof AuthenticatedTodosRouteImport
+    '/_authenticated/vods/': {
+      id: '/_authenticated/vods/'
+      path: '/vods'
+      fullPath: '/vods/'
+      preLoaderRoute: typeof AuthenticatedVodsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/auth/$': {
@@ -147,24 +147,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/images/$': {
-      id: '/api/images/$'
-      path: '/api/images/$'
-      fullPath: '/api/images/$'
-      preLoaderRoute: typeof ApiImagesSplatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/vods/$vodId/': {
+      id: '/_authenticated/vods/$vodId/'
+      path: '/vods/$vodId'
+      fullPath: '/vods/$vodId/'
+      preLoaderRoute: typeof AuthenticatedVodsVodIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
-  AuthenticatedTodosRoute: typeof AuthenticatedTodosRoute
+  AuthenticatedVodsIndexRoute: typeof AuthenticatedVodsIndexRoute
+  AuthenticatedVodsVodIdIndexRoute: typeof AuthenticatedVodsVodIdIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
-  AuthenticatedTodosRoute: AuthenticatedTodosRoute,
+  AuthenticatedVodsIndexRoute: AuthenticatedVodsIndexRoute,
+  AuthenticatedVodsVodIdIndexRoute: AuthenticatedVodsVodIdIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -176,7 +178,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiImagesSplatRoute: ApiImagesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,7 +8,7 @@ import { getRouteOption } from "@test/vitest/helpers/route";
 vi.mock(import("@/pages/home"));
 
 describe("index route beforeLoad guard", () => {
-  it("redirects authenticated user to /todos", () => {
+  it("redirects authenticated user to /vods", () => {
     expect.assertions(1);
 
     // Arrange
@@ -20,7 +20,7 @@ describe("index route beforeLoad guard", () => {
       beforeLoad(args);
     }).toThrow(
       expect.objectContaining({
-        options: expect.objectContaining({ to: "/todos" }) as unknown,
+        options: expect.objectContaining({ to: "/vods" }) as unknown,
       }),
     );
   });

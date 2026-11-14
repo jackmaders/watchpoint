@@ -28,7 +28,7 @@ describe("error middleware", () => {
     expect(actual).toBe(result);
   });
 
-  it.each(["TODO_NOT_FOUND", "TODO_CREATE_FAILED"] as const)(
+  it.each(["VOD_NOT_FOUND", "USER_FORBIDDEN", "INTERNAL_SERVER_ERROR"] as const)(
     "preserves %s application errors",
     async (code) => {
       expect.assertions(1);

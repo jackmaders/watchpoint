@@ -5,33 +5,27 @@ import { hasPermission } from "../permissions";
 
 describe("hasPermission authorization helper", () => {
   describe("admin role", () => {
-    it.each(["todos:read", "todos:create", "todos:update", "todos:delete"] as const)(
-      "grants %s permission",
-      (permission) => {
-        expect.assertions(1);
+    it.each(["vods:read"] as const)("grants %s permission", (permission) => {
+      expect.assertions(1);
 
-        // Act
-        const result = hasPermission("admin", permission);
+      // Act
+      const result = hasPermission("admin", permission);
 
-        // Assert
-        expect(result).toBe(true);
-      },
-    );
+      // Assert
+      expect(result).toBe(true);
+    });
   });
 
   describe("user role", () => {
-    it.each(["todos:read", "todos:create", "todos:update", "todos:delete"] as const)(
-      "grants %s permission",
-      (permission) => {
-        expect.assertions(1);
+    it.each(["vods:read"] as const)("grants %s permission", (permission) => {
+      expect.assertions(1);
 
-        // Act
-        const result = hasPermission("user", permission);
+      // Act
+      const result = hasPermission("user", permission);
 
-        // Assert
-        expect(result).toBe(true);
-      },
-    );
+      // Assert
+      expect(result).toBe(true);
+    });
   });
 
   describe("missing or unrecognized role", () => {
@@ -39,7 +33,7 @@ describe("hasPermission authorization helper", () => {
       expect.assertions(1);
 
       // Act
-      const result = hasPermission(undefined, "todos:read");
+      const result = hasPermission(undefined, "vods:read");
 
       // Assert
       expect(result).toBe(false);
@@ -49,7 +43,7 @@ describe("hasPermission authorization helper", () => {
       expect.assertions(1);
 
       // Act
-      const result = hasPermission("guest" as unknown as UserRole, "todos:read");
+      const result = hasPermission("guest" as unknown as UserRole, "vods:read");
 
       // Assert
       expect(result).toBe(false);

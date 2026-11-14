@@ -4,6 +4,7 @@ import { waitForHydration } from "./hydration";
 
 class HomePage {
   public readonly heading: Locator;
+  public readonly signInHeading: Locator;
   public readonly signUpHeading: Locator;
   public readonly signInTab: Locator;
   public readonly signUpTab: Locator;
@@ -16,7 +17,8 @@ class HomePage {
 
   public constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole("main").getByRole("heading", { name: "Sign In" });
+    this.heading = page.getByRole("main").getByRole("heading", { level: 1, name: "Watchpoint" });
+    this.signInHeading = page.getByRole("main").getByRole("heading", { name: "Sign In" });
     this.signUpHeading = page.getByRole("main").getByRole("heading", { name: "Sign Up" });
     this.signInTab = page.getByRole("tab", { name: "Sign In" });
     this.signUpTab = page.getByRole("tab", { name: "Sign Up" });
@@ -26,6 +28,12 @@ class HomePage {
     this.submitButton = page
       .getByRole("main")
       .getByRole("button", { name: /sign in|create account/iu });
+  }
+
+  public get pitch(): Locator {
+    return this.page
+      .getByRole("main")
+      .getByText("Structured Overwatch VOD review with auto-paused decision Checkpoints.");
   }
 
   public async goto() {

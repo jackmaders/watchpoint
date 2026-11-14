@@ -1,1 +1,10 @@
-export { todos, type Todo } from "./schema";
+export {
+  checkpoints,
+  competitiveTiers,
+  skillCategories,
+  vods,
+  type Checkpoint,
+  type CompetitiveTier,
+  type SkillCategory,
+  type Vod,
+} from "./schema";

@@ -9,7 +9,7 @@ export function SignInCard() {
         <CardTitle>
           <h2>Sign In</h2>
         </CardTitle>
-        <CardDescription>Enter your credentials to access your todos</CardDescription>
+        <CardDescription>Enter your credentials to access Watchpoint VOD reviews</CardDescription>
       </CardHeader>
       <CardContent>
         <SignInForm />

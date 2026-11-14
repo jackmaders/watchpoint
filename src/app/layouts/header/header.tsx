@@ -1,6 +1,6 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { cn } from "cn";
-import { CheckSquare } from "lucide-react";
+import { Crosshair } from "lucide-react";
 import type { ComponentProps } from "react";
 
 import { SignInDialog } from "@/features/user-sign-in";
@@ -14,12 +14,12 @@ const rootRouteApi = getRouteApi("__root__");
 
 export function Header({ className, ...props }: ComponentProps<"header">) {
   const { session } = rootRouteApi.useRouteContext();
-  const canReadTodos = hasPermission(session?.user.role, "todos:read");
+  const canReadVods = hasPermission(session?.user.role, "vods:read");
 
   const links: ComponentProps<typeof Link>[] = [
     { children: "Home", to: "/" },
     { children: "About", to: "/about" },
-    ...(canReadTodos ? [{ children: "Todos", to: "/todos" }] : []),
+    ...(canReadVods ? [{ children: "VODs", to: "/vods" }] : []),
   ];
 
   return (
@@ -52,8 +52,8 @@ export function Header({ className, ...props }: ComponentProps<"header">) {
 function Logo({ className, ...props }: ComponentProps<"div">) {
   return (
     <div className={cn("flex items-center gap-2", className)} {...props}>
-      <CheckSquare className="size-5" />
-      <span>App</span>
+      <Crosshair className="size-5" />
+      <span>Watchpoint</span>
     </div>
   );
 }
