@@ -8,8 +8,8 @@ import { checkpoints, vods } from "@/shared/db/schema";
 import { seedVods } from "../../vods";
 
 describe("seedVods database seeder", () => {
-  it("seeds the three curated OWCS Korea VODs and twelve checkpoints", async () => {
-    expect.assertions(8);
+  it("seeds the three curated OWCS Korea VODs in curated order", async () => {
+    expect.assertions(3);
 
     // Arrange
     const db = getDb(env.DB);
@@ -17,14 +17,9 @@ describe("seedVods database seeder", () => {
     // Act
     await seedVods(db);
     const seededVods = await db.select().from(vods).orderBy(asc(vods.curatedOrder));
-    const seededCheckpoints = await db
-      .select()
-      .from(checkpoints)
-      .orderBy(asc(checkpoints.vodId), asc(checkpoints.timeSec));
 
     // Assert
     expect(seededVods).toHaveLength(3);
-    expect(seededCheckpoints).toHaveLength(12);
     expect(seededVods.map((vod) => vod.id)).toStrictEqual([
       "shu-ana-owcs-kr-s3",
       "junbin-winston-owcs-kr-s3",
@@ -38,10 +33,26 @@ describe("seedVods database seeder", () => {
       title: "[ Shu ] Ana Main Madness | Zeta Division vs Team Falcons | OWCS Korea Stage 3",
       youtubeVideoId: "Ha5QwBV3Rhk",
     });
+  });
 
+  it("seeds twelve checkpoints covering all skill categories per VOD", async () => {
+    expect.assertions(5);
+
+    // Arrange
+    const db = getDb(env.DB);
+
+    // Act
+    await seedVods(db);
+    const seededCheckpoints = await db
+      .select()
+      .from(checkpoints)
+      .orderBy(asc(checkpoints.vodId), asc(checkpoints.timeSec));
     const junbinCheckpoints = seededCheckpoints.filter(
       (cp) => cp.vodId === "junbin-winston-owcs-kr-s3",
     );
+
+    // Assert
+    expect(seededCheckpoints).toHaveLength(12);
     expect(junbinCheckpoints).toHaveLength(4);
     expect(junbinCheckpoints.map((cp) => cp.skillCategory)).toStrictEqual([
       "Strategy",

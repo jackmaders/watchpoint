@@ -21,6 +21,20 @@ describe("vods-service getVods", () => {
     expect(result).toStrictEqual([]);
   });
 
+  it("uses the default database context when called without arguments", async () => {
+    expect.assertions(1);
+
+    // Arrange
+    const db = getDb(env.DB);
+    await seedVods(db);
+
+    // Act
+    const result = await getVods();
+
+    // Assert
+    expect(result).toHaveLength(3);
+  });
+
   it("returns curated VODs ordered by curatedOrder with derived role, checkpointCount, and skillCategories", async () => {
     expect.assertions(4);
 
