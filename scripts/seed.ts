@@ -2,9 +2,12 @@ import { drizzle } from "drizzle-orm/d1";
 // oxlint-disable node/no-top-level-await -- CLI entrypoint uses top-level await for clean exit codes on failure.
 import { getPlatformProxy } from "wrangler";
 
-import { seedAdmin } from "../src/shared/db/seed";
+import { seedAdmin, seedVods } from "../src/shared/db/seed";
 
-const seeders = [{ name: "seedAdmin", seeder: seedAdmin }];
+const seeders = [
+  { name: "seedAdmin", seeder: seedAdmin },
+  { name: "seedVods", seeder: seedVods },
+];
 
 const proxy = await getPlatformProxy<{ DB: Parameters<typeof drizzle>[0] }>();
 
