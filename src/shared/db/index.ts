@@ -1,5 +1,6 @@
 export {
   checkpoints,
+  competitiveTiers,
   skillCategories,
   vods,
   type Checkpoint,
