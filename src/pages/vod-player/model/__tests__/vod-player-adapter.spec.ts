@@ -10,7 +10,7 @@ interface CapturedYouTubePlayerOptions {
   events?: {
     onAutoplayBlocked?: () => void;
     onError?: (event: { data: number }) => void;
-    onReady?: () => void;
+    onReady?: (event?: { target?: FakeYouTubePlayer }) => void;
     onStateChange?: (event: { data: number }) => void;
   };
   host?: string;
@@ -18,7 +18,17 @@ interface CapturedYouTubePlayerOptions {
   videoId: string;
 }
 
-function createFakeYouTubeEnvironment() {
+interface FakeYouTubePlayer {
+  destroy: () => void;
+  getCurrentTime: () => number;
+  pauseVideo: () => void;
+  playVideo: () => void;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+}
+
+function createFakeYouTubeEnvironment(
+  onConstruct?: (player: FakeYouTubePlayer, options: CapturedYouTubePlayerOptions) => void,
+) {
   const calls: {
     element: HTMLElement | string;
     options: CapturedYouTubePlayerOptions;
@@ -41,6 +51,7 @@ function createFakeYouTubeEnvironment() {
 
     public constructor(element: HTMLElement | string, options: CapturedYouTubePlayerOptions) {
       calls.push({ element, options });
+      onConstruct?.(this, options);
     }
   }
 
@@ -189,7 +200,7 @@ describe("youtube vod player adapter", () => {
     expect(script.isConnected).toBe(false);
   });
 
-  it("ignores play/pause and queues seekTo before onReady fires", () => {
+  it("queues seekTo and pause before onReady fires and ignores pre-ready play", () => {
     expect.assertions(5);
 
     // Arrange
@@ -202,19 +213,79 @@ describe("youtube vod player adapter", () => {
     adapter.load("Ha5QwBV3Rhk");
     const timeBeforeReady = adapter.getCurrentTime();
     adapter.play();
-    adapter.pause();
     adapter.seekTo(45);
+    adapter.pause();
     const [call] = fakeEnv.calls;
 
     // Assert before ready
-    expect(timeBeforeReady).toBe(0);
-    expect(fakeEnv.playerInstance.playVideo).not.toHaveBeenCalled();
-    expect(fakeEnv.playerInstance.pauseVideo).not.toHaveBeenCalled();
-    expect(fakeEnv.playerInstance.seekTo).not.toHaveBeenCalled();
+    expect([
+      timeBeforeReady,
+      fakeEnv.playerInstance.playVideo.mock.calls.length,
+      fakeEnv.playerInstance.pauseVideo.mock.calls.length,
+      fakeEnv.playerInstance.seekTo.mock.calls.length,
+    ]).toStrictEqual([0, 0, 0, 0]);
 
     // Act ready
     call?.options.events?.onReady?.();
     expect(fakeEnv.playerInstance.seekTo).toHaveBeenCalledWith(45, true);
+    expect(fakeEnv.playerInstance.pauseVideo).toHaveBeenCalledOnce();
+    expect(fakeEnv.playerInstance.playVideo).not.toHaveBeenCalled();
+    expect(adapter.getCurrentTime()).toBe(0);
+  });
+
+  it("clears queued pre-ready pause when play is called before onReady", () => {
+    expect.assertions(2);
+
+    // Arrange
+    const container = createHostContainer();
+    const fakeEnv = createFakeYouTubeEnvironment();
+    window.YT = { Player: fakeEnv.Player };
+    const adapter = createYouTubeVodPlayerAdapter({ container });
+
+    // Act
+    adapter.load("Ha5QwBV3Rhk");
+    adapter.pause();
+    adapter.play();
+    fakeEnv.calls[0]?.options.events?.onReady?.();
+
+    // Assert
+    expect(fakeEnv.playerInstance.playVideo).not.toHaveBeenCalled();
+    expect(fakeEnv.playerInstance.pauseVideo).not.toHaveBeenCalled();
+  });
+
+  it("supports synchronous onReady with event.target and ignores synchronous onReady without target", () => {
+    expect.assertions(4);
+
+    // Arrange
+    const container = createHostContainer();
+    const secondContainer = createHostContainer();
+    const syncTargetEnv = createFakeYouTubeEnvironment((player, options) => {
+      options.events?.onReady?.({ target: player });
+    });
+    const syncEmptyTargetEnv = createFakeYouTubeEnvironment((_player, options) => {
+      options.events?.onReady?.();
+    });
+
+    const adapter = createYouTubeVodPlayerAdapter({ container });
+    adapter.load("Ha5QwBV3Rhk");
+    adapter.seekTo(75);
+    adapter.pause();
+
+    // Act synchronous ready with target
+    window.YT = { Player: syncTargetEnv.Player };
+    window.onYouTubeIframeAPIReady?.();
+    adapter.play();
+
+    // Act synchronous ready without target
+    window.YT = { Player: syncEmptyTargetEnv.Player };
+    const secondAdapter = createYouTubeVodPlayerAdapter({ container: secondContainer });
+    secondAdapter.load("nkfn9HK66gg");
+
+    // Assert
+    expect(syncTargetEnv.playerInstance.seekTo).toHaveBeenCalledWith(75, true);
+    expect(syncTargetEnv.playerInstance.pauseVideo).toHaveBeenCalledOnce();
+    expect(syncTargetEnv.playerInstance.playVideo).toHaveBeenCalledOnce();
+    expect(secondAdapter.getCurrentTime()).toBe(0);
   });
 
   it("delegates play, pause, seekTo, and clamped getCurrentTime after onReady", () => {
@@ -417,6 +488,45 @@ describe("youtube vod player adapter", () => {
     expect(script.isConnected).toBe(true);
   });
 
+  it("removes dead script tag and recovers on next load when cancelled script later errors", () => {
+    expect.assertions(5);
+
+    // Arrange
+    const firstContainer = createHostContainer();
+    const secondContainer = createHostContainer();
+    const fakeEnv = createFakeYouTubeEnvironment();
+    const errors: VodPlayerErrorCode[] = [];
+    const firstAdapter = createYouTubeVodPlayerAdapter({
+      container: firstContainer,
+      onError: (error) => {
+        errors.push(error);
+      },
+    });
+    const secondAdapter = createYouTubeVodPlayerAdapter({
+      container: secondContainer,
+      onError: (error) => {
+        errors.push(error);
+      },
+    });
+    firstAdapter.load("Ha5QwBV3Rhk");
+    const deadScript = requireYouTubeApiScript();
+
+    // Act
+    firstAdapter.destroy();
+    deadScript.dispatchEvent(new Event("error"));
+    secondAdapter.load("nkfn9HK66gg");
+    const retriedScript = requireYouTubeApiScript();
+    window.YT = { Player: fakeEnv.Player };
+    window.onYouTubeIframeAPIReady?.();
+
+    // Assert
+    expect(errors).toStrictEqual([]);
+    expect(deadScript.isConnected).toBe(false);
+    expect(retriedScript).not.toBe(deadScript);
+    expect(fakeEnv.calls).toHaveLength(1);
+    expect(fakeEnv.calls[0]?.options.videoId).toBe("nkfn9HK66gg");
+  });
+
   it("ignores events safely when optional onStateChange and onError callbacks are omitted", () => {
     expect.assertions(1);
 
@@ -440,5 +550,34 @@ describe("youtube vod player adapter", () => {
 
     // Assert
     expect(fakeEnv.calls).toHaveLength(1);
+  });
+
+  it("reuses an existing iframe_api script tag in document.head and recovers if externally detached", () => {
+    expect.assertions(4);
+
+    // Arrange
+    const container = createHostContainer();
+    const fakeEnv = createFakeYouTubeEnvironment();
+    const preseededScript = document.createElement("script");
+    preseededScript.src = "https://www.youtube.com/iframe_api";
+    document.head.insertBefore(preseededScript, null);
+    const adapter = createYouTubeVodPlayerAdapter({ container });
+
+    // Act
+    adapter.load("Ha5QwBV3Rhk");
+    const activeScriptsDuringFirstLoad = document.head.querySelectorAll(
+      'script[src="https://www.youtube.com/iframe_api"]',
+    );
+    preseededScript.remove();
+    adapter.load("nkfn9HK66gg");
+    const replacementScript = requireYouTubeApiScript();
+    window.YT = { Player: fakeEnv.Player };
+    window.onYouTubeIframeAPIReady?.();
+
+    // Assert
+    expect(activeScriptsDuringFirstLoad).toHaveLength(1);
+    expect(replacementScript).not.toBe(preseededScript);
+    expect(fakeEnv.calls).toHaveLength(1);
+    expect(fakeEnv.calls[0]?.options.videoId).toBe("nkfn9HK66gg");
   });
 });

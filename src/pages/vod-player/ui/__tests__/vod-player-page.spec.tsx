@@ -3,7 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { Suspense } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { TEST_VOD_CHECKPOINTS, TEST_VOD_DETAIL } from "@test/vitest/fixtures/vods";
+import {
+  createVodDetailFixture,
+  TEST_VOD_CHECKPOINTS,
+  TEST_VOD_DETAIL,
+} from "@test/vitest/fixtures/vods";
 import { renderWithProviders } from "@test/vitest/wrappers/testing-wrapper";
 
 import { getVodDetailFn } from "../../api/vod-player.functions";
@@ -151,6 +155,22 @@ describe("vod player page", () => {
         "Play the video. Playback pauses automatically at each Checkpoint.",
       ),
     ).toBeDefined();
+  });
+
+  it("omits checkpoint pill strip when vod has no checkpoints", async () => {
+    expect.assertions(2);
+
+    // Arrange
+    setupMockAdapter();
+    vi.mocked(getVodDetailFn).mockResolvedValueOnce(createVodDetailFixture({ checkpoints: [] }));
+
+    // Act
+    const heading = await mountVodPlayerPage();
+    const checkpointGroup = screen.queryByRole("group", { name: "Checkpoints" });
+
+    // Assert
+    expect(heading).toBeDefined();
+    expect(checkpointGroup).toBeNull();
   });
 
   it("auto-pauses playback and displays the crossed checkpoint prompt during PLAYING polling", async () => {

@@ -8,11 +8,15 @@ interface YouTubePlayerInstance {
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
 }
 
+interface YouTubePlayerReadyEvent {
+  target?: YouTubePlayerInstance | undefined;
+}
+
 interface YouTubePlayerOptions {
   events: {
     onAutoplayBlocked: () => void;
     onError: (event: { data: number }) => void;
-    onReady: () => void;
+    onReady: (event?: YouTubePlayerReadyEvent) => void;
     onStateChange: (event: { data: number }) => void;
   };
   host: string;
@@ -40,11 +44,91 @@ declare global {
   }
 }
 
-function createYouTubeApiScript(): HTMLScriptElement {
-  const script = document.createElement("script");
-  script.src = YOUTUBE_IFRAME_API_URL;
-  script.async = true;
-  return script;
+interface YouTubeApiLoadListener {
+  onFailed: () => void;
+  onLoaded: () => void;
+}
+
+interface PendingYouTubeApiLoad {
+  abort: () => void;
+  listeners: Set<YouTubeApiLoadListener>;
+  script: HTMLScriptElement;
+}
+
+let pendingApiLoad: PendingYouTubeApiLoad | null = null;
+
+function loadYouTubeIframeApi(listener: YouTubeApiLoadListener): () => void {
+  if (pendingApiLoad && !pendingApiLoad.script.isConnected) {
+    pendingApiLoad.abort();
+  }
+
+  const activeLoad = pendingApiLoad ?? startYouTubeApiLoad();
+  activeLoad.listeners.add(listener);
+
+  return () => {
+    activeLoad.listeners.delete(listener);
+  };
+}
+
+function startYouTubeApiLoad(): PendingYouTubeApiLoad {
+  const listeners = new Set<YouTubeApiLoadListener>();
+  const script = ensureYouTubeApiScript();
+  let detachLoadHandlers: (() => void) | null = null;
+  const activeLoad: PendingYouTubeApiLoad = {
+    abort: () => {
+      detachLoadHandlers?.();
+    },
+    listeners,
+    script,
+  };
+  pendingApiLoad = activeLoad;
+  detachLoadHandlers = attachYouTubeLoadHandlers({
+    listeners,
+    previousReady: window.onYouTubeIframeAPIReady,
+    script,
+  });
+  return activeLoad;
+}
+
+function attachYouTubeLoadHandlers({
+  listeners,
+  previousReady,
+  script,
+}: {
+  listeners: Set<YouTubeApiLoadListener>;
+  previousReady: (() => void) | undefined;
+  script: HTMLScriptElement;
+}): () => void {
+  function cleanupPendingLoad() {
+    script.removeEventListener("error", handleScriptError);
+    window.onYouTubeIframeAPIReady = previousReady;
+    pendingApiLoad = null;
+  }
+
+  function handleScriptError() {
+    cleanupPendingLoad();
+    script.remove();
+    notifyPendingListeners(listeners, "onFailed");
+  }
+
+  function handleApiReady() {
+    cleanupPendingLoad();
+    previousReady?.();
+    notifyPendingListeners(listeners, "onLoaded");
+  }
+
+  script.addEventListener("error", handleScriptError, { once: true });
+  window.onYouTubeIframeAPIReady = handleApiReady;
+  return cleanupPendingLoad;
+}
+
+function notifyPendingListeners(
+  listeners: Set<YouTubeApiLoadListener>,
+  eventName: "onFailed" | "onLoaded",
+) {
+  for (const listener of listeners) {
+    listener[eventName]();
+  }
 }
 
 function ensureYouTubeApiScript(): HTMLScriptElement {
@@ -60,38 +144,11 @@ function ensureYouTubeApiScript(): HTMLScriptElement {
   return script;
 }
 
-function loadYouTubeIframeApi({
-  onFailed,
-  onLoaded,
-}: {
-  onFailed: () => void;
-  onLoaded: () => void;
-}): () => void {
-  let cancelled = false;
-  const script = ensureYouTubeApiScript();
-
-  function handleScriptError() {
-    cancelled = true;
-    script.remove();
-    onFailed();
-  }
-
-  script.addEventListener("error", handleScriptError, { once: true });
-
-  const previousReady = window.onYouTubeIframeAPIReady;
-  window.onYouTubeIframeAPIReady = () => {
-    previousReady?.();
-    script.removeEventListener("error", handleScriptError);
-    if (!cancelled) {
-      cancelled = true;
-      onLoaded();
-    }
-  };
-
-  return () => {
-    cancelled = true;
-    script.removeEventListener("error", handleScriptError);
-  };
+function createYouTubeApiScript(): HTMLScriptElement {
+  const script = document.createElement("script");
+  script.src = YOUTUBE_IFRAME_API_URL;
+  script.async = true;
+  return script;
 }
 
 export { loadYouTubeIframeApi, type YouTubePlayerInstance, type YouTubePlayerOptions };

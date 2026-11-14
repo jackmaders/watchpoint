@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "./fixtures";
-import { AuthClient, HomePage, VodPlayerPage, VodsPage } from "./page-objects";
+import { AuthClient, HomePage, NotFoundPage, VodPlayerPage, VodsPage } from "./page-objects";
 
 const SHU_VOD_ID = "shu-ana-owcs-kr-s3";
 const SHU_TITLE = "[ Shu ] Ana Main Madness | Zeta Division vs Team Falcons | OWCS Korea Stage 3";
@@ -29,6 +29,27 @@ test("redirects unauthenticated visitors from /vods/$vodId to /", async ({ page 
   // Assert
   await expect(page).toHaveURL(/\/$/u);
   await expect(homePage.heading).toBeVisible();
+});
+
+test("renders NotFoundPage when authenticated user navigates to nonexistent vodId", async ({
+  page,
+  baseURL,
+  browserDiagnostics,
+}) => {
+  // Arrange
+  const vodPlayerPage = new VodPlayerPage(page);
+  const notFoundPage = new NotFoundPage(page);
+  browserDiagnostics.allowNotFoundPath("/vods/nonexistent-vod");
+  await signUpTestUser(page, baseURL);
+
+  // Act
+  await vodPlayerPage.goto("nonexistent-vod");
+
+  // Assert
+  await expect(page).toHaveURL(/\/vods\/nonexistent-vod$/u);
+  await expect(notFoundPage.heading).toBeVisible();
+  await expect(notFoundPage.message).toBeVisible();
+  await expect(notFoundPage.returnHomeLink).toHaveAttribute("href", "/");
 });
 
 test("navigates from /vods VOD card to /vods/$vodId Studio Split player", async ({

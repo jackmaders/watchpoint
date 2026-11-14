@@ -1,4 +1,4 @@
-import { test as base, expect } from "@playwright/test";
+import { test as base, type ConsoleMessage, expect } from "@playwright/test";
 import { inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { getPlatformProxy } from "wrangler";
@@ -28,7 +28,24 @@ const BUSY_ERROR_PATTERNS = [
 type SeedDatabase = Parameters<typeof seedVods>[0];
 
 interface BrowserDiagnostics {
+  readonly allowNotFoundPath: (pathname: string) => void;
   readonly problems: readonly string[];
+}
+
+function isExpectedNotFoundConsoleError(
+  message: ConsoleMessage,
+  allowedNotFoundPaths: ReadonlySet<string>,
+): boolean {
+  if (message.type() !== "error" || !message.text().includes("status of 404")) {
+    return false;
+  }
+
+  const locationUrl = message.location().url;
+  if (!globalThis.URL.canParse(locationUrl)) {
+    return false;
+  }
+
+  return allowedNotFoundPaths.has(new globalThis.URL(locationUrl).pathname);
 }
 
 function isDatabaseBusyError(error: unknown): boolean {
@@ -85,6 +102,7 @@ const test = base.extend<
   browserDiagnostics: [
     async ({ page }, use, testInfo) => {
       const problems: string[] = [];
+      const allowedNotFoundPaths = new Set<string>();
 
       page.on("console", (message) => {
         if (!["warning", "error"].includes(message.type())) {
@@ -93,6 +111,10 @@ const test = base.extend<
 
         const text = message.text();
         if (IGNORED_WARNINGS.some((pattern) => text.includes(pattern))) {
+          return;
+        }
+
+        if (isExpectedNotFoundConsoleError(message, allowedNotFoundPaths)) {
           return;
         }
 
@@ -111,7 +133,12 @@ const test = base.extend<
         });
       });
 
-      await use({ problems });
+      await use({
+        allowNotFoundPath: (pathname) => {
+          allowedNotFoundPaths.add(pathname);
+        },
+        problems,
+      });
 
       if (problems.length > 0) {
         const report = problems.join("\n");
