@@ -3,7 +3,6 @@ import { screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import type { VodCatalogueItem } from "@/pages/vods/api/vods-service";
 import { TEST_VODS } from "@test/vitest/fixtures/vods";
 import { renderWithProviders } from "@test/vitest/wrappers/testing-wrapper";
 
@@ -13,8 +12,7 @@ import { VodsPage } from "../vods-page";
 
 vi.mock(import("../../api/vods.functions"));
 
-function mountVodsPage(vods: VodCatalogueItem[]) {
-  vi.mocked(getVodsFn).mockResolvedValueOnce(vods);
+function renderSuspendedVodsPage() {
   renderWithProviders(
     <Suspense fallback={<p>Loading VODs</p>}>
       <VodsPage />
@@ -26,8 +24,11 @@ describe("vods page", () => {
   it("renders the VOD Catalogue heading and a card for each VOD", async () => {
     expect.assertions(3);
 
-    // Arrange & Act
-    mountVodsPage(TEST_VODS);
+    // Arrange
+    vi.mocked(getVodsFn).mockResolvedValueOnce(TEST_VODS);
+
+    // Act
+    renderSuspendedVodsPage();
     const heading = await screen.findByRole("heading", { level: 1, name: "VOD Catalogue" });
     const items = screen.getAllByRole("listitem");
     const linkTitles = screen.getAllByRole("link").map((link) => link.textContent);
@@ -41,14 +42,19 @@ describe("vods page", () => {
   it("renders an empty state card when no VODs are available", async () => {
     expect.assertions(3);
 
-    // Arrange & Act
-    mountVodsPage([]);
+    // Arrange
+    vi.mocked(getVodsFn).mockResolvedValueOnce([]);
+
+    // Act
+    renderSuspendedVodsPage();
     const heading = await screen.findByRole("heading", { level: 1, name: "VOD Catalogue" });
+    const emptyStateHeading = screen.getByText("No VODs available");
+    const list = screen.queryByRole("list");
 
     // Assert
     expect(heading).toBeDefined();
-    expect(screen.getByText("No VODs available")).toBeDefined();
-    expect(screen.queryByRole("list")).toBeNull();
+    expect(emptyStateHeading).toBeDefined();
+    expect(list).toBeNull();
   });
 
   it("renders immediately from pre-seeded query cache without suspending", () => {
@@ -64,9 +70,11 @@ describe("vods page", () => {
 
     // Act
     renderWithProviders(<VodsPage />, { queryClient });
+    const heading = screen.getByRole("heading", { level: 1, name: "VOD Catalogue" });
+    const items = screen.getAllByRole("listitem");
 
     // Assert
-    expect(screen.getByRole("heading", { level: 1, name: "VOD Catalogue" })).toBeDefined();
-    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(heading).toBeDefined();
+    expect(items).toHaveLength(3);
   });
 });

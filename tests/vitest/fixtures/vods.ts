@@ -1,4 +1,4 @@
-import type { VodCatalogueItem } from "@/pages/vods/api/vods-service";
+import type { VodCatalogueItem } from "@/pages/vods";
 
 const TEST_VOD: VodCatalogueItem = {
   checkpointCount: 4,

@@ -5,15 +5,12 @@ import { getPlatformProxy } from "wrangler";
 
 import { checkpoints } from "@/shared/db/schema";
 import { seedVods } from "@/shared/db/seed";
+import { SEED_CHECKPOINTS, SEED_VODS } from "@/shared/db/seed/vod-data";
 
 const HTTP_OK = 200;
 const SEED_TIMEOUT_MS = 15_000;
-const SEEDED_CHECKPOINT_COUNT = 12;
-const SEEDED_VOD_IDS = [
-  "shu-ana-owcs-kr-s3",
-  "junbin-winston-owcs-kr-s3",
-  "taejong-tracer-owcs-kr-s3",
-];
+const SEEDED_VOD_IDS = SEED_VODS.map((vod) => vod.id);
+const SEEDED_CHECKPOINT_COUNT = SEED_CHECKPOINTS.length;
 const THUMBNAIL_STUB_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
 

@@ -22,8 +22,8 @@ A specific timestamp in a VOD where playback automatically pauses to challenge t
 _Avoid_: Key point, stop point, pause point, quiz stop
 
 **Prompt**:
-The challenge presented at a Checkpoint, tagged with a Skill Category and containing answer choices, the correct answer, and a coaching explanation.
-_Avoid_: Quiz, question, pop-up
+The challenge presented at a Checkpoint, tagged with a Skill Category and containing answer choices, the correct answer, and a coaching explanation (persisted in the `checkpoints.question` schema column).
+_Avoid_: Quiz, pop-up
 
 **Skill Category**:
 The Overwatch game-sense dimension evaluated by a Prompt: Strategy (macro win conditions, ultimate economy, fight planning), Tactics (micro positioning, target priority, engagement timing), Awareness (killfeed reading, flanker locations, teammate status), or Tracking (enemy cooldowns and ultimate charge).
@@ -72,8 +72,7 @@ The authorization role assigned to a User (`UserRole`), currently either `"user"
 
 **Permission**:
 A granular capability granted to a user role (`Permission`), determining
-allowed actions such as `"todos:read"`, `"todos:create"`, `"todos:update"`,
-or `"todos:delete"`.
+allowed actions such as `"vods:read"`.
 
 **Account**:
 An authentication record connecting a User to credentials or an identity
