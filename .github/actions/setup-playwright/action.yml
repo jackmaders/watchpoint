@@ -1,0 +1,23 @@
+name: Setup Playwright
+description: Caches and installs a Playwright browser
+
+inputs:
+  browser:
+    description: Playwright browser to install
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Playwright browser
+      id: playwright-cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ inputs.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-${{ inputs.browser }}-
+    - name: Install Playwright browser
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: vpx playwright install ${{ inputs.browser }}

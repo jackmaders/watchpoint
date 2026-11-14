@@ -1,0 +1,1 @@
+ALTER TABLE `todos` ADD `image_key` text;

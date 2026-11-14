@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/start.ts!",
+    "src/app/router.tsx!",
+    "src/app/routes/**/*.{ts,tsx}!",
+    "src/**/index.ts!",
+    "src/shared/ui/shadcn/**!",
+    "tests/browser/**/*.test.ts",
+    "tests/vitest/worker-entry.ts",
+    "tests/vitest/setup/*.ts",
+    "src/**/__tests__/**/*.{ts,tsx}",
+    "src/**/__mocks__/**/*.{ts,tsx}",
+    "tests/vitest/fixtures/**/*.{ts,tsx}",
+    "tests/vitest/wrappers/**/*.{ts,tsx}"
+  ],
+  "includeEntryExports": true,
+  "project": [
+    "src/**/*.{ts,tsx,css}!",
+    "!src/**/__tests__/**",
+    "!src/**/__mocks__/**",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "tags": ["+public", "+internal"],
+  "ignore": [],
+  "ignoreDependencies": ["cloudflare"],
+  "ignoreExportsUsedInFile": false,
+  "rules": {
+    "binaries": "error",
+    "catalog": "error",
+    "catalogReferences": "error",
+    "cycles": "error",
+    "dependencies": "off",
+    "devDependencies": "off",
+    "files": "error",
+    "namespaceMembers": "error",
+    "unlisted": "error",
+    "unresolved": "error",
+    "exports": "error",
+    "types": "error",
+    "nsExports": "error",
+    "nsTypes": "error",
+    "enumMembers": "error",
+    "duplicates": "error"
+  }
+}

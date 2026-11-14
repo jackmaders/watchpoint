@@ -1,0 +1,6 @@
+{
+  "generatedRouteTree": "./src/app/routeTree.gen.ts",
+  "routeFileIgnorePattern": "__tests__",
+  "routesDirectory": "./src/app/routes",
+  "target": "react"
+}
