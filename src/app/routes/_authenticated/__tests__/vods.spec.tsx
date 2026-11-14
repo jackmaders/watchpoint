@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/id-length -- Test assertions verify the Ticket #12 URL search parameter "q". */
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -18,6 +17,8 @@ vi.mock(import("@/pages/vods"));
 vi.mock(import("@/shared/auth"));
 vi.mock(import("@/app/layouts"));
 vi.mock(import("@/shared/ui/shadcn/toast"));
+
+const SEARCH_PARAM_KEY = "q";
 
 describe("vods route options", () => {
   it("configures private no-store cache headers", () => {
@@ -44,17 +45,21 @@ describe("vods route options", () => {
     // Act
     const validSearch = validateSearch({
       map: "  King's Row ",
-      q: "  Ana ",
+      [SEARCH_PARAM_KEY]: "  Ana ",
       role: "Support",
       sort: "Hero A–Z",
       tier: "OWCS",
     });
-    const invalidSearch = validateSearch({ q: "   ", role: "Flex", sort: "Curated" });
+    const invalidSearch = validateSearch({
+      [SEARCH_PARAM_KEY]: "   ",
+      role: "Flex",
+      sort: "Curated",
+    });
 
     // Assert
     expect(validSearch).toStrictEqual({
       map: "King's Row",
-      q: "Ana",
+      [SEARCH_PARAM_KEY]: "Ana",
       role: "Support",
       sort: "Hero A–Z",
       tier: "OWCS",
@@ -76,7 +81,7 @@ describe("vods route options", () => {
     const queryClient = {
       query: vi.fn<() => Promise<unknown>>().mockResolvedValue([]),
     } as unknown as QueryClient;
-    const filters = { q: "Ana", role: "Support" } as const;
+    const filters = { [SEARCH_PARAM_KEY]: "Ana", role: "Support" } as const;
 
     // Act
     const deps = loaderDeps({ search: filters });

@@ -16,20 +16,19 @@ import {
 const SEARCH_PARAM_KEY = "q";
 
 interface VodCatalogueControlsProps {
+  clearCount: number;
   filters: VodCatalogueFilters;
   maps: readonly string[];
   onFiltersChange: (nextFilters: VodCatalogueFilters) => void;
 }
 
-function VodCatalogueControls({ filters, maps, onFiltersChange }: VodCatalogueControlsProps) {
-  const urlQuery = filters.q ?? "";
-  const [query, setQuery] = useState(urlQuery);
-  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery);
-
-  if (urlQuery !== syncedUrlQuery) {
-    setSyncedUrlQuery(urlQuery);
-    setQuery(urlQuery);
-  }
+function VodCatalogueControls({
+  clearCount,
+  filters,
+  maps,
+  onFiltersChange,
+}: VodCatalogueControlsProps) {
+  const [query, setQuery] = useSyncedSearchQuery(filters.q ?? "", clearCount);
 
   function updateFilter(field: keyof VodCatalogueFilters, value: string) {
     onFiltersChange(
@@ -52,6 +51,24 @@ function VodCatalogueControls({ filters, maps, onFiltersChange }: VodCatalogueCo
       <VodFilterSelectGrid filters={filters} maps={maps} onUpdateFilter={updateFilter} />
     </div>
   );
+}
+
+function useSyncedSearchQuery(urlQuery: string, clearCount: number) {
+  const [query, setQuery] = useState(urlQuery);
+  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery);
+  const [syncedClearCount, setSyncedClearCount] = useState(clearCount);
+
+  if (urlQuery !== syncedUrlQuery) {
+    setSyncedUrlQuery(urlQuery);
+    setQuery(urlQuery);
+  }
+
+  if (clearCount !== syncedClearCount) {
+    setSyncedClearCount(clearCount);
+    setQuery("");
+  }
+
+  return [query, setQuery] as const;
 }
 
 function VodSearchForm({
