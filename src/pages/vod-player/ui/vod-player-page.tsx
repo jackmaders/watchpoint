@@ -66,7 +66,7 @@ function VodPlayerColumn({
   playerHostRef,
 }: VodPlayerColumnProps) {
   return (
-    <div className="space-y-3 lg:flex-1">
+    <div className="space-y-3 lg:min-w-0 lg:flex-1">
       <section
         aria-label="VOD player"
         className="aspect-video w-full overflow-hidden rounded-lg border bg-black"
@@ -87,6 +87,10 @@ function CheckpointPillStrip({
   checkpoints,
   onSelectCheckpoint,
 }: CheckpointPillStripProps) {
+  if (checkpoints.length === 0) {
+    return null;
+  }
+
   return (
     <fieldset aria-label="Checkpoints" className="flex flex-wrap gap-2">
       {checkpoints.map((checkpoint) => {
