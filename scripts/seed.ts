@@ -9,7 +9,10 @@ const seeders = [
   { name: "seedVods", seeder: seedVods },
 ];
 
-const proxy = await getPlatformProxy<{ DB: Parameters<typeof drizzle>[0] }>();
+const environment = process.env["CLOUDFLARE_ENV"];
+const proxy = await getPlatformProxy<{ DB: Parameters<typeof drizzle>[0] }>(
+  environment !== undefined && environment.length > 0 ? { environment } : {},
+);
 
 try {
   const db = drizzle(proxy.env.DB);

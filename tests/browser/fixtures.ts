@@ -1,4 +1,13 @@
-import { test as base } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
+import { drizzle } from "drizzle-orm/d1";
+import { getPlatformProxy } from "wrangler";
+
+import { seedVods } from "@/shared/db/seed";
+
+const HTTP_OK = 200;
+const SEED_TIMEOUT_MS = 15_000;
+const THUMBNAIL_STUB_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
 
 const IGNORED_WARNINGS = [
   // Firefox internal layout engine warning triggered during client navigation / stylesheet eval
@@ -9,9 +18,39 @@ interface BrowserDiagnostics {
   readonly problems: readonly string[];
 }
 
-const test = base.extend<{
-  browserDiagnostics: BrowserDiagnostics;
-}>({
+function isDatabaseBusyError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  if (error.message.includes("SQLITE_BUSY") || error.message.includes("database is locked")) {
+    return true;
+  }
+
+  return isDatabaseBusyError(error.cause);
+}
+
+async function trySeedVods(db: Parameters<typeof seedVods>[0]): Promise<boolean> {
+  try {
+    await seedVods(db);
+    return true;
+  } catch (error) {
+    if (isDatabaseBusyError(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+const test = base.extend<
+  {
+    browserDiagnostics: BrowserDiagnostics;
+  },
+  {
+    seedPreviewDatabase: null;
+  }
+>({
   browserDiagnostics: [
     async ({ page }, use, testInfo) => {
       const problems: string[] = [];
@@ -33,6 +72,14 @@ const test = base.extend<{
         problems.push(`[pageerror] ${error.message}`);
       });
 
+      await page.route("https://i.ytimg.com/**", async (route) => {
+        await route.fulfill({
+          body: THUMBNAIL_STUB_SVG,
+          contentType: "image/svg+xml",
+          status: HTTP_OK,
+        });
+      });
+
       await use({ problems });
 
       if (problems.length > 0) {
@@ -46,6 +93,24 @@ const test = base.extend<{
       }
     },
     { auto: true },
+  ],
+  seedPreviewDatabase: [
+    async ({ playwright }, use) => {
+      void playwright;
+      const proxy = await getPlatformProxy<{ DB: D1Database }>({
+        environment: "preview",
+      });
+      try {
+        const db = drizzle(proxy.env.DB);
+        await expect
+          .poll(async () => await trySeedVods(db), { timeout: SEED_TIMEOUT_MS })
+          .toBe(true);
+      } finally {
+        await proxy.dispose();
+      }
+      await use(null);
+    },
+    { auto: true, scope: "worker" },
   ],
 });
 
