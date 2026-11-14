@@ -265,4 +265,37 @@ describe("vods page", () => {
     expect(heading).toBeDefined();
     expect(items).toHaveLength(3);
   });
+
+  it("uses controlFilters for filter controls while querying with committed filters", async () => {
+    expect.assertions(3);
+
+    // Arrange
+    const queryClient = createPreSeededQueryClient({ tier: "OWCS" });
+    const onFiltersChange = vi.fn<(nextFilters: VodCatalogueFilters) => void>();
+
+    // Act
+    const { user } = renderWithProviders(
+      <VodsPage
+        controlFilters={{ tier: "OWCS", role: "Tank" }}
+        filters={{ tier: "OWCS" }}
+        onFiltersChange={onFiltersChange}
+      />,
+      { queryClient },
+    );
+    const roleSelect = screen.getByRole<HTMLSelectElement>("combobox", { name: "Role" });
+    const tierSelect = screen.getByRole<HTMLSelectElement>("combobox", {
+      name: "Competitive Tier",
+    });
+    const mapSelect = screen.getByRole("combobox", { name: "Map" });
+    await user.selectOptions(mapSelect, "Lijiang Tower");
+
+    // Assert
+    expect(roleSelect.value).toBe("Tank");
+    expect(tierSelect.value).toBe("OWCS");
+    expect(onFiltersChange).toHaveBeenCalledWith({
+      map: "Lijiang Tower",
+      role: "Tank",
+      tier: "OWCS",
+    });
+  });
 });

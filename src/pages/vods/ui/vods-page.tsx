@@ -13,11 +13,12 @@ import { VodCard } from "./vod-card";
 import { VodCatalogueControls } from "./vod-catalogue-controls";
 
 interface VodsPageProps {
+  controlFilters?: VodCatalogueFilters | undefined;
   filters: VodCatalogueFilters;
   onFiltersChange: (nextFilters: VodCatalogueFilters) => void;
 }
 
-function VodsPage({ filters, onFiltersChange }: VodsPageProps) {
+function VodsPage({ controlFilters, filters, onFiltersChange }: VodsPageProps) {
   const { data: vods } = useSuspenseQuery(vodsQueryOptions(filters));
   const { data: maps } = useSuspenseQuery(vodMapsQueryOptions());
   const hasActiveFilters = Object.keys(normalizeVodFilters(filters)).length > 0;
@@ -30,7 +31,11 @@ function VodsPage({ filters, onFiltersChange }: VodsPageProps) {
           Study curated Overwatch POVs with interactive Checkpoint prompts.
         </p>
       </header>
-      <VodCatalogueControls filters={filters} maps={maps} onFiltersChange={onFiltersChange} />
+      <VodCatalogueControls
+        filters={controlFilters ?? filters}
+        maps={maps}
+        onFiltersChange={onFiltersChange}
+      />
       {vods.length === 0 ? (
         <EmptyVodCatalogue
           hasActiveFilters={hasActiveFilters}

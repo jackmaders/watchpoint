@@ -1,9 +1,11 @@
 import type { VodCatalogueFilters } from "../../model/vod-catalogue";
 
 function VodsPage({
+  controlFilters,
   filters,
   onFiltersChange,
 }: {
+  controlFilters?: VodCatalogueFilters | undefined;
   filters: VodCatalogueFilters;
   onFiltersChange: (nextFilters: VodCatalogueFilters) => void;
 }) {
@@ -11,6 +13,7 @@ function VodsPage({
     <div>
       <h1>VOD Catalogue Page</h1>
       <p>{JSON.stringify(filters)}</p>
+      <p>{`controls:${JSON.stringify(controlFilters ?? filters)}`}</p>
       <button
         onClick={() => {
           onFiltersChange({ role: "Support" });
