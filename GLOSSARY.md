@@ -1,9 +1,33 @@
-# Vite+ Starter Application
+# Watchpoint
 
-This context is the starter application and its conventions for organizing,
-validating, persisting, and testing application behavior.
+Watchpoint is a structured Overwatch VOD review application where authenticated players watch curated high-level Ranked and Pro gameplay VODs that pause at key moments to test their decision-making and game sense. It is built on the Vite+ starter conventions for organizing, validating, persisting, and testing application behavior.
 
 ## Language
+
+### VOD Review
+
+**VOD**:
+A recorded Overwatch match video from a single player's first-person perspective (POV), indexed by a primary Hero (whose Role is statically derived), map, and Competitive Tier, played through an external video embed rather than self-hosted storage.
+_Avoid_: Match replay, clip, video file
+
+**Competitive Tier**:
+The competitive bracket of a VOD: Ranked GM, Ranked Champion, FACEIT, or OWCS.
+_Avoid_: Rank tag, league, division
+
+**Role**:
+The Overwatch team role derived statically from a Hero: Tank, Damage, or Support.
+
+**Checkpoint**:
+A specific timestamp in a VOD where playback automatically pauses to challenge the viewer before revealing what happens next.
+_Avoid_: Key point, stop point, pause point, quiz stop
+
+**Prompt**:
+The challenge presented at a Checkpoint, tagged with a Skill Category and containing answer choices, the correct answer, and a coaching explanation.
+_Avoid_: Quiz, question, pop-up
+
+**Skill Category**:
+The Overwatch game-sense dimension evaluated by a Prompt: Strategy (macro win conditions, ultimate economy, fight planning), Tactics (micro positioning, target priority, engagement timing), Awareness (killfeed reading, flanker locations, teammate status), or Tracking (enemy cooldowns and ultimate charge).
+_Avoid_: Quiz type, question category, tag
 
 ### Architecture
 
