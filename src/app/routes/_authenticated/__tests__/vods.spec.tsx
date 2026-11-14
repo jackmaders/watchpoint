@@ -16,6 +16,7 @@ import { getRouteOption } from "@test/vitest/helpers/route";
 vi.mock(import("@/pages/vods"));
 vi.mock(import("@/shared/auth"));
 vi.mock(import("@/app/layouts"));
+vi.mock(import("@/shared/ui/shadcn/toast"));
 
 describe("vods route options", () => {
   it("configures private no-store cache headers", () => {
@@ -129,7 +130,7 @@ describe("vods route options", () => {
     const initialFilters = screen.getByText('{"role":"Tank"}');
     await user.click(screen.getByRole("button", { name: "Apply Mock Filter" }));
     await waitFor(() => {
-      expect(router.state.location.search).toStrictEqual({ role: "Support" });
+      expect({ ...router.state.location.search }).toStrictEqual({ role: "Support" });
     });
 
     // Assert

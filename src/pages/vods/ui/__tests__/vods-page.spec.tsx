@@ -232,13 +232,13 @@ describe("vods page", () => {
       { queryClient },
     );
     const searchInput = screen.getByRole<HTMLInputElement>("searchbox", { name: "Search" });
-    const roleSelect = screen.getByRole<HTMLSelectElement>("combobox", { name: "Role" });
+    const roleSelect = screen.getByRole("combobox", { name: "Role" });
     const initialQueryValue = searchInput.value;
-    const initialRoleValue = roleSelect.value;
+    const initialRoleValue = (roleSelect as unknown as { value: string }).value;
 
     rerender(<VodsPage filters={{ role: "Tank" }} onFiltersChange={onFiltersChange} />);
     const updatedQueryValue = searchInput.value;
-    const updatedRoleValue = roleSelect.value;
+    const updatedRoleValue = (roleSelect as unknown as { value: string }).value;
 
     // Assert
     expect(initialQueryValue).toBe("Ana");
