@@ -40,23 +40,25 @@ const TEST_VODS: VodCatalogueItem[] = [
   }),
 ];
 
+const DEFAULT_VOD_CHECKPOINT: VodCheckpoint = {
+  correctOptionIndex: 1,
+  explanation: "Pair Nano Boost with your tank dive to take space around the first choke.",
+  id: "shu-ana-owcs-kr-s3-cp-1",
+  options: [
+    "Save Nano Boost strictly as an emergency heal",
+    "Use Nano Boost to enable your main tank dive initiation",
+    "Nano your flex support during poke",
+    "Hold Nano Boost until overtime",
+  ],
+  question:
+    "Before the first fight breaks out, what is your primary win condition with Nano Boost?",
+  skillCategory: "Strategy",
+  timeSec: 45,
+  vodId: TEST_VOD.id,
+};
+
 const TEST_VOD_CHECKPOINTS: VodCheckpoint[] = [
-  {
-    correctOptionIndex: 1,
-    explanation: "Pair Nano Boost with your tank dive to take space around the first choke.",
-    id: "shu-ana-owcs-kr-s3-cp-1",
-    options: [
-      "Save Nano Boost strictly as an emergency heal",
-      "Use Nano Boost to enable your main tank dive initiation",
-      "Nano your flex support during poke",
-      "Hold Nano Boost until overtime",
-    ],
-    question:
-      "Before the first fight breaks out, what is your primary win condition with Nano Boost?",
-    skillCategory: "Strategy",
-    timeSec: 45,
-    vodId: TEST_VOD.id,
-  },
+  DEFAULT_VOD_CHECKPOINT,
   {
     correctOptionIndex: 0,
     explanation: "Wait out Winston bubble timing before landing Sleep Dart and anti-nade.",
@@ -118,7 +120,7 @@ const TEST_VOD_DETAIL: VodDetail = {
 };
 
 function createVodCheckpointFixture(overrides: Partial<VodCheckpoint> = {}): VodCheckpoint {
-  return { ...TEST_VOD_CHECKPOINTS[0]!, ...overrides };
+  return { ...DEFAULT_VOD_CHECKPOINT, ...overrides };
 }
 
 function createVodDetailFixture(overrides: Partial<VodDetail> = {}): VodDetail {

@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedVodsIndexRouteImport } from './routes/_authenticated/vods/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AuthenticatedVodsVodIdIndexRouteImport } from './routes/_authenticated/vods/$vodId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +46,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVodsVodIdIndexRoute =
+  AuthenticatedVodsVodIdIndexRouteImport.update({
+    id: '/vods/$vodId/',
+    path: '/vods/$vodId/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/vods/': typeof AuthenticatedVodsIndexRoute
+  '/vods/$vodId/': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/vods': typeof AuthenticatedVodsIndexRoute
+  '/vods/$vodId': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,14 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authenticated/vods/': typeof AuthenticatedVodsIndexRoute
+  '/_authenticated/vods/$vodId/': typeof AuthenticatedVodsVodIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/profile' | '/api/auth/$' | '/vods/'
+  fullPaths:
+    '/' | '/about' | '/profile' | '/api/auth/$' | '/vods/' | '/vods/$vodId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/profile' | '/api/auth/$' | '/vods'
+  to: '/' | '/about' | '/profile' | '/api/auth/$' | '/vods' | '/vods/$vodId'
   id:
     | '__root__'
     | '/'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/api/auth/$'
     | '/_authenticated/vods/'
+    | '/_authenticated/vods/$vodId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,17 +147,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/vods/$vodId/': {
+      id: '/_authenticated/vods/$vodId/'
+      path: '/vods/$vodId'
+      fullPath: '/vods/$vodId/'
+      preLoaderRoute: typeof AuthenticatedVodsVodIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedVodsIndexRoute: typeof AuthenticatedVodsIndexRoute
+  AuthenticatedVodsVodIdIndexRoute: typeof AuthenticatedVodsVodIdIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedVodsIndexRoute: AuthenticatedVodsIndexRoute,
+  AuthenticatedVodsVodIdIndexRoute: AuthenticatedVodsVodIdIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

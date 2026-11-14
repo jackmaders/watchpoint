@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import type { ComponentProps } from "react";
 
@@ -63,12 +64,13 @@ function VodCardTitle({ id, title }: { id: string; title: string }) {
   return (
     <CardTitle>
       <h2>
-        <a
+        <Link
           className="line-clamp-2 after:absolute after:inset-0 hover:underline focus-visible:underline focus-visible:outline-none"
-          href={`/vods/${id}`}
+          params={{ vodId: id }}
+          to="/vods/$vodId"
         >
           {title}
-        </a>
+        </Link>
       </h2>
     </CardTitle>
   );
