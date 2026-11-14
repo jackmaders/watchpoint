@@ -18,6 +18,14 @@ vi.mock(import("@/shared/auth"));
 vi.mock(import("@/app/layouts"));
 vi.mock(import("@/shared/ui/shadcn/toast"));
 
+function createDeferredVods() {
+  let resolve: (value: typeof TEST_VODS) => void = vi.fn();
+  const promise = new Promise<typeof TEST_VODS>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 describe("vods route options", () => {
   it("configures private no-store cache headers", () => {
     expect.assertions(1);
@@ -139,14 +147,11 @@ describe("vods route options", () => {
   });
 
   it("updates controlFilters immediately while loader is pending and falls back when leaving /vods", async () => {
-    expect.assertions(4);
+    expect.assertions(5);
 
     // Arrange
     vi.mocked(getSessionFn).mockResolvedValue(TEST_SESSION);
-    let resolveNextVods: ((value: typeof TEST_VODS) => void) | undefined;
-    const pendingVods = new Promise<typeof TEST_VODS>((resolve) => {
-      resolveNextVods = resolve;
-    });
+    const { promise: pendingVods, resolve: resolveNextVods } = createDeferredVods();
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -160,17 +165,11 @@ describe("vods route options", () => {
     queryClient.setQueryDefaults(mapsOptions.queryKey, { staleTime: Infinity });
     queryClient.setQueryData(mapsOptions.queryKey, ["King's Row"]);
 
-    const originalQuery = queryClient.query.bind(queryClient);
-    const nextKey = JSON.stringify(nextOptions.queryKey);
-    vi.spyOn(queryClient, "query").mockImplementation((async (
-      options: Parameters<QueryClient["query"]>[0],
-    ) => {
-      if (JSON.stringify(options.queryKey) === nextKey) {
-        return await pendingVods;
-      }
-
-      return await originalQuery(options);
-    }) as QueryClient["query"]);
+    vi.spyOn(queryClient, "query")
+      .mockResolvedValueOnce(TEST_VODS)
+      .mockResolvedValueOnce(["King's Row"])
+      .mockReturnValueOnce(pendingVods)
+      .mockResolvedValueOnce(["King's Row"]);
 
     const router = createRouter({
       context: { queryClient, session: TEST_SESSION },
@@ -182,11 +181,11 @@ describe("vods route options", () => {
 
     // Act
     render(<RouterProvider router={router} />);
-    await screen.findByRole("heading", { name: "VOD Catalogue Page" });
+    const heading = await screen.findByRole("heading", { name: "VOD Catalogue Page" });
     await user.click(screen.getByRole("button", { name: "Apply Mock Filter" }));
     const pendingControls = await screen.findByText('controls:{"role":"Support"}');
     const committedBeforeResolve = screen.getByText('{"role":"Tank"}');
-    resolveNextVods?.(TEST_VODS);
+    resolveNextVods(TEST_VODS);
     const committedAfterResolve = await screen.findByText('{"role":"Support"}');
     await act(async () => {
       await router.navigate({ to: "/about" });
@@ -194,6 +193,7 @@ describe("vods route options", () => {
     const aboutHeading = await screen.findByRole("heading", { name: "About" });
 
     // Assert
+    expect(heading).toBeDefined();
     expect(pendingControls).toBeDefined();
     expect(committedBeforeResolve).toBeDefined();
     expect(committedAfterResolve).toBeDefined();

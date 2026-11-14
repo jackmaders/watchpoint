@@ -282,16 +282,16 @@ describe("vods page", () => {
       />,
       { queryClient },
     );
-    const roleSelect = screen.getByRole<HTMLSelectElement>("combobox", { name: "Role" });
-    const tierSelect = screen.getByRole<HTMLSelectElement>("combobox", {
+    const roleSelect = screen.getByRole("combobox", { name: "Role" });
+    const tierSelect = screen.getByRole("combobox", {
       name: "Competitive Tier",
     });
     const mapSelect = screen.getByRole("combobox", { name: "Map" });
     await user.selectOptions(mapSelect, "Lijiang Tower");
 
     // Assert
-    expect(roleSelect.value).toBe("Tank");
-    expect(tierSelect.value).toBe("OWCS");
+    expect(roleSelect).toHaveProperty("value", "Tank");
+    expect(tierSelect).toHaveProperty("value", "OWCS");
     expect(onFiltersChange).toHaveBeenCalledWith({
       map: "Lijiang Tower",
       role: "Tank",
