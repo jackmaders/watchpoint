@@ -17,10 +17,34 @@ async function getVods(
   { db = getDb() }: DbContext = {},
 ): Promise<VodCatalogueItem[]> {
   const normalized = normalizeVodFilters(filters);
-  const conditions = buildVodFilterConditions(normalized);
   const sort = normalized.sort ?? DEFAULT_VOD_SORT;
+  const vodRows = await queryVodRows(db, normalized, sort);
 
-  const vodRows = await db
+  if (vodRows.length === 0) {
+    return [];
+  }
+
+  const categoryMap = await queryVodCategoryMap(
+    db,
+    vodRows.map((vod) => vod.id),
+  );
+
+  return vodRows.map((vod) => mapVodRowToItem(vod, categoryMap.get(vod.id)));
+}
+
+async function getVodMaps({ db = getDb() }: DbContext = {}): Promise<string[]> {
+  const rows = await db.selectDistinct({ map: vods.map }).from(vods).orderBy(asc(vods.map));
+  return rows.map((row) => row.map);
+}
+
+async function queryVodRows(
+  db: ReturnType<typeof getDb>,
+  filters: VodCatalogueFilters,
+  sort: VodSortOption,
+) {
+  const conditions = buildVodFilterConditions(filters);
+
+  return await db
     .select({
       checkpointCount: count(checkpoints.id),
       curatedOrder: vods.curatedOrder,
@@ -36,84 +60,73 @@ async function getVods(
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .groupBy(vods.id)
     .orderBy(...getVodOrderBy(sort));
+}
 
-  if (vodRows.length === 0) {
-    return [];
-  }
-
+async function queryVodCategoryMap(db: ReturnType<typeof getDb>, vodIds: readonly string[]) {
   const categoryRows = await db
     .selectDistinct({ skillCategory: checkpoints.skillCategory, vodId: checkpoints.vodId })
     .from(checkpoints)
-    .where(
-      inArray(
-        checkpoints.vodId,
-        vodRows.map((vod) => vod.id),
-      ),
-    );
+    .where(inArray(checkpoints.vodId, vodIds));
 
-  const categoryMap = groupSkillCategories(categoryRows);
-
-  return vodRows.map((vod) => {
-    const categories = categoryMap.get(vod.id);
-    return {
-      checkpointCount: vod.checkpointCount,
-      curatedOrder: vod.curatedOrder,
-      hero: vod.hero,
-      id: vod.id,
-      map: vod.map,
-      role: getHeroRole(vod.hero),
-      skillCategories: categories
-        ? skillCategories.filter((category) => categories.has(category))
-        : [],
-      tier: vod.tier,
-      title: vod.title,
-      youtubeVideoId: vod.youtubeVideoId,
-    };
-  });
+  return groupSkillCategories(categoryRows);
 }
 
-async function getVodMaps({ db = getDb() }: DbContext = {}): Promise<string[]> {
-  const rows = await db.selectDistinct({ map: vods.map }).from(vods).orderBy(asc(vods.map));
-  return rows.map((row) => row.map);
+interface VodRow {
+  checkpointCount: number;
+  curatedOrder: number;
+  hero: string;
+  id: string;
+  map: string;
+  tier: VodCatalogueItem["tier"];
+  title: string;
+  youtubeVideoId: string;
+}
+
+function mapVodRowToItem(
+  vod: VodRow,
+  categories: Set<SkillCategory> | undefined,
+): VodCatalogueItem {
+  return {
+    checkpointCount: vod.checkpointCount,
+    curatedOrder: vod.curatedOrder,
+    hero: vod.hero,
+    id: vod.id,
+    map: vod.map,
+    role: getHeroRole(vod.hero),
+    skillCategories: categories
+      ? skillCategories.filter((category) => categories.has(category))
+      : [],
+    tier: vod.tier,
+    title: vod.title,
+    youtubeVideoId: vod.youtubeVideoId,
+  };
+}
+
+function buildSearchCondition(query: string): SQL {
+  const pattern = `%${escapeLikePattern(query.toLowerCase())}%`;
+  return sql`(lower(${vods.title}) LIKE ${pattern} ESCAPE '!' OR lower(${vods.hero}) LIKE ${pattern} ESCAPE '!' OR lower(${vods.map}) LIKE ${pattern} ESCAPE '!')`;
 }
 
 function buildVodFilterConditions(filters: VodCatalogueFilters): SQL[] {
-  const conditions: SQL[] = [];
+  const candidates: (SQL | undefined)[] = [
+    filters.q === undefined ? undefined : buildSearchCondition(filters.q),
+    filters.role === undefined ? undefined : inArray(vods.hero, getHeroesForRole(filters.role)),
+    filters.tier === undefined ? undefined : eq(vods.tier, filters.tier),
+    filters.map === undefined ? undefined : eq(vods.map, filters.map),
+  ];
 
-  if (filters.q !== undefined) {
-    const pattern = `%${escapeLikePattern(filters.q.toLowerCase())}%`;
-    conditions.push(
-      sql`(lower(${vods.title}) LIKE ${pattern} ESCAPE '!' OR lower(${vods.hero}) LIKE ${pattern} ESCAPE '!' OR lower(${vods.map}) LIKE ${pattern} ESCAPE '!')`,
-    );
-  }
-  if (filters.role !== undefined) {
-    conditions.push(inArray(vods.hero, getHeroesForRole(filters.role)));
-  }
-  if (filters.tier !== undefined) {
-    conditions.push(eq(vods.tier, filters.tier));
-  }
-  if (filters.map !== undefined) {
-    conditions.push(eq(vods.map, filters.map));
-  }
-
-  return conditions;
+  return candidates.filter((condition): condition is SQL => condition !== undefined);
 }
 
 function getVodOrderBy(sort: VodSortOption): SQL[] {
-  switch (sort) {
-    case "Curated": {
-      return [asc(vods.curatedOrder), asc(vods.title)];
-    }
-    case "Map A–Z": {
-      return [asc(vods.map), asc(vods.curatedOrder), asc(vods.title)];
-    }
-    case "Hero A–Z": {
-      return [asc(vods.hero), asc(vods.curatedOrder), asc(vods.title)];
-    }
-    case "Most Checkpoints": {
-      return [desc(count(checkpoints.id)), asc(vods.curatedOrder), asc(vods.title)];
-    }
-  }
+  const orderByBySort: Record<VodSortOption, SQL[]> = {
+    Curated: [asc(vods.curatedOrder), asc(vods.title)],
+    "Hero A–Z": [asc(vods.hero), asc(vods.curatedOrder), asc(vods.title)],
+    "Map A–Z": [asc(vods.map), asc(vods.curatedOrder), asc(vods.title)],
+    "Most Checkpoints": [desc(count(checkpoints.id)), asc(vods.curatedOrder), asc(vods.title)],
+  };
+
+  return orderByBySort[sort];
 }
 
 function escapeLikePattern(value: string): string {

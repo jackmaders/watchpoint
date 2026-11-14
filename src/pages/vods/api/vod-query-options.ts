@@ -1,17 +1,28 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getVodsFn } from "./vods.functions";
+import { normalizeVodFilters, type VodCatalogueFilters } from "../model/vod-catalogue";
+import { getVodMapsFn, getVodsFn } from "./vods.functions";
 
 const vodKeys = {
   all: ["vods"] as const,
-  list: () => [...vodKeys.all, "list"] as const,
+  list: (filters: VodCatalogueFilters) => [...vodKeys.all, "list", filters] as const,
+  maps: () => [...vodKeys.all, "maps"] as const,
 };
 
-function vodsQueryOptions() {
+function vodsQueryOptions(filters: VodCatalogueFilters = {}) {
+  const normalizedFilters = normalizeVodFilters(filters);
+
   return queryOptions({
-    queryFn: async () => await getVodsFn(),
-    queryKey: vodKeys.list(),
+    queryFn: async () => await getVodsFn({ data: normalizedFilters }),
+    queryKey: vodKeys.list(normalizedFilters),
   });
 }
 
-export { vodsQueryOptions };
+function vodMapsQueryOptions() {
+  return queryOptions({
+    queryFn: async () => await getVodMapsFn(),
+    queryKey: vodKeys.maps(),
+  });
+}
+
+export { vodMapsQueryOptions, vodsQueryOptions };
