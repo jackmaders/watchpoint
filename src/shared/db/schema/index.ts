@@ -17,4 +17,15 @@ export {
   userRoles,
   type Verification,
 } from "./auth";
-export { todos, type Todo } from "./todos";
+export {
+  checkpoints,
+  competitiveTiers,
+  skillCategories,
+  vods,
+  type Checkpoint,
+  type CompetitiveTier,
+  type NewCheckpoint,
+  type NewVod,
+  type SkillCategory,
+  type Vod,
+} from "./vods";

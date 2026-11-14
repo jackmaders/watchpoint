@@ -5,7 +5,7 @@ import { HomePage } from "@/pages/home";
 export const Route = createFileRoute("/")({
   beforeLoad: ({ context }) => {
     if (context.session) {
-      throw redirect({ to: "/todos" });
+      throw redirect({ to: "/vods" });
     }
   },
   component: HomePage,

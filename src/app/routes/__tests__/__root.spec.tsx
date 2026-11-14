@@ -33,7 +33,7 @@ describe("root route document metadata", () => {
     const result = head({} as never);
 
     // Assert
-    expect(result.meta).toContainEqual({ title: "TanStack Start Starter" });
+    expect(result.meta).toContainEqual({ title: "Watchpoint" });
     expect(result.meta).toContainEqual({ charSet: "utf8" });
     expect(result.meta).toContainEqual({
       content: "width=device-width, initial-scale=1",

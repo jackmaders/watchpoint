@@ -9,7 +9,7 @@ export function SignUpCard() {
         <CardTitle>
           <h2>Sign Up</h2>
         </CardTitle>
-        <CardDescription>Create an account to start managing your todos</CardDescription>
+        <CardDescription>Create an account to start reviewing Overwatch VODs</CardDescription>
       </CardHeader>
       <CardContent>
         <SignUpForm />

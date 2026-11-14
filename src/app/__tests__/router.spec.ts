@@ -45,6 +45,21 @@ describe("router route matching", () => {
 });
 
 describe("router auth route matching", () => {
+  it("matches the vods catalogue page within authenticated layout", () => {
+    expect.assertions(1);
+
+    // Act
+    const router = getRouter();
+    const matches = router.matchRoutes("/vods");
+
+    // Assert
+    expect(matches.map((match) => match.routeId)).toStrictEqual([
+      "__root__",
+      "/_authenticated",
+      "/_authenticated/vods/",
+    ]);
+  });
+
   it("matches the profile page within authenticated layout", () => {
     expect.assertions(1);
 
@@ -69,17 +84,6 @@ describe("router auth route matching", () => {
 
     // Assert
     expect(matches.map((match) => match.routeId)).toStrictEqual(["__root__", "/api/auth/$"]);
-  });
-
-  it("matches api images splat routes within the root document", () => {
-    expect.assertions(1);
-
-    // Act
-    const router = getRouter();
-    const matches = router.matchRoutes("/api/images/todos/todo-1/pic.webp");
-
-    // Assert
-    expect(matches.map((match) => match.routeId)).toStrictEqual(["__root__", "/api/images/$"]);
   });
 });
 
@@ -150,7 +154,7 @@ describe("api failure notifications", () => {
     expect.hasAssertions();
     // Arrange
     const client = getRouter().options.context.queryClient;
-    const apiError = new ApplicationError("TODO_CREATE_FAILED");
+    const apiError = new ApplicationError("VOD_NOT_FOUND");
     const onError = vi.fn<() => void>();
     const mutation = client.getMutationCache().build(client, {
       mutationFn: vi.fn<() => Promise<never>>().mockRejectedValue(apiError),

@@ -25,7 +25,7 @@ function getPermissionServerMiddleware(permission: Permission) {
 type MiddlewareInput = Parameters<ReturnType<typeof getPermissionServerMiddleware>>[0];
 
 describe("permissionMiddleware behavior", () => {
-  it.each<Permission>(["todos:read", "todos:create", "todos:update", "todos:delete"])(
+  it.each<Permission>(["vods:read"])(
     "passes the session to next when an admin has %s",
     async (permission) => {
       expect.assertions(2);
@@ -49,7 +49,7 @@ describe("permissionMiddleware behavior", () => {
     },
   );
 
-  it.each<Permission>(["todos:read", "todos:create", "todos:update", "todos:delete"])(
+  it.each<Permission>(["vods:read"])(
     "passes the session to next when a user has %s",
     async (permission) => {
       expect.assertions(2);
@@ -80,7 +80,7 @@ describe("permissionMiddleware behavior", () => {
     vi.mocked(ensureSession).mockResolvedValueOnce(TEST_SESSION);
     vi.mocked(hasPermission).mockReturnValueOnce(false);
     const next = vi.fn<() => Promise<void>>();
-    const serverFn = getPermissionServerMiddleware("todos:create");
+    const serverFn = getPermissionServerMiddleware("vods:read");
     const input = { context: {}, next } as unknown as MiddlewareInput;
 
     // Act
@@ -101,7 +101,7 @@ describe("permissionMiddleware behavior", () => {
     // Arrange
     vi.mocked(ensureSession).mockRejectedValueOnce(new Error("Unauthorized"));
     const next = vi.fn<() => Promise<void>>();
-    const serverFn = getPermissionServerMiddleware("todos:read");
+    const serverFn = getPermissionServerMiddleware("vods:read");
     const input = { context: {}, next } as unknown as MiddlewareInput;
 
     // Act & Assert
@@ -123,7 +123,7 @@ describe("permissionMiddleware role validation", () => {
         }),
       );
       const next = vi.fn<() => Promise<void>>();
-      const serverFn = getPermissionServerMiddleware("todos:read");
+      const serverFn = getPermissionServerMiddleware("vods:read");
       const input = { context: {}, next } as unknown as MiddlewareInput;
 
       // Act
