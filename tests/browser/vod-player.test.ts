@@ -9,11 +9,14 @@ const SHU_CHECKPOINT_COUNT = 4;
 const FIRST_CHECKPOINT_TIME_SEC = 45;
 const FIRST_CHECKPOINT_QUESTION =
   "Before the first fight breaks out, what is your primary win condition with Nano Boost?";
-const FIRST_CHECKPOINT_OPTION_ONE = "Save Nano Boost strictly as an emergency heal";
-const FIRST_CHECKPOINT_OPTION_TWO = "Use Nano Boost to enable your main tank dive initiation";
+const FIRST_CHECKPOINT_OPTION_ONE = "Save Nano Boost strictly as an emergency heal for your Tracer";
+const FIRST_CHECKPOINT_OPTION_TWO =
+  "Use Nano Boost to enable your main tank's dive initiation and build momentum";
 const SECOND_CHECKPOINT_TIME_SEC = 110;
 const SECOND_CHECKPOINT_QUESTION =
   "The enemy Winston dives your backline; how should you sequence Sleep Dart and Biotic Grenade?";
+const SECOND_CHECKPOINT_OPTION_ONE =
+  "Bait or wait out his bubble timing, land Sleep Dart, then anti-nade as your team collapses";
 
 test("redirects unauthenticated visitors from /vods/$vodId to /", async ({ page }) => {
   // Arrange
@@ -33,11 +36,7 @@ test("navigates from /vods VOD card to /vods/$vodId Studio Split player", async 
   baseURL,
 }) => {
   // Arrange
-  const vodsPage = new VodsPage(page);
-  const vodPlayerPage = new VodPlayerPage(page);
-  await vodPlayerPage.stubYouTubeApi();
-  await signUpTestUser(page, baseURL);
-  await vodsPage.goto();
+  const { vodPlayerPage, vodsPage } = await openAuthenticatedVodsPage(page, baseURL);
 
   // Act
   await vodsPage.getCardLink(SHU_TITLE).click();
@@ -56,11 +55,7 @@ test("auto-pauses playback on requestAnimationFrame checkpoint crossing and open
   baseURL,
 }) => {
   // Arrange
-  const vodPlayerPage = new VodPlayerPage(page);
-  await vodPlayerPage.stubYouTubeApi();
-  await signUpTestUser(page, baseURL);
-  await vodPlayerPage.goto(SHU_VOD_ID);
-  await vodPlayerPage.waitForPlayerReady();
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
 
   // Act
   await vodPlayerPage.simulatePlaybackAcross(FIRST_CHECKPOINT_TIME_SEC);
@@ -79,54 +74,13 @@ test("auto-pauses playback on requestAnimationFrame checkpoint crossing and open
     });
 });
 
-test("clicking a checkpoint pill seeks, pauses playback, and opens that checkpoint prompt", async ({
+test("clicking a checkpoint pill seeks, pauses playback, and displays that checkpoint prompt", async ({
   page,
   baseURL,
 }) => {
   // Arrange
-  const vodPlayerPage = new VodPlayerPage(page);
-  await vodPlayerPage.stubYouTubeApi();
-  await signUpTestUser(page, baseURL);
-  await vodPlayerPage.goto(SHU_VOD_ID);
-  await vodPlayerPage.waitForPlayerReady();
-
-  // Act
-  await vodPlayerPage.clickCheckpointPill("01:50");
-  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_ONE);
-  await vodPlayerPage.clickCheckpointPill("00:45");
-  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_ONE);
-  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_TWO);
-
-  // Assert
-  await expect(vodPlayerPage.getCheckpointPill("00:45")).toHaveAttribute("aria-pressed", "true");
-  await expect(vodPlayerPage.promptSkillBadge("Strategy")).toBeVisible();
-  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_ONE)).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
-  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_TWO)).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect
-    .poll(async () => await vodPlayerPage.getStubPlayerState())
-    .toMatchObject({
-      currentTime: FIRST_CHECKPOINT_TIME_SEC,
-      seekCalls: [SECOND_CHECKPOINT_TIME_SEC, FIRST_CHECKPOINT_TIME_SEC],
-      state: "PAUSED",
-    });
-});
-
-test("clicking second checkpoint pill seeks to 110s, pauses, and renders Tactics prompt", async ({
-  page,
-  baseURL,
-}) => {
-  // Arrange
-  const vodPlayerPage = new VodPlayerPage(page);
-  await vodPlayerPage.stubYouTubeApi();
-  await signUpTestUser(page, baseURL);
-  await vodPlayerPage.goto(SHU_VOD_ID);
-  await vodPlayerPage.waitForPlayerReady();
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await vodPlayerPage.startPlayback();
 
   // Act
   await vodPlayerPage.clickCheckpointPill("01:50");
@@ -144,6 +98,75 @@ test("clicking second checkpoint pill seeks to 110s, pauses, and renders Tactics
       state: "PAUSED",
     });
 });
+
+test("allows selecting and changing a prompt option on an active checkpoint", async ({
+  page,
+  baseURL,
+}) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await vodPlayerPage.clickCheckpointPill("00:45");
+
+  // Act
+  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_ONE);
+  await vodPlayerPage.selectPromptOption(FIRST_CHECKPOINT_OPTION_TWO);
+
+  // Assert
+  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_ONE)).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_TWO)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
+test("resets selected option and seeks when switching to another checkpoint pill", async ({
+  page,
+  baseURL,
+}) => {
+  // Arrange
+  const vodPlayerPage = await openAuthenticatedVodPlayer(page, baseURL, SHU_VOD_ID);
+  await vodPlayerPage.clickCheckpointPill("01:50");
+  await vodPlayerPage.selectPromptOption(SECOND_CHECKPOINT_OPTION_ONE);
+
+  // Act
+  await vodPlayerPage.clickCheckpointPill("00:45");
+
+  // Assert
+  await expect(vodPlayerPage.getCheckpointPill("00:45")).toHaveAttribute("aria-pressed", "true");
+  await expect(vodPlayerPage.promptSkillBadge("Strategy")).toBeVisible();
+  await expect(vodPlayerPage.getPromptOption(FIRST_CHECKPOINT_OPTION_ONE)).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect
+    .poll(async () => await vodPlayerPage.getStubPlayerState())
+    .toMatchObject({
+      currentTime: FIRST_CHECKPOINT_TIME_SEC,
+      seekCalls: [SECOND_CHECKPOINT_TIME_SEC, FIRST_CHECKPOINT_TIME_SEC],
+      state: "PAUSED",
+    });
+});
+
+async function openAuthenticatedVodsPage(page: Page, baseURL: string | undefined) {
+  const vodsPage = new VodsPage(page);
+  const vodPlayerPage = new VodPlayerPage(page);
+  await vodPlayerPage.stubYouTubeApi();
+  await signUpTestUser(page, baseURL);
+  await vodsPage.goto();
+  return { vodPlayerPage, vodsPage };
+}
+
+async function openAuthenticatedVodPlayer(page: Page, baseURL: string | undefined, vodId: string) {
+  const vodPlayerPage = new VodPlayerPage(page);
+  await vodPlayerPage.stubYouTubeApi();
+  await signUpTestUser(page, baseURL);
+  await vodPlayerPage.goto(vodId);
+  await vodPlayerPage.waitForPlayerReady();
+  return vodPlayerPage;
+}
 
 async function signUpTestUser(page: Page, baseURL: string | undefined) {
   const authClient = new AuthClient(page);

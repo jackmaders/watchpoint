@@ -8,6 +8,7 @@ const YT_STATE_PAUSED = 2;
 
 interface StubYouTubePlayerSnapshot {
   currentTime: number;
+  currentTimeReadCount: number;
   host: string;
   isReady: boolean;
   pausedCount: number;
@@ -16,15 +17,14 @@ interface StubYouTubePlayerSnapshot {
   videoId: string;
 }
 
+interface WatchpointYtStub {
+  getSnapshot: () => StubYouTubePlayerSnapshot | null;
+  play: () => void;
+  setCurrentTime: (timeSec: number) => void;
+}
+
 declare global {
-  interface Window {
-    __watchpointYtStub?: {
-      advanceToAndPlay: (timeSec: number) => void;
-      getSnapshot: () => StubYouTubePlayerSnapshot;
-      play: () => void;
-      setCurrentTime: (timeSec: number) => void;
-    };
-  }
+  var watchpointYtStub: WatchpointYtStub | undefined;
 }
 
 const YOUTUBE_IFRAME_API_STUB_SCRIPT = `
@@ -37,9 +37,9 @@ const YOUTUBE_IFRAME_API_STUB_SCRIPT = `
 
   class StubYouTubePlayer {
     constructor(element, options) {
-      activeEvents = options.events || {};
-      activeSnapshot = {
+      const snapshot = {
         currentTime: 0,
+        currentTimeReadCount: 0,
         host: options.host || "",
         isReady: false,
         pausedCount: 0,
@@ -47,10 +47,13 @@ const YOUTUBE_IFRAME_API_STUB_SCRIPT = `
         state: "UNSTARTED",
         videoId: options.videoId || "",
       };
-      element.dataset.stubVideoId = activeSnapshot.videoId;
+      this.snapshot = snapshot;
+      activeEvents = options.events || {};
+      activeSnapshot = snapshot;
+      element.dataset.stubVideoId = snapshot.videoId;
       queueMicrotask(() => {
-        if (!activeSnapshot) return;
-        activeSnapshot.isReady = true;
+        if (activeSnapshot !== snapshot) return;
+        snapshot.isReady = true;
         if (activeEvents && typeof activeEvents.onReady === "function") {
           activeEvents.onReady();
         }
@@ -58,7 +61,9 @@ const YOUTUBE_IFRAME_API_STUB_SCRIPT = `
     }
 
     getCurrentTime() {
-      return activeSnapshot ? activeSnapshot.currentTime : 0;
+      if (!activeSnapshot) return 0;
+      activeSnapshot.currentTimeReadCount += 1;
+      return activeSnapshot.currentTime;
     }
 
     playVideo() {
@@ -85,21 +90,15 @@ const YOUTUBE_IFRAME_API_STUB_SCRIPT = `
     }
 
     destroy() {
-      activeSnapshot = null;
-      activeEvents = null;
+      if (activeSnapshot === this.snapshot) {
+        activeSnapshot = null;
+        activeEvents = null;
+      }
     }
   }
 
   window.YT = { Player: StubYouTubePlayer };
-  window.__watchpointYtStub = {
-    advanceToAndPlay(timeSec) {
-      if (!activeSnapshot) return;
-      activeSnapshot.currentTime = timeSec;
-      activeSnapshot.state = "PLAYING";
-      if (activeEvents && typeof activeEvents.onStateChange === "function") {
-        activeEvents.onStateChange({ data: STATE_PLAYING });
-      }
-    },
+  globalThis.watchpointYtStub = {
     getSnapshot() {
       return activeSnapshot;
     },
@@ -150,7 +149,7 @@ class VodPlayerPage {
   }
 
   public getCheckpointPill(timestamp: string): Locator {
-    return this.checkpointsGroup.getByRole("button", { name: timestamp });
+    return this.checkpointsGroup.getByRole("button", { exact: true, name: timestamp });
   }
 
   public promptSkillBadge(skillCategory: string): Locator {
@@ -164,7 +163,7 @@ class VodPlayerPage {
   public getPromptOption(optionText: string): Locator {
     return this.promptPanel
       .getByRole("group", { name: "Prompt options" })
-      .getByRole("button", { name: optionText });
+      .getByRole("button", { exact: true, name: optionText });
   }
 
   public async stubYouTubeApi() {
@@ -184,8 +183,14 @@ class VodPlayerPage {
 
   public async waitForPlayerReady() {
     await this.page.waitForFunction(
-      () => window.__watchpointYtStub?.getSnapshot()?.isReady === true,
+      () => globalThis.watchpointYtStub?.getSnapshot()?.isReady === true,
     );
+  }
+
+  public async startPlayback() {
+    await this.page.evaluate(() => {
+      globalThis.watchpointYtStub?.play();
+    });
   }
 
   public async clickCheckpointPill(timestamp: string) {
@@ -197,19 +202,17 @@ class VodPlayerPage {
   }
 
   public async simulatePlaybackAcross(targetTimeSec: number) {
-    await this.page.evaluate(async (timeSec) => {
-      window.__watchpointYtStub?.play();
-      await new Promise<void>((resolve) => {
-        window.requestAnimationFrame(() => {
-          resolve();
-        });
-      });
-      window.__watchpointYtStub?.setCurrentTime(timeSec);
+    await this.startPlayback();
+    await this.page.waitForFunction(
+      () => (globalThis.watchpointYtStub?.getSnapshot()?.currentTimeReadCount ?? 0) >= 1,
+    );
+    await this.page.evaluate((timeSec) => {
+      globalThis.watchpointYtStub?.setCurrentTime(timeSec);
     }, targetTimeSec);
   }
 
   public async getStubPlayerState(): Promise<StubYouTubePlayerSnapshot | null> {
-    return await this.page.evaluate(() => window.__watchpointYtStub?.getSnapshot() ?? null);
+    return await this.page.evaluate(() => globalThis.watchpointYtStub?.getSnapshot() ?? null);
   }
 }
 
