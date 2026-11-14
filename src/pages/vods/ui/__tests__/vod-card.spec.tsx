@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 
 import { createVodFixture, TEST_VOD } from "@test/vitest/fixtures/vods";
+import { renderWithProviders } from "@test/vitest/wrappers/testing-wrapper";
 
 import { VodCard } from "../vod-card";
 
@@ -13,7 +14,7 @@ describe("vod card", () => {
     const vod = TEST_VOD;
 
     // Act
-    render(<VodCard vod={vod} />);
+    renderWithProviders(<VodCard vod={vod} />);
     const thumbnail = screen.getByRole("img", { name: vod.title });
     const heading = screen.getByRole("heading", { level: 2, name: vod.title });
     const link = screen.getByRole("link", { name: vod.title });
@@ -34,7 +35,7 @@ describe("vod card", () => {
     const vod = TEST_VOD;
 
     // Act
-    render(<VodCard title={vod.title} vod={vod} />);
+    renderWithProviders(<VodCard title={vod.title} vod={vod} />);
     const card = screen.getByTitle(vod.title);
     const link = screen.getByRole("link", { name: vod.title });
 
@@ -51,7 +52,7 @@ describe("vod card", () => {
     const vod = TEST_VOD;
 
     // Act
-    render(<VodCard vod={vod} />);
+    renderWithProviders(<VodCard vod={vod} />);
     const tierBadge = screen.getByText("OWCS");
     const checkpointLabel = screen.getByText("4 Checkpoints");
     const subtitle = screen.getByText("Ana (Support) · King's Row");
@@ -73,7 +74,7 @@ describe("vod card", () => {
     const vod = createVodFixture({ checkpointCount: 1 });
 
     // Act
-    render(<VodCard vod={vod} />);
+    renderWithProviders(<VodCard vod={vod} />);
     const checkpointLabel = screen.getByText("1 Checkpoint");
 
     // Assert
@@ -87,7 +88,7 @@ describe("vod card", () => {
     const vod = createVodFixture({ checkpointCount: 0, skillCategories: [] });
 
     // Act
-    render(<VodCard vod={vod} />);
+    renderWithProviders(<VodCard vod={vod} />);
     const checkpointLabel = screen.getByText("0 Checkpoints");
     const strategyBadge = screen.queryByText("Strategy");
     const tacticsBadge = screen.queryByText("Tactics");
@@ -109,7 +110,7 @@ describe("vod card", () => {
     const vod = TEST_VOD;
 
     // Act
-    render(<VodCard className="border-primary" title="Featured VOD" vod={vod} />);
+    renderWithProviders(<VodCard className="border-primary" title="Featured VOD" vod={vod} />);
     const card = screen.getByTitle("Featured VOD");
 
     // Assert
