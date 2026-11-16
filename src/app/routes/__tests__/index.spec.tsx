@@ -13,14 +13,34 @@ describe("index route beforeLoad guard", () => {
 
     // Arrange
     const beforeLoad = getRouteOption(IndexRoute, "beforeLoad") as (ctx: unknown) => unknown;
-    const args = { context: { session: TEST_SESSION } };
+    const args = { context: { session: TEST_SESSION }, search: { returnTo: undefined } };
 
     // Assert
     expect(() => {
       beforeLoad(args);
     }).toThrow(
       expect.objectContaining({
-        options: expect.objectContaining({ to: "/vods" }) as unknown,
+        options: expect.objectContaining({ href: "/vods" }) as unknown,
+      }),
+    );
+  });
+
+  it("redirects an authenticated user to a validated return destination", () => {
+    expect.assertions(1);
+
+    // Arrange
+    const beforeLoad = getRouteOption(IndexRoute, "beforeLoad") as (ctx: unknown) => unknown;
+    const args = {
+      context: { session: TEST_SESSION },
+      search: { returnTo: "/vods/example?role=Support" },
+    };
+
+    // Assert
+    expect(() => {
+      beforeLoad(args);
+    }).toThrow(
+      expect.objectContaining({
+        options: expect.objectContaining({ href: "/vods/example?role=Support" }) as unknown,
       }),
     );
   });

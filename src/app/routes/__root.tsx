@@ -60,8 +60,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         className="flex min-h-svh flex-col font-sans wrap-anywhere antialiased"
         data-hydrated="false"
       >
+        <a
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring"
+          href="#main-content"
+        >
+          Skip to main content
+        </a>
         <Header />
-        <main className="container mx-auto flex flex-1 flex-col px-4 py-8">{children}</main>
+        <main
+          id="main-content"
+          className="container mx-auto flex flex-1 flex-col px-4 py-8"
+          tabIndex={-1}
+        >
+          {children}
+        </main>
         <Footer />
         <Toaster />
         <Devtools />

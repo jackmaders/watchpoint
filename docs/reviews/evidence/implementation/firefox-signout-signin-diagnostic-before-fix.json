@@ -1,0 +1,27 @@
+{
+  "label": "firefox-signout-signin-diagnostic",
+  "sourceSnapshot": "before removal of redundant post-invalidation form navigation",
+  "browser": "Firefox",
+  "finalURL": "/vods",
+  "pageErrors": [],
+  "consoleErrors": [
+    {
+      "name": "TypeError",
+      "message": "NetworkError when attempting to fetch resource."
+    }
+  ],
+  "failedRequests": [
+    {
+      "method": "GET",
+      "url": "http://localhost:4194/_serverFn/[redacted]",
+      "queryPresent": true,
+      "failure": "NS_BINDING_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4194/_serverFn/[redacted]",
+      "queryPresent": false,
+      "failure": "NS_BINDING_ABORTED"
+    }
+  ]
+}

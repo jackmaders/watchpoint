@@ -59,6 +59,7 @@ const useAuth = vi.fn<
 });
 
 export { useAuth };
+export { getInternalReturnTo } from "../return-to";
 export { authClient, mockAuthClient, signIn, signOut, signUp, useSession } from "./auth.client";
 export { getSessionFn } from "./session.functions";
 export { permissionMiddleware } from "../middleware";

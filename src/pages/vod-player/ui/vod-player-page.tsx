@@ -56,15 +56,15 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
     checkpoints: vod.checkpoints,
     youtubeVideoId: vod.youtubeVideoId,
   });
-  const totalCheckpoints = vod.checkpoints.length;
-  const correctCount = vod.checkpoints.filter(
-    (checkpoint) => answers.get(checkpoint.id)?.isCorrect === true,
-  ).length;
-  const isSessionComplete =
-    totalCheckpoints > 0 && vod.checkpoints.every((checkpoint) => answers.has(checkpoint.id));
+  const sessionSummary = getSessionSummary(vod.checkpoints, answers);
 
   return (
     <section className="space-y-4">
+      <CheckpointAnnouncement
+        checkpoint={activeCheckpoint}
+        answer={activeAnswer}
+        summary={sessionSummary}
+      />
       <h1 className="text-lg font-semibold">{vod.title}</h1>
       <div className="flex flex-col gap-6 lg:flex-row">
         <VodPlayerColumn
@@ -79,16 +79,76 @@ function VodPlayerStudio({ vod }: { vod: VodDetail }) {
         <VodPromptPanel
           activeAnswer={activeAnswer}
           activeCheckpoint={activeCheckpoint}
-          correctCount={correctCount}
-          isSessionComplete={isSessionComplete}
+          correctCount={sessionSummary.correctCount}
+          isSessionComplete={sessionSummary.isSessionComplete}
           onResetSession={resetSession}
           onResumeVod={resumeVod}
           onSelectOption={selectOption}
-          totalCheckpoints={totalCheckpoints}
+          totalCheckpoints={sessionSummary.totalCheckpoints}
         />
       </div>
     </section>
   );
+}
+
+function CheckpointAnnouncement({
+  answer,
+  checkpoint,
+  summary,
+}: {
+  answer: CheckpointAnswer | null;
+  checkpoint: VodCheckpoint | null;
+  summary: ReturnType<typeof getSessionSummary>;
+}) {
+  return (
+    <output aria-atomic="true" aria-live="polite" className="sr-only">
+      {getCheckpointAnnouncement(checkpoint, answer, summary)}
+    </output>
+  );
+}
+
+function getCheckpointAnnouncement(
+  activeCheckpoint: VodCheckpoint | null,
+  activeAnswer: CheckpointAnswer | null,
+  summary: ReturnType<typeof getSessionSummary>,
+): string {
+  if (!activeCheckpoint) {
+    return summary.isSessionComplete
+      ? `Session complete. ${summary.correctCount} of ${summary.totalCheckpoints} Checkpoints correct.`
+      : "";
+  }
+  if (!activeAnswer) {
+    return `New Checkpoint: ${activeCheckpoint.question}`;
+  }
+  return getAnswerAnnouncement(activeAnswer, summary);
+}
+
+function getAnswerAnnouncement(
+  answer: CheckpointAnswer,
+  summary: ReturnType<typeof getSessionSummary>,
+): string {
+  const result = answer.isCorrect ? "Correct answer." : "Incorrect answer.";
+  const complete = summary.isSessionComplete
+    ? ` Session complete. ${summary.correctCount} of ${summary.totalCheckpoints} Checkpoints correct.`
+    : "";
+  return `${result} Review the correct answer and explanation.${complete}`;
+}
+
+function getSessionSummary(
+  checkpoints: readonly VodCheckpoint[],
+  answers: ReadonlyMap<string, CheckpointAnswer>,
+) {
+  const totalCheckpoints = checkpoints.length;
+  const correctCount = checkpoints.filter(
+    (checkpoint) => answers.get(checkpoint.id)?.isCorrect === true,
+  ).length;
+
+  return {
+    correctCount,
+    isSessionComplete:
+      totalCheckpoints > 0 && checkpoints.every((checkpoint) => answers.has(checkpoint.id)),
+    totalCheckpoints,
+  };
 }
 
 function VodPlayerColumn({

@@ -1,0 +1,4670 @@
+[
+  {
+    "label": "light-form-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<input id=\"_r_3_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(255 255 255)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1,
+        "textContrast": 7.99,
+        "placeholderColor": "rgb(76, 79, 105)",
+        "placeholderContrast": 7.99,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(108, 111, 133)",
+        "borderContrast": 4.94,
+        "borderOnFillContrast": 4.94,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=tab][aria-selected=true]": {
+        "found": true,
+        "text": "Sign Up",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgb(239, 241, 245)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(220 224 232)",
+        "fillContrast": 1.17,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs-list items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 grou",
+            "backgroundColor": "rgb(220, 224, 232)"
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent ",
+            "backgroundColor": "rgb(239, 241, 245)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.01,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 7.04,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-form-invalid",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "input[aria-invalid=\"true\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(210, 15, 57)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(255 255 255)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1,
+        "textContrast": 5.43,
+        "placeholderColor": "rgb(210, 15, 57)",
+        "placeholderContrast": 5.43,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(210, 15, 57)",
+        "borderContrast": 5.43,
+        "borderOnFillContrast": 5.43,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.550482 0.202776 0.0730503 / 0.2) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[data-slot=\"field-error\"]": {
+        "found": true,
+        "text": "Password must be at least 8 characters",
+        "color": "rgb(210, 15, 57)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(255 255 255)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1,
+        "textContrast": 5.43,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "text-sm font-normal text-destructive",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.6,
+        "borderOnFillContrast": 2.6,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 7.04,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-form-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)",
+        "effectiveBackground": "rgb(145 81 221)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 4.75,
+        "textContrast": 4.75,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-overlay-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "[role=\"dialog\"] input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(204 208 218)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 1,
+        "textContrast": 5.17,
+        "placeholderColor": "rgb(76, 79, 105)",
+        "placeholderContrast": 5.17,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(136, 57, 239)",
+        "borderContrast": 3.51,
+        "borderOnFillContrast": 3.51,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 1px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.554654 0.11374 -0.223014 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Sign in",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 4.56,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] [data-slot=\"dialog-description\"]": {
+        "found": true,
+        "text": "Enter your credentials to access Watchpoint VOD reviews",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(204 208 218)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 1,
+        "textContrast": 5.17,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "p",
+            "className": "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 1.69,
+        "borderOnFillContrast": 1.69,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-overlay-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Sign in",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)",
+        "effectiveBackground": "rgb(134 71 213)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 3.51,
+        "textContrast": 5.42,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-overlay-invalid",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "[role=\"dialog\"] input[aria-invalid=\"true\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(210, 15, 57)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(204 208 218)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 1,
+        "textContrast": 3.52,
+        "placeholderColor": "rgb(210, 15, 57)",
+        "placeholderContrast": 3.52,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(210, 15, 57)",
+        "borderContrast": 3.52,
+        "borderOnFillContrast": 3.52,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.550482 0.202776 0.0730503 / 0.2) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] [data-slot=\"field-error\"]": {
+        "found": true,
+        "text": "Password must be at least 8 characters",
+        "color": "rgb(210, 15, 57)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(204 208 218)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 1,
+        "textContrast": 3.52,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "text-sm font-normal text-destructive",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 1.69,
+        "borderOnFillContrast": 1.69,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      },
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      }
+    ]
+  },
+  {
+    "label": "light-catalogue",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<body class=\"flex min-h-svh flex-col font-sans wrap-anywhere antialiased\" data-hydrated=\"true\"><a class=\"sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring\" href=\"#main-content\">Skip to main content</a><header class=\"sticky top-0 z-50 flex h-14 items-center border-b",
+    "checks": {
+      "input[type=\"search\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(255 255 255)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1,
+        "textContrast": 7.99,
+        "placeholderColor": "rgb(76, 79, 105)",
+        "placeholderContrast": 7.99,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-4 rounded-lg border bg-card p-4",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-2 sm:flex-row sm:items-end",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 flex-col gap-1.5",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(108, 111, 133)",
+        "borderContrast": 4.94,
+        "borderOnFillContrast": 4.94,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "select": {
+        "found": true,
+        "text": "All rolesTankDamageSupport",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgb(239, 241, 245)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1.13,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-4 rounded-lg border bg-card p-4",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-1.5",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "select",
+            "className": "h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border",
+            "backgroundColor": "rgb(239, 241, 245)"
+          }
+        ],
+        "borderColor": "rgb(108, 111, 133)",
+        "borderContrast": 4.94,
+        "borderOnFillContrast": 4.37,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "a[href*='/vods/']": {
+        "found": true,
+        "text": "[ Shu ] Ana Main Madness | Zeta Division vs Team Falcons | OWCS Korea Stage 3",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(255 255 255)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 1,
+        "textContrast": 7.99,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "ul",
+            "className": "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "li",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card-header @container/card-header grid auto-rows-min items-start rounded-t-xl px-(--card-spacing) has-data-[slot=",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "h2",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "a",
+            "className": "line-clamp-2 after:absolute after:inset-0 hover:underline focus-visible:underline focus-visible:outline-none",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.6,
+        "borderOnFillContrast": 2.6,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-catalogue-empty",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none d",
+    "checks": {
+      "h2": {
+        "found": false
+      },
+      "button": {
+        "found": true,
+        "text": "Sign Out",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 6.23,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "header",
+            "className": "sticky top-0 z-50 flex h-14 items-center border-b bg-background",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "container mx-auto flex items-center justify-between px-4 py-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex items-center gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex items-center gap-2 max-md:hidden",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-selected-pill-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"button\" tabindex=\"0\" data-slot=\"button\" aria-pressed=\"true\" class=\"group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none ",
+    "checks": {
+      "button[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "00:45",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)",
+        "effectiveBackground": "rgb(141 78 219)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 4.37,
+        "textContrast": 4.95,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-3 lg:min-w-0 lg:flex-1",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "flex flex-wrap gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whit",
+            "backgroundColor": "oklab(0.4933 0.107853 -0.214455 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-prompt-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button type=\"button\" tabindex=\"0\" data-slot=\"button\" aria-pressed=\"true\" class=\"group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none ",
+    "checks": {
+      "fieldset[aria-label=\"Prompt options\"] button:first-child": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "oklab(0.905959 -0.00108051 -0.0116442 / 0.6)",
+        "effectiveBackground": "rgb(228 230 237)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1.1,
+        "textContrast": 6.4,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.905959 -0.00108051 -0.0116442 / 0.6)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.3,
+        "borderOnFillContrast": 2.09,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-prompt-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button aria-pressed=\"false\" class=\"w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 border-border hover:bg-muted/60\" aria-disabled=\"false\" type=\"button\">Save Nano Boost strictly as an emergency heal for your Tracer</button>",
+    "checks": {
+      "aside[aria-label=\"Checkpoint prompt\"]": {
+        "found": true,
+        "text": "Strategy00:45Before the first fight breaks out, what is your primary win condition with Nano Boost?Save Nano Boost strictly as an emergency heal for your TracerUse Nano Boost to en",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.3,
+        "borderOnFillContrast": 2.3,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": "Checkpoint prompt",
+        "ariaLive": null
+      },
+      "[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "00:45",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 6.23,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-3 lg:min-w-0 lg:flex-1",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "flex flex-wrap gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whit",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "fieldset[aria-label=\"Prompt options\"] button:first-child": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.3,
+        "borderOnFillContrast": 2.3,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-feedback",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "light",
+    "focus": "<button aria-pressed=\"true\" class=\"w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 border-destructive bg-destructive/10\" aria-disabled=\"true\" type=\"button\">Save Nano Boost strictly as an emergency heal for your Tracer</button>",
+    "checks": {
+      "aside[aria-label=\"Checkpoint prompt\"]": {
+        "found": true,
+        "text": "Strategy00:45Before the first fight breaks out, what is your primary win condition with Nano Boost?Save Nano Boost strictly as an emergency heal for your TracerUse Nano Boost to en",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.3,
+        "borderOnFillContrast": 2.3,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": "Checkpoint prompt",
+        "ariaLive": null
+      },
+      "output[aria-live=\"polite\"]": {
+        "found": true,
+        "text": "Incorrect answer. Review the correct answer and explanation.",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(239 241 245)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1,
+        "textContrast": 7.06,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "output",
+            "className": "sr-only",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(156, 160, 176)",
+        "borderContrast": 2.3,
+        "borderOnFillContrast": 2.3,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": "polite"
+      },
+      "fieldset[aria-label=\"Prompt options\"] button[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "oklab(0.550482 0.202776 0.0730503 / 0.1)",
+        "effectiveBackground": "rgb(236 218 226)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1.18,
+        "textContrast": 5.97,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.550482 0.202776 0.0730503 / 0.1)"
+          }
+        ],
+        "borderColor": "rgb(210, 15, 57)",
+        "borderContrast": 4.8,
+        "borderOnFillContrast": 4.06,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "true",
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "fieldset[aria-label=\"Prompt options\"] button[aria-disabled=\"true\"]": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "oklab(0.550482 0.202776 0.0730503 / 0.1)",
+        "effectiveBackground": "rgb(236 218 226)",
+        "adjacentBackground": "rgb(239 241 245)",
+        "fillContrast": 1.18,
+        "textContrast": 5.97,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.550482 0.202776 0.0730503 / 0.1)"
+          }
+        ],
+        "borderColor": "rgb(210, 15, 57)",
+        "borderContrast": 4.8,
+        "borderOnFillContrast": 4.06,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.14,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "true",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "Incorrect answer. Review the correct answer and explanation."
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-form-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<input id=\"_r_3_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(71 73 92)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1.86,
+        "textContrast": 6.11,
+        "placeholderColor": "rgb(205, 214, 244)",
+        "placeholderContrast": 6.11,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "rgb(166, 173, 200)",
+        "borderContrast": 7.37,
+        "borderOnFillContrast": 3.97,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=tab][aria-selected=true]": {
+        "found": true,
+        "text": "Sign Up",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(79 83 102)",
+        "adjacentBackground": "rgb(41 44 60)",
+        "fillContrast": 1.82,
+        "textContrast": 5.26,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs-list items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 grou",
+            "backgroundColor": "rgb(41, 44, 60)"
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent ",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "rgb(166, 173, 200)",
+        "borderContrast": 6.21,
+        "borderOnFillContrast": 3.42,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.84,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 8.07,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-form-invalid",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "input[aria-invalid=\"true\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(255, 182, 197)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(71 73 92)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1.86,
+        "textContrast": 5.37,
+        "placeholderColor": "rgb(255, 182, 197)",
+        "placeholderContrast": 5.37,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "oklab(0.848484 0.0862129 0.00834584 / 0.5)",
+        "borderContrast": 3.52,
+        "borderOnFillContrast": 2.53,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.848484 0.0862129 0.00834584 / 0.4) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[data-slot=\"field-error\"]": {
+        "found": true,
+        "text": "Password must be at least 8 characters",
+        "color": "rgb(255, 182, 197)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(30 30 46)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1,
+        "textContrast": 9.96,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "text-sm font-normal text-destructive",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.46,
+        "borderOnFillContrast": 2.46,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 8.07,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-form-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)",
+        "effectiveBackground": "rgb(168 139 208)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 5.68,
+        "textContrast": 5.68,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-overlay-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "[role=\"dialog\"] input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(84 87 108)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 1.77,
+        "textContrast": 4.91,
+        "placeholderColor": "rgb(205, 214, 244)",
+        "placeholderContrast": 4.91,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "rgb(203, 166, 247)",
+        "borderContrast": 6.19,
+        "borderOnFillContrast": 3.5,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 1px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.787138 0.0677087 -0.0974627 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Sign in",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 6.19,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] [data-slot=\"dialog-description\"]": {
+        "found": true,
+        "text": "Enter your credentials to access Watchpoint VOD reviews",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(49 50 68)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 1,
+        "textContrast": 8.69,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "p",
+            "className": "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 1.88,
+        "borderOnFillContrast": 1.88,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-overlay-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"email\" placeholder=\"name@example.com\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-vis",
+    "checks": {
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Sign in",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)",
+        "effectiveBackground": "rgb(171 143 212)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 4.56,
+        "textContrast": 5.94,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-overlay-invalid",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" aria-busy=\"false\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:poi",
+    "checks": {
+      "[role=\"dialog\"] input[aria-invalid=\"true\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(255, 182, 197)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(84 87 108)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 1.77,
+        "textContrast": 4.31,
+        "placeholderColor": "rgb(255, 182, 197)",
+        "placeholderContrast": 4.31,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "oklab(0.848484 0.0862129 0.00834584 / 0.5)",
+        "borderContrast": 3.1,
+        "borderOnFillContrast": 2.23,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.848484 0.0862129 0.00834584 / 0.4) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] [data-slot=\"field-error\"]": {
+        "found": true,
+        "text": "Password must be at least 8 characters",
+        "color": "rgb(255, 182, 197)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(49 50 68)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 1,
+        "textContrast": 7.63,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "text-sm font-normal text-destructive",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 1.88,
+        "borderOnFillContrast": 1.88,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      },
+      {
+        "role": "alert",
+        "live": null,
+        "text": "Password must be at least 8 characters"
+      }
+    ]
+  },
+  {
+    "label": "dark-catalogue",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<body class=\"flex min-h-svh flex-col font-sans wrap-anywhere antialiased\" data-hydrated=\"true\"><a class=\"sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring\" href=\"#main-content\">Skip to main content</a><header class=\"sticky top-0 z-50 flex h-14 items-center border-b",
+    "checks": {
+      "input[type=\"search\"]": {
+        "found": true,
+        "text": "",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(71 73 92)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1.86,
+        "textContrast": 6.11,
+        "placeholderColor": "rgb(205, 214, 244)",
+        "placeholderContrast": 6.11,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-4 rounded-lg border bg-card p-4",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-2 sm:flex-row sm:items-end",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 flex-col gap-1.5",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "rgb(166, 173, 200)",
+        "borderContrast": 7.37,
+        "borderOnFillContrast": 3.97,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "select": {
+        "found": true,
+        "text": "All rolesTankDamageSupport",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgb(24, 24, 37)",
+        "effectiveBackground": "rgb(24 24 37)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1.07,
+        "textContrast": 12.14,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-4 rounded-lg border bg-card p-4",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-1.5",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "select",
+            "className": "h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border",
+            "backgroundColor": "rgb(24, 24, 37)"
+          }
+        ],
+        "borderColor": "rgb(166, 173, 200)",
+        "borderContrast": 7.37,
+        "borderOnFillContrast": 7.89,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "a[href*='/vods/']": {
+        "found": true,
+        "text": "[ Shu ] Ana Main Madness | Zeta Division vs Team Falcons | OWCS Korea Stage 3",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(30 30 46)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 1,
+        "textContrast": 11.34,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "mx-auto flex w-full max-w-6xl flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "ul",
+            "className": "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "li",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card-header @container/card-header grid auto-rows-min items-start rounded-t-xl px-(--card-spacing) has-data-[slot=",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "h2",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "a",
+            "className": "line-clamp-2 after:absolute after:inset-0 hover:underline focus-visible:underline focus-visible:outline-none",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.46,
+        "borderOnFillContrast": 2.46,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-catalogue-empty",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" class=\"group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none d",
+    "checks": {
+      "h2": {
+        "found": false
+      },
+      "button": {
+        "found": true,
+        "text": "Sign Out",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 8.64,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "header",
+            "className": "sticky top-0 z-50 flex h-14 items-center border-b bg-background",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "container mx-auto flex items-center justify-between px-4 py-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex items-center gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex items-center gap-2 max-md:hidden",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-selected-pill-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"button\" tabindex=\"0\" data-slot=\"button\" aria-pressed=\"true\" class=\"group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none ",
+    "checks": {
+      "button[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "00:45",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)",
+        "effectiveBackground": "rgb(166 138 206)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 5.98,
+        "textContrast": 5.58,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-3 lg:min-w-0 lg:flex-1",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "flex flex-wrap gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whit",
+            "backgroundColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.8)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-prompt-hover",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button type=\"button\" tabindex=\"0\" data-slot=\"button\" aria-pressed=\"true\" class=\"group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none ",
+    "checks": {
+      "fieldset[aria-label=\"Prompt options\"] button:first-child": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.297338 0.0031933 -0.0291991 / 0.6)",
+        "effectiveBackground": "rgb(35 35 51)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1.14,
+        "textContrast": 10.68,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.297338 0.0031933 -0.0291991 / 0.6)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.63,
+        "borderOnFillContrast": 2.31,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-prompt-focused",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button aria-pressed=\"false\" class=\"w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 border-border hover:bg-muted/60\" aria-disabled=\"false\" type=\"button\">Save Nano Boost strictly as an emergency heal for your Tracer</button>",
+    "checks": {
+      "aside[aria-label=\"Checkpoint prompt\"]": {
+        "found": true,
+        "text": "Strategy00:45Before the first fight breaks out, what is your primary win condition with Nano Boost?Save Nano Boost strictly as an emergency heal for your TracerUse Nano Boost to en",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(24 24 37)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1,
+        "textContrast": 12.14,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.63,
+        "borderOnFillContrast": 2.63,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": "Checkpoint prompt",
+        "ariaLive": null
+      },
+      "[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "00:45",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 8.64,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-3 lg:min-w-0 lg:flex-1",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "flex flex-wrap gap-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whit",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "fieldset[aria-label=\"Prompt options\"] button:first-child": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(24 24 37)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1,
+        "textContrast": 12.14,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.63,
+        "borderOnFillContrast": 2.63,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "false",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "New Checkpoint: Before the first fight breaks out, what is your primary win condition with Nano Boost?"
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-feedback",
+    "viewport": {
+      "width": 1440,
+      "height": 960,
+      "scrollWidth": 1440
+    },
+    "mode": "dark",
+    "focus": "<button aria-pressed=\"true\" class=\"w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 border-destructive bg-destructive/10\" aria-disabled=\"true\" type=\"button\">Save Nano Boost strictly as an emergency heal for your Tracer</button>",
+    "checks": {
+      "aside[aria-label=\"Checkpoint prompt\"]": {
+        "found": true,
+        "text": "Strategy00:45Before the first fight breaks out, what is your primary win condition with Nano Boost?Save Nano Boost strictly as an emergency heal for your TracerUse Nano Boost to en",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(24 24 37)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1,
+        "textContrast": 12.14,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.63,
+        "borderOnFillContrast": 2.63,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": "Checkpoint prompt",
+        "ariaLive": null
+      },
+      "output[aria-live=\"polite\"]": {
+        "found": true,
+        "text": "Incorrect answer. Review the correct answer and explanation.",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(24 24 37)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1,
+        "textContrast": 12.14,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "output",
+            "className": "sr-only",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(88, 91, 112)",
+        "borderContrast": 2.63,
+        "borderOnFillContrast": 2.63,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": "polite"
+      },
+      "fieldset[aria-label=\"Prompt options\"] button[aria-pressed=\"true\"]": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.848484 0.0862129 0.00834584 / 0.1)",
+        "effectiveBackground": "rgb(48 41 53)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1.25,
+        "textContrast": 9.72,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.848484 0.0862129 0.00834584 / 0.1)"
+          }
+        ],
+        "borderColor": "rgb(255, 182, 197)",
+        "borderContrast": 10.66,
+        "borderOnFillContrast": 8.53,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "true",
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "fieldset[aria-label=\"Prompt options\"] button[aria-disabled=\"true\"]": {
+        "found": true,
+        "text": "Save Nano Boost strictly as an emergency heal for your Tracer",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.848484 0.0862129 0.00834584 / 0.1)",
+        "effectiveBackground": "rgb(48 41 53)",
+        "adjacentBackground": "rgb(24 24 37)",
+        "fillContrast": 1.25,
+        "textContrast": 9.72,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "section",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-col gap-6 lg:flex-row",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "aside",
+            "className": "h-fit rounded-lg border p-4 lg:w-90 lg:shrink-0",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "space-y-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "fieldset",
+            "className": "space-y-2",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:rin",
+            "backgroundColor": "oklab(0.848484 0.0862129 0.00834584 / 0.1)"
+          }
+        ],
+        "borderColor": "rgb(255, 182, 197)",
+        "borderContrast": 10.66,
+        "borderOnFillContrast": 8.53,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.13,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": "true",
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": null,
+        "live": "polite",
+        "text": "Incorrect answer. Review the correct answer and explanation."
+      },
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "mobile-navigation-keyboard",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "focusRestored": true,
+    "activeElement": "<button type=\"button\" tabindex=\"0\" data-slot=\"drawer-trigger\" data-base-ui-click-trigger=\"\" id=\"base-ui-_R_3f9a_\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-label=\"Open menu\" class=\"group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&amp;_svg:not([class*='size-'])]:size-3.5 md:hidden\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-menu\" aria-hidden=\"true\" data-icon=\"inline-start\"><path d=\"M4 5h16\"></path><path d=\"M4 12h16\"></path><path d=\"M4 19h16\"></path></svg></button>"
+  },
+  {
+    "label": "light-signup-overlay-320x568",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320
+    },
+    "mode": "light",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"name\" placeholder=\"Your name\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:bor",
+    "checks": {
+      "[role=\"dialog\"] input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(76, 79, 105)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "effectiveBackground": "rgb(204 208 218)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 1,
+        "textContrast": 5.17,
+        "placeholderColor": "rgb(76, 79, 105)",
+        "placeholderContrast": 5.17,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          }
+        ],
+        "borderColor": "rgb(136, 57, 239)",
+        "borderContrast": 3.51,
+        "borderOnFillContrast": 3.51,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 1px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.554654 0.11374 -0.223014 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(204 208 218)",
+        "fillContrast": 4.56,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(204, 208, 218)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 1.9,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-signup-overlay-320x568",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320
+    },
+    "mode": "dark",
+    "focus": "<input id=\"_r_b_\" data-slot=\"input\" autocomplete=\"name\" placeholder=\"Your name\" required=\"\" aria-invalid=\"false\" class=\"h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:bor",
+    "checks": {
+      "[role=\"dialog\"] input": {
+        "found": true,
+        "text": "",
+        "color": "rgb(205, 214, 244)",
+        "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)",
+        "effectiveBackground": "rgb(84 87 108)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 1.77,
+        "textContrast": 4.91,
+        "placeholderColor": "rgb(205, 214, 244)",
+        "placeholderContrast": 4.91,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/field flex w-full gap-2 data-[invalid=true]:text-destructive flex-col *:w-full [&>.sr-only]:w-auto",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "input",
+            "className": "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none fi",
+            "backgroundColor": "oklab(0.750954 0.00274682 -0.0394558 / 0.3)"
+          }
+        ],
+        "borderColor": "rgb(203, 166, 247)",
+        "borderContrast": 6.19,
+        "borderOnFillContrast": 3.5,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 1px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.787138 0.0677087 -0.0974627 / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      },
+      "[role=\"dialog\"] button[type=submit]": {
+        "found": true,
+        "text": "Create account",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(49 50 68)",
+        "fillContrast": 6.19,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-po",
+            "backgroundColor": "rgb(49, 50, 68)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 2.71,
+        "boxShadow": "none",
+        "disabled": false,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "light-signin-loading",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320
+    },
+    "mode": "light",
+    "focus": "<body class=\"flex min-h-svh flex-col font-sans wrap-anywhere antialiased\" data-hydrated=\"true\"><a class=\"sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring\" href=\"#main-content\">Skip to main content</a><header class=\"sticky top-0 z-50 flex h-14 items-center border-b",
+    "checks": {
+      "form button[aria-busy=\"true\"]": {
+        "found": true,
+        "text": "Please wait…",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(117, 37, 213)",
+        "effectiveBackground": "rgb(117 37 213)",
+        "adjacentBackground": "rgb(255 255 255)",
+        "fillContrast": 7.04,
+        "textContrast": 7.04,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(239, 241, 245)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(255, 255, 255)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(117, 37, 213)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.554654 0.11374 -0.223014 / 0.5) none 3px",
+        "outlineColor": "oklab(0.554654 0.11374 -0.223014 / 0.5)",
+        "outlineContrast": 2.23,
+        "boxShadow": "none",
+        "disabled": true,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "dark-signin-loading",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320
+    },
+    "mode": "dark",
+    "focus": "<body class=\"flex min-h-svh flex-col font-sans wrap-anywhere antialiased\" data-hydrated=\"true\"><a class=\"sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring\" href=\"#main-content\">Skip to main content</a><header class=\"sticky top-0 z-50 flex h-14 items-center border-b",
+    "checks": {
+      "form button[aria-busy=\"true\"]": {
+        "found": true,
+        "text": "Please wait…",
+        "color": "rgb(30, 30, 46)",
+        "backgroundColor": "rgb(203, 166, 247)",
+        "effectiveBackground": "rgb(203 166 247)",
+        "adjacentBackground": "rgb(30 30 46)",
+        "fillContrast": 8.07,
+        "textContrast": 8.07,
+        "placeholderColor": null,
+        "placeholderContrast": null,
+        "backgroundLayers": [
+          {
+            "tag": "html",
+            "className": "dark",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "body",
+            "className": "flex min-h-svh flex-col font-sans wrap-anywhere antialiased",
+            "backgroundColor": "rgb(24, 24, 37)"
+          },
+          {
+            "tag": "main",
+            "className": "container mx-auto flex flex-1 flex-col px-4 py-8",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex flex-1 items-center justify-center p-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex w-full max-w-sm flex-col gap-6",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/tabs flex gap-2 data-horizontal:flex-col",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "flex-1 text-sm outline-none mt-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "div",
+            "className": "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-f",
+            "backgroundColor": "rgb(30, 30, 46)"
+          },
+          {
+            "tag": "div",
+            "className": "px-(--card-spacing)",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "form",
+            "className": "flex flex-col gap-4",
+            "backgroundColor": "rgba(0, 0, 0, 0)"
+          },
+          {
+            "tag": "button",
+            "className": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-",
+            "backgroundColor": "rgb(203, 166, 247)"
+          }
+        ],
+        "borderColor": "rgba(0, 0, 0, 0)",
+        "borderContrast": null,
+        "borderOnFillContrast": null,
+        "outline": "oklab(0.787138 0.0677087 -0.0974627 / 0.5) none 3px",
+        "outlineColor": "oklab(0.787138 0.0677087 -0.0974627 / 0.5)",
+        "outlineContrast": 3.07,
+        "boxShadow": "none",
+        "disabled": true,
+        "ariaDisabled": null,
+        "ariaLabel": null,
+        "ariaLive": null
+      }
+    },
+    "liveRegions": [
+      {
+        "role": "region",
+        "live": "polite",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "label": "auth-signin-restores-requested-vod",
+    "requested": "http://localhost:4194/vods/shu-ana-owcs-kr-s3",
+    "actual": "http://localhost:4194/vods/shu-ana-owcs-kr-s3",
+    "passed": true
+  },
+  {
+    "label": "auth-rejects-external-return-to",
+    "actual": "http://localhost:4194/vods"
+  },
+  {
+    "label": "responsive-catalogue-320",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "scrollWidth": 320
+  },
+  {
+    "label": "responsive-player-320",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "scrollWidth": 320,
+    "promptRect": {
+      "x": 16,
+      "y": 414,
+      "width": 288,
+      "height": 422,
+      "top": 414,
+      "right": 304,
+      "bottom": 836,
+      "left": 16
+    },
+    "focusedControl": "00:45"
+  },
+  {
+    "label": "responsive-catalogue-768",
+    "viewport": {
+      "width": 768,
+      "height": 720
+    },
+    "scrollWidth": 768
+  },
+  {
+    "label": "responsive-player-768",
+    "viewport": {
+      "width": 768,
+      "height": 720
+    },
+    "scrollWidth": 768,
+    "promptRect": {
+      "x": 16,
+      "y": 610,
+      "width": 736,
+      "height": 282,
+      "top": 610,
+      "right": 752,
+      "bottom": 892,
+      "left": 16
+    },
+    "focusedControl": "00:45"
+  },
+  {
+    "label": "responsive-catalogue-1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "scrollWidth": 1024
+  },
+  {
+    "label": "responsive-player-1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "scrollWidth": 1024,
+    "promptRect": {
+      "x": 648,
+      "y": 132,
+      "width": 360,
+      "height": 382,
+      "top": 132,
+      "right": 1008,
+      "bottom": 514,
+      "left": 648
+    },
+    "focusedControl": "00:45"
+  },
+  {
+    "label": "responsive-catalogue-1280",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "scrollWidth": 1280
+  },
+  {
+    "label": "responsive-player-1280",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "scrollWidth": 1280,
+    "promptRect": {
+      "x": 904,
+      "y": 132,
+      "width": 360,
+      "height": 382,
+      "top": 132,
+      "right": 1264,
+      "bottom": 514,
+      "left": 904
+    },
+    "focusedControl": "00:45"
+  },
+  {
+    "label": "loader-transient-retry",
+    "failedRequests": 1,
+    "recovered": true,
+    "actualURL": "http://localhost:4194/vods?q=Transient+loader+failure"
+  },
+  {
+    "label": "real-youtube-smoke",
+    "youtubeApiReady": true,
+    "iframes": [
+      {
+        "title": "YouTube video player",
+        "src": "https://www.youtube-nocookie.com/embed/Ha5QwBV3Rhk?controls=1&enablejsapi=1&origin=http%3A%2F%2Flocalhost%3A4194&playsinline=1&rel=0&widgetid=1&forigin=http%3A%2F%2Flocalhost%3A4194%2Fvods%2Fshu-ana-owcs-kr-s3&aoriginsup=1&vf=6"
+      }
+    ],
+    "playerErrors": []
+  }
+]

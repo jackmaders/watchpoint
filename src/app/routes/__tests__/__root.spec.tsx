@@ -68,7 +68,10 @@ describe("root route layout and shellComponent", () => {
 
     // Assert
     expect(screen.getByRole("banner")).toBeDefined();
-    expect(screen.getByRole("main")).toBeDefined();
+    expect([
+      screen.getByRole("main").getAttribute("id"),
+      screen.getByRole("link", { name: "Skip to main content" }).getAttribute("href"),
+    ]).toStrictEqual(["main-content", "#main-content"]);
     expect(screen.getByRole("contentinfo")).toBeDefined();
     expect(screen.getByText("Child content")).toBeDefined();
     expect(document.body.dataset["hydrated"]).toBe("true");
