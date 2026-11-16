@@ -33,10 +33,10 @@ pnpm build
 
 This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
-Replace `src/app/styles/theme.css` with a tweakcn theme export to change the theme.
-Keep framework imports, base styles, and compatibility aliases in
-`src/app/styles/index.css`. Load any custom fonts required by the theme from
-`theme.css`.
+Change palette values in `src/app/styles/theme.css` to change the theme. Keep
+framework imports, Tailwind color mappings, base styles, and installed component
+geometry in `src/app/styles/index.css`. Load any custom fonts required by the
+theme from `theme.css`.
 
 ### Removing Tailwind CSS
 

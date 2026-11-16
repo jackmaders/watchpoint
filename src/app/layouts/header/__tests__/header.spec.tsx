@@ -54,6 +54,23 @@ describe("header identity and navigation", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
   });
 
+  it("provides a visible close action in the mobile navigation drawer", async () => {
+    expect.assertions(2);
+
+    // Arrange
+    const user = userEvent.setup();
+    await renderHeader();
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    const closeButton = screen.getByRole("button", { name: "Close menu" });
+    await user.click(closeButton);
+
+    // Assert
+    expect(closeButton).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Close menu" })).toBeNull();
+  });
+
   it("shows VODs link without Todos and sign out button when user is authenticated", async () => {
     expect.assertions(3);
 

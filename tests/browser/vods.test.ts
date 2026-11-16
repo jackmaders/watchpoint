@@ -11,7 +11,7 @@ const JUNBIN_TITLE =
 const TAEJONG_TITLE =
   "[ Taejong ] One Trick Tracer | Poker Face vs RODE Zanside Gaming | OWCS Korea Stage 3";
 
-test("redirects unauthenticated visitors from /vods to /", async ({ page }) => {
+test("preserves /vods while redirecting unauthenticated visitors to sign in", async ({ page }) => {
   // Arrange
   const vodsPage = new VodsPage(page);
   const homePage = new HomePage(page);
@@ -20,7 +20,7 @@ test("redirects unauthenticated visitors from /vods to /", async ({ page }) => {
   await vodsPage.goto();
 
   // Assert
-  await expect(page).toHaveURL(/\/$/u);
+  await expect(page).toHaveURL(/\/?returnTo=%2Fvods$/u);
   await expect(homePage.heading).toBeVisible();
 });
 

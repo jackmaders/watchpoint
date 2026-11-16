@@ -37,14 +37,17 @@ describe("_authenticated route beforeLoad guard", () => {
     const beforeLoad = getRouteOption(AuthenticatedRoute, "beforeLoad") as (
       ctx: unknown,
     ) => unknown;
-    const args = { context: { session: null } };
+    const args = { context: { session: null }, location: { href: "/vods/example?role=Support" } };
 
     // Assert
     expect(() => {
       beforeLoad(args);
     }).toThrow(
       expect.objectContaining({
-        options: expect.objectContaining({ to: "/" }) as unknown,
+        options: expect.objectContaining({
+          to: "/",
+          search: { returnTo: "/vods/example?role=Support" },
+        }) as unknown,
       }),
     );
   });

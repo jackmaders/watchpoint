@@ -4,10 +4,12 @@ import { z } from "zod";
 import { useAuth } from "@/shared/auth";
 import { useAppForm, type AppFormProps } from "@/shared/ui/form";
 
+const MIN_PASSWORD_LENGTH = 8;
+
 const signUpSchema = z.object({
   email: z.email("Enter a valid email address"),
   name: z.string().min(1, "Name is required"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(MIN_PASSWORD_LENGTH, "Password must be at least 8 characters"),
 });
 
 export function SignUpForm({ className, ...props }: AppFormProps) {
@@ -46,6 +48,7 @@ export function SignUpForm({ className, ...props }: AppFormProps) {
               label="Password"
               type="password"
               autoComplete="new-password"
+              description="Use at least 8 characters."
               required
             />
           )}

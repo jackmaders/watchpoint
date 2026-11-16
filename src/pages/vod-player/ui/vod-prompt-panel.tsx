@@ -79,6 +79,10 @@ function renderPromptPanelBody({
     );
   }
 
+  if (totalCheckpoints === 0) {
+    return <p className="text-sm text-muted-foreground">This VOD has no Checkpoints to review.</p>;
+  }
+
   return <IdlePromptState />;
 }
 
@@ -146,7 +150,14 @@ function ActiveCheckpointPrompt({
         options={checkpoint.options}
         onSelectOption={onSelectOption}
       />
-      {answer ? <PromptFeedback answer={answer} explanation={checkpoint.explanation} /> : null}
+      {answer ? (
+        <PromptFeedback
+          answer={answer}
+          correctAnswer={checkpoint.options[checkpoint.correctOptionIndex] ?? ""}
+          explanation={checkpoint.explanation}
+          selectedAnswer={checkpoint.options[answer.selectedOptionIndex] ?? ""}
+        />
+      ) : null}
       {answer ? (
         <Button className="w-full" type="button" onClick={onResumeVod}>
           Resume VOD
@@ -180,13 +191,15 @@ function PromptOptionList({
             key={optionLabel}
             aria-pressed={isSelected}
             className={cn(
-              "w-full rounded-md border px-3 py-2 text-left text-sm transition",
+              "w-full rounded-md border px-3 py-2 text-left text-sm transition outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
               getOptionStateClass({ isAnswered, isCorrectOption, isSelected }),
             )}
-            disabled={isAnswered}
+            aria-disabled={isAnswered}
             type="button"
             onClick={() => {
-              onSelectOption(optionIndex);
+              if (!isAnswered) {
+                onSelectOption(optionIndex);
+              }
             }}
           >
             {optionLabel}
@@ -199,14 +212,24 @@ function PromptOptionList({
 
 function PromptFeedback({
   answer,
+  correctAnswer,
   explanation,
+  selectedAnswer,
 }: {
   answer: CheckpointAnswer;
+  correctAnswer: string;
   explanation: string;
+  selectedAnswer: string;
 }) {
   return (
     <div className="rounded-md border bg-muted/40 p-3 text-sm">
       <p className="font-semibold">{answer.isCorrect ? "Correct" : "Incorrect"}</p>
+      <p className="mt-1">
+        <span className="font-semibold">Correct answer:</span> {correctAnswer}
+      </p>
+      <p className="mt-1">
+        <span className="font-semibold">Your answer:</span> {selectedAnswer}
+      </p>
       <p className="mt-1 text-muted-foreground">{explanation}</p>
     </div>
   );
@@ -225,7 +248,7 @@ function getOptionStateClass({
     return "border-border hover:bg-muted/60";
   }
   if (isCorrectOption) {
-    return "border-emerald-500 bg-emerald-500/10";
+    return "border-success bg-success/10 text-success";
   }
   if (isSelected) {
     return "border-destructive bg-destructive/10";

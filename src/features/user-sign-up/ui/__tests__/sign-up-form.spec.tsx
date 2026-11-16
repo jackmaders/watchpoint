@@ -20,7 +20,7 @@ afterEach(() => {
 
 describe("sign up form", () => {
   it("renders form fields and labels correctly", () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     // Act
     renderWithProviders(<SignUpForm />);
@@ -29,6 +29,26 @@ describe("sign up form", () => {
     expect(screen.getByLabelText("Name")).toBeDefined();
     expect(screen.getByLabelText("Email")).toBeDefined();
     expect(screen.getByLabelText("Password")).toBeDefined();
+    expect(screen.getByText("Use at least 8 characters.")).toBeDefined();
+  });
+
+  it("rejects passwords shorter than eight characters", async () => {
+    expect.assertions(2);
+
+    // Arrange
+    const { user } = renderWithProviders(<SignUpForm />);
+
+    // Act
+    await user.type(screen.getByLabelText("Name"), TEST_SIGN_UP_CREDENTIALS.name);
+    await user.type(screen.getByLabelText("Email"), TEST_SIGN_UP_CREDENTIALS.email);
+    await user.type(screen.getByLabelText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: "Create account" }));
+
+    // Assert
+    await expect(
+      screen.findByText("Password must be at least 8 characters"),
+    ).resolves.toBeDefined();
+    expect(signUp.email).not.toHaveBeenCalled();
   });
 
   it("submits registration with valid inputs", async () => {

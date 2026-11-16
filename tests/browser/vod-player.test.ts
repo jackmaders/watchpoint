@@ -22,7 +22,7 @@ const SECOND_CHECKPOINT_OPTION_ONE =
 const PASSIVE_SCRUB_START_SEC = 10;
 const PASSIVE_SCRUB_END_SEC = 60;
 
-test("redirects unauthenticated visitors from /vods/$vodId to /", async ({ page }) => {
+test("preserves player destination through sign-in redirect", async ({ page }) => {
   // Arrange
   const vodPlayerPage = new VodPlayerPage(page);
   const homePage = new HomePage(page);
@@ -31,7 +31,7 @@ test("redirects unauthenticated visitors from /vods/$vodId to /", async ({ page 
   await vodPlayerPage.goto(SHU_VOD_ID);
 
   // Assert
-  await expect(page).toHaveURL(/\/$/u);
+  await expect(page).toHaveURL(/\/?returnTo=%2Fvods%2Fshu-ana-owcs-kr-s3$/u);
   await expect(homePage.heading).toBeVisible();
 });
 
